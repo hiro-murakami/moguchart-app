@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import "@mogura/moguchart";
-import type { GanttRow, RenderBarContentEventDetail } from "@mogura/moguchart";
+import type {
+  GanttRow,
+  RenderBarContentEventDetail,
+  GanttChartOption,
+} from "@mogura/moguchart";
 
 // --- 設定値 ---
 const chartStartStr = ref("2025-12-15");
@@ -23,14 +27,14 @@ const rows = ref<GanttRow[]>([
       {
         id: "1-1",
         name: "ヒアリング",
-        start: new Date("2025-12-15"),
-        end: new Date("2025-12-18"),
+        start: new Date("2025-12-15T00:00:00"),
+        end: new Date("2025-12-18T00:00:00"),
       },
       {
         id: "1-2",
         name: "要件定義書作成",
-        start: new Date("2025-12-19"),
-        end: new Date("2025-12-24"),
+        start: new Date("2025-12-19T00:00:00"),
+        end: new Date("2025-12-24T00:00:00"),
       },
     ],
   },
@@ -41,26 +45,26 @@ const rows = ref<GanttRow[]>([
       {
         id: "2-1",
         name: "基本設計",
-        start: new Date("2025-12-25"),
-        end: new Date("2025-12-30"),
+        start: new Date("2025-12-25T00:00:00"),
+        end: new Date("2025-12-30T00:00:00"),
       },
       {
         id: "2-2",
         name: "詳細設計",
-        start: new Date("2026-01-05"),
-        end: new Date("2026-01-10"),
+        start: new Date("2026-01-05T00:00:00"),
+        end: new Date("2026-01-10T00:00:00"),
       },
       {
         id: "2-3",
         name: "DB設計",
-        start: new Date("2025-12-28"),
-        end: new Date("2026-01-04"),
+        start: new Date("2025-12-28T00:00:00"),
+        end: new Date("2026-01-04T00:00:00"),
       },
       {
         id: "2-4",
         name: "UIデザイン",
-        start: new Date("2026-01-05"),
-        end: new Date("2026-01-15"),
+        start: new Date("2026-01-05T00:00:00"),
+        end: new Date("2026-01-15T00:00:00"),
       },
     ],
   },
@@ -71,26 +75,26 @@ const rows = ref<GanttRow[]>([
       {
         id: "3-1",
         name: "環境構築",
-        start: new Date("2026-01-10"),
-        end: new Date("2026-01-12"),
+        start: new Date("2026-01-10T00:00:00"),
+        end: new Date("2026-01-12T00:00:00"),
       },
       {
         id: "3-2",
         name: "バックエンド実装",
-        start: new Date("2026-01-13"),
-        end: new Date("2026-01-25"),
+        start: new Date("2026-01-13T00:00:00"),
+        end: new Date("2026-01-25T00:00:00"),
       },
       {
         id: "3-3",
         name: "フロントエンド実装",
-        start: new Date("2026-01-16"),
-        end: new Date("2026-01-28"),
+        start: new Date("2026-01-16T00:00:00"),
+        end: new Date("2026-01-28T00:00:00"),
       },
       {
         id: "3-4",
         name: "API連携",
-        start: new Date("2026-01-26"),
-        end: new Date("2026-01-30"),
+        start: new Date("2026-01-26T00:00:00"),
+        end: new Date("2026-01-30T00:00:00"),
       },
     ],
   },
@@ -101,20 +105,20 @@ const rows = ref<GanttRow[]>([
       {
         id: "4-1",
         name: "単体テスト",
-        start: new Date("2026-01-25"),
-        end: new Date("2026-01-31"),
+        start: new Date("2026-01-25T00:00:00"),
+        end: new Date("2026-01-31T00:00:00"),
       },
       {
         id: "4-2",
         name: "結合テスト",
-        start: new Date("2026-02-01"),
-        end: new Date("2026-02-07"),
+        start: new Date("2026-02-01T00:00:00"),
+        end: new Date("2026-02-07T00:00:00"),
       },
       {
         id: "4-3",
         name: "QA対応",
-        start: new Date("2026-02-08"),
-        end: new Date("2026-02-12"),
+        start: new Date("2026-02-08T00:00:00"),
+        end: new Date("2026-02-12T00:00:00"),
       },
     ],
   },
@@ -125,20 +129,20 @@ const rows = ref<GanttRow[]>([
       {
         id: "5-1",
         name: "リリース準備",
-        start: new Date("2026-02-10"),
-        end: new Date("2026-02-12"),
+        start: new Date("2026-02-10T00:00:00"),
+        end: new Date("2026-02-12T00:00:00"),
       },
       {
         id: "5-2",
         name: "本番リリース",
-        start: new Date("2026-02-13"),
-        end: new Date("2026-02-13"),
+        start: new Date("2026-02-13T00:00:00"),
+        end: new Date("2026-02-13T00:00:00"),
       },
     ],
   },
 ]);
 
-const inputChartOption = computed(() => ({
+const inputChartOption = computed<GanttChartOption>(() => ({
   bar: {
     height: barHeight.value,
     margin: barMargin.value,
@@ -148,8 +152,9 @@ const inputChartOption = computed(() => ({
     width: labelWidth.value,
   },
   calendar: {
-    start: new Date(chartStartStr.value),
+    start: new Date(chartStartStr.value + "T00:00:00"),
     pxPerDay: pxPerDay.value,
+    totalDays: totalDays.value,
   },
   readOnly: isReadOnly.value,
 }));
@@ -176,38 +181,12 @@ function applySettings() {
 function handleRowsChange(e: CustomEvent) {
   rows.value = e.detail;
 }
-
-function handleRenderBarContent(e: Event) {
-  const detail = (e as CustomEvent<RenderBarContentEventDetail>).detail;
-  const { container, task } = detail;
-
-  container.innerHTML = "";
-
-  const progress = (parseInt(task.id, 10) * 33) % 100;
-
-  const progressEl = document.createElement("div");
-  progressEl.style.width = `${progress}%`;
-  progressEl.style.height = "100%";
-  progressEl.style.backgroundColor = "rgba(255, 255, 255, 0.4)";
-  progressEl.style.borderRadius = "inherit";
-  container.appendChild(progressEl);
-
-  const textEl = document.createElement("div");
-  textEl.textContent = `${progress}%`;
-  textEl.style.position = "absolute";
-  textEl.style.right = "4px";
-  textEl.style.top = "50%";
-  textEl.style.transform = "translateY(-50%)";
-  textEl.style.fontSize = "10px";
-  textEl.style.color = "white";
-  container.appendChild(textEl);
-}
 </script>
 
 <template>
-  <v-app theme="light">
+  <v-app theme="dark">
     <div class="gantt-app">
-      <h2 class="mb-6">Moguchart 2 (Vue)</h2>
+      <h2 class="mb-6">Moguchart (Vue)</h2>
 
       <div class="controls">
         <v-row>
@@ -298,9 +277,9 @@ function handleRenderBarContent(e: Event) {
           :rows="rows"
           :option="appliedChartOption"
           :totalDays="appliedTotalDays"
+          theme="dark"
           @rows-change="handleRowsChange"
-          @render-bar-content="handleRenderBarContent"
-        ></gantt-chart>
+        />
       </div>
     </div>
   </v-app>
@@ -310,7 +289,6 @@ function handleRenderBarContent(e: Event) {
 .gantt-app {
   padding: 50px;
   font-family: sans-serif;
-  color: #333;
 }
 
 .controls {
@@ -321,8 +299,8 @@ function handleRenderBarContent(e: Event) {
   display: block;
   width: 100%;
   overflow-x: auto;
-  border: 1px solid #e2e8f0;
-  background: white;
+  border: 1px solid #444;
+  background: #1e1e1e;
   box-sizing: border-box;
 }
 </style>
