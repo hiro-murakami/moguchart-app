@@ -1,11 +1,7 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import "@mogura/moguchart";
-import type {
-  GanttRow,
-  RenderBarContentEventDetail,
-  GanttChartOption,
-} from "@mogura/moguchart";
+import type { GanttRow, GanttChartOption } from "@mogura/moguchart";
 
 // --- 設定値 ---
 const chartStartStr = ref("2025-12-15");
@@ -19,128 +15,7 @@ const labelWidth = ref(150);
 // --- 状態 ---
 const isReadOnly = ref(false);
 
-const rows = ref<GanttRow[]>([
-  {
-    id: "1",
-    label: "要件定義",
-    tasks: [
-      {
-        id: "1-1",
-        name: "ヒアリング",
-        start: new Date("2025-12-15T00:00:00"),
-        end: new Date("2025-12-18T00:00:00"),
-      },
-      {
-        id: "1-2",
-        name: "要件定義書作成",
-        start: new Date("2025-12-19T00:00:00"),
-        end: new Date("2025-12-24T00:00:00"),
-      },
-    ],
-  },
-  {
-    id: "2",
-    label: "設計",
-    tasks: [
-      {
-        id: "2-1",
-        name: "基本設計",
-        start: new Date("2025-12-25T00:00:00"),
-        end: new Date("2025-12-30T00:00:00"),
-      },
-      {
-        id: "2-2",
-        name: "詳細設計",
-        start: new Date("2026-01-05T00:00:00"),
-        end: new Date("2026-01-10T00:00:00"),
-      },
-      {
-        id: "2-3",
-        name: "DB設計",
-        start: new Date("2025-12-28T00:00:00"),
-        end: new Date("2026-01-04T00:00:00"),
-      },
-      {
-        id: "2-4",
-        name: "UIデザイン",
-        start: new Date("2026-01-05T00:00:00"),
-        end: new Date("2026-01-15T00:00:00"),
-      },
-    ],
-  },
-  {
-    id: "3",
-    label: "開発",
-    tasks: [
-      {
-        id: "3-1",
-        name: "環境構築",
-        start: new Date("2026-01-10T00:00:00"),
-        end: new Date("2026-01-12T00:00:00"),
-      },
-      {
-        id: "3-2",
-        name: "バックエンド実装",
-        start: new Date("2026-01-13T00:00:00"),
-        end: new Date("2026-01-25T00:00:00"),
-      },
-      {
-        id: "3-3",
-        name: "フロントエンド実装",
-        start: new Date("2026-01-16T00:00:00"),
-        end: new Date("2026-01-28T00:00:00"),
-      },
-      {
-        id: "3-4",
-        name: "API連携",
-        start: new Date("2026-01-26T00:00:00"),
-        end: new Date("2026-01-30T00:00:00"),
-      },
-    ],
-  },
-  {
-    id: "4",
-    label: "テスト",
-    tasks: [
-      {
-        id: "4-1",
-        name: "単体テスト",
-        start: new Date("2026-01-25T00:00:00"),
-        end: new Date("2026-01-31T00:00:00"),
-      },
-      {
-        id: "4-2",
-        name: "結合テスト",
-        start: new Date("2026-02-01T00:00:00"),
-        end: new Date("2026-02-07T00:00:00"),
-      },
-      {
-        id: "4-3",
-        name: "QA対応",
-        start: new Date("2026-02-08T00:00:00"),
-        end: new Date("2026-02-12T00:00:00"),
-      },
-    ],
-  },
-  {
-    id: "5",
-    label: "リリース",
-    tasks: [
-      {
-        id: "5-1",
-        name: "リリース準備",
-        start: new Date("2026-02-10T00:00:00"),
-        end: new Date("2026-02-12T00:00:00"),
-      },
-      {
-        id: "5-2",
-        name: "本番リリース",
-        start: new Date("2026-02-13T00:00:00"),
-        end: new Date("2026-02-13T00:00:00"),
-      },
-    ],
-  },
-]);
+const rows = ref<GanttRow[]>([]);
 
 const inputChartOption = computed<GanttChartOption>(() => ({
   bar: {
@@ -176,10 +51,48 @@ function applySettings() {
   appliedTotalDays.value = totalDays.value;
 }
 
-// --- ロジック ---
+// --- データ永続化ロジック ---
+const API_URL = "http://localhost:3001/api/gantt";
 
-function handleRowsChange(e: CustomEvent) {
+async function loadData() {
+  try {
+    const res = await fetch(API_URL);
+    if (res.ok) {
+      const data = await res.json();
+      // JSONから取得した日付文字列をDateオブジェクトに変換
+      rows.value = data.map((row: any) => ({
+        ...row,
+        tasks: row.tasks.map((task: any) => ({
+          ...task,
+          start: new Date(task.start),
+          end: new Date(task.end),
+        })),
+      }));
+    }
+  } catch (err) {
+    console.error("Failed to load data:", err);
+  }
+}
+
+async function saveData(newRows: GanttRow[]) {
+  try {
+    await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newRows),
+    });
+  } catch (err) {
+    console.error("Failed to save data:", err);
+  }
+}
+
+onMounted(() => {
+  loadData();
+});
+
+async function handleRowsChange(e: CustomEvent) {
   rows.value = e.detail;
+  await saveData(rows.value);
 }
 </script>
 
@@ -207,6 +120,7 @@ function handleRowsChange(e: CustomEvent) {
               v-model.number="totalDays"
               variant="outlined"
               density="compact"
+              suffix="日"
               hide-details
             />
           </v-col>
@@ -217,6 +131,7 @@ function handleRowsChange(e: CustomEvent) {
               v-model.number="pxPerDay"
               variant="outlined"
               density="compact"
+              suffix="px"
               hide-details
             />
           </v-col>
@@ -227,6 +142,7 @@ function handleRowsChange(e: CustomEvent) {
               v-model.number="labelWidth"
               variant="outlined"
               density="compact"
+              suffix="px"
               hide-details
             />
           </v-col>
@@ -237,6 +153,7 @@ function handleRowsChange(e: CustomEvent) {
               v-model.number="barHeight"
               variant="outlined"
               density="compact"
+              suffix="px"
               hide-details
             />
           </v-col>
@@ -247,6 +164,7 @@ function handleRowsChange(e: CustomEvent) {
               v-model.number="barMargin"
               variant="outlined"
               density="compact"
+              suffix="px"
               hide-details
             />
           </v-col>
