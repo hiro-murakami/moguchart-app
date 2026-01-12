@@ -3,6 +3,7 @@ import 'dotenv/config'
 import express from 'express';
 import cors from 'cors';
 import { PrismaClient } from '@prisma/client'; // pkg を経由せず直接 import
+import { fileURLToPath } from 'node:url';
 
 const app = express();
 const prisma = new PrismaClient();
@@ -47,6 +48,8 @@ app.post("/api/gantt", async (req, res) => {
   }
 });
 
+export default app;
+
 const start = async () => {
   try {
     await prisma.$connect();
@@ -60,4 +63,6 @@ const start = async () => {
   }
 };
 
-start();
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  start();
+}

@@ -39,6 +39,14 @@ export default defineConfig({
     exclude: ["@mogura/moguchart"],
   },
   server: {
+    proxy: {
+      "/api": {
+        // firebase-debug.log に出力されているエミュレータのURLを指定
+        target:
+          "http://127.0.0.1:5001/firestore-sample-c7300/asia-northeast1/api",
+        changeOrigin: true,
+      },
+    },
     fs: {
       // リンクされたパッケージがモノレポ外にある場合のために許可範囲を広げる
       allow: ["..", "../../../"],

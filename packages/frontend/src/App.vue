@@ -52,7 +52,8 @@ function applySettings() {
 }
 
 // --- データ永続化ロジック ---
-const API_URL = "http://localhost:3001/api/gantt";
+// const API_URL = "http://localhost:3001/api/gantt";
+const API_URL = "/api/gantt";
 
 async function loadData() {
   try {

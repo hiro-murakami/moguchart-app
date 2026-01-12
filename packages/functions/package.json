@@ -2,16 +2,22 @@
   "name": "functions",
   "private": true,
   "type": "module",
-  "main": "server.js",
+  "main": "index.js",
   "scripts": {
-    "dev": "nodemon server.js",
+    "dev": "cd ../.. && firebase emulators:start --only functions",
+    "dev:standalone": "nodemon server.js",
     "prisma:generate": "npx prisma generate"
+  },
+  "engines": {
+    "node": "24"
   },
   "dependencies": {
     "@prisma/client": "^6.19.1",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "firebase-admin": "^13.0.2",
+    "firebase-functions": "^6.3.0"
   },
   "devDependencies": {
     "@types/node": "^22.9.0",
