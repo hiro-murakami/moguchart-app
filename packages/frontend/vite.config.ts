@@ -28,7 +28,7 @@ export default defineConfig({
   ],
   resolve: {
     // lit 関連のパッケージをすべて重複排除の対象にする
-    dedupe: ["lit", "lit-html", "lit-element", "@lit/reactive-element"],
+    dedupe: ["lit"],
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
     },
