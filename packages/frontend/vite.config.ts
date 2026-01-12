@@ -4,6 +4,7 @@ import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
 import vuetify, { transformAssetUrls } from "vite-plugin-vuetify";
 import Unfonts from "unplugin-fonts/vite";
+import Components from "unplugin-vue-components/vite";
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -15,6 +16,7 @@ export default defineConfig({
     vuetify({
       autoImport: true,
     }),
+    Components(),
     Unfonts({
       google: {
         families: [
@@ -28,7 +30,7 @@ export default defineConfig({
   ],
   resolve: {
     // lit 関連のパッケージをすべて重複排除の対象にする
-    dedupe: ["lit"],
+    dedupe: ["lit", "lit-html", "lit-element"],
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
     },
