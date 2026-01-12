@@ -1,0 +1,22 @@
+{
+  "name": "functions",
+  "private": true,
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "dev": "nodemon server.js",
+    "prisma:generate": "npx prisma generate"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.1",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "nodemon": "^3.1.11",
+    "prisma": "^6.19.1",
+    "typescript": "~5.9.2"
+  }
+}

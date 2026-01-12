@@ -4,12 +4,15 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-overrides:
-  '@mogura/moguchart': link:../moguchart
-
 importers:
 
   .:
+    devDependencies:
+      npm-run-all2:
+        specifier: ^8.0.4
+        version: 8.0.4
+
+  packages/frontend:
     dependencies:
       '@fontsource/roboto':
         specifier: 5.2.7
@@ -18,20 +21,8 @@ importers:
         specifier: 7.4.47
         version: 7.4.47
       '@mogura/moguchart':
-        specifier: link:../moguchart
-        version: link:../moguchart
-      '@prisma/client':
-        specifier: ^6.19.1
-        version: 6.19.1(prisma@6.19.1(typescript@5.9.3))(typescript@5.9.3)
-      cors:
-        specifier: ^2.8.5
-        version: 2.8.5
-      dotenv:
-        specifier: ^17.2.3
-        version: 17.2.3
-      express:
-        specifier: ^5.2.1
-        version: 5.2.1
+        specifier: link:../../../moguchart
+        version: link:../../../moguchart
       lit:
         specifier: ^3.3.2
         version: 3.3.2
@@ -54,15 +45,9 @@ importers:
       '@vue/tsconfig':
         specifier: ^0.8.1
         version: 0.8.1(typescript@5.9.3)(vue@3.5.26(typescript@5.9.3))
-      nodemon:
-        specifier: ^3.1.11
-        version: 3.1.11
       npm-run-all2:
         specifier: ^8.0.4
         version: 8.0.4
-      prisma:
-        specifier: ^6.19.1
-        version: 6.19.1(typescript@5.9.3)
       sass-embedded:
         specifier: ^1.92.1
         version: 1.97.2
@@ -84,6 +69,34 @@ importers:
       vue-tsc:
         specifier: ^3.2.0
         version: 3.2.2(typescript@5.9.3)
+
+  packages/functions:
+    dependencies:
+      '@prisma/client':
+        specifier: ^6.19.1
+        version: 6.19.1(prisma@6.19.1(typescript@5.9.3))(typescript@5.9.3)
+      cors:
+        specifier: ^2.8.5
+        version: 2.8.5
+      dotenv:
+        specifier: ^17.2.3
+        version: 17.2.3
+      express:
+        specifier: ^5.2.1
+        version: 5.2.1
+    devDependencies:
+      '@types/node':
+        specifier: ^22.9.0
+        version: 22.19.5
+      nodemon:
+        specifier: ^3.1.11
+        version: 3.1.11
+      prisma:
+        specifier: ^6.19.1
+        version: 6.19.1(typescript@5.9.3)
+      typescript:
+        specifier: ~5.9.2
+        version: 5.9.3
 
 packages:
 

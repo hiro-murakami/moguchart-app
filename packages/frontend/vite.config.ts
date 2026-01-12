@@ -1,0 +1,47 @@
+import { fileURLToPath, URL } from "node:url";
+
+import { defineConfig } from "vite";
+import vue from "@vitejs/plugin-vue";
+import vuetify, { transformAssetUrls } from "vite-plugin-vuetify";
+import Unfonts from "unplugin-fonts/vite";
+
+// https://vitejs.dev/config/
+export default defineConfig({
+  plugins: [
+    vue({
+      template: { transformAssetUrls },
+    }),
+    // https://github.com/vuetifyjs/vuetify-loader/tree/next/packages/vite-plugin
+    vuetify({
+      autoImport: true,
+    }),
+    Unfonts({
+      google: {
+        families: [
+          {
+            name: "Roboto",
+            styles: "100;300;400;500;700;900",
+          },
+        ],
+      },
+    }),
+  ],
+  resolve: {
+    // lit 関連のパッケージをすべて重複排除の対象にする
+    dedupe: ["lit", "lit-html", "lit-element", "@lit/reactive-element"],
+    alias: {
+      "@": fileURLToPath(new URL("./src", import.meta.url)),
+    },
+    extensions: [".js", ".json", ".jsx", ".mjs", ".ts", ".tsx", ".vue"],
+  },
+  optimizeDeps: {
+    // リンクされたパッケージを事前バンドルから除外する（これで dedupe が効くようになります）
+    exclude: ["@mogura/moguchart"],
+  },
+  server: {
+    fs: {
+      // リンクされたパッケージがモノレポ外にある場合のために許可範囲を広げる
+      allow: ["..", "../../../"],
+    },
+  },
+});

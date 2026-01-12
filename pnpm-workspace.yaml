@@ -1,2 +1,2 @@
-overrides:
-  '@mogura/moguchart': link:../moguchart
+packages:
+  - "packages/*"
