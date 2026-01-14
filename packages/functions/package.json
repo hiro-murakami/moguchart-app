@@ -12,6 +12,7 @@
     "node": "24"
   },
   "dependencies": {
+    "@moguchart/shared": "workspace:*",
     "@prisma/client": "^6.19.1",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",

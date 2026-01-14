@@ -4,7 +4,7 @@
   "type": "module",
   "version": "0.0.0",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --force",
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
     "build-only": "vite build",
@@ -13,8 +13,8 @@
   "dependencies": {
     "@fontsource/roboto": "5.2.7",
     "@mdi/font": "7.4.47",
+    "@moguchart/shared": "workspace:*",
     "@mogura/moguchart": "link:../../../moguchart",
-    "lit": "^3.3.2",
     "vue": "^3.5.21",
     "vuetify": "^3.10.1"
   },

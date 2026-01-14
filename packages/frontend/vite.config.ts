@@ -10,7 +10,12 @@ import Components from "unplugin-vue-components/vite";
 export default defineConfig({
   plugins: [
     vue({
-      template: { transformAssetUrls },
+      template: {
+        transformAssetUrls,
+        compilerOptions: {
+          isCustomElement: (tag) => tag.startsWith("gantt-"),
+        },
+      },
     }),
     // https://github.com/vuetifyjs/vuetify-loader/tree/next/packages/vite-plugin
     vuetify({
@@ -29,8 +34,6 @@ export default defineConfig({
     }),
   ],
   resolve: {
-    // lit 関連のパッケージをすべて重複排除の対象にする
-    dedupe: ["lit", "lit-html", "lit-element"],
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
     },
