@@ -4,6 +4,7 @@ import express from "express";
 import cors from "cors";
 import { PrismaClient } from "@prisma/client"; // pkg を経由せず直接 import
 import { fileURLToPath } from "node:url";
+import { SHARED_MESSAGE } from "@moguchart/shared";
 
 const app = express();
 const prisma = new PrismaClient();
@@ -11,6 +12,11 @@ const port = process.env.PORT || 3001;
 
 app.use(cors());
 app.use(express.json());
+
+// 共有パッケージの動作確認用エンドポイント
+app.get("/api/shared-test", (req, res) => {
+  res.json({ message: SHARED_MESSAGE });
+});
 
 // データの取得
 app.get("/api/gantt", async (req, res) => {

@@ -2,11 +2,11 @@
   "name": "functions",
   "private": true,
   "type": "module",
-  "main": "lib/index.js",
+  "main": "dist/index.js",
   "scripts": {
     "lint": "eslint --ext .js,.ts .",
-    "build": "tsc",
-    "build:watch": "tsc --watch",
+    "build": "node build.cjs",
+    "build:watch": "node build.cjs --watch",
     "dev": "pnpm run build && (pnpm run build:watch & firebase emulators:start --only functions)",
     "serve": "pnpm run build && firebase emulators:start --only functions",
     "shell": "pnpm run build && firebase functions:shell",
@@ -19,7 +19,6 @@
     "node": "22"
   },
   "dependencies": {
-    "@moguchart/shared": "workspace:*",
     "@prisma/client": "^6.19.1",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
@@ -28,8 +27,10 @@
     "firebase-functions": "^6.3.0"
   },
   "devDependencies": {
+    "@moguchart/shared": "workspace:*",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
+    "esbuild": "^0.25.0",
     "@types/node": "^22.9.0",
     "nodemon": "^3.1.11",
     "prisma": "^6.19.1",
