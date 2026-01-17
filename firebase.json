@@ -9,6 +9,9 @@
       "firebase-debug.*.log",
       ".env",
       ".env.*"
+    ],
+    "predeploy": [
+      "pnpm --filter functions build"
     ]
   },
   "hosting": {
