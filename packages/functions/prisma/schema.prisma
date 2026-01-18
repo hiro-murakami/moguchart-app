@@ -2,6 +2,7 @@
 
 generator client {
   provider = "prisma-client-js"
+  previewFeatures = ["dbComments"]
 }
 
 datasource db {
@@ -9,11 +10,49 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+/// ガントチャート
 model GanttChart {
   id        Int      @id @default(autoincrement())
-  data      Json     // ガントチャートの行データをJSONとして保存
-  createdBy String   @default("system") // 作成者email
+  /// ガントチャートの行データをJSONとして保存
+  data      Json
+  /// 作成者email
+  createdBy String   @default("system")
   createdAt DateTime @default(now())
-  updatedBy String   @default("system") // 更新者email
+  /// 更新者email
+  updatedBy String   @default("system")
+  updatedAt DateTime @updatedAt
+}
+
+/// 行
+model Row {
+  id        Int      @id @default(autoincrement())
+  /// 行ラベル
+  label     String
+  /// 作成者email
+  createdBy String   @default("system")
+  createdAt DateTime @default(now())
+  /// 更新者email
+  updatedBy String   @default("system")
+  updatedAt DateTime @updatedAt
+  tasks     Task[]
+}
+
+/// タスク
+model Task {
+  id        Int      @id @default(autoincrement())
+  /// 行ID
+  rowId     Int
+  row       Row      @relation(fields: [rowId], references: [id])
+  /// タスク名
+  name      String
+  /// 開始日時
+  start     DateTime
+  /// 終了日時
+  end       DateTime
+  /// 作成者email
+  createdBy String   @default("system")
+  createdAt DateTime @default(now())
+  /// 更新者email
+  updatedBy String   @default("system")
   updatedAt DateTime @updatedAt
 }

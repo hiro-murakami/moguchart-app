@@ -1,21 +1,22 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
-import "@mogura/moguchart";
-import type { GanttRow, GanttChartOption } from "@mogura/moguchart";
+import { ref, computed, onMounted } from 'vue'
+import '@mogura/moguchart'
+import type { GanttRow, GanttChartOption } from '@mogura/moguchart'
+import firebaseFunctions from './scripts'
 
 // --- 設定値 ---
-const chartStartStr = ref("2025-12-15");
-const pxPerDay = ref(28);
-const totalDays = ref(90);
-const barHeight = ref(28);
-const barMargin = ref(4);
-const barCornerRadius = ref(4);
-const labelWidth = ref(150);
+const chartStartStr = ref('2025-12-15')
+const pxPerDay = ref(28)
+const totalDays = ref(90)
+const barHeight = ref(28)
+const barMargin = ref(4)
+const barCornerRadius = ref(4)
+const labelWidth = ref(150)
 
 // --- 状態 ---
-const isReadOnly = ref(false);
+const isReadOnly = ref(false)
 
-const rows = ref<GanttRow[]>([]);
+const rows = ref<GanttRow[]>([])
 
 const inputChartOption = computed<GanttChartOption>(() => ({
   bar: {
@@ -27,73 +28,66 @@ const inputChartOption = computed<GanttChartOption>(() => ({
     width: labelWidth.value,
   },
   calendar: {
-    start: new Date(chartStartStr.value + "T00:00:00"),
+    start: new Date(chartStartStr.value + 'T00:00:00'),
     pxPerDay: pxPerDay.value,
     totalDays: totalDays.value,
   },
   readOnly: isReadOnly.value,
-}));
+}))
 
 // --- 適用される設定 ---
-const appliedChartOption = ref(inputChartOption.value);
-const appliedTotalDays = ref(totalDays.value);
+const appliedChartOption = ref(inputChartOption.value)
+const appliedTotalDays = ref(totalDays.value)
 
 const isSettingsChanged = computed(() => {
   return (
     totalDays.value !== appliedTotalDays.value ||
     JSON.stringify(inputChartOption.value) !==
       JSON.stringify(appliedChartOption.value)
-  );
-});
+  )
+})
 
 function applySettings() {
-  appliedChartOption.value = inputChartOption.value;
-  appliedTotalDays.value = totalDays.value;
+  appliedChartOption.value = inputChartOption.value
+  appliedTotalDays.value = totalDays.value
 }
 
 // --- データ永続化ロジック ---
-// const API_URL = "http://localhost:3001/api/gantt";
-const API_URL = "/api/gantt";
 
 async function loadData() {
   try {
-    const res = await fetch(API_URL);
-    if (res.ok) {
-      const data = await res.json();
+    const data = await firebaseFunctions.selectGanttChart()
+    if (data?.data) {
       // JSONから取得した日付文字列をDateオブジェクトに変換
-      rows.value = data.map((row: any) => ({
+      rows.value = data.data.map((row: any) => ({
         ...row,
         tasks: row.tasks.map((task: any) => ({
           ...task,
           start: new Date(task.start),
           end: new Date(task.end),
         })),
-      }));
+      }))
     }
   } catch (err) {
-    console.error("Failed to load data:", err);
+    console.error('Failed to load data:', err)
   }
 }
 
 async function saveData(newRows: GanttRow[]) {
   try {
-    await fetch(API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newRows),
-    });
+    await firebaseFunctions.upsertGanttChart(newRows)
   } catch (err) {
-    console.error("Failed to save data:", err);
+    console.error('Failed to save data:', err)
   }
 }
 
 onMounted(() => {
-  loadData();
-});
+  loadData()
+})
 
 async function handleRowsChange(e: CustomEvent) {
-  rows.value = e.detail;
-  await saveData(rows.value);
+  rows.value = e.detail
+  await saveData(rows.value)
 }
 </script>
 
