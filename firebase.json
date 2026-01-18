@@ -1,6 +1,6 @@
 {
   "functions": {
-    "source": "packages/functions/dist",
+    "source": "packages/functions",
     "codebase": "default",
     "ignore": [
       "node_modules",
