@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "pnpm -r --parallel dev",
     "build": "pnpm -r build",
-    "deploy:dev": "pnpm run build && firebase deploy",
+    "deploy:all": "pnpm run build && firebase deploy",
     "deploy:functions": "firebase deploy --only functions",
     "serve:functions": "firebase emulators:start --only functions",
     "refresh:packages": "rm -rf node_modules pnpm-lock.yaml packages/frontend/node_modules packages/functions/node_modules && pnpm i && pnpm --filter ./packages/functions run prisma:generate"

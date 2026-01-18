@@ -1,9 +1,8 @@
 // server.ts
 import "dotenv/config";
-import express from "express";
-import cors from "cors";
+import * as express from "express";
+import * as cors from "cors";
 import { PrismaClient } from "@prisma/client";
-import { fileURLToPath } from "node:url";
 
 const app = express();
 const prisma = new PrismaClient();
@@ -64,6 +63,6 @@ const start = async () => {
   }
 };
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (require.main === module) {
   start();
 }
