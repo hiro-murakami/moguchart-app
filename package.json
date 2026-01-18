@@ -1,44 +1,18 @@
 {
-  "name": "moguchart-test2",
+  "name": "moguchart-monorepo",
   "private": true,
-  "type": "module",
-  "version": "0.0.0",
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
-    "dev": "vite",
-    "dev:all": "run-p serve dev",
-    "build": "run-p type-check \"build-only {@}\" --",
-    "preview": "vite preview",
-    "build-only": "vite build",
-    "type-check": "vue-tsc --build --force",
-    "serve": "nodemon server.js",
-    "prisma:generate": "npx prisma generate"
-  },
-  "dependencies": {
-    "@fontsource/roboto": "5.2.7",
-    "@mdi/font": "7.4.47",
-    "@mogura/moguchart": "link:../moguchart",
-    "@prisma/client": "^6.19.1",
-    "cors": "^2.8.5",
-    "dotenv": "^17.2.3",
-    "express": "^5.2.1",
-    "lit": "^3.3.2",
-    "vue": "^3.5.21",
-    "vuetify": "^3.10.1"
+    "dev": "pnpm -r --parallel dev",
+    "build": "pnpm -r build",
+    "deploy:all": "pnpm run build && firebase deploy",
+    "deploy:functions": "firebase deploy --only functions",
+    "serve:functions": "firebase emulators:start --only functions",
+    "refresh:packages": "rm -rf node_modules pnpm-lock.yaml packages/frontend/node_modules packages/functions/node_modules && pnpm i && pnpm --filter ./packages/functions run prisma:generate"
   },
   "devDependencies": {
-    "@tsconfig/node22": "^22.0.0",
-    "@types/node": "^22.9.0",
-    "@vitejs/plugin-vue": "^6.0.1",
-    "@vue/tsconfig": "^0.8.1",
-    "nodemon": "^3.1.11",
-    "npm-run-all2": "^8.0.4",
-    "prisma": "^6.19.1",
-    "sass-embedded": "^1.92.1",
-    "typescript": "~5.9.2",
-    "unplugin-fonts": "^1.4.0",
-    "unplugin-vue-components": "^29.0.0",
-    "vite": "^7.1.5",
-    "vite-plugin-vuetify": "^2.1.2",
-    "vue-tsc": "^3.2.0"
+    "npm-run-all2": "^8.0.4"
   }
 }

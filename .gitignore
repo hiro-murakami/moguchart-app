@@ -1,6 +1,8 @@
 .DS_Store
 node_modules
-/dist
+dist
+.firebase
+lib
 
 # local env files
 .env.local
@@ -22,3 +24,4 @@ pnpm-debug.log*
 *.sw?
 
 /src/generated/prisma
+firebase-debug.log

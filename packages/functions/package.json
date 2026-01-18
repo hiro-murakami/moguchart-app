@@ -1,0 +1,36 @@
+{
+  "name": "functions",
+  "private": true,
+  "main": "lib/index.js",
+  "scripts": {
+    "lint": "eslint --ext .js,.ts .",
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "dev": "pnpm run build && (pnpm run build:watch & firebase emulators:start --only functions)",
+    "serve": "pnpm run build && firebase emulators:start --only functions",
+    "shell": "pnpm run build && firebase functions:shell",
+    "start": "pnpm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log",
+    "prisma:generate": "npx prisma generate"
+  },
+  "engines": {
+    "node": "22"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.1",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "firebase-admin": "^13.0.2",
+    "firebase-functions": "^6.3.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^22.9.0",
+    "nodemon": "^3.1.11",
+    "prisma": "^6.19.1",
+    "typescript": "~5.9.2"
+  }
+}
