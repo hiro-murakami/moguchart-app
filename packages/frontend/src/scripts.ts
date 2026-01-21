@@ -39,7 +39,7 @@ class FirebaseFunctions {
     return this.callFunction<GanttChart | null>('selectGanttChart')
   }
 
-  upsertGanttChart(param: Record<string, unknown>): Promise<void> {
+  upsertGanttChart(param: Object): Promise<void> {
     return this.callFunction<void>('upsertGanttChart', param)
   }
 

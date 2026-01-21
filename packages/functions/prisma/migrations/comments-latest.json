@@ -1,0 +1,131 @@
+{
+  "GanttChart": {
+    "table": {
+      "tableName": "GanttChart",
+      "comment": "ガントチャート"
+    },
+    "columns": [
+      {
+        "tableName": "GanttChart",
+        "columnName": "id",
+        "comment": ""
+      },
+      {
+        "tableName": "GanttChart",
+        "columnName": "data",
+        "comment": "ガントチャートの行データをJSONとして保存"
+      },
+      {
+        "tableName": "GanttChart",
+        "columnName": "createdBy",
+        "comment": "作成者email"
+      },
+      {
+        "tableName": "GanttChart",
+        "columnName": "createdAt",
+        "comment": ""
+      },
+      {
+        "tableName": "GanttChart",
+        "columnName": "updatedBy",
+        "comment": "更新者email"
+      },
+      {
+        "tableName": "GanttChart",
+        "columnName": "updatedAt",
+        "comment": ""
+      }
+    ]
+  },
+  "Row": {
+    "table": {
+      "tableName": "Row",
+      "comment": "行"
+    },
+    "columns": [
+      {
+        "tableName": "Row",
+        "columnName": "id",
+        "comment": ""
+      },
+      {
+        "tableName": "Row",
+        "columnName": "label",
+        "comment": "行ラベル"
+      },
+      {
+        "tableName": "Row",
+        "columnName": "createdBy",
+        "comment": "作成者email"
+      },
+      {
+        "tableName": "Row",
+        "columnName": "createdAt",
+        "comment": ""
+      },
+      {
+        "tableName": "Row",
+        "columnName": "updatedBy",
+        "comment": "更新者email"
+      },
+      {
+        "tableName": "Row",
+        "columnName": "updatedAt",
+        "comment": ""
+      }
+    ]
+  },
+  "Task": {
+    "table": {
+      "tableName": "Task",
+      "comment": "タスク"
+    },
+    "columns": [
+      {
+        "tableName": "Task",
+        "columnName": "id",
+        "comment": ""
+      },
+      {
+        "tableName": "Task",
+        "columnName": "rowId",
+        "comment": "行ID"
+      },
+      {
+        "tableName": "Task",
+        "columnName": "name",
+        "comment": "タスク名"
+      },
+      {
+        "tableName": "Task",
+        "columnName": "start",
+        "comment": "開始日時"
+      },
+      {
+        "tableName": "Task",
+        "columnName": "end",
+        "comment": "終了日時"
+      },
+      {
+        "tableName": "Task",
+        "columnName": "createdBy",
+        "comment": "作成者email"
+      },
+      {
+        "tableName": "Task",
+        "columnName": "createdAt",
+        "comment": ""
+      },
+      {
+        "tableName": "Task",
+        "columnName": "updatedBy",
+        "comment": "更新者email"
+      },
+      {
+        "tableName": "Task",
+        "columnName": "updatedAt",
+        "comment": ""
+      }
+    ]
+  }
+}

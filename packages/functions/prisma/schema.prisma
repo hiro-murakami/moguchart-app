@@ -2,7 +2,10 @@
 
 generator client {
   provider = "prisma-client-js"
-  previewFeatures = ["dbComments"]
+}
+
+generator comments {
+  provider = "prisma-db-comments-generator"
 }
 
 datasource db {

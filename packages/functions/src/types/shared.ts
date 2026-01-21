@@ -27,20 +27,20 @@ export interface FunctionResult {
 
 export type FunctionName = 'selectGanttChart' | 'upsertGanttChart'
 
-export interface Task {
+export interface GanttTask {
   id: string
   name: string
   start: string
   end: string
 }
 
-export interface Row {
+export interface GanttRow {
   id: string
   label: string
-  tasks: Task[]
+  tasks: GanttTask[]
 }
 
 export interface GanttChart {
   id: number
-  data: Row[]
+  data: GanttRow[]
 }

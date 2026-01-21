@@ -1,4 +1,4 @@
-import { GanttChart, Row } from '../types/shared'
+import type { GanttChart, GanttRow } from '../types/shared'
 import { prisma } from './common/commonFunctions'
 
 const selectGanttChart = async (): Promise<GanttChart | null> => {
@@ -15,7 +15,7 @@ const selectGanttChart = async (): Promise<GanttChart | null> => {
     // chart.data は Prisma.JsonValue 型 (nullの可能性がある)
     // GanttChart['data'] は Object 型
     // null の場合は空オブジェクトとして扱い、Object型へキャストする
-    data: (chart.data as unknown as Row[]) ?? [],
+    data: (chart.data as unknown as GanttRow[]) ?? [],
   }
 }
 

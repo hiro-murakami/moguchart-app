@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import '@mogura/moguchart'
-import type { GanttRow, GanttChartOption } from '@mogura/moguchart'
+import * as moguchart from '@mogura/moguchart'
 import firebaseFunctions from './scripts'
 
 // --- 設定値 ---
@@ -16,9 +16,9 @@ const labelWidth = ref(150)
 // --- 状態 ---
 const isReadOnly = ref(false)
 
-const rows = ref<GanttRow[]>([])
+const rows = ref<moguchart.GanttRow[]>([])
 
-const inputChartOption = computed<GanttChartOption>(() => ({
+const inputChartOption = computed<moguchart.GanttChartOption>(() => ({
   bar: {
     height: barHeight.value,
     margin: barMargin.value,
@@ -73,7 +73,7 @@ async function loadData() {
   }
 }
 
-async function saveData(newRows: GanttRow[]) {
+async function saveData(newRows: moguchart.GanttRow[]) {
   try {
     await firebaseFunctions.upsertGanttChart(newRows)
   } catch (err) {
