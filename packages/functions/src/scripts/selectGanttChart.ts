@@ -1,7 +1,7 @@
-import type { GanttChart, GanttRow } from '../types/shared'
+import type { GanttRow, SelectGanttChart } from '../types/shared'
 import { prisma } from './common/commonFunctions'
 
-const selectGanttChart = async (): Promise<GanttChart | null> => {
+const selectGanttChart: SelectGanttChart = async () => {
   const chart = await prisma.ganttChart.findUnique({
     where: { id: 1 },
   })

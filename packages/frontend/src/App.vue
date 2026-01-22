@@ -2,7 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import '@mogura/moguchart'
 import * as moguchart from '@mogura/moguchart'
-import firebaseFunctions from './scripts'
+import { selectGanttChart, upsertGanttChart } from '@/scripts'
 
 // --- 設定値 ---
 const chartStartStr = ref('2025-12-15')
@@ -56,7 +56,7 @@ function applySettings() {
 
 async function loadData() {
   try {
-    const data = await firebaseFunctions.selectGanttChart()
+    const data = await selectGanttChart()
     if (data?.data) {
       // JSONから取得した日付文字列をDateオブジェクトに変換
       rows.value = data.data.map((row: any) => ({
@@ -75,7 +75,7 @@ async function loadData() {
 
 async function saveData(newRows: moguchart.GanttRow[]) {
   try {
-    await firebaseFunctions.upsertGanttChart(newRows)
+    await upsertGanttChart(newRows)
   } catch (err) {
     console.error('Failed to save data:', err)
   }

@@ -1,8 +1,9 @@
 import { InputJsonValue } from '@prisma/client/runtime/library'
+import type { UpsertGanttChart } from '../types/shared'
 import { prisma } from './common/commonFunctions'
 
-const upsertGanttChart = async (param: Object): Promise<void> => {
-  const data = param as InputJsonValue
+const upsertGanttChart: UpsertGanttChart = async (param) => {
+  const data = param as unknown as InputJsonValue
   await prisma.ganttChart.upsert({
     where: { id: 1 },
     update: { data },

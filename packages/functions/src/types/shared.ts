@@ -44,3 +44,6 @@ export interface GanttChart {
   id: number
   data: GanttRow[]
 }
+
+export type SelectGanttChart = () => Promise<GanttChart | null>
+export type UpsertGanttChart = (param: GanttRow[]) => Promise<void>

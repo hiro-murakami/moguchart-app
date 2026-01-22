@@ -3,13 +3,14 @@ import type {
   FunctionParam,
   FunctionResult,
   GanttChart,
+  SelectGanttChart,
+  UpsertGanttChart,
 } from '@functions/types/shared'
 import { initializeApp } from 'firebase/app'
 import {
   connectFunctionsEmulator,
   getFunctions,
   httpsCallable,
-  type Functions,
 } from 'firebase/functions'
 
 // Firebaseの設定
@@ -25,29 +26,18 @@ const firebaseConfig = {
 
 const firebaseApp = initializeApp(firebaseConfig)
 
-class FirebaseFunctions {
-  private functions: Functions
+const functions = getFunctions(firebaseApp, 'asia-northeast1')
+if (import.meta.env.VITE_APP_MODE === 'mock') {
+  connectFunctionsEmulator(functions, 'localhost', 5001)
+}
 
-  constructor() {
-    this.functions = getFunctions(firebaseApp, 'asia-northeast1')
-    if (import.meta.env.VITE_APP_MODE === 'mock') {
-      connectFunctionsEmulator(this.functions, 'localhost', 5001)
-    }
-  }
+const callFunction = async <T>(name: FunctionName, param = {}) => {
+  const callable = httpsCallable<FunctionParam, FunctionResult>(
+    functions,
+    'gantt-functions',
+  )
 
-  selectGanttChart(): Promise<GanttChart | null> {
-    return this.callFunction<GanttChart | null>('selectGanttChart')
-  }
-
-  upsertGanttChart(param: Object): Promise<void> {
-    return this.callFunction<void>('upsertGanttChart', param)
-  }
-
-  callFunction = async <T>(name: FunctionName, param = {}) => {
-    const callable = httpsCallable<FunctionParam, FunctionResult>(
-      this.functions,
-      'gantt-functions',
-    )
+  try {
     const result = await callable({
       name,
       email: 'test@example.com',
@@ -55,8 +45,20 @@ class FirebaseFunctions {
     })
 
     return result.data.data as T
+  } catch (error: any) {
+    console.error(`[FirebaseFunctions] Error calling ${name}:`, {
+      code: error.code,
+      message: error.message,
+      details: error.details,
+    })
+    throw error
   }
 }
 
-const firebaseFunctions = new FirebaseFunctions()
-export default firebaseFunctions
+export const selectGanttChart: SelectGanttChart = () => {
+  return callFunction<GanttChart | null>('selectGanttChart')
+}
+
+export const upsertGanttChart: UpsertGanttChart = (param) => {
+  return callFunction<void>('upsertGanttChart', param)
+}
