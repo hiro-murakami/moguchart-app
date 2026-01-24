@@ -2,9 +2,9 @@ import type {
   FunctionName,
   FunctionParam,
   FunctionResult,
-  GanttChart,
+  GanttRow,
   SelectGanttChart,
-  UpsertGanttChart,
+  UpsertGanttTask,
 } from '@functions/types/shared'
 import { initializeApp } from 'firebase/app'
 import {
@@ -56,9 +56,9 @@ const callFunction = async <T>(name: FunctionName, param = {}) => {
 }
 
 export const selectGanttChart: SelectGanttChart = () => {
-  return callFunction<GanttChart | null>('selectGanttChart')
+  return callFunction<GanttRow[]>('selectGanttChart')
 }
 
-export const upsertGanttChart: UpsertGanttChart = (param) => {
-  return callFunction<void>('upsertGanttChart', param)
+export const upsertGanttTask: UpsertGanttTask = (param) => {
+  return callFunction<void>('upsertGanttTask', param)
 }

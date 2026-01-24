@@ -2,8 +2,8 @@ import * as functions from 'firebase-functions/v2'
 import { FirebaseFunction } from '../../types'
 import { PrismaClient } from '@prisma/client'
 import { FunctionParam, FunctionResult } from '../../types/shared'
+import dayjs from 'dayjs'
 
-const dayjs = require('dayjs')
 dayjs.extend(require('dayjs/plugin/utc'))
 dayjs.extend(require('dayjs/plugin/timezone'))
 
@@ -52,4 +52,11 @@ export const setupFirebaseFunction = (
       return result
     },
   )
+}
+
+export const toDateString = (
+  value: Date | dayjs.Dayjs,
+  format: string = 'YYYY-MM-DDTHH:mm:ss',
+): string => {
+  return dayjs(value).format(format)
 }

@@ -23,7 +23,7 @@ model GanttChart {
   createdAt DateTime @default(now())
   /// 更新者email
   updatedBy String   @default("system")
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @default(now())
 }
 
 /// 行
@@ -36,7 +36,7 @@ model Row {
   createdAt DateTime @default(now())
   /// 更新者email
   updatedBy String   @default("system")
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @default(now())
   tasks     Task[]
 }
 
@@ -57,5 +57,5 @@ model Task {
   createdAt DateTime @default(now())
   /// 更新者email
   updatedBy String   @default("system")
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @default(now())
 }

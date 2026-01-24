@@ -1,8 +1,11 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { selectGanttChart, upsertGanttTask } from '@/modules/scripts'
+import type { GanttRow, GanttTask } from '@functions/types/shared'
 import '@mogura/moguchart'
+import type { TaskUpdateEventDetail } from '@mogura/moguchart'
 import * as moguchart from '@mogura/moguchart'
-import { selectGanttChart, upsertGanttChart } from '@/scripts'
+import { computed, onMounted, ref } from 'vue'
+import { toDateString } from '@/modules/utils'
 
 // --- 設定値 ---
 const chartStartStr = ref('2025-12-15')
@@ -57,27 +60,18 @@ function applySettings() {
 async function loadData() {
   try {
     const data = await selectGanttChart()
-    if (data?.data) {
-      // JSONから取得した日付文字列をDateオブジェクトに変換
-      rows.value = data.data.map((row: any) => ({
-        ...row,
-        tasks: row.tasks.map((task: any) => ({
-          ...task,
-          start: new Date(task.start),
-          end: new Date(task.end),
-        })),
-      }))
-    }
+    rows.value = data.map((row: GanttRow) => ({
+      ...row,
+      id: row.id.toString(),
+      tasks: row.tasks.map((task: GanttTask) => ({
+        ...task,
+        id: task.id.toString(),
+        start: new Date(task.start),
+        end: new Date(task.end),
+      })),
+    }))
   } catch (err) {
     console.error('Failed to load data:', err)
-  }
-}
-
-async function saveData(newRows: moguchart.GanttRow[]) {
-  try {
-    await upsertGanttChart(newRows)
-  } catch (err) {
-    console.error('Failed to save data:', err)
   }
 }
 
@@ -85,9 +79,19 @@ onMounted(() => {
   loadData()
 })
 
-async function handleRowsChange(e: CustomEvent) {
-  rows.value = e.detail
-  await saveData(rows.value)
+const handleTaskUpdate = async (e: CustomEvent<TaskUpdateEventDetail>) => {
+  if (e.detail.isDragging) {
+    return
+  }
+  console.log('handleTaskUpdate', e.detail)
+  const data = {
+    id: Number(e.detail.id),
+    rowId: Number(e.detail.targetRowId),
+    name: e.detail.name || '',
+    start: toDateString(e.detail.start),
+    end: toDateString(e.detail.end),
+  }
+  await upsertGanttTask(data)
 }
 </script>
 
@@ -191,7 +195,7 @@ async function handleRowsChange(e: CustomEvent) {
           :option="appliedChartOption"
           :totalDays="appliedTotalDays"
           theme="dark"
-          @rows-change="handleRowsChange"
+          @task-update="handleTaskUpdate"
         />
       </div>
     </div>

@@ -1,11 +1,11 @@
-import { FirebaseFunction } from './types/index.js'
-import selectGanttChart from './scripts/selectGanttChart.js'
-import upsertGanttChart from './scripts/upsertGanttChart.js'
 import { setupFirebaseFunction } from './scripts/common/commonFunctions.js'
+import selectGanttChart from './scripts/selectGanttChart.js'
+import upsertGanttTask from './scripts/upsertGanttTask.js'
+import { FirebaseFunction } from './types/index.js'
 
 const functions: FirebaseFunction = {
   selectGanttChart,
-  upsertGanttChart,
+  upsertGanttTask,
 }
 
 export const gantt = {

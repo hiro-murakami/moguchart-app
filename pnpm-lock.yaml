@@ -26,6 +26,9 @@ importers:
       '@mogura/moguchart':
         specifier: link:../../../moguchart
         version: link:../../../moguchart
+      dayjs:
+        specifier: ^1.11.19
+        version: 1.11.19
       firebase:
         specifier: ^12.8.0
         version: 12.8.0

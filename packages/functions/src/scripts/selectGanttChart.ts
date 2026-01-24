@@ -1,22 +1,19 @@
-import type { GanttRow, SelectGanttChart } from '../types/shared'
-import { prisma } from './common/commonFunctions'
+import type { SelectGanttChart } from '../types/shared'
+import { prisma, toDateString } from './common/commonFunctions'
 
 const selectGanttChart: SelectGanttChart = async () => {
-  const chart = await prisma.ganttChart.findUnique({
-    where: { id: 1 },
+  const data = await prisma.row.findMany({
+    include: { tasks: true },
   })
-
-  if (!chart) {
-    return null
-  }
-
-  return {
-    id: chart.id,
-    // chart.data は Prisma.JsonValue 型 (nullの可能性がある)
-    // GanttChart['data'] は Object 型
-    // null の場合は空オブジェクトとして扱い、Object型へキャストする
-    data: (chart.data as unknown as GanttRow[]) ?? [],
-  }
+  return data.map((row) => ({
+    ...row,
+    tasks: row.tasks.map((task) => ({
+      ...task,
+      rowId: row.id,
+      start: toDateString(task.start),
+      end: toDateString(task.end),
+    })),
+  }))
 }
 
 export default selectGanttChart
