@@ -1,18 +1,18 @@
 import type { UpsertGanttTask } from '../types/shared'
 import { prisma } from './common/commonFunctions'
+import { fromGanttTask } from './common/converters'
 
 const upsertGanttTask: UpsertGanttTask = async (param) => {
-  const data = {
-    ...param,
-    start: new Date(param.start),
-    end: new Date(param.end),
-  }
+  const data = fromGanttTask(param)
+  const { id, ...createData } = data
 
-  await prisma.task.upsert({
+  const result = await prisma.ganttTask.upsert({
     where: { id: data.id },
     update: data,
-    create: data,
+    create: createData,
   })
+
+  return result.id
 }
 
 export default upsertGanttTask

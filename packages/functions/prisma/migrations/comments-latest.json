@@ -37,92 +37,92 @@
       }
     ]
   },
-  "Row": {
+  "GanttRow": {
     "table": {
-      "tableName": "Row",
-      "comment": "行"
+      "tableName": "GanttRow",
+      "comment": "ガント行"
     },
     "columns": [
       {
-        "tableName": "Row",
+        "tableName": "GanttRow",
         "columnName": "id",
         "comment": ""
       },
       {
-        "tableName": "Row",
-        "columnName": "label",
+        "tableName": "GanttRow",
+        "columnName": "name",
         "comment": "行ラベル"
       },
       {
-        "tableName": "Row",
+        "tableName": "GanttRow",
         "columnName": "createdBy",
         "comment": "作成者email"
       },
       {
-        "tableName": "Row",
+        "tableName": "GanttRow",
         "columnName": "createdAt",
         "comment": ""
       },
       {
-        "tableName": "Row",
+        "tableName": "GanttRow",
         "columnName": "updatedBy",
         "comment": "更新者email"
       },
       {
-        "tableName": "Row",
+        "tableName": "GanttRow",
         "columnName": "updatedAt",
         "comment": ""
       }
     ]
   },
-  "Task": {
+  "GanttTask": {
     "table": {
-      "tableName": "Task",
-      "comment": "タスク"
+      "tableName": "GanttTask",
+      "comment": "ガントタスク"
     },
     "columns": [
       {
-        "tableName": "Task",
+        "tableName": "GanttTask",
         "columnName": "id",
         "comment": ""
       },
       {
-        "tableName": "Task",
+        "tableName": "GanttTask",
         "columnName": "rowId",
         "comment": "行ID"
       },
       {
-        "tableName": "Task",
+        "tableName": "GanttTask",
         "columnName": "name",
         "comment": "タスク名"
       },
       {
-        "tableName": "Task",
+        "tableName": "GanttTask",
         "columnName": "start",
         "comment": "開始日時"
       },
       {
-        "tableName": "Task",
+        "tableName": "GanttTask",
         "columnName": "end",
         "comment": "終了日時"
       },
       {
-        "tableName": "Task",
+        "tableName": "GanttTask",
         "columnName": "createdBy",
         "comment": "作成者email"
       },
       {
-        "tableName": "Task",
+        "tableName": "GanttTask",
         "columnName": "createdAt",
         "comment": ""
       },
       {
-        "tableName": "Task",
+        "tableName": "GanttTask",
         "columnName": "updatedBy",
         "comment": "更新者email"
       },
       {
-        "tableName": "Task",
+        "tableName": "GanttTask",
         "columnName": "updatedAt",
         "comment": ""
       }

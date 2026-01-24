@@ -19,33 +19,33 @@ model GanttChart {
   /// ガントチャートの行データをJSONとして保存
   data      Json
   /// 作成者email
-  createdBy String   @default("system")
-  createdAt DateTime @default(now())
+  createdBy String?  @default("system")
+  createdAt DateTime? @default(now())
   /// 更新者email
-  updatedBy String   @default("system")
-  updatedAt DateTime @default(now())
+  updatedBy String?  @default("system")
+  updatedAt DateTime? @default(now())
 }
 
-/// 行
-model Row {
+/// ガント行
+model GanttRow {
   id        Int      @id @default(autoincrement())
   /// 行ラベル
-  label     String
+  name     String
   /// 作成者email
-  createdBy String   @default("system")
-  createdAt DateTime @default(now())
+  createdBy String?  @default("system")
+  createdAt DateTime? @default(now())
   /// 更新者email
-  updatedBy String   @default("system")
-  updatedAt DateTime @default(now())
-  tasks     Task[]
+  updatedBy String?  @default("system")
+  updatedAt DateTime? @default(now())
+  tasks     GanttTask[]
 }
 
-/// タスク
-model Task {
+/// ガントタスク
+model GanttTask {
   id        Int      @id @default(autoincrement())
   /// 行ID
   rowId     Int
-  row       Row      @relation(fields: [rowId], references: [id])
+  row       GanttRow      @relation(fields: [rowId], references: [id])
   /// タスク名
   name      String
   /// 開始日時
@@ -53,9 +53,9 @@ model Task {
   /// 終了日時
   end       DateTime
   /// 作成者email
-  createdBy String   @default("system")
-  createdAt DateTime @default(now())
+  createdBy String?  @default("system")
+  createdAt DateTime? @default(now())
   /// 更新者email
-  updatedBy String   @default("system")
-  updatedAt DateTime @default(now())
+  updatedBy String?  @default("system")
+  updatedAt DateTime? @default(now())
 }

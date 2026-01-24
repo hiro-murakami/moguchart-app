@@ -1,19 +1,12 @@
 import type { SelectGanttChart } from '../types/shared'
-import { prisma, toDateString } from './common/commonFunctions'
+import { prisma } from './common/commonFunctions'
+import { toGanttRow } from './common/converters'
 
 const selectGanttChart: SelectGanttChart = async () => {
-  const data = await prisma.row.findMany({
+  const data = await prisma.ganttRow.findMany({
     include: { tasks: true },
   })
-  return data.map((row) => ({
-    ...row,
-    tasks: row.tasks.map((task) => ({
-      ...task,
-      rowId: row.id,
-      start: toDateString(task.start),
-      end: toDateString(task.end),
-    })),
-  }))
+  return data.map(toGanttRow)
 }
 
 export default selectGanttChart

@@ -1,9 +1,12 @@
 import type {
+  DeleteGanttRow,
+  DeleteGanttTask,
   FunctionName,
   FunctionParam,
   FunctionResult,
   GanttRow,
   SelectGanttChart,
+  UpsertGanttRow,
   UpsertGanttTask,
 } from '@functions/types/shared'
 import { initializeApp } from 'firebase/app'
@@ -60,5 +63,17 @@ export const selectGanttChart: SelectGanttChart = () => {
 }
 
 export const upsertGanttTask: UpsertGanttTask = (param) => {
-  return callFunction<void>('upsertGanttTask', param)
+  return callFunction<number>('upsertGanttTask', param)
+}
+
+export const upsertGanttRow: UpsertGanttRow = (param) => {
+  return callFunction<number>('upsertGanttRow', param)
+}
+
+export const deleteGanttRow: DeleteGanttRow = (id) => {
+  return callFunction<number>('deleteGanttRow', id)
+}
+
+export const deleteGanttTask: DeleteGanttTask = (id) => {
+  return callFunction<number>('deleteGanttTask', id)
 }

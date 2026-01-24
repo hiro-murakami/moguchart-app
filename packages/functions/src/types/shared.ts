@@ -13,7 +13,12 @@ export interface FunctionResult {
   data?: any
 }
 
-export type FunctionName = 'selectGanttChart' | 'upsertGanttTask'
+export type FunctionName =
+  | 'selectGanttChart'
+  | 'upsertGanttTask'
+  | 'upsertGanttRow'
+  | 'deleteGanttRow'
+  | 'deleteGanttTask'
 
 export interface GanttTask {
   id: number
@@ -25,9 +30,12 @@ export interface GanttTask {
 
 export interface GanttRow {
   id: number
-  label: string
+  name: string
   tasks: GanttTask[]
 }
 
 export type SelectGanttChart = () => Promise<GanttRow[]>
-export type UpsertGanttTask = (param: GanttTask) => Promise<void>
+export type UpsertGanttTask = (param: GanttTask) => Promise<number>
+export type UpsertGanttRow = (param: GanttRow) => Promise<number>
+export type DeleteGanttRow = (id: number) => Promise<number>
+export type DeleteGanttTask = (id: number) => Promise<number>

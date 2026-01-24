@@ -12,5 +12,8 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     HelloWorld: typeof import('./src/components/HelloWorld.vue')['default']
+    RowAddDialog: typeof import('./src/components/RowAddDialog.vue')['default']
+    RowDeleteDialog: typeof import('./src/components/RowDeleteDialog.vue')['default']
+    TaskEditDialog: typeof import('./src/components/TaskEditDialog.vue')['default']
   }
 }
