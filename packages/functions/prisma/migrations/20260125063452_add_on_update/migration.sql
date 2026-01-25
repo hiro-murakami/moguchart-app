@@ -1,8 +1,0 @@
--- This is an empty migration.-- GanttChartテーブルのupdatedAtを変更
-ALTER TABLE `GanttChart` MODIFY `updatedAt` DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3);
-
--- GanttRowテーブルのupdatedAtを変更
-ALTER TABLE `GanttRow` MODIFY `updatedAt` DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3);
-
--- GanttTaskテーブルのupdatedAtを変更
-ALTER TABLE `GanttTask` MODIFY `updatedAt` DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3);

@@ -1,42 +1,4 @@
 {
-  "GanttChart": {
-    "table": {
-      "tableName": "GanttChart",
-      "comment": "ガントチャート"
-    },
-    "columns": [
-      {
-        "tableName": "GanttChart",
-        "columnName": "id",
-        "comment": ""
-      },
-      {
-        "tableName": "GanttChart",
-        "columnName": "data",
-        "comment": "ガントチャートの行データをJSONとして保存"
-      },
-      {
-        "tableName": "GanttChart",
-        "columnName": "createdBy",
-        "comment": "作成者email"
-      },
-      {
-        "tableName": "GanttChart",
-        "columnName": "createdAt",
-        "comment": ""
-      },
-      {
-        "tableName": "GanttChart",
-        "columnName": "updatedBy",
-        "comment": "更新者email"
-      },
-      {
-        "tableName": "GanttChart",
-        "columnName": "updatedAt",
-        "comment": ""
-      }
-    ]
-  },
   "GanttRow": {
     "table": {
       "tableName": "GanttRow",
@@ -46,7 +8,7 @@
       {
         "tableName": "GanttRow",
         "columnName": "id",
-        "comment": ""
+        "comment": "行ID"
       },
       {
         "tableName": "GanttRow",
@@ -61,7 +23,7 @@
       {
         "tableName": "GanttRow",
         "columnName": "createdAt",
-        "comment": ""
+        "comment": "作成日時"
       },
       {
         "tableName": "GanttRow",
@@ -71,7 +33,7 @@
       {
         "tableName": "GanttRow",
         "columnName": "updatedAt",
-        "comment": ""
+        "comment": "更新日時"
       }
     ]
   },
@@ -84,7 +46,7 @@
       {
         "tableName": "GanttTask",
         "columnName": "id",
-        "comment": ""
+        "comment": "タスクID"
       },
       {
         "tableName": "GanttTask",
@@ -114,7 +76,7 @@
       {
         "tableName": "GanttTask",
         "columnName": "createdAt",
-        "comment": ""
+        "comment": "作成日時"
       },
       {
         "tableName": "GanttTask",
@@ -124,7 +86,7 @@
       {
         "tableName": "GanttTask",
         "columnName": "updatedAt",
-        "comment": ""
+        "comment": "更新日時"
       }
     ]
   }

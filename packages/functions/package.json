@@ -12,7 +12,11 @@
     "start": "pnpm run shell",
     "deploy": "firebase deploy --only functions",
     "logs": "firebase functions:log",
-    "prisma:generate": "npx prisma generate"
+    "prisma:generate": "npx prisma generate",
+    "seed": "prisma db seed"
+  },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
   },
   "engines": {
     "node": "22"
@@ -32,6 +36,7 @@
     "@types/node": "^22.9.0",
     "eslint-config-prettier": "^10.1.8",
     "prisma": "^6.19.1",
+    "ts-node": "^10.9.2",
     "typescript": "~5.9.2"
   }
 }
