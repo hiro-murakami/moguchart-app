@@ -4,6 +4,7 @@ import {
   upsertGanttTask,
   upsertGanttRow,
   deleteGanttRow,
+  deleteGanttTask,
 } from '@/modules/scripts'
 import type { GanttRow, GanttTask } from '@functions/types/shared'
 import '@mogura/moguchart'
@@ -74,6 +75,7 @@ const handleTaskUpdate = async (e: CustomEvent<TaskUpdateEventDetail>) => {
   if (e.detail.isDragging) {
     return
   }
+
   const data = {
     id: Number(e.detail.id),
     rowId: Number(e.detail.targetRowId),
@@ -82,6 +84,7 @@ const handleTaskUpdate = async (e: CustomEvent<TaskUpdateEventDetail>) => {
     end: toDateString(e.detail.end),
   }
   await upsertGanttTask(data)
+  await loadData()
 }
 
 // --- ダイアログ関連 ---
@@ -112,6 +115,20 @@ const handleTaskDblClick = (e: CustomEvent<TaskClickEventDetail>) => {
   }
 }
 
+const handleAddTask = () => {
+  if (rows.value.length === 0 || !rows.value[0]?.id) {
+    return
+  }
+  editingTask.value = {
+    id: '0',
+    rowId: rows.value[0].id,
+    name: '新規タスク',
+    start: chartStartStr.value,
+    end: chartStartStr.value,
+  }
+  isDialogVisible.value = true
+}
+
 const saveTask = async (taskData: typeof editingTask.value) => {
   const data = {
     id: Number(taskData.id),
@@ -121,6 +138,12 @@ const saveTask = async (taskData: typeof editingTask.value) => {
     end: taskData.end,
   }
   await upsertGanttTask(data)
+  isDialogVisible.value = false
+  await loadData()
+}
+
+const deleteTask = async (taskId: string) => {
+  await deleteGanttTask(Number(taskId))
   isDialogVisible.value = false
   await loadData()
 }
@@ -153,6 +176,9 @@ const deleteRow = async (rowId: string) => {
 
       <div class="mb-4">
         <v-btn color="primary" @click="isRowDialogVisible = true">行追加</v-btn>
+        <v-btn color="secondary" class="ml-2" @click="handleAddTask">
+          タスク追加
+        </v-btn>
         <v-btn
           color="error"
           class="ml-2"
@@ -176,7 +202,9 @@ const deleteRow = async (rowId: string) => {
       <TaskEditDialog
         v-model="isDialogVisible"
         :task="editingTask"
+        :rows="rows"
         @save="saveTask"
+        @delete="deleteTask"
       />
 
       <RowAddDialog v-model="isRowDialogVisible" @save="saveNewRow" />
