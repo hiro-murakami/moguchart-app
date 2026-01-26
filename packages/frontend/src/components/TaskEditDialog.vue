@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import ConfirmDialog from './ConfirmDialog.vue'
 
 interface TaskData {
   id: string
@@ -27,7 +28,7 @@ const emit = defineEmits<{
 }>()
 
 const localTask = ref<TaskData>({ ...props.task })
-const showDeleteConfirm = ref(false)
+const confirmDialog = ref<InstanceType<typeof ConfirmDialog> | null>(null)
 
 watch(
   () => props.task,
@@ -45,13 +46,13 @@ const save = () => {
   emit('save', localTask.value)
 }
 
-const handleDelete = () => {
-  showDeleteConfirm.value = true
-}
-
-const executeDelete = () => {
-  showDeleteConfirm.value = false
-  emit('delete', localTask.value.id)
+const handleDelete = async () => {
+  const result = await confirmDialog.value?.open({
+    message: `「${localTask.value.name}」を本当に削除しますか？`,
+  })
+  if (result) {
+    emit('delete', localTask.value.id)
+  }
 }
 </script>
 
@@ -116,19 +117,11 @@ const executeDelete = () => {
     </v-card>
   </v-dialog>
 
-  <v-dialog v-model="showDeleteConfirm" max-width="300">
-    <v-card>
-      <v-card-title>削除確認</v-card-title>
-      <v-card-text>本当に削除しますか？</v-card-text>
-      <v-card-actions>
-        <v-spacer></v-spacer>
-        <v-btn color="grey" variant="text" @click="showDeleteConfirm = false">
-          キャンセル
-        </v-btn>
-        <v-btn color="error" variant="text" @click="executeDelete">
-          削除
-        </v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
+  <ConfirmDialog
+    ref="confirmDialog"
+    title="削除確認"
+    message="本当に削除しますか？"
+    confirm-text="削除"
+    confirm-color="error"
+  />
 </template>

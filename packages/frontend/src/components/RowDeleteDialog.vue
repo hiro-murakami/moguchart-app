@@ -3,7 +3,7 @@ import { ref, watch } from 'vue'
 
 interface RowData {
   id: string | number
-  label: string
+  name: string
 }
 
 const props = defineProps<{
@@ -50,7 +50,7 @@ const confirmDelete = () => {
         <v-select
           v-model="selectedRowId"
           :items="rows"
-          item-title="label"
+          item-title="name"
           item-value="id"
           label="削除する行を選択"
         ></v-select>
