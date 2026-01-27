@@ -77,7 +77,7 @@ const handleTaskUpdate = async (e: CustomEvent<TaskUpdateEventDetail>) => {
   }
 
   const data = {
-    id: Number(e.detail.id),
+    id: e.detail.mode === 'copy' ? 0 : Number(e.detail.id),
     rowId: Number(e.detail.targetRowId),
     name: e.detail.name || '',
     start: toDateString(e.detail.start),
