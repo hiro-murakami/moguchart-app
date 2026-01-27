@@ -36,7 +36,7 @@ model GanttTask {
   id        Int      @id @default(autoincrement())
   /// 行ID
   rowId     Int
-  row       GanttRow      @relation(fields: [rowId], references: [id])
+  row       GanttRow      @relation(fields: [rowId], references: [id], onDelete: Cascade)
   /// タスク名
   name      String
   /// 開始日時

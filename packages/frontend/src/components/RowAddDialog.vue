@@ -45,7 +45,6 @@ const save = () => {
           v-model="localName"
           label="行の名前"
           autofocus
-          @keyup.enter="save"
         ></v-text-field>
       </v-card-text>
       <v-card-actions>

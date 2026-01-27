@@ -44,6 +44,9 @@ const chartOption = computed<moguchart.GanttChartOption>(() => ({
     pxPerDay: pxPerDay.value,
     totalDays: totalDays.value,
   },
+  rowHeader: {
+    maxWidth: 400,
+  },
   readOnly: isReadOnly.value,
 }))
 
