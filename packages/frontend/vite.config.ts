@@ -9,6 +9,12 @@ import path from "node:path";
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  build: {
+    sourcemap: true,
+  },
+  css: {
+    devSourcemap: true,
+  },
   plugins: [
     vue({
       template: {
