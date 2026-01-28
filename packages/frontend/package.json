@@ -4,7 +4,7 @@
   "type": "module",
   "version": "0.0.0",
   "scripts": {
-    "dev": "vite --force",
+    "dev": "VITE_APP_MODE=mock vite --force",
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
     "build-only": "vite build",
@@ -14,6 +14,8 @@
     "@fontsource/roboto": "5.2.7",
     "@mdi/font": "7.4.47",
     "@mogura/moguchart": "link:../../../moguchart",
+    "dayjs": "^1.11.19",
+    "firebase": "^12.8.0",
     "vue": "^3.5.21",
     "vuetify": "^3.10.1"
   },

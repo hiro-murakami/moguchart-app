@@ -1,0 +1,93 @@
+{
+  "GanttRow": {
+    "table": {
+      "tableName": "GanttRow",
+      "comment": "ガント行"
+    },
+    "columns": [
+      {
+        "tableName": "GanttRow",
+        "columnName": "id",
+        "comment": "行ID"
+      },
+      {
+        "tableName": "GanttRow",
+        "columnName": "name",
+        "comment": "行ラベル"
+      },
+      {
+        "tableName": "GanttRow",
+        "columnName": "createdBy",
+        "comment": "作成者email"
+      },
+      {
+        "tableName": "GanttRow",
+        "columnName": "createdAt",
+        "comment": "作成日時"
+      },
+      {
+        "tableName": "GanttRow",
+        "columnName": "updatedBy",
+        "comment": "更新者email"
+      },
+      {
+        "tableName": "GanttRow",
+        "columnName": "updatedAt",
+        "comment": "更新日時"
+      }
+    ]
+  },
+  "GanttTask": {
+    "table": {
+      "tableName": "GanttTask",
+      "comment": "ガントタスク"
+    },
+    "columns": [
+      {
+        "tableName": "GanttTask",
+        "columnName": "id",
+        "comment": "タスクID"
+      },
+      {
+        "tableName": "GanttTask",
+        "columnName": "rowId",
+        "comment": "行ID"
+      },
+      {
+        "tableName": "GanttTask",
+        "columnName": "name",
+        "comment": "タスク名"
+      },
+      {
+        "tableName": "GanttTask",
+        "columnName": "start",
+        "comment": "開始日時"
+      },
+      {
+        "tableName": "GanttTask",
+        "columnName": "end",
+        "comment": "終了日時"
+      },
+      {
+        "tableName": "GanttTask",
+        "columnName": "createdBy",
+        "comment": "作成者email"
+      },
+      {
+        "tableName": "GanttTask",
+        "columnName": "createdAt",
+        "comment": "作成日時"
+      },
+      {
+        "tableName": "GanttTask",
+        "columnName": "updatedBy",
+        "comment": "更新者email"
+      },
+      {
+        "tableName": "GanttTask",
+        "columnName": "updatedAt",
+        "comment": "更新日時"
+      }
+    ]
+  }
+}

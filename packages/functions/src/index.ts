@@ -1,12 +1,19 @@
-import { onRequest } from "firebase-functions/v2/https";
-import { setGlobalOptions } from "firebase-functions/v2";
-import app from "./server.js";
+import { setupFirebaseFunction } from './scripts/common/commonFunctions.js'
+import deleteGanttRow from './scripts/deleteGanttRow.js'
+import deleteGanttTask from './scripts/deleteGanttTask.js'
+import selectGanttChart from './scripts/selectGanttChart.js'
+import upsertGanttRow from './scripts/upsertGanttRow.js'
+import upsertGanttTask from './scripts/upsertGanttTask.js'
+import { FirebaseFunction } from './types/index.js'
 
-setGlobalOptions({
-  region: "asia-northeast1",
-  memory: "512MiB",
-  timeoutSeconds: 60,
-  maxInstances: 10,
-});
+const functions: FirebaseFunction = {
+  deleteGanttRow,
+  deleteGanttTask,
+  selectGanttChart,
+  upsertGanttRow,
+  upsertGanttTask,
+}
 
-export const api = onRequest(app);
+export const gantt = {
+  functions: setupFirebaseFunction(functions),
+}

@@ -11,6 +11,10 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    ConfirmDialog: typeof import('./src/components/ConfirmDialog.vue')['default']
     HelloWorld: typeof import('./src/components/HelloWorld.vue')['default']
+    RowAddDialog: typeof import('./src/components/RowAddDialog.vue')['default']
+    RowDeleteDialog: typeof import('./src/components/RowDeleteDialog.vue')['default']
+    TaskEditDialog: typeof import('./src/components/TaskEditDialog.vue')['default']
   }
 }

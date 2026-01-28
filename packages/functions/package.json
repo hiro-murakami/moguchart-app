@@ -12,25 +12,31 @@
     "start": "pnpm run shell",
     "deploy": "firebase deploy --only functions",
     "logs": "firebase functions:log",
-    "prisma:generate": "npx prisma generate"
+    "prisma:generate": "npx prisma generate",
+    "seed": "prisma db seed"
+  },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
   },
   "engines": {
     "node": "22"
   },
   "dependencies": {
     "@prisma/client": "^6.19.1",
-    "cors": "^2.8.5",
-    "dotenv": "^17.2.3",
-    "express": "^5.2.1",
+    "dayjs": "^1.11.19",
     "firebase-admin": "^13.0.2",
-    "firebase-functions": "^6.3.0"
+    "firebase-functions": "^6.3.0",
+    "lodash": "^4.17.21"
   },
   "devDependencies": {
+    "@onozaty/prisma-db-comments-generator": "^1.4.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
+    "@types/lodash": "^4.17.23",
     "@types/node": "^22.9.0",
-    "nodemon": "^3.1.11",
+    "eslint-config-prettier": "^10.1.8",
     "prisma": "^6.19.1",
+    "ts-node": "^10.9.2",
     "typescript": "~5.9.2"
   }
 }
