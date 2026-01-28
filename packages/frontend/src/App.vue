@@ -11,6 +11,7 @@ import '@mogura/moguchart'
 import type {
   TaskClickEventDetail,
   TaskUpdateEventDetail,
+  RowReorderEventDetail,
 } from '@mogura/moguchart'
 import * as moguchart from '@mogura/moguchart'
 import { computed, onMounted, ref } from 'vue'
@@ -47,6 +48,7 @@ const chartOption = computed<moguchart.GanttChartOption>(() => ({
   rowHeader: {
     maxWidth: 400,
   },
+  enableRowReordering: true,
   readOnly: isReadOnly.value,
 }))
 
@@ -151,6 +153,10 @@ const deleteTask = async (taskId: string) => {
   await loadData()
 }
 
+const handleRowReordered = (e: CustomEvent<RowReorderEventDetail>) => {
+  console.log('Row reordered:', e.detail)
+}
+
 // --- 行追加関連 ---
 const isRowDialogVisible = ref(false)
 
@@ -199,6 +205,7 @@ const deleteRow = async (rowId: string) => {
           theme="dark"
           @task-update="handleTaskUpdate"
           @task-dblclick="handleTaskDblClick"
+          @row-reordered="handleRowReordered"
         />
       </div>
 
