@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import DialogProvider from '@/components/DialogProvider.vue'
-import GanttChartView from '@/views/GanttChartView.vue'
 import { provideLoading } from '@/modules/useLoading'
 
 const { isLoading } = provideLoading()
@@ -9,7 +8,7 @@ const { isLoading } = provideLoading()
 <template>
   <DialogProvider>
     <v-app theme="dark">
-      <GanttChartView />
+      <router-view />
       <v-overlay
         v-model="isLoading"
         class="align-center justify-center"

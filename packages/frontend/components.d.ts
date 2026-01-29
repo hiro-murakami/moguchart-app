@@ -15,6 +15,8 @@ declare module 'vue' {
     ConfirmDialog: typeof import('./src/components/ConfirmDialog.vue')['default']
     ConfirmProvider: typeof import('./src/components/ConfirmProvider.vue')['default']
     DialogProvider: typeof import('./src/components/DialogProvider.vue')['default']
+    RouterLink: typeof import('vue-router')['RouterLink']
+    RouterView: typeof import('vue-router')['RouterView']
     RowAddDialog: typeof import('./src/components/RowAddDialog.vue')['default']
     RowDeleteDialog: typeof import('./src/components/RowDeleteDialog.vue')['default']
     Snackbar: typeof import('./src/components/Snackbar.vue')['default']
