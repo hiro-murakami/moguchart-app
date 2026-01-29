@@ -16,6 +16,7 @@ import type {
 import * as moguchart from '@mogura/moguchart'
 import { computed, onMounted, ref } from 'vue'
 import { toDateString } from '@/modules/utils'
+import ConfirmProvider from '@/components/ConfirmProvider.vue'
 
 // --- 設定値 ---
 const chartStartStr = ref('2025-12-15')
@@ -179,53 +180,55 @@ const deleteRow = async (rowId: string) => {
 </script>
 
 <template>
-  <v-app theme="dark">
-    <div class="gantt-app">
-      <h2 class="mb-6">Moguchart (Vue)</h2>
+  <ConfirmProvider>
+    <v-app theme="dark">
+      <div class="gantt-app">
+        <h2 class="mb-6">Moguchart (Vue)</h2>
 
-      <div class="mb-4">
-        <v-btn color="primary" @click="isRowDialogVisible = true">行追加</v-btn>
-        <v-btn color="secondary" class="ml-2" @click="handleAddTask">
-          タスク追加
-        </v-btn>
-        <v-btn
-          color="error"
-          class="ml-2"
-          @click="isRowDeleteDialogVisible = true"
-        >
-          行削除
-        </v-btn>
-      </div>
+        <div class="mb-4">
+          <v-btn color="primary" @click="isRowDialogVisible = true">行追加</v-btn>
+          <v-btn color="secondary" class="ml-2" @click="handleAddTask">
+            タスク追加
+          </v-btn>
+          <v-btn
+            color="error"
+            class="ml-2"
+            @click="isRowDeleteDialogVisible = true"
+          >
+            行削除
+          </v-btn>
+        </div>
 
-      <div class="chart-container">
-        <gantt-chart
+        <div class="chart-container">
+          <gantt-chart
+            :rows="rows"
+            :option="chartOption"
+            :totalDays="totalDays"
+            theme="dark"
+            @task-update="handleTaskUpdate"
+            @task-dblclick="handleTaskDblClick"
+            @row-reordered="handleRowReordered"
+          />
+        </div>
+
+        <TaskEditDialog
+          v-model="isDialogVisible"
+          :task="editingTask"
           :rows="rows"
-          :option="chartOption"
-          :totalDays="totalDays"
-          theme="dark"
-          @task-update="handleTaskUpdate"
-          @task-dblclick="handleTaskDblClick"
-          @row-reordered="handleRowReordered"
+          @save="saveTask"
+          @delete="deleteTask"
+        />
+
+        <RowAddDialog v-model="isRowDialogVisible" @save="saveNewRow" />
+
+        <RowDeleteDialog
+          v-model="isRowDeleteDialogVisible"
+          :rows="rows"
+          @delete="deleteRow"
         />
       </div>
-
-      <TaskEditDialog
-        v-model="isDialogVisible"
-        :task="editingTask"
-        :rows="rows"
-        @save="saveTask"
-        @delete="deleteTask"
-      />
-
-      <RowAddDialog v-model="isRowDialogVisible" @save="saveNewRow" />
-
-      <RowDeleteDialog
-        v-model="isRowDeleteDialogVisible"
-        :rows="rows"
-        @delete="deleteRow"
-      />
-    </div>
-  </v-app>
+    </v-app>
+  </ConfirmProvider>
 </template>
 
 <style scoped>

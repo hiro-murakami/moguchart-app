@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import ConfirmDialog from './ConfirmDialog.vue'
+import { useConfirm } from '@/modules/useConfirm'
 
 interface TaskData {
   id: string
@@ -28,7 +28,7 @@ const emit = defineEmits<{
 }>()
 
 const localTask = ref<TaskData>({ ...props.task })
-const confirmDialog = ref<InstanceType<typeof ConfirmDialog> | null>(null)
+const confirm = useConfirm()
 
 watch(
   () => props.task,
@@ -47,8 +47,11 @@ const save = () => {
 }
 
 const handleDelete = async () => {
-  const result = await confirmDialog.value?.open({
+  const result = await confirm({
+    title: '削除確認',
     message: `「${localTask.value.name}」を本当に削除しますか？`,
+    confirmText: '削除',
+    confirmColor: 'error',
   })
   if (result) {
     emit('delete', localTask.value.id)
@@ -116,12 +119,4 @@ const handleDelete = async () => {
       </v-card-actions>
     </v-card>
   </v-dialog>
-
-  <ConfirmDialog
-    ref="confirmDialog"
-    title="削除確認"
-    message="本当に削除しますか？"
-    confirm-text="削除"
-    confirm-color="error"
-  />
 </template>
