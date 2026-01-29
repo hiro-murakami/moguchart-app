@@ -18,6 +18,7 @@ declare module 'vue' {
     HelloWorld: typeof import('./src/components/HelloWorld.vue')['default']
     RowAddDialog: typeof import('./src/components/RowAddDialog.vue')['default']
     RowDeleteDialog: typeof import('./src/components/RowDeleteDialog.vue')['default']
+    Snackbar: typeof import('./src/components/Snackbar.vue')['default']
     TaskEditDialog: typeof import('./src/components/TaskEditDialog.vue')['default']
   }
 }

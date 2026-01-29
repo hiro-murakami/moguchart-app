@@ -2,8 +2,10 @@
 import { provide, ref } from 'vue'
 import ConfirmDialog from './ConfirmDialog.vue'
 import AlertDialog from './AlertDialog.vue'
+import Snackbar from './Snackbar.vue'
 import { confirmKey } from '@/modules/useConfirm'
 import { alertKey } from '@/modules/useAlert'
+import { snackbarKey } from '@/modules/useSnackbar'
 
 // Confirm Dialog
 const confirmDialog = ref<InstanceType<typeof ConfirmDialog> | null>(null)
@@ -24,10 +26,21 @@ const alert = (options?: import('@/components/AlertDialog.vue').AlertOptions) =>
   return alertDialog.value.open(options)
 }
 provide(alertKey, alert)
+
+// Snackbar
+const snackbar = ref<InstanceType<typeof Snackbar> | null>(null)
+const showSnackbar = (options?: import('@/components/Snackbar.vue').SnackbarOptions) => {
+  if (!snackbar.value) {
+    throw new Error('Snackbar is not ready.')
+  }
+  snackbar.value.open(options)
+}
+provide(snackbarKey, showSnackbar)
 </script>
 
 <template>
   <slot></slot>
   <ConfirmDialog ref="confirmDialog" />
   <AlertDialog ref="alertDialog" />
+  <Snackbar ref="snackbar" />
 </template>

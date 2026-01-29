@@ -12,4 +12,3 @@ import GanttChartView from '@/views/GanttChartView.vue'
 </template>
 
 <style scoped></style>
-
