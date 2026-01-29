@@ -72,7 +72,7 @@ defineExpose({ open })
 </script>
 
 <template>
-  <v-dialog v-model="isOpen" max-width="300">
+  <v-dialog v-model="isOpen" max-width="600">
     <v-card>
       <v-card-title>{{ state.title }}</v-card-title>
       <v-card-text>

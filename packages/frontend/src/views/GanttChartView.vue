@@ -18,6 +18,7 @@ import { computed, onMounted, ref } from 'vue'
 import { toDateString } from '@/modules/utils'
 import { useAlert } from '@/modules/useAlert'
 import { useSnackbar } from '@/modules/useSnackbar'
+import { useLoading } from '@/modules/useLoading'
 
 // --- 設定値 ---
 const chartStartStr = ref('2025-12-15')
@@ -56,6 +57,7 @@ const chartOption = computed<moguchart.GanttChartOption>(() => ({
 
 const alert = useAlert()
 const snackbar = useSnackbar()
+const { setIsLoading } = useLoading()
 
 const showAlert = () => {
   alert({
@@ -71,9 +73,17 @@ const showSnackbar = () => {
   })
 }
 
+const testLoading = () => {
+  setIsLoading(true)
+  setTimeout(() => {
+    setIsLoading(false)
+  }, 2000)
+}
+
 // --- データ永続化ロジック ---
 
 async function loadData() {
+  setIsLoading(true)
   try {
     const data = await selectGanttChart()
     rows.value = data.map((row: GanttRow) => ({
@@ -92,6 +102,8 @@ async function loadData() {
       title: 'エラー',
       message: 'データの読み込みに失敗しました。',
     })
+  } finally {
+    setIsLoading(false)
   }
 }
 
@@ -226,6 +238,9 @@ const deleteRow = async (rowId: string) => {
       </v-btn>
       <v-btn color="info" class="ml-4" @click="showSnackbar">
         スナックバー表示 (Test)
+      </v-btn>
+      <v-btn color="warning" class="ml-4" @click="testLoading">
+        ローディング表示 (Test)
       </v-btn>
     </div>
 
