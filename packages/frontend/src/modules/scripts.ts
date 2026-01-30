@@ -8,6 +8,8 @@ import type {
   SelectGanttChart,
   UpsertGanttRow,
   UpsertGanttTask,
+  UpdateGanttRowOrder,
+  GanttRowOrder,
 } from '@functions/types/shared'
 import { initializeApp } from 'firebase/app'
 import {
@@ -71,9 +73,13 @@ export const upsertGanttRow: UpsertGanttRow = (param) => {
 }
 
 export const deleteGanttRow: DeleteGanttRow = (id) => {
-  return callFunction<number>('deleteGanttRow', id)
+  return callFunction<void>('deleteGanttRow', id)
 }
 
 export const deleteGanttTask: DeleteGanttTask = (id) => {
-  return callFunction<number>('deleteGanttTask', id)
+  return callFunction<void>('deleteGanttTask', id)
+}
+
+export const updateGanttRowOrder: UpdateGanttRowOrder = (param) => {
+  return callFunction<void>('updateGanttRowOrder', param)
 }

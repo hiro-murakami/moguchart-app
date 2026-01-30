@@ -19,6 +19,7 @@ export type FunctionName =
   | 'upsertGanttRow'
   | 'deleteGanttRow'
   | 'deleteGanttTask'
+  | 'updateGanttRowOrder'
 
 export interface GanttTask {
   id: number
@@ -31,11 +32,20 @@ export interface GanttTask {
 export interface GanttRow {
   id: number
   name: string
+  order: number
   tasks: GanttTask[]
+}
+
+export type GanttRowOrder = {
+  id: number
+  order: number
 }
 
 export type SelectGanttChart = () => Promise<GanttRow[]>
 export type UpsertGanttTask = (param: GanttTask) => Promise<number>
-export type UpsertGanttRow = (param: GanttRow) => Promise<number>
-export type DeleteGanttRow = (id: number) => Promise<number>
-export type DeleteGanttTask = (id: number) => Promise<number>
+export type UpsertGanttRow = (row: GanttRow) => Promise<number>
+export type DeleteGanttRow = (id: number) => Promise<void>
+export type DeleteGanttTask = (id: number) => Promise<void>
+export type UpdateGanttRowOrder = (rows: GanttRowOrder[]) => Promise<void>
+
+// --- フロントエンドとバックエンドで実装を共有しない型 ---
