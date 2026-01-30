@@ -13,7 +13,6 @@ declare module 'vue' {
   export interface GlobalComponents {
     AlertDialog: typeof import('./src/components/AlertDialog.vue')['default']
     ConfirmDialog: typeof import('./src/components/ConfirmDialog.vue')['default']
-    ConfirmProvider: typeof import('./src/components/ConfirmProvider.vue')['default']
     DialogProvider: typeof import('./src/components/DialogProvider.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']

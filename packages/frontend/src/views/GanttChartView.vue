@@ -5,6 +5,7 @@ import {
   upsertGanttRow,
   deleteGanttRow,
   deleteGanttTask,
+  updateGanttRowOrder,
 } from '@/modules/scripts'
 import type { GanttRow, GanttTask } from '@functions/types/shared'
 import '@mogura/moguchart'
@@ -192,8 +193,28 @@ const deleteTask = async (taskId: string) => {
   await loadData()
 }
 
-const handleRowReordered = (e: CustomEvent<RowReorderEventDetail>) => {
-  console.log('Row reordered:', e.detail)
+const handleRowReordered = async (e: CustomEvent<RowReorderEventDetail>) => {
+  setIsLoading(true)
+  try {
+    const orderedRows = e.detail.rows.map((row, index) => ({
+      id: Number(row.id),
+      order: index + 1,
+    }))
+    await updateGanttRowOrder(orderedRows)
+    // loadData() を呼ぶとローカルでの並べ替えと前後してちらつくため、ローカルデータを直接更新する
+    rows.value = e.detail.rows
+    // snackbar({ message: '行の並び順を更新しました。', color: 'success' })
+  } catch (err) {
+    console.error('Failed to reorder rows:', err)
+    alert({
+      title: 'エラー',
+      message: '行の並び順の更新に失敗しました。',
+    })
+    // エラーが発生した場合はサーバーの状態に戻す
+    await loadData()
+  } finally {
+    setIsLoading(false)
+  }
 }
 
 // --- 行追加関連 ---
@@ -201,7 +222,7 @@ const isRowDialogVisible = ref(false)
 
 const saveNewRow = async (name: string) => {
   // 行を追加するAPI呼び出し
-  await upsertGanttRow({ id: 0, name, tasks: [] })
+  await upsertGanttRow({ id: 0, name, order: 0, tasks: [] })
 
   isRowDialogVisible.value = false
   await loadData()
