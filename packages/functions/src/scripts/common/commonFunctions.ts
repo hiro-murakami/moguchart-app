@@ -36,7 +36,10 @@ export const setupFirebaseFunction = (
 
       const requestData = data.data as FunctionParam
 
-      await targetFunctions[requestData.name](requestData.param)
+      await targetFunctions[requestData.name](
+        requestData.param,
+        data.auth.token.email,
+      )
         .then((resultData: any) => {
           result.data = resultData
         })

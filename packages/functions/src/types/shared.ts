@@ -41,10 +41,16 @@ export type GanttRowOrder = {
 }
 
 export type SelectGanttChart = () => Promise<GanttRow[]>
-export type UpsertGanttTask = (param: GanttTask) => Promise<number>
-export type UpsertGanttRow = (row: GanttRow) => Promise<number>
-export type DeleteGanttRow = (id: number) => Promise<void>
-export type DeleteGanttTask = (id: number) => Promise<void>
-export type UpdateGanttRowOrder = (rows: GanttRowOrder[]) => Promise<void>
+export type UpsertGanttTask = (
+  task: GanttTask,
+  email?: string,
+) => Promise<number>
+export type UpsertGanttRow = (row: GanttRow, email?: string) => Promise<number>
+export type DeleteGanttRow = (id: number, email?: string) => Promise<void>
+export type DeleteGanttTask = (id: number, email?: string) => Promise<void>
+export type UpdateGanttRowOrder = (
+  rowOrders: GanttRowOrder[],
+  email?: string,
+) => Promise<void>
 
 // --- フロントエンドとバックエンドで実装を共有しない型 ---

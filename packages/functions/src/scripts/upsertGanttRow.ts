@@ -2,8 +2,8 @@ import type { UpsertGanttRow } from '../types/shared'
 import { prisma } from './common/commonFunctions'
 import { fromGanttRow } from './common/converters'
 
-const upsertGanttRow: UpsertGanttRow = async (param) => {
-  const data = fromGanttRow(param)
+const upsertGanttRow: UpsertGanttRow = async (row, email?: string) => {
+  const data = fromGanttRow(row)
   // id はDB側で自動採番されるので入力データからは除外する
   const { id, ...createOrUpdateData } = data
 
@@ -14,6 +14,8 @@ const upsertGanttRow: UpsertGanttRow = async (param) => {
       data: {
         ...createOrUpdateData,
         order: count,
+        createdBy: email,
+        updatedBy: email,
       },
     })
     return result.id
@@ -21,7 +23,7 @@ const upsertGanttRow: UpsertGanttRow = async (param) => {
     // 更新
     const result = await prisma.ganttRow.update({
       where: { id },
-      data: createOrUpdateData,
+      data: { ...createOrUpdateData, updatedBy: email },
     })
     return result.id
   }
