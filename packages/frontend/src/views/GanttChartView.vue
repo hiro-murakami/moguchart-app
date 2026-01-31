@@ -1,28 +1,27 @@
 <script setup lang="ts">
 import {
-  selectGanttChart,
-  upsertGanttTask,
-  upsertGanttRow,
   deleteGanttRow,
   deleteGanttTask,
+  selectGanttChart,
   updateGanttRowOrder,
+  upsertGanttRow,
+  upsertGanttTask,
 } from '@/modules/scripts'
+import { useAlert } from '@/modules/useAlert'
+import { useAuth } from '@/modules/useAuth'
+import { useLoading } from '@/modules/useLoading'
+import { toDateString } from '@/modules/utils'
 import type { GanttRow, GanttTask } from '@functions/types/shared'
 import '@mogura/moguchart'
 import type {
+  RowReorderEventDetail,
   TaskClickEventDetail,
   TaskUpdateEventDetail,
-  RowReorderEventDetail,
 } from '@mogura/moguchart'
 import * as moguchart from '@mogura/moguchart'
 import { computed, ref, watch } from 'vue'
-import { toDateString } from '@/modules/utils'
-import { useAlert } from '@/modules/useAlert'
-import { useSnackbar } from '@/modules/useSnackbar'
-import { useLoading } from '@/modules/useLoading'
-import { useAuth } from '@/modules/useAuth'
 
-const { user, signIn } = useAuth()
+const { user } = useAuth()
 
 // --- 設定値 ---
 const chartStartStr = ref('2025-12-15')
@@ -229,7 +228,7 @@ const deleteRow = async (rowId: string) => {
 </script>
 
 <template>
-  <div v-if="user" class="gantt-app">
+  <div class="gantt-app">
     <h2 class="mb-6">Moguchart (Vue)</h2>
 
     <div class="mb-4">
@@ -274,25 +273,6 @@ const deleteRow = async (rowId: string) => {
       @delete="deleteRow"
     />
   </div>
-  <v-container v-else class="fill-height">
-    <v-row align="center" justify="center">
-      <v-col cols="12" sm="8" md="4">
-        <v-card class="elevation-12">
-          <v-toolbar color="primary" dark>
-            <v-toolbar-title>Login Required</v-toolbar-title>
-          </v-toolbar>
-          <v-card-text>
-            <p class="text-center">
-              この機能を利用するにはログインが必要です。
-            </p>
-          </v-card-text>
-          <v-card-actions class="justify-center">
-            <v-btn color="primary" @click="signIn">Login with Google</v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-col>
-    </v-row>
-  </v-container>
 </template>
 
 <style scoped>

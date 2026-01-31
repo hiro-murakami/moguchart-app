@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import DialogProvider from '@/components/DialogProvider.vue'
 import { provideLoading } from '@/modules/useLoading'
 import { useAuth } from '@/modules/useAuth'
 
@@ -23,7 +22,8 @@ const { user, signIn, signOut } = useAuth()
         </template>
       </v-app-bar>
       <v-main>
-        <router-view />
+        <router-view v-if="user" />
+        <LoginPrompt v-else />
       </v-main>
       <v-overlay
         v-model="isLoading"
