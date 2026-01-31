@@ -13,6 +13,9 @@ import App from './App.vue'
 // Composables
 import { createApp } from 'vue'
 
+// Firebase
+import '@/firebase'
+
 // Styles
 import 'unfonts.css'
 
