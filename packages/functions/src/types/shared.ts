@@ -3,12 +3,11 @@
 
 export interface FunctionParam {
   name: string
-  email: string
   param: Object
 }
 
 export interface FunctionResult {
-  status: 'success' | 'failed'
+  status: 'succeeded' | 'failed'
   message?: string
   data?: any
 }

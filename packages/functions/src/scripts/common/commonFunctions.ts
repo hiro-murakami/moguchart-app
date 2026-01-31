@@ -25,21 +25,18 @@ export const setupFirebaseFunction = (
 
       // 認証チェック
       // Authorizationヘッダがない、または不正な値が設定されていた場合はエラーとする
-      // if (!data.auth) {
-      //   throw new Error("認証されていません")
-      // }
+      if (!data.auth) {
+        throw new Error('認証されていません')
+      }
 
       // メイン処理を実行する
       const result: FunctionResult = {
-        status: 'success',
+        status: 'succeeded',
       }
 
       const requestData = data.data as FunctionParam
 
-      await targetFunctions[requestData.name](
-        requestData.param,
-        requestData.email,
-      )
+      await targetFunctions[requestData.name](requestData.param)
         .then((resultData: any) => {
           result.data = resultData
         })

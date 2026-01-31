@@ -15,11 +15,14 @@ import type {
   RowReorderEventDetail,
 } from '@mogura/moguchart'
 import * as moguchart from '@mogura/moguchart'
-import { computed, onMounted, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { toDateString } from '@/modules/utils'
 import { useAlert } from '@/modules/useAlert'
 import { useSnackbar } from '@/modules/useSnackbar'
 import { useLoading } from '@/modules/useLoading'
+import { useAuth } from '@/modules/useAuth'
+
+const { user, signIn } = useAuth()
 
 // --- 設定値 ---
 const chartStartStr = ref('2025-12-15')
@@ -57,29 +60,7 @@ const chartOption = computed<moguchart.GanttChartOption>(() => ({
 }))
 
 const alert = useAlert()
-const snackbar = useSnackbar()
 const { setIsLoading } = useLoading()
-
-const showAlert = () => {
-  alert({
-    title: 'テストアラート',
-    message: 'これは useAlert からのメッセージです。',
-  })
-}
-
-const showSnackbar = () => {
-  snackbar({
-    message: 'これは useSnackbar からのメッセージです。',
-    color: 'success',
-  })
-}
-
-const testLoading = () => {
-  setIsLoading(true)
-  setTimeout(() => {
-    setIsLoading(false)
-  }, 2000)
-}
 
 // --- データ永続化ロジック ---
 
@@ -108,9 +89,18 @@ async function loadData() {
   }
 }
 
-onMounted(() => {
-  loadData()
-})
+watch(
+  user,
+  (newUser) => {
+    if (newUser) {
+      loadData()
+    } else {
+      // ユーザーがログアウトした場合、データをクリアする
+      rows.value = []
+    }
+  },
+  { immediate: true }, // コンポーネントのマウント時に即時実行する
+)
 
 const handleTaskUpdate = async (e: CustomEvent<TaskUpdateEventDetail>) => {
   if (e.detail.isDragging) {
@@ -239,7 +229,7 @@ const deleteRow = async (rowId: string) => {
 </script>
 
 <template>
-  <div class="gantt-app">
+  <div v-if="user" class="gantt-app">
     <h2 class="mb-6">Moguchart (Vue)</h2>
 
     <div class="mb-4">
@@ -253,15 +243,6 @@ const deleteRow = async (rowId: string) => {
         @click="isRowDeleteDialogVisible = true"
       >
         行削除
-      </v-btn>
-      <v-btn color="info" class="ml-4" @click="showAlert">
-        アラート表示 (Test)
-      </v-btn>
-      <v-btn color="info" class="ml-4" @click="showSnackbar">
-        スナックバー表示 (Test)
-      </v-btn>
-      <v-btn color="warning" class="ml-4" @click="testLoading">
-        ローディング表示 (Test)
       </v-btn>
     </div>
 
@@ -293,6 +274,25 @@ const deleteRow = async (rowId: string) => {
       @delete="deleteRow"
     />
   </div>
+  <v-container v-else class="fill-height">
+    <v-row align="center" justify="center">
+      <v-col cols="12" sm="8" md="4">
+        <v-card class="elevation-12">
+          <v-toolbar color="primary" dark>
+            <v-toolbar-title>Login Required</v-toolbar-title>
+          </v-toolbar>
+          <v-card-text>
+            <p class="text-center">
+              この機能を利用するにはログインが必要です。
+            </p>
+          </v-card-text>
+          <v-card-actions class="justify-center">
+            <v-btn color="primary" @click="signIn">Login with Google</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-col>
+    </v-row>
+  </v-container>
 </template>
 
 <style scoped>
