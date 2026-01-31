@@ -13,12 +13,31 @@ export interface FunctionResult {
 }
 
 export type FunctionName =
+  | 'selectProjects'
   | 'selectGanttChart'
   | 'upsertGanttTask'
   | 'upsertGanttRow'
   | 'deleteGanttRow'
   | 'deleteGanttTask'
   | 'updateGanttRowOrder'
+
+export type Role = 'owner' | 'editor' | 'viewer'
+
+export interface Project {
+  id: string
+  name: string
+  start: string
+  end: string
+  attribute: Object
+}
+
+export interface GanttRow {
+  id: number
+  projectId: string
+  name: string
+  order: number
+  tasks: GanttTask[]
+}
 
 export interface GanttTask {
   id: number
@@ -28,19 +47,13 @@ export interface GanttTask {
   end: string
 }
 
-export interface GanttRow {
-  id: number
-  name: string
-  order: number
-  tasks: GanttTask[]
-}
-
 export type GanttRowOrder = {
   id: number
   order: number
 }
 
-export type SelectGanttChart = () => Promise<GanttRow[]>
+export type SelectProjects = () => Promise<Project[]>
+export type SelectGanttChart = (projectId: string) => Promise<GanttRow[]>
 export type UpsertGanttTask = (
   task: GanttTask,
   email?: string,

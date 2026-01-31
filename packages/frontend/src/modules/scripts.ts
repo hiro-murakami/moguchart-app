@@ -9,6 +9,8 @@ import type {
   UpsertGanttRow,
   UpsertGanttTask,
   UpdateGanttRowOrder,
+  SelectProjects,
+  Project,
 } from '@functions/types/shared'
 import { httpsCallable } from 'firebase/functions'
 import { functions } from '@/firebase'
@@ -33,8 +35,12 @@ const callFunction = async <T>(name: FunctionName, param = {}) => {
   }
 }
 
-export const selectGanttChart: SelectGanttChart = () => {
-  return callFunction<GanttRow[]>('selectGanttChart')
+export const selectProjects: SelectProjects = () => {
+  return callFunction<Project[]>('selectProjects')
+}
+
+export const selectGanttChart: SelectGanttChart = (projectId) => {
+  return callFunction<GanttRow[]>('selectGanttChart', projectId)
 }
 
 export const upsertGanttTask: UpsertGanttTask = (param) => {

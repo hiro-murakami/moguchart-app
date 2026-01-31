@@ -4,19 +4,41 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// generator comments {
-//  provider = "prisma-db-comments-generator"
-// }
-
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
+}
+
+/// プロジェクト
+model Project {
+  /// プロジェクトID
+  id        String      @id @default(uuid()) @db.Char(36)
+  /// プロジェクト名
+  name      String
+  /// 開始日時
+  start     DateTime
+  /// 終了日時
+  end       DateTime
+  /// 属性
+  attribute Json
+  /// 作成者email
+  createdBy String?  @default("system")
+  /// 作成日時
+  createdAt DateTime? @default(now()) @db.Timestamp(3)
+  /// 更新者email
+  updatedBy String?  @default("system")
+  /// 更新日時
+  updatedAt DateTime? @default(now()) @db.Timestamp(3)
+  /// ガント行配列
+  rows      GanttRow[]
 }
 
 /// ガント行
 model GanttRow {
   /// 行ID
   id        Int      @id @default(autoincrement())
+  /// プロジェクトID
+  projectId String   @db.Char(36)
   /// 行ラベル
   name     String
   /// 並び順
@@ -29,6 +51,10 @@ model GanttRow {
   updatedBy String?  @default("system")
   /// 更新日時
   updatedAt DateTime? @default(now()) @db.Timestamp(3)
+
+  /// プロジェクト
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  /// タスク配列
   tasks     GanttTask[]
 }
 
@@ -38,7 +64,6 @@ model GanttTask {
   id        Int      @id @default(autoincrement())
   /// 行ID
   rowId     Int
-  row       GanttRow      @relation(fields: [rowId], references: [id], onDelete: Cascade)
   /// タスク名
   name      String
   /// 開始日時
@@ -53,4 +78,7 @@ model GanttTask {
   updatedBy String?  @default("system")
   /// 更新日時
   updatedAt DateTime? @default(now()) @db.Timestamp(3)
+
+  /// 行
+  row       GanttRow      @relation(fields: [rowId], references: [id], onDelete: Cascade)
 }
