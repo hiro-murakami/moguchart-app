@@ -6,6 +6,7 @@ import selectProjects from './scripts/selectProjects.js'
 import updateGanttRowOrder from './scripts/updateGanttRowOrder.js'
 import upsertGanttRow from './scripts/upsertGanttRow.js'
 import upsertGanttTask from './scripts/upsertGanttTask.js'
+import upsertProject from './scripts/upsertProject.js'
 import { FirebaseFunction } from './types/index.js'
 
 const functions: FirebaseFunction = {
@@ -16,6 +17,7 @@ const functions: FirebaseFunction = {
   upsertGanttRow,
   upsertGanttTask,
   updateGanttRowOrder,
+  upsertProject,
 }
 
 export const gantt = {

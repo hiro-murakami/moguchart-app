@@ -53,3 +53,4 @@ export const toProject = (project: PrismaProject): Project => {
     attribute: (project.attribute ?? {}) as Object,
   }
 }
+

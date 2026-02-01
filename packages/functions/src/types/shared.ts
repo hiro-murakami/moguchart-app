@@ -20,6 +20,7 @@ export type FunctionName =
   | 'deleteGanttRow'
   | 'deleteGanttTask'
   | 'updateGanttRowOrder'
+  | 'upsertProject'
 
 export type Role = 'owner' | 'editor' | 'viewer'
 
@@ -28,7 +29,7 @@ export interface Project {
   name: string
   start: string
   end: string
-  attribute: Object
+  attribute: any
 }
 
 export interface GanttRow {
@@ -65,5 +66,9 @@ export type UpdateGanttRowOrder = (
   rowOrders: GanttRowOrder[],
   email?: string,
 ) => Promise<void>
+export type UpsertProject = (
+  project: Project,
+  email?: string,
+) => Promise<string>
 
 // --- フロントエンドとバックエンドで実装を共有しない型 ---

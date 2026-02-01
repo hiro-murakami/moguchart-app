@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ProjectAddDialog from '@/components/ProjectAddDialog.vue'
 import { useGanttChartView } from '@/modules/useGanttChartView'
 
 const {
@@ -11,6 +12,7 @@ const {
   editingTask,
   isRowDialogVisible,
   isRowDeleteDialogVisible,
+  isProjectAddDialogVisible,
 
   // methods
   handleTaskUpdate,
@@ -21,6 +23,7 @@ const {
   handleRowReordered,
   saveNewRow,
   deleteRow,
+  saveNewProject,
 } = useGanttChartView()
 </script>
 
@@ -39,6 +42,9 @@ const {
         density="compact"
         style="max-width: 300px"
       />
+      <v-btn color="primary" @click="isProjectAddDialogVisible = true">
+        プロジェクト追加
+      </v-btn>
       <v-btn color="primary" @click="isRowDialogVisible = true">行追加</v-btn>
       <v-btn color="secondary" class="ml-2" @click="handleAddTask">
         タスク追加
@@ -77,6 +83,11 @@ const {
       v-model="isRowDeleteDialogVisible"
       :rows="rows"
       @delete="deleteRow"
+    />
+
+    <ProjectAddDialog
+      v-model="isProjectAddDialogVisible"
+      @save="saveNewProject"
     />
   </div>
 </template>

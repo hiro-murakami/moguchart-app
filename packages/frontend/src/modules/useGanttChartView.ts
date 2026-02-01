@@ -6,12 +6,13 @@ import {
   updateGanttRowOrder,
   upsertGanttRow,
   upsertGanttTask,
+  upsertProject,
 } from '@/modules/scripts'
 import { useAlert } from '@/modules/useAlert'
 import { useAuth } from '@/modules/useAuth'
 import { useLoading } from '@/modules/useLoading'
 import { toDateString } from '@/modules/utils'
-import type { GanttRow, GanttTask } from '@functions/types/shared'
+import type { GanttRow, GanttTask, Project } from '@functions/types/shared'
 import type {
   RowReorderEventDetail,
   TaskClickEventDetail,
@@ -19,7 +20,6 @@ import type {
 } from '@mogura/moguchart'
 import * as moguchart from '@mogura/moguchart'
 import { computed, ref, watch } from 'vue'
-import type { Project } from '@functions/types/shared'
 
 const calculateDaysBetween = (start: string, end: string): number => {
   const startDate = new Date(start)
@@ -261,6 +261,20 @@ export function useGanttChartView() {
     await loadData(projectId.value)
   }
 
+  // --- プロジェクト追加関連 ---
+  const isProjectAddDialogVisible = ref(false)
+
+  const saveNewProject = async (project: Omit<Project, 'id' | 'attribute'>) => {
+    const newProjectId = await upsertProject({
+      ...project,
+      id: '',
+      attribute: {},
+    })
+    projects.value = await selectProjects()
+    projectId.value = newProjectId
+    isProjectAddDialogVisible.value = false
+  }
+
   return {
     // state
     projects,
@@ -271,6 +285,7 @@ export function useGanttChartView() {
     editingTask,
     isRowDialogVisible,
     isRowDeleteDialogVisible,
+    isProjectAddDialogVisible,
 
     // methods
     handleTaskUpdate,
@@ -281,5 +296,6 @@ export function useGanttChartView() {
     handleRowReordered,
     saveNewRow,
     deleteRow,
+    saveNewProject,
   }
 }
