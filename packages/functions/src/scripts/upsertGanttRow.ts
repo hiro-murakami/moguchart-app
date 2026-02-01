@@ -1,5 +1,9 @@
 import type { UpsertGanttRow } from '../types/shared'
-import { prisma } from './common/commonFunctions'
+import {
+  getCreateCommonColumns,
+  getUpdateCommonColumns,
+  prisma,
+} from './common/commonFunctions'
 import { fromGanttRow } from './common/converters'
 
 const upsertGanttRow: UpsertGanttRow = async (row, email?: string) => {
@@ -14,8 +18,7 @@ const upsertGanttRow: UpsertGanttRow = async (row, email?: string) => {
       data: {
         ...createOrUpdateData,
         order: count,
-        createdBy: email,
-        updatedBy: email,
+        ...getCreateCommonColumns(email),
       },
     })
     return result.id
@@ -23,7 +26,7 @@ const upsertGanttRow: UpsertGanttRow = async (row, email?: string) => {
     // 更新
     const result = await prisma.ganttRow.update({
       where: { id },
-      data: { ...createOrUpdateData, updatedBy: email },
+      data: { ...createOrUpdateData, ...getUpdateCommonColumns(email) },
     })
     return result.id
   }

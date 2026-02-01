@@ -60,3 +60,15 @@ export const toDateString = (
 ): string => {
   return dayjs(value).format(format)
 }
+
+export const getUpdateCommonColumns = (email?: string) => ({
+  updatedBy: email,
+  updatedAt: new Date(),
+})
+
+export const getCreateCommonColumns = (email?: string) => ({
+  createdBy: email,
+  createdAt: new Date(),
+  updatedBy: email,
+  updatedAt: new Date(),
+})

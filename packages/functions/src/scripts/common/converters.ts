@@ -1,8 +1,9 @@
 import {
   GanttTask as PrismaGanttTask,
   GanttRow as PrismaGanttRow,
+  Project as PrismaProject,
 } from '@prisma/client'
-import type { GanttRow, GanttTask } from '../../types/shared'
+import type { GanttRow, GanttTask, Project } from '../../types/shared'
 import { toDateString } from './commonFunctions'
 import { omit } from 'lodash'
 
@@ -43,3 +44,13 @@ export const fromGanttRow = (
     ...omit(row, 'tasks'),
   }
 }
+
+export const toProject = (project: PrismaProject): Project => {
+  return {
+    ...omit(project, ['createdBy', 'createdAt', 'updatedBy', 'updatedAt']),
+    start: toDateString(project.start),
+    end: toDateString(project.end),
+    attribute: (project.attribute ?? {}) as Object,
+  }
+}
+

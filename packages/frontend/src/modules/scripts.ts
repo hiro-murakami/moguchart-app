@@ -1,3 +1,4 @@
+import { functions } from '@/firebase'
 import type {
   DeleteGanttRow,
   DeleteGanttTask,
@@ -5,13 +6,15 @@ import type {
   FunctionParam,
   FunctionResult,
   GanttRow,
+  Project,
   SelectGanttChart,
+  SelectProjects,
+  UpdateGanttRowOrder,
   UpsertGanttRow,
   UpsertGanttTask,
-  UpdateGanttRowOrder,
+  UpsertProject,
 } from '@functions/types/shared'
 import { httpsCallable } from 'firebase/functions'
-import { functions } from '@/firebase'
 
 const callFunction = async <T>(name: FunctionName, param = {}) => {
   const callable = httpsCallable<FunctionParam, FunctionResult>(
@@ -33,8 +36,12 @@ const callFunction = async <T>(name: FunctionName, param = {}) => {
   }
 }
 
-export const selectGanttChart: SelectGanttChart = () => {
-  return callFunction<GanttRow[]>('selectGanttChart')
+export const selectProjects: SelectProjects = () => {
+  return callFunction<Project[]>('selectProjects')
+}
+
+export const selectGanttChart: SelectGanttChart = (projectId) => {
+  return callFunction<GanttRow[]>('selectGanttChart', projectId)
 }
 
 export const upsertGanttTask: UpsertGanttTask = (param) => {
@@ -55,4 +62,8 @@ export const deleteGanttTask: DeleteGanttTask = (id) => {
 
 export const updateGanttRowOrder: UpdateGanttRowOrder = (param) => {
   return callFunction<void>('updateGanttRowOrder', param)
+}
+
+export const upsertProject: UpsertProject = (param) => {
+  return callFunction<string>('upsertProject', param)
 }

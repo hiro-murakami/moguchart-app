@@ -1,5 +1,9 @@
 import type { UpsertGanttTask } from '../types/shared'
-import { prisma } from './common/commonFunctions'
+import {
+  getCreateCommonColumns,
+  getUpdateCommonColumns,
+  prisma,
+} from './common/commonFunctions'
 import { fromGanttTask } from './common/converters'
 
 const upsertGanttTask: UpsertGanttTask = async (task, email?: string) => {
@@ -8,8 +12,8 @@ const upsertGanttTask: UpsertGanttTask = async (task, email?: string) => {
 
   const result = await prisma.ganttTask.upsert({
     where: { id: data.id },
-    update: { ...data, updatedBy: email },
-    create: { ...createData, createdBy: email, updatedBy: email },
+    update: { ...data, ...getUpdateCommonColumns(email) },
+    create: { ...createData, ...getCreateCommonColumns(email) },
   })
 
   return result.id
