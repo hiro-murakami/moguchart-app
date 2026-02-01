@@ -10,16 +10,17 @@ import type {
   Project,
   Role,
   Authority,
+  ProjectAttribute,
 } from '../../types/shared'
-import { toDateString } from './commonFunctions'
+import { toDateString, toDateTimeString } from './commonFunctions'
 
 type CommonColumns = 'createdBy' | 'createdAt' | 'updatedBy' | 'updatedAt'
 
 export const toGanttTask = (task: PrismaGanttTask): GanttTask => {
   return {
     ...omit(task, ['createdBy', 'createdAt', 'updatedBy', 'updatedAt']),
-    start: toDateString(task.start),
-    end: toDateString(task.end),
+    start: toDateTimeString(task.start),
+    end: toDateTimeString(task.end),
   }
 }
 
@@ -68,7 +69,7 @@ export const toProject =
       ...omit(project, ['createdBy', 'createdAt', 'updatedBy', 'updatedAt']),
       start: toDateString(project.start),
       end: toDateString(project.end),
-      attribute: (project.attribute ?? {}) as Object,
+      attribute: (project.attribute ?? {}) as ProjectAttribute,
       authority: (project.authority ?? {}) as Authority,
       role: getRole(project.authority as Authority, email),
     }

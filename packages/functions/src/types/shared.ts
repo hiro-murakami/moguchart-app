@@ -24,6 +24,10 @@ export type FunctionName =
 
 export type Role = 'owner' | 'editor' | 'viewer'
 
+export type ProjectAttribute = {
+  description?: string
+}
+
 export type Authority = {
   owners?: string[]
   editors?: string[]
@@ -35,7 +39,7 @@ export interface Project {
   name: string
   start: string
   end: string
-  attribute: any
+  attribute: ProjectAttribute
   public: boolean
   authority: Authority
   role: Role

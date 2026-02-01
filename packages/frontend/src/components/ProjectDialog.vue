@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from 'vue'
 import type { Project } from '@functions/types/shared'
-import { toDateString } from '@/modules/utils'
 import inputRules from '@/modules/inputRules'
 import type { VForm } from 'vuetify/components'
 
@@ -37,8 +36,8 @@ watch(
       if (props.project) {
         // 編集モード
         localName.value = props.project.name
-        localStart.value = toDateString(props.project.start, 'YYYY-MM-DD')
-        localEnd.value = toDateString(props.project.end, 'YYYY-MM-DD')
+        localStart.value = props.project.start
+        localEnd.value = props.project.end
         localPublic.value = props.project.public
         if (props.project.authority) {
           const { owners, editors, viewers } = props.project.authority
@@ -106,18 +105,24 @@ const save = async () => {
             :rules="[inputRules.required, inputRules.within(191)]"
             autofocus
           />
-          <v-text-field
-            v-model="localStart"
-            label="開始日"
-            type="date"
-            :rules="[inputRules.required]"
-          />
-          <v-text-field
-            v-model="localEnd"
-            label="終了日"
-            type="date"
-            :rules="[inputRules.required]"
-          />
+          <v-row>
+            <v-col>
+              <v-text-field
+                v-model="localStart"
+                label="開始日"
+                type="date"
+                :rules="[inputRules.required]"
+              />
+            </v-col>
+            <v-col>
+              <v-text-field
+                v-model="localEnd"
+                label="終了日"
+                type="date"
+                :rules="[inputRules.required]"
+              />
+            </v-col>
+          </v-row>
           <v-checkbox v-model="localPublic" label="一般公開" />
           <div class="text-subtitle mt-4">権限</div>
           <v-combobox

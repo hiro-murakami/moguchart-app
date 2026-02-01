@@ -16,9 +16,9 @@ model Project {
   /// プロジェクト名
   name      String
   /// 開始日時
-  start     DateTime
+  start     DateTime  @db.Date
   /// 終了日時
-  end       DateTime
+  end       DateTime  @db.Date
   /// 属性
   attribute Json     @default("{}")
   /// 一般公開フラグ

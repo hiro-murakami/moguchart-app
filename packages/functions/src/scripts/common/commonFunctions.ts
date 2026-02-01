@@ -56,9 +56,13 @@ export const setupFirebaseFunction = (
 
 export const toDateString = (
   value: Date | dayjs.Dayjs,
-  format: string = 'YYYY-MM-DDTHH:mm:ss',
+  format: string = 'YYYY-MM-DD',
 ): string => {
   return dayjs(value).format(format)
+}
+
+export const toDateTimeString = (value: Date | dayjs.Dayjs): string => {
+  return toDateString(value, 'YYYY-MM-DDTHH:mm:ss')
 }
 
 export const getUpdateCommonColumns = (email?: string) => ({
