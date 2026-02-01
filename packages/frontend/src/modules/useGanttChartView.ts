@@ -12,7 +12,12 @@ import { useAlert } from '@/modules/useAlert'
 import { useAuth } from '@/modules/useAuth'
 import { useLoading } from '@/modules/useLoading'
 import { toDateString } from '@/modules/utils'
-import type { GanttRow, GanttTask, Project } from '@functions/types/shared'
+import type {
+  GanttRow,
+  GanttTask,
+  Project,
+  Role,
+} from '@functions/types/shared'
 import type {
   RowReorderEventDetail,
   TaskClickEventDetail,
@@ -43,11 +48,12 @@ export function useGanttChartView() {
   const labelWidth = ref(150)
 
   // --- 状態 ---
-  const isReadOnly = ref(false)
-
   const projects = ref<Project[]>([])
   const projectId = ref<string>('')
+  const currentRole = ref<Role>('viewer') // デフォルト値を viewer に
   const rows = ref<moguchart.GanttRow[]>([])
+
+  const isReadOnly = computed(() => currentRole.value === 'viewer')
 
   const chartOption = computed<moguchart.GanttChartOption>(() => ({
     bar: {
@@ -106,6 +112,7 @@ export function useGanttChartView() {
     if (project) {
       chartStartStr.value = project.start
       chartEndStr.value = project.end
+      currentRole.value = project.role
     }
     loadData(newProjectId)
   })
@@ -126,6 +133,7 @@ export function useGanttChartView() {
         rows.value = []
         projects.value = []
         projectId.value = ''
+        currentRole.value = 'viewer' // ロールもリセット
       }
     },
     { immediate: true }, // コンポーネントのマウント時に即時実行する
@@ -277,9 +285,7 @@ export function useGanttChartView() {
   }
 
   const saveProject = async (
-    projectData:
-      | Omit<Project, 'attribute'>
-      | Omit<Project, 'id' | 'attribute'>,
+    projectData: Omit<Project, 'attribute'> | Omit<Project, 'id' | 'attribute'>,
   ) => {
     const projectToSave = {
       ...projectData,
@@ -317,6 +323,7 @@ export function useGanttChartView() {
     isRowDeleteDialogVisible,
     isProjectDialogVisible,
     editingProject,
+    currentRole,
 
     // methods
     handleTaskUpdate,

@@ -1,11 +1,12 @@
 import {
-  GanttTask as PrismaGanttTask,
   GanttRow as PrismaGanttRow,
+  GanttTask as PrismaGanttTask,
   Project as PrismaProject,
 } from '@prisma/client'
-import type { GanttRow, GanttTask, Project } from '../../types/shared'
-import { toDateString } from './commonFunctions'
 import { omit } from 'lodash'
+import { Authority } from '../../types'
+import type { GanttRow, GanttTask, Project, Role } from '../../types/shared'
+import { toDateString } from './commonFunctions'
 
 type CommonColumns = 'createdBy' | 'createdAt' | 'updatedBy' | 'updatedAt'
 
@@ -45,12 +46,24 @@ export const fromGanttRow = (
   }
 }
 
-export const toProject = (project: PrismaProject): Project => {
-  return {
-    ...omit(project, ['createdBy', 'createdAt', 'updatedBy', 'updatedAt']),
-    start: toDateString(project.start),
-    end: toDateString(project.end),
-    attribute: (project.attribute ?? {}) as Object,
-  }
-}
+export const toProject =
+  (email: string) =>
+  (project: PrismaProject): Project => {
+    const getRole = (authority: Authority, email: string): Role => {
+      if (authority.owners?.includes(email)) {
+        return 'owner'
+      } else if (authority.editors?.includes(email)) {
+        return 'editor'
+      }
 
+      return 'viewer'
+    }
+
+    return {
+      ...omit(project, ['createdBy', 'createdAt', 'updatedBy', 'updatedAt']),
+      start: toDateString(project.start),
+      end: toDateString(project.end),
+      attribute: (project.attribute ?? {}) as Object,
+      role: getRole(project.authority as Authority, email),
+    }
+  }

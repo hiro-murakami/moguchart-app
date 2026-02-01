@@ -20,7 +20,11 @@ model Project {
   /// 終了日時
   end       DateTime
   /// 属性
-  attribute Json
+  attribute Json     @default("{}")
+  /// 一般公開フラグ
+  public    Boolean  @default(false)
+  /// 権限
+  authority Json     @default("{}")
   /// 作成者email
   createdBy String?  @default("system")
   /// 作成日時

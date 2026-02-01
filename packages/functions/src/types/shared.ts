@@ -30,6 +30,7 @@ export interface Project {
   start: string
   end: string
   attribute: any
+  role: Role
 }
 
 export interface GanttRow {
@@ -53,7 +54,7 @@ export type GanttRowOrder = {
   order: number
 }
 
-export type SelectProjects = () => Promise<Project[]>
+export type SelectProjects = (_?: any, email?: string) => Promise<Project[]>
 export type SelectGanttChart = (projectId: string) => Promise<GanttRow[]>
 export type UpsertGanttTask = (
   task: GanttTask,
