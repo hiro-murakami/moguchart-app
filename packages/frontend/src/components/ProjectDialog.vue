@@ -26,6 +26,9 @@ const localName = ref('')
 const localStart = ref('')
 const localEnd = ref('')
 const localPublic = ref(false)
+const localOwners = ref<string[]>([])
+const localEditors = ref<string[]>([])
+const localViewers = ref<string[]>([])
 
 watch(
   () => props.modelValue,
@@ -37,6 +40,12 @@ watch(
         localStart.value = toDateString(props.project.start, 'YYYY-MM-DD')
         localEnd.value = toDateString(props.project.end, 'YYYY-MM-DD')
         localPublic.value = props.project.public
+        if (props.project.authority) {
+          const { owners, editors, viewers } = props.project.authority
+          localOwners.value = owners || []
+          localEditors.value = editors || []
+          localViewers.value = viewers || []
+        }
         await nextTick() // DOMの更新を待つ
         form.value?.validate()
       } else {
@@ -45,6 +54,9 @@ watch(
         localStart.value = ''
         localEnd.value = ''
         localPublic.value = false
+        localOwners.value = []
+        localEditors.value = []
+        localViewers.value = []
         form.value?.resetValidation()
       }
     } else {
@@ -65,6 +77,11 @@ const save = async () => {
     start: localStart.value,
     end: localEnd.value,
     public: localPublic.value,
+    authority: {
+      owners: localOwners.value,
+      editors: localEditors.value,
+      viewers: localViewers.value,
+    },
   }
   if (isEdit.value && props.project) {
     projectData.id = props.project.id
@@ -102,6 +119,34 @@ const save = async () => {
             :rules="[inputRules.required]"
           />
           <v-checkbox v-model="localPublic" label="一般公開" />
+          <div class="text-subtitle mt-4">権限</div>
+          <v-combobox
+            v-model="localOwners"
+            label="オーナー"
+            multiple
+            chips
+            deletable-chips
+            closable-chips
+            :rules="[inputRules.areMailAddresses]"
+          />
+          <v-combobox
+            v-model="localEditors"
+            label="編集者"
+            multiple
+            chips
+            deletable-chips
+            closable-chips
+            :rules="[inputRules.areMailAddresses]"
+          />
+          <v-combobox
+            v-model="localViewers"
+            label="閲覧者"
+            multiple
+            chips
+            deletable-chips
+            closable-chips
+            :rules="[inputRules.areMailAddresses]"
+          />
         </v-form>
       </v-card-text>
       <v-card-actions>

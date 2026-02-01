@@ -18,6 +18,13 @@ const inputRules = {
     !value ||
     /^[\w\-._]+@[\w\-._]+\.[A-Za-z]+$/.test(value) ||
     message.ERROR_INVALID_MAIL_ADDRESS,
+  areMailAddresses: (values: string[]) => {
+    if (!values || values.length === 0) return true
+    const hasInvalid = values.some(
+      (value) => !/^[\w\-._]+@[\w\-._]+\.[A-Za-z]+$/.test(value),
+    )
+    return !hasInvalid || message.ERROR_INVALID_MAIL_ADDRESS
+  },
 }
 
 export default inputRules
