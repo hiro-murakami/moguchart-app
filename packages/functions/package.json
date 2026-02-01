@@ -29,7 +29,6 @@
     "lodash": "^4.17.21"
   },
   "devDependencies": {
-    "@onozaty/prisma-db-comments-generator": "^1.4.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/lodash": "^4.17.23",

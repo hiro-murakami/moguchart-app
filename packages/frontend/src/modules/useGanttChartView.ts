@@ -261,18 +261,48 @@ export function useGanttChartView() {
     await loadData(projectId.value)
   }
 
-  // --- プロジェクト追加関連 ---
-  const isProjectAddDialogVisible = ref(false)
+  // --- プロジェクト追加/編集関連 ---
+  const isProjectDialogVisible = ref(false)
+  const editingProject = ref<Project | null>(null)
 
-  const saveNewProject = async (project: Omit<Project, 'id' | 'attribute'>) => {
-    const newProjectId = await upsertProject({
-      ...project,
-      id: '',
+  const openProjectDialog = (isEditMode: boolean) => {
+    if (isEditMode) {
+      const project = projects.value.find((p) => p.id === projectId.value)
+      if (!project) return
+      editingProject.value = { ...project }
+    } else {
+      editingProject.value = null
+    }
+    isProjectDialogVisible.value = true
+  }
+
+  const saveProject = async (
+    projectData:
+      | Omit<Project, 'attribute'>
+      | Omit<Project, 'id' | 'attribute'>,
+  ) => {
+    const projectToSave = {
+      ...projectData,
       attribute: {},
-    })
+    }
+
+    let targetProjectId = projectId.value
+    if ('id' in projectToSave && projectToSave.id) {
+      await upsertProject(projectToSave)
+    } else {
+      targetProjectId = await upsertProject({ ...projectToSave, id: '' })
+    }
+
     projects.value = await selectProjects()
-    projectId.value = newProjectId
-    isProjectAddDialogVisible.value = false
+    projectId.value = targetProjectId
+
+    const updatedProject = projects.value.find((p) => p.id === targetProjectId)
+    if (updatedProject) {
+      chartStartStr.value = updatedProject.start
+      chartEndStr.value = updatedProject.end
+    }
+
+    isProjectDialogVisible.value = false
   }
 
   return {
@@ -285,7 +315,8 @@ export function useGanttChartView() {
     editingTask,
     isRowDialogVisible,
     isRowDeleteDialogVisible,
-    isProjectAddDialogVisible,
+    isProjectDialogVisible,
+    editingProject,
 
     // methods
     handleTaskUpdate,
@@ -296,6 +327,7 @@ export function useGanttChartView() {
     handleRowReordered,
     saveNewRow,
     deleteRow,
-    saveNewProject,
+    saveProject,
+    openProjectDialog,
   }
 }
