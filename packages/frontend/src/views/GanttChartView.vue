@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import ProjectDialog from '@/components/ProjectDialog.vue'
+import RoleChip from '@/components/RoleChip.vue'
 import { useGanttChartView } from '@/modules/useGanttChartView'
 import { computed } from 'vue'
 
@@ -30,19 +31,6 @@ const {
   openProjectDialog,
 } = useGanttChartView()
 
-const getRoleColor = (role: string) => {
-  switch (role) {
-    case 'owner':
-      return 'primary'
-    case 'editor':
-      return 'secondary'
-    case 'viewer':
-      return 'default'
-    default:
-      return 'default'
-  }
-}
-
 const isViewer = computed(() => currentRole.value === 'viewer')
 </script>
 
@@ -59,20 +47,17 @@ const isViewer = computed(() => currentRole.value === 'viewer')
         label="プロジェクトを選択"
         :disabled="projects.length === 0"
         density="compact"
+        hide-details
         style="max-width: 300px"
       >
         <template #selection="{ item }">
           <span>{{ item.raw.name }}</span>
-          <v-chip :color="getRoleColor(item.raw.role)" size="small" class="ml-2">{{
-            item.raw.role
-          }}</v-chip>
+          <RoleChip :role="item.raw.role" class="ml-2" />
         </template>
         <template #item="{ props, item }">
           <v-list-item v-bind="props" :title="item.raw.name">
             <template #append>
-              <v-chip :color="getRoleColor(item.raw.role)" size="small">{{
-                item.raw.role
-              }}</v-chip>
+              <RoleChip :role="item.raw.role" />
             </template>
           </v-list-item>
         </template>
@@ -80,35 +65,31 @@ const isViewer = computed(() => currentRole.value === 'viewer')
       <v-btn color="primary" @click="openProjectDialog(false)">
         プロジェクト追加
       </v-btn>
-      <v-btn
-        color="primary"
-        :disabled="!projectId || isViewer"
-        @click="openProjectDialog(true)"
-      >
-        プロジェクト編集
-      </v-btn>
-      <v-btn
-        color="primary"
-        :disabled="isViewer"
-        @click="isRowDialogVisible = true"
-        >行追加</v-btn
-      >
-      <v-btn
-        color="secondary"
-        class="ml-2"
-        :disabled="isViewer"
-        @click="handleAddTask"
-      >
-        タスク追加
-      </v-btn>
-      <v-btn
-        color="error"
-        class="ml-2"
-        :disabled="isViewer"
-        @click="isRowDeleteDialogVisible = true"
-      >
-        行削除
-      </v-btn>
+      <template v-if="!isViewer">
+        <v-btn
+          color="primary"
+          :disabled="!projectId"
+          @click="openProjectDialog(true)"
+        >
+          プロジェクト編集
+        </v-btn>
+        <v-btn
+          color="primary"
+          :disabled="isViewer"
+          @click="isRowDialogVisible = true"
+          >行追加</v-btn
+        >
+        <v-btn color="secondary" class="ml-2" @click="handleAddTask">
+          タスク追加
+        </v-btn>
+        <v-btn
+          color="error"
+          class="ml-2"
+          @click="isRowDeleteDialogVisible = true"
+        >
+          行削除
+        </v-btn>
+      </template>
     </div>
 
     <div class="chart-container">

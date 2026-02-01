@@ -4,8 +4,13 @@ import {
   Project as PrismaProject,
 } from '@prisma/client'
 import { omit } from 'lodash'
-import { Authority } from '../../types'
-import type { GanttRow, GanttTask, Project, Role } from '../../types/shared'
+import type {
+  GanttRow,
+  GanttTask,
+  Project,
+  Role,
+  Authority,
+} from '../../types/shared'
 import { toDateString } from './commonFunctions'
 
 type CommonColumns = 'createdBy' | 'createdAt' | 'updatedBy' | 'updatedAt'
@@ -64,6 +69,7 @@ export const toProject =
       start: toDateString(project.start),
       end: toDateString(project.end),
       attribute: (project.attribute ?? {}) as Object,
+      authority: (project.authority ?? {}) as Authority,
       role: getRole(project.authority as Authority, email),
     }
   }
