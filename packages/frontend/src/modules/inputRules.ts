@@ -1,0 +1,23 @@
+import message from '@/modules/message'
+
+export type ComponentRule = (value: any) => string | boolean
+
+const inputRules = {
+  none: () => true,
+  required: (value: string | any[]) => {
+    if (Array.isArray(value)) {
+      return !!value.length || message.ERROR_INPUT_REQUIRE
+    }
+    return !!value || message.ERROR_INPUT_REQUIRE
+  },
+  within: (max: number) => (value: string) =>
+    !value || value.length <= max || message.ERROR_INPUT_WITHIN(max),
+  length: (length: number) => (value: string) =>
+    !value || value.length === length || message.ERROR_INPUT_LENGTH(length),
+  isMailAddress: (value: string) =>
+    !value ||
+    /^[\w\-._]+@[\w\-._]+\.[A-Za-z]+$/.test(value) ||
+    message.ERROR_INVALID_MAIL_ADDRESS,
+}
+
+export default inputRules

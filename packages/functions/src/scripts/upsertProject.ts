@@ -7,7 +7,7 @@ import {
 import { Prisma } from '@prisma/client'
 
 const upsertProject: UpsertProject = async (project, email?: string) => {
-  const { id, ...data } = project
+  const { id, role, ...data } = project
   const isNew = !id
 
   if (isNew) {
@@ -23,7 +23,7 @@ const upsertProject: UpsertProject = async (project, email?: string) => {
     start: new Date(data.start),
     end: new Date(data.end),
     attribute: data.attribute as Prisma.InputJsonValue,
-    role: data.role as Prisma.InputJsonValue,
+    authority: data.authority as Prisma.InputJsonValue,
   }
 
   if (isNew) {

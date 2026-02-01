@@ -284,19 +284,26 @@ export function useGanttChartView() {
     isProjectDialogVisible.value = true
   }
 
-  const saveProject = async (
-    projectData: Omit<Project, 'attribute'> | Omit<Project, 'id' | 'attribute'>,
-  ) => {
-    const projectToSave = {
+  const saveProject = async (projectData: Partial<Project>) => {
+    const projectToSave: Partial<Project> = {
+      // 編集中の場合は既存の値をベースにする
+      ...(editingProject.value ? { ...editingProject.value } : {}),
+      // ダイアログで編集された値を上書き
       ...projectData,
+      // attributeは常に空
       attribute: {},
     }
 
-    let targetProjectId = projectId.value
-    if ('id' in projectToSave && projectToSave.id) {
-      await upsertProject(projectToSave)
+    let targetProjectId: string
+    if (projectToSave.id) {
+      // 更新
+      targetProjectId = await upsertProject(projectToSave as Project)
     } else {
-      targetProjectId = await upsertProject({ ...projectToSave, id: '' })
+      // 新規
+      targetProjectId = await upsertProject({
+        ...projectToSave,
+        id: '',
+      } as Project)
     }
 
     projects.value = await selectProjects()
