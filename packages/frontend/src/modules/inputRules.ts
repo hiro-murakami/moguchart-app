@@ -25,6 +25,14 @@ const inputRules = {
     )
     return !hasInvalid || message.ERROR_INVALID_MAIL_ADDRESS
   },
+  dateBefore: (target: string) => (value: string) => {
+    if (!value || !target) return true
+    return value <= target || message.ERROR_DATE_BEFORE
+  },
+  dateAfter: (target: string) => (value: string) => {
+    if (!value || !target) return true
+    return value >= target || message.ERROR_DATE_AFTER
+  },
 }
 
 export default inputRules

@@ -290,8 +290,6 @@ export function useGanttChartView() {
       ...(editingProject.value ? { ...editingProject.value } : {}),
       // ダイアログで編集された値を上書き
       ...projectData,
-      // attributeは常に空
-      attribute: {},
     }
 
     let targetProjectId: string

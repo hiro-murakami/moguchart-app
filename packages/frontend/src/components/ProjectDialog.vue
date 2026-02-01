@@ -22,6 +22,7 @@ const title = computed(() =>
 const form = ref<VForm | null>(null)
 const formValid = ref(false)
 const localName = ref('')
+const localDescription = ref('')
 const localStart = ref('')
 const localEnd = ref('')
 const localPublic = ref(false)
@@ -36,6 +37,7 @@ watch(
       if (props.project) {
         // 編集モード
         localName.value = props.project.name
+        localDescription.value = props.project.attribute.description || ''
         localStart.value = props.project.start
         localEnd.value = props.project.end
         localPublic.value = props.project.public
@@ -50,6 +52,7 @@ watch(
       } else {
         // 新規追加モード
         localName.value = ''
+        localDescription.value = ''
         localStart.value = ''
         localEnd.value = ''
         localPublic.value = false
@@ -76,6 +79,9 @@ const save = async () => {
     start: localStart.value,
     end: localEnd.value,
     public: localPublic.value,
+    attribute: {
+      description: localDescription.value,
+    },
     authority: {
       owners: localOwners.value,
       editors: localEditors.value,
@@ -93,65 +99,80 @@ const save = async () => {
   <v-dialog
     :model-value="modelValue"
     @update:model-value="emit('update:modelValue', $event)"
-    max-width="400px"
+    max-width="500px"
   >
     <v-card>
       <v-card-title>{{ title }}</v-card-title>
       <v-card-text>
         <v-form ref="form" v-model="formValid">
-          <v-text-field
-            v-model="localName"
-            label="プロジェクト名"
-            :rules="[inputRules.required, inputRules.within(191)]"
-            autofocus
-          />
-          <v-row>
-            <v-col>
+          <v-row dense>
+            <v-col cols="12">
+              <v-text-field
+                v-model="localName"
+                label="プロジェクト名"
+                :rules="[inputRules.required, inputRules.within(191)]"
+                autofocus
+              />
+            </v-col>
+            <v-col cols="12">
+              <v-textarea v-model="localDescription" label="説明" auto-grow />
+            </v-col>
+            <v-col cols="6">
               <v-text-field
                 v-model="localStart"
                 label="開始日"
                 type="date"
-                :rules="[inputRules.required]"
+                :rules="[inputRules.required, inputRules.dateBefore(localEnd)]"
               />
             </v-col>
-            <v-col>
+            <v-col cols="6">
               <v-text-field
                 v-model="localEnd"
                 label="終了日"
                 type="date"
-                :rules="[inputRules.required]"
+                :rules="[inputRules.required, inputRules.dateAfter(localStart)]"
+              />
+            </v-col>
+            <v-col cols="12">
+              <v-checkbox v-model="localPublic" label="一般公開" />
+            </v-col>
+            <v-col cols="12">
+              <div class="text-subtitle mt-4">権限</div>
+            </v-col>
+            <v-col cols="12">
+              <v-combobox
+                v-model="localOwners"
+                label="オーナー"
+                multiple
+                chips
+                deletable-chips
+                closable-chips
+                :rules="[inputRules.areMailAddresses]"
+              />
+            </v-col>
+            <v-col cols="12">
+              <v-combobox
+                v-model="localEditors"
+                label="編集者"
+                multiple
+                chips
+                deletable-chips
+                closable-chips
+                :rules="[inputRules.areMailAddresses]"
+              />
+            </v-col>
+            <v-col cols="12">
+              <v-combobox
+                v-model="localViewers"
+                label="閲覧者"
+                multiple
+                chips
+                deletable-chips
+                closable-chips
+                :rules="[inputRules.areMailAddresses]"
               />
             </v-col>
           </v-row>
-          <v-checkbox v-model="localPublic" label="一般公開" />
-          <div class="text-subtitle mt-4">権限</div>
-          <v-combobox
-            v-model="localOwners"
-            label="オーナー"
-            multiple
-            chips
-            deletable-chips
-            closable-chips
-            :rules="[inputRules.areMailAddresses]"
-          />
-          <v-combobox
-            v-model="localEditors"
-            label="編集者"
-            multiple
-            chips
-            deletable-chips
-            closable-chips
-            :rules="[inputRules.areMailAddresses]"
-          />
-          <v-combobox
-            v-model="localViewers"
-            label="閲覧者"
-            multiple
-            chips
-            deletable-chips
-            closable-chips
-            :rules="[inputRules.areMailAddresses]"
-          />
         </v-form>
       </v-card-text>
       <v-card-actions>
