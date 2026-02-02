@@ -1,7 +1,12 @@
 <script setup lang="ts">
-defineProps<{
-  role: string
-}>()
+withDefaults(
+  defineProps<{
+    role?: string
+  }>(),
+  {
+    role: '',
+  },
+)
 
 const getRoleColor = (role: string) => {
   switch (role) {
