@@ -49,6 +49,7 @@ const isViewer = computed(() => currentRole.value === 'viewer')
         density="compact"
         hide-details
         style="max-width: 300px"
+        autocomplete="off"
       >
         <template #selection="{ item }">
           <span>{{ item.raw.name }}</span>

@@ -112,6 +112,7 @@ const save = async () => {
                 label="プロジェクト名"
                 :rules="[inputRules.required, inputRules.within(191)]"
                 autofocus
+                autocomplete="off"
               />
             </v-col>
             <v-col cols="12">
@@ -148,6 +149,7 @@ const save = async () => {
                 deletable-chips
                 closable-chips
                 :rules="[inputRules.areMailAddresses]"
+                autocomplete="off"
               />
             </v-col>
             <v-col cols="12">
@@ -159,6 +161,7 @@ const save = async () => {
                 deletable-chips
                 closable-chips
                 :rules="[inputRules.areMailAddresses]"
+                autocomplete="off"
               />
             </v-col>
             <v-col cols="12">
@@ -170,6 +173,7 @@ const save = async () => {
                 deletable-chips
                 closable-chips
                 :rules="[inputRules.areMailAddresses]"
+                autocomplete="off"
               />
             </v-col>
           </v-row>
