@@ -45,6 +45,7 @@ const save = () => {
           v-model="localName"
           label="行の名前"
           autofocus
+          autocomplete="off"
         ></v-text-field>
       </v-card-text>
       <v-card-actions>

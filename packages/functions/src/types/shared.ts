@@ -24,12 +24,25 @@ export type FunctionName =
 
 export type Role = 'owner' | 'editor' | 'viewer'
 
+export type ProjectAttribute = {
+  description?: string
+}
+
+export type Authority = {
+  owners?: string[]
+  editors?: string[]
+  viewers?: string[]
+}
+
 export interface Project {
   id: string
   name: string
   start: string
   end: string
-  attribute: any
+  attribute: ProjectAttribute
+  public: boolean
+  authority: Authority
+  role: Role
 }
 
 export interface GanttRow {
@@ -53,7 +66,7 @@ export type GanttRowOrder = {
   order: number
 }
 
-export type SelectProjects = () => Promise<Project[]>
+export type SelectProjects = (_?: any, email?: string) => Promise<Project[]>
 export type SelectGanttChart = (projectId: string) => Promise<GanttRow[]>
 export type UpsertGanttTask = (
   task: GanttTask,

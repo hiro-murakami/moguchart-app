@@ -7,16 +7,26 @@ import {
 import { Prisma } from '@prisma/client'
 
 const upsertProject: UpsertProject = async (project, email?: string) => {
-  const { id, ...data } = project
+  const { id, role, ...data } = project
+  const isNew = !id
+
+  if (isNew) {
+    data.authority = {
+      owners: [email!],
+      editors: [],
+      viewers: [],
+    }
+  }
 
   const dataForDb = {
     ...data,
     start: new Date(data.start),
     end: new Date(data.end),
     attribute: data.attribute as Prisma.InputJsonValue,
+    authority: data.authority as Prisma.InputJsonValue,
   }
 
-  if (!id) {
+  if (isNew) {
     // 新規作成
     const result = await prisma.project.create({
       data: {

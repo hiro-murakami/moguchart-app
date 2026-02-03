@@ -74,6 +74,7 @@ const handleDelete = async () => {
               <v-text-field
                 v-model="localTask.name"
                 label="タスク名"
+                autocomplete="off"
               ></v-text-field>
             </v-col>
             <v-col cols="12">
@@ -83,6 +84,7 @@ const handleDelete = async () => {
                 item-title="name"
                 item-value="id"
                 label="行"
+                autocomplete="off"
               ></v-select>
             </v-col>
             <v-col cols="12" sm="6">

@@ -38,7 +38,9 @@ const confirmDelete = async () => {
     return
   }
 
-  const selectedRow = props.rows.find((r) => String(r.id) === selectedRowId.value)
+  const selectedRow = props.rows.find(
+    (r) => String(r.id) === selectedRowId.value,
+  )
   const rowName = selectedRow ? selectedRow.name : ''
 
   const result = await confirm({
@@ -70,6 +72,7 @@ const confirmDelete = async () => {
           item-value="id"
           label="削除する行を選択"
           :disabled="rows.length === 0"
+          autocomplete="off"
         ></v-select>
         <div v-if="rows.length === 0" class="text-caption">
           削除できる行がありません。

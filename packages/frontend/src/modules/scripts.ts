@@ -25,6 +25,10 @@ const callFunction = async <T>(name: FunctionName, param = {}) => {
   try {
     const result = await callable({ name, param })
 
+    if (result.data.status === 'failed') {
+      throw new Error(result.data.message)
+    }
+
     return result.data.data as T
   } catch (error: any) {
     console.error(`[FirebaseFunctions] Error calling ${name}:`, {

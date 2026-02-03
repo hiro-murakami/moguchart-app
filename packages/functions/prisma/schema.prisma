@@ -16,11 +16,15 @@ model Project {
   /// プロジェクト名
   name      String
   /// 開始日時
-  start     DateTime
+  start     DateTime  @db.Date
   /// 終了日時
-  end       DateTime
+  end       DateTime  @db.Date
   /// 属性
-  attribute Json
+  attribute Json     @default("{}")
+  /// 一般公開フラグ
+  public    Boolean  @default(false)
+  /// 権限
+  authority Json     @default("{}")
   /// 作成者email
   createdBy String?  @default("system")
   /// 作成日時
