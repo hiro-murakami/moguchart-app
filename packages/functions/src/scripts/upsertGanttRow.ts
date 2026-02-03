@@ -13,11 +13,13 @@ const upsertGanttRow: UpsertGanttRow = async (row, email?: string) => {
 
   if (id === 0) {
     // 新規作成
-    const count = await prisma.ganttRow.count()
+    const order = await prisma.ganttRow.count({
+      where: { projectId: createOrUpdateData.projectId },
+    })
     const result = await prisma.ganttRow.create({
       data: {
         ...createOrUpdateData,
-        order: count,
+        order,
         ...getCreateCommonColumns(email),
       },
     })
