@@ -19,21 +19,13 @@ import type {
   Role,
 } from '@functions/types/shared'
 import type {
+  RowHeaderClickEventDetail,
   RowReorderEventDetail,
   TaskClickEventDetail,
   TaskUpdateEventDetail,
 } from '@mogura/moguchart'
 import * as moguchart from '@mogura/moguchart'
 import { computed, ref, watch } from 'vue'
-
-const calculateDaysBetween = (start: string, end: string): number => {
-  const startDate = new Date(start)
-  const endDate = new Date(end)
-  const diffTime = Math.abs(endDate.getTime() - startDate.getTime())
-  // 終了日も期間に含めるため、+1 する
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1
-  return diffDays
-}
 
 export function useGanttChartView() {
   const { user } = useAuth()
@@ -260,6 +252,74 @@ export function useGanttChartView() {
     await loadData(projectId.value)
   }
 
+  const updateRowName = async (rowId: number, name: string) => {
+    const row = rows.value.find((r) => Number(r.id) === rowId)
+    if (!row) return
+
+    await upsertGanttRow({
+      id: rowId,
+      name,
+      order: (row as any).order ?? 0,
+      projectId: projectId.value,
+      tasks: [],
+    })
+    await loadData(projectId.value)
+  }
+
+  // --- Inline Row Editing ---
+  const editingRowId = ref<number | null>(null)
+  const editingRowName = ref('')
+  const editingInputStyle = ref({
+    top: '0px',
+    left: '0px',
+    width: '0px',
+    height: '0px',
+  })
+
+  const handleRowHeaderClick = (e: CustomEvent<RowHeaderClickEventDetail>) => {
+    if (isReadOnly.value) return
+    if (editingRowId.value !== null) return // Already editing
+
+    const { row, target } = e.detail
+    if (!row) return
+
+    editingRowId.value = Number(row.id)
+    editingRowName.value = row.name
+
+    if (target) {
+      const targetRect = (target as HTMLElement).getBoundingClientRect()
+
+      // Use fixed positioning relative to the viewport
+      editingInputStyle.value = {
+        top: `${targetRect.top}px`,
+        left: `${targetRect.left}px`,
+        // Ensure minimum dimensions for better UX
+        width: `${Math.max(targetRect.width, 140)}px`,
+        height: `${Math.max(targetRect.height, 24)}px`,
+      }
+
+      // Focus the input next tick
+      setTimeout(() => {
+        const input = document.getElementById('row-edit-input')
+        if (input) (input as HTMLInputElement).focus()
+      }, 0)
+    }
+  }
+
+  const handleRowNameUpdate = async (e?: KeyboardEvent) => {
+    if (e?.isComposing) return
+
+    if (editingRowId.value !== null && editingRowName.value.trim() !== '') {
+      await updateRowName(editingRowId.value, editingRowName.value)
+    }
+    editingRowId.value = null
+  }
+
+  const cancelRowNameUpdate = (e?: KeyboardEvent) => {
+    if (e?.isComposing) return
+    editingRowId.value = null
+  }
+
   // --- 行削除関連 ---
   const isRowDeleteDialogVisible = ref(false)
 
@@ -329,6 +389,10 @@ export function useGanttChartView() {
     isProjectDialogVisible,
     editingProject,
     currentRole,
+    isReadOnly,
+    editingRowId,
+    editingRowName,
+    editingInputStyle,
 
     // methods
     handleTaskUpdate,
@@ -338,8 +402,12 @@ export function useGanttChartView() {
     deleteTask,
     handleRowReordered,
     saveNewRow,
+    updateRowName,
     deleteRow,
     saveProject,
     openProjectDialog,
+    handleRowHeaderClick,
+    handleRowNameUpdate,
+    cancelRowNameUpdate,
   }
 }

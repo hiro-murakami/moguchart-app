@@ -2,7 +2,6 @@
 import ProjectDialog from '@/components/ProjectDialog.vue'
 import RoleChip from '@/components/RoleChip.vue'
 import { useGanttChartView } from '@/modules/useGanttChartView'
-import { computed } from 'vue'
 
 const {
   // state
@@ -16,7 +15,10 @@ const {
   isRowDeleteDialogVisible,
   isProjectDialogVisible,
   editingProject,
-  currentRole,
+  isReadOnly,
+  editingRowId,
+  editingRowName,
+  editingInputStyle,
 
   // methods
   handleTaskUpdate,
@@ -29,9 +31,10 @@ const {
   deleteRow,
   saveProject,
   openProjectDialog,
+  handleRowHeaderClick,
+  handleRowNameUpdate,
+  cancelRowNameUpdate,
 } = useGanttChartView()
-
-const isViewer = computed(() => currentRole.value === 'viewer')
 </script>
 
 <template>
@@ -66,7 +69,7 @@ const isViewer = computed(() => currentRole.value === 'viewer')
       <v-btn color="primary" @click="openProjectDialog(false)">
         プロジェクト追加
       </v-btn>
-      <template v-if="!isViewer">
+      <template v-if="!isReadOnly">
         <v-btn
           color="primary"
           :disabled="!projectId"
@@ -76,7 +79,7 @@ const isViewer = computed(() => currentRole.value === 'viewer')
         </v-btn>
         <v-btn
           color="primary"
-          :disabled="isViewer"
+          :disabled="isReadOnly"
           @click="isRowDialogVisible = true"
           >行追加</v-btn
         >
@@ -100,7 +103,25 @@ const isViewer = computed(() => currentRole.value === 'viewer')
         theme="dark"
         @task-update="handleTaskUpdate"
         @task-dblclick="handleTaskDblClick"
+        @row-header-click="handleRowHeaderClick"
         @row-reordered="handleRowReordered"
+      />
+
+      <input
+        v-if="editingRowId !== null"
+        id="row-edit-input"
+        v-model="editingRowName"
+        class="row-edit-input"
+        :style="{
+          top: editingInputStyle.top,
+          left: editingInputStyle.left,
+          width: editingInputStyle.width,
+          height: editingInputStyle.height,
+        }"
+        autocomplete="off"
+        @keydown.enter="handleRowNameUpdate"
+        @keydown.esc="cancelRowNameUpdate"
+        @blur="cancelRowNameUpdate()"
       />
     </div>
 
@@ -140,6 +161,17 @@ const isViewer = computed(() => currentRole.value === 'viewer')
   overflow-x: auto;
   border: 1px solid #444;
   background: #1e1e1e;
+  box-sizing: border-box;
+}
+.row-edit-input {
+  position: fixed;
+  background: #333;
+  color: white;
+  border: 1px solid #007bff;
+  padding: 0 4px;
+  z-index: 1000;
+  font-size: 14px;
+  outline: none;
   box-sizing: border-box;
 }
 </style>
