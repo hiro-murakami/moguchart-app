@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import ProjectDialog from '@/components/ProjectDialog.vue'
-import RoleChip from '@/components/RoleChip.vue'
 import { useGanttChartView } from '@/modules/useGanttChartView'
 
 const {
@@ -11,7 +9,6 @@ const {
   chartOption,
   isDialogVisible,
   editingTask,
-  isRowDialogVisible,
   isRowDeleteDialogVisible,
   isProjectDialogVisible,
   editingProject,
@@ -27,7 +24,7 @@ const {
   saveTask,
   deleteTask,
   handleRowReordered,
-  saveNewRow,
+  handleAddRow,
   deleteRow,
   saveProject,
   openProjectDialog,
@@ -77,10 +74,7 @@ const {
         >
           プロジェクト編集
         </v-btn>
-        <v-btn
-          color="primary"
-          :disabled="isReadOnly"
-          @click="isRowDialogVisible = true"
+        <v-btn color="primary" :disabled="isReadOnly" @click="handleAddRow"
           >行追加</v-btn
         >
         <v-btn color="secondary" class="ml-2" @click="handleAddTask">
@@ -132,8 +126,6 @@ const {
       @save="saveTask"
       @delete="deleteTask"
     />
-
-    <RowAddDialog v-model="isRowDialogVisible" @save="saveNewRow" />
 
     <RowDeleteDialog
       v-model="isRowDeleteDialogVisible"

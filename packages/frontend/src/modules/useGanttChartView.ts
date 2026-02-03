@@ -236,19 +236,15 @@ export function useGanttChartView() {
   }
 
   // --- 行追加関連 ---
-  const isRowDialogVisible = ref(false)
-
-  const saveNewRow = async (name: string) => {
-    // 行を追加するAPI呼び出し
+  const handleAddRow = async () => {
+    const newName = `新規行 - ${rows.value.length + 1}`
     await upsertGanttRow({
       id: 0,
-      name,
-      order: 0,
+      name: newName,
+      order: rows.value.length,
       projectId: projectId.value,
       tasks: [],
     })
-
-    isRowDialogVisible.value = false
     await loadData(projectId.value)
   }
 
@@ -384,7 +380,6 @@ export function useGanttChartView() {
     chartOption,
     isDialogVisible,
     editingTask,
-    isRowDialogVisible,
     isRowDeleteDialogVisible,
     isProjectDialogVisible,
     editingProject,
@@ -401,7 +396,7 @@ export function useGanttChartView() {
     saveTask,
     deleteTask,
     handleRowReordered,
-    saveNewRow,
+    handleAddRow,
     updateRowName,
     deleteRow,
     saveProject,
