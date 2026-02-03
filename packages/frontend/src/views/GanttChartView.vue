@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useGanttChartView } from '@/modules/useGanttChartView'
+import RowHeaderContextMenu from '@/components/RowHeaderContextMenu.vue'
 
 const {
   // state
@@ -16,6 +17,7 @@ const {
   editingRowId,
   editingRowName,
   editingInputStyle,
+  contextMenu,
 
   // methods
   handleTaskUpdate,
@@ -31,6 +33,11 @@ const {
   handleRowHeaderClick,
   handleRowNameUpdate,
   cancelRowNameUpdate,
+  handleRowHeaderContextMenu,
+  closeContextMenu,
+  handleAddRowAbove,
+  handleAddRowBelow,
+  handleDeleteRowFromContextMenu,
 } = useGanttChartView()
 </script>
 
@@ -74,9 +81,6 @@ const {
         >
           プロジェクト編集
         </v-btn>
-        <v-btn color="primary" :disabled="isReadOnly" @click="handleAddRow"
-          >行追加</v-btn
-        >
         <v-btn color="secondary" class="ml-2" @click="handleAddTask">
           タスク追加
         </v-btn>
@@ -99,6 +103,7 @@ const {
         @task-dblclick="handleTaskDblClick"
         @row-header-click="handleRowHeaderClick"
         @row-reordered="handleRowReordered"
+        @row-header-contextmenu="handleRowHeaderContextMenu"
       />
 
       <input
@@ -118,6 +123,27 @@ const {
         @blur="cancelRowNameUpdate()"
       />
     </div>
+
+    <div v-if="!isReadOnly" class="mt-2">
+      <v-btn
+        color="primary"
+        variant="text"
+        prepend-icon="mdi-plus"
+        @click="handleAddRow()"
+      >
+        行追加
+      </v-btn>
+    </div>
+
+    <!-- Context Menu -->
+    <RowHeaderContextMenu
+      v-model="contextMenu.visible"
+      :x="contextMenu.x"
+      :y="contextMenu.y"
+      @add-row-above="handleAddRowAbove"
+      @add-row-below="handleAddRowBelow"
+      @delete-row="handleDeleteRowFromContextMenu"
+    />
 
     <TaskEditDialog
       v-model="isDialogVisible"

@@ -10,6 +10,7 @@ import {
 } from '@/modules/scripts'
 import { useAlert } from '@/modules/useAlert'
 import { useAuth } from '@/modules/useAuth'
+import { useConfirm } from '@/modules/useConfirm'
 import { useLoading } from '@/modules/useLoading'
 import { toDateString } from '@/modules/utils'
 import type {
@@ -19,13 +20,14 @@ import type {
   Role,
 } from '@functions/types/shared'
 import type {
+  RowHeaderContextMenuEventDetail,
   RowHeaderClickEventDetail,
   RowReorderEventDetail,
   TaskClickEventDetail,
   TaskUpdateEventDetail,
 } from '@mogura/moguchart'
 import * as moguchart from '@mogura/moguchart'
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, nextTick } from 'vue'
 
 export function useGanttChartView() {
   const { user } = useAuth()
@@ -70,6 +72,7 @@ export function useGanttChartView() {
 
   const alert = useAlert()
   const { setIsLoading } = useLoading()
+  const confirm = useConfirm()
 
   // --- データ永続化ロジック ---
 
@@ -236,16 +239,88 @@ export function useGanttChartView() {
   }
 
   // --- 行追加関連 ---
-  const handleAddRow = async () => {
-    const newName = `新規行 - ${rows.value.length + 1}`
-    await upsertGanttRow({
-      id: 0,
-      name: newName,
-      order: rows.value.length,
-      projectId: projectId.value,
-      tasks: [],
-    })
-    await loadData(projectId.value)
+  const handleAddRow = async (index?: number) => {
+    setIsLoading(true)
+    try {
+      const targetIndex = index ?? rows.value.length
+      const newName = '新規行'
+
+      // 新規行を追加
+      const newRowId = await upsertGanttRow({
+        id: 0,
+        name: newName,
+        order: targetIndex + 1,
+        projectId: projectId.value,
+        tasks: [],
+      })
+
+      // 挿入位置に関わらず順序を更新して正規化する
+      // (既存のorderが連番でない場合に意図しない位置に入るのを防ぐため)
+      const currentRows = [...rows.value]
+      const newRowStub = { id: String(newRowId) } as any
+      currentRows.splice(targetIndex, 0, newRowStub)
+
+      const orderedRows = currentRows.map((row, idx) => ({
+        id: Number(row.id),
+        order: idx + 1,
+      }))
+
+      await updateGanttRowOrder(orderedRows)
+
+      await loadData(projectId.value)
+      startEditingRowByName(newRowId, newName)
+    } catch (err) {
+      console.error('Failed to add row:', err)
+      alert({
+        title: 'エラー',
+        message: '行の追加に失敗しました。',
+      })
+    } finally {
+      setIsLoading(false)
+      closeContextMenu()
+    }
+  }
+
+  const startEditingRowByName = async (rowId: number, name: string) => {
+    await nextTick()
+    // DOM描画完了を待つために少し遅延させる
+    setTimeout(() => {
+      // 名前を含む要素を探す (XPath)
+      const xpath = `//div[text()="${name}"] | //span[text()="${name}"]`
+      const result = document.evaluate(
+        xpath,
+        document,
+        null,
+        XPathResult.ORDERED_NODE_SNAPSHOT_TYPE,
+        null,
+      )
+
+      let target: HTMLElement | null = null
+      if (result.snapshotLength > 0) {
+        // 複数ヒットする場合は最後の要素を採用する（新規追加行はDOMの後方にある可能性が高いため）
+        target = result.snapshotItem(result.snapshotLength - 1) as HTMLElement
+      }
+
+      if (target) {
+        const targetRect = target.getBoundingClientRect()
+        editingInputStyle.value = {
+          top: `${targetRect.top}px`,
+          left: `${targetRect.left}px`,
+          width: `${Math.max(targetRect.width, 140)}px`,
+          height: `${Math.max(targetRect.height, 24)}px`,
+        }
+        editingRowId.value = rowId
+        editingRowName.value = name
+
+        setTimeout(() => {
+          const input = document.getElementById('row-edit-input')
+          if (input) {
+            ;(input as HTMLInputElement).focus()
+            ;(input as HTMLInputElement).select()
+          }
+        }, 0)
+      }
+    }, 100)
   }
 
   const updateRowName = async (rowId: number, name: string) => {
@@ -316,6 +391,54 @@ export function useGanttChartView() {
     editingRowId.value = null
   }
 
+  // --- コンテキストメニュー関連 ---
+  const contextMenu = ref({
+    visible: false,
+    x: 0,
+    y: 0,
+    rowId: null as number | null,
+  })
+
+  const handleRowHeaderContextMenu = (
+    e: CustomEvent<RowHeaderContextMenuEventDetail>,
+  ) => {
+    e.preventDefault()
+    if (isReadOnly.value) return
+    const { row, event } = e.detail
+    if (!row) return
+
+    contextMenu.value = {
+      visible: true,
+      x: event.clientX,
+      y: event.clientY,
+      rowId: Number(row.id),
+    }
+  }
+
+  const closeContextMenu = () => {
+    contextMenu.value.visible = false
+  }
+
+  const handleAddRowAbove = async () => {
+    if (contextMenu.value.rowId === null) return
+    const index = rows.value.findIndex(
+      (r) => Number(r.id) === contextMenu.value.rowId,
+    )
+    if (index !== -1) {
+      await handleAddRow(index)
+    }
+  }
+
+  const handleAddRowBelow = async () => {
+    if (contextMenu.value.rowId === null) return
+    const index = rows.value.findIndex(
+      (r) => Number(r.id) === contextMenu.value.rowId,
+    )
+    if (index !== -1) {
+      await handleAddRow(index + 1)
+    }
+  }
+
   // --- 行削除関連 ---
   const isRowDeleteDialogVisible = ref(false)
 
@@ -323,6 +446,27 @@ export function useGanttChartView() {
     await deleteGanttRow(Number(rowId))
     isRowDeleteDialogVisible.value = false
     await loadData(projectId.value)
+  }
+
+  const handleDeleteRowFromContextMenu = async () => {
+    const rowId = contextMenu.value.rowId
+    if (rowId === null) return
+
+    closeContextMenu()
+
+    const targetRow = rows.value.find((r) => Number(r.id) === rowId)
+    const rowName = targetRow ? targetRow.name : '選択した行'
+
+    const result = await confirm({
+      title: '行削除の確認',
+      message: `「${rowName}」を削除してもよろしいですか？\n含まれるタスクもすべて削除されます。`,
+      confirmText: '削除',
+      confirmColor: 'error',
+    })
+
+    if (result) {
+      await deleteRow(String(rowId))
+    }
   }
 
   // --- プロジェクト追加/編集関連 ---
@@ -388,6 +532,7 @@ export function useGanttChartView() {
     editingRowId,
     editingRowName,
     editingInputStyle,
+    contextMenu,
 
     // methods
     handleTaskUpdate,
@@ -404,5 +549,10 @@ export function useGanttChartView() {
     handleRowHeaderClick,
     handleRowNameUpdate,
     cancelRowNameUpdate,
+    handleRowHeaderContextMenu,
+    closeContextMenu,
+    handleAddRowAbove,
+    handleAddRowBelow,
+    handleDeleteRowFromContextMenu,
   }
 }
