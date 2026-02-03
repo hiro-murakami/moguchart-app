@@ -158,7 +158,7 @@ const {
       @delete="deleteRow"
     />
 
-    <ProjectDialog
+    <ProjectDetailDialog
       v-model="isProjectDialogVisible"
       :project="editingProject"
       @save="saveProject"
