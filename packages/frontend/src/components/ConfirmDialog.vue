@@ -76,7 +76,7 @@ defineExpose({ open })
     <v-card>
       <v-card-title>{{ state.title }}</v-card-title>
       <v-card-text>
-        <div v-if="state.message">{{ state.message }}</div>
+        <span v-if="state.message" v-html="state.message"></span>
         <slot></slot>
       </v-card-text>
       <v-card-actions>

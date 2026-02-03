@@ -19,15 +19,8 @@ import type {
   Project,
   Role,
 } from '@functions/types/shared'
-import type {
-  RowHeaderContextMenuEventDetail,
-  RowHeaderClickEventDetail,
-  RowReorderEventDetail,
-  TaskClickEventDetail,
-  TaskUpdateEventDetail,
-} from '@mogura/moguchart'
 import * as moguchart from '@mogura/moguchart'
-import { computed, ref, watch, nextTick } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 
 export function useGanttChartView() {
   const { user } = useAuth()
@@ -134,7 +127,9 @@ export function useGanttChartView() {
     { immediate: true }, // コンポーネントのマウント時に即時実行する
   )
 
-  const handleTaskUpdate = async (e: CustomEvent<TaskUpdateEventDetail>) => {
+  const handleTaskUpdate = async (
+    e: CustomEvent<moguchart.TaskUpdateEventDetail>,
+  ) => {
     if (e.detail.isDragging) {
       return
     }
@@ -160,7 +155,9 @@ export function useGanttChartView() {
     end: '',
   })
 
-  const handleTaskDblClick = (e: CustomEvent<TaskClickEventDetail>) => {
+  const handleTaskDblClick = (
+    e: CustomEvent<moguchart.TaskClickEventDetail>,
+  ) => {
     const detail = e.detail
     const taskId = String(detail.task.id)
     const row = rows.value.find((r) => r.tasks.some((t) => t.id === taskId))
@@ -215,7 +212,9 @@ export function useGanttChartView() {
     await loadData(projectId.value)
   }
 
-  const handleRowReordered = async (e: CustomEvent<RowReorderEventDetail>) => {
+  const handleRowReordered = async (
+    e: CustomEvent<moguchart.RowReorderEventDetail>,
+  ) => {
     setIsLoading(true)
     try {
       const orderedRows = e.detail.rows.map((row, index) => ({
@@ -307,7 +306,7 @@ export function useGanttChartView() {
           top: `${targetRect.top}px`,
           left: `${targetRect.left}px`,
           width: `${Math.max(targetRect.width, 140)}px`,
-          height: `${Math.max(targetRect.height, 24)}px`,
+          height: `${barHeight.value + barMargin.value * 2}px`,
         }
         editingRowId.value = rowId
         editingRowName.value = name
@@ -347,7 +346,9 @@ export function useGanttChartView() {
     height: '0px',
   })
 
-  const handleRowHeaderClick = (e: CustomEvent<RowHeaderClickEventDetail>) => {
+  const handleRowHeaderDblClick = (
+    e: CustomEvent<moguchart.RowHeaderDblClickEventDetail>,
+  ) => {
     if (isReadOnly.value) return
     if (editingRowId.value !== null) return // Already editing
 
@@ -366,7 +367,7 @@ export function useGanttChartView() {
         left: `${targetRect.left}px`,
         // Ensure minimum dimensions for better UX
         width: `${Math.max(targetRect.width, 140)}px`,
-        height: `${Math.max(targetRect.height, 24)}px`,
+        height: `${barHeight.value + barMargin.value * 2}px`,
       }
 
       // Focus the input next tick
@@ -400,7 +401,7 @@ export function useGanttChartView() {
   })
 
   const handleRowHeaderContextMenu = (
-    e: CustomEvent<RowHeaderContextMenuEventDetail>,
+    e: CustomEvent<moguchart.RowHeaderContextMenuEventDetail>,
   ) => {
     e.preventDefault()
     if (isReadOnly.value) return
@@ -459,7 +460,7 @@ export function useGanttChartView() {
 
     const result = await confirm({
       title: '行削除の確認',
-      message: `「${rowName}」を削除してもよろしいですか？\n含まれるタスクもすべて削除されます。`,
+      message: `「<b>${rowName}</b>」を削除してもよろしいですか？<br>含まれるタスクもすべて削除されます。`,
       confirmText: '削除',
       confirmColor: 'error',
     })
@@ -546,7 +547,7 @@ export function useGanttChartView() {
     deleteRow,
     saveProject,
     openProjectDialog,
-    handleRowHeaderClick,
+    handleRowHeaderDblClick,
     handleRowNameUpdate,
     cancelRowNameUpdate,
     handleRowHeaderContextMenu,

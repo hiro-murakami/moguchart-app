@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { useGanttChartView } from '@/modules/useGanttChartView'
-import RowHeaderContextMenu from '@/components/RowHeaderContextMenu.vue'
 
 const {
   // state
@@ -30,7 +29,7 @@ const {
   deleteRow,
   saveProject,
   openProjectDialog,
-  handleRowHeaderClick,
+  handleRowHeaderDblClick,
   handleRowNameUpdate,
   cancelRowNameUpdate,
   handleRowHeaderContextMenu,
@@ -101,7 +100,7 @@ const {
         theme="dark"
         @task-update="handleTaskUpdate"
         @task-dblclick="handleTaskDblClick"
-        @row-header-click="handleRowHeaderClick"
+        @row-header-dblclick="handleRowHeaderDblClick"
         @row-reordered="handleRowReordered"
         @row-header-contextmenu="handleRowHeaderContextMenu"
       />
