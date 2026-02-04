@@ -6,7 +6,6 @@ import {
   updateGanttRowOrder,
   upsertGanttRow,
   upsertGanttTask,
-  upsertProject,
 } from '@/modules/scripts'
 import { useAlert } from '@/modules/useAlert'
 import { useAuth } from '@/modules/useAuth'
@@ -22,7 +21,7 @@ import type {
 import * as moguchart from '@mogura/moguchart'
 import { computed, nextTick, ref, watch } from 'vue'
 
-export function useGanttChartView() {
+export const useGanttChartView = () => {
   const { user } = useAuth()
 
   // --- 設定値 ---
@@ -472,52 +471,6 @@ export function useGanttChartView() {
 
   // --- プロジェクト追加/編集関連 ---
   const isProjectListDialogVisible = ref(false)
-  const isProjectDialogVisible = ref(false)
-  const editingProject = ref<Project | null>(null)
-
-  const openProjectDialog = (isEditMode: boolean, projectToEdit?: Project) => {
-    if (isEditMode) {
-      const project = projectToEdit || projects.value.find((p) => p.id === projectId.value)
-      if (!project) return
-      editingProject.value = { ...project }
-    } else {
-      editingProject.value = null
-    }
-    isProjectDialogVisible.value = true
-  }
-
-  const saveProject = async (projectData: Partial<Project>) => {
-    const projectToSave: Partial<Project> = {
-      // 編集中の場合は既存の値をベースにする
-      ...(editingProject.value ? { ...editingProject.value } : {}),
-      // ダイアログで編集された値を上書き
-      ...projectData,
-    }
-
-    let targetProjectId: string
-    if (projectToSave.id) {
-      // 更新
-      targetProjectId = await upsertProject(projectToSave as Project)
-    } else {
-      // 新規
-      targetProjectId = await upsertProject({
-        ...projectToSave,
-        id: '',
-      } as Project)
-    }
-
-    projects.value = await selectProjects()
-    projectId.value = targetProjectId
-
-    const updatedProject = projects.value.find((p) => p.id === targetProjectId)
-    if (updatedProject) {
-      chartStartStr.value = updatedProject.start
-      chartEndStr.value = updatedProject.end
-    }
-
-    isProjectDialogVisible.value = false
-    isProjectListDialogVisible.value = false
-  }
 
   return {
     // state
@@ -529,8 +482,6 @@ export function useGanttChartView() {
     editingTask,
     isRowDeleteDialogVisible,
     isProjectListDialogVisible,
-    isProjectDialogVisible,
-    editingProject,
     currentRole,
     isReadOnly,
     editingRowId,
@@ -548,8 +499,6 @@ export function useGanttChartView() {
     handleAddRow,
     updateRowName,
     deleteRow,
-    saveProject,
-    openProjectDialog,
     handleRowHeaderDblClick,
     handleRowNameUpdate,
     cancelRowNameUpdate,

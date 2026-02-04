@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import type { Project } from '@functions/types/shared'
-import { selectProjects } from '@/modules/scripts'
+import { selectProjects, upsertProject } from '@/modules/scripts'
+import ProjectDetailDialog from './ProjectDetailDialog.vue'
 
 const props = defineProps<{
   modelValue: boolean
@@ -11,13 +12,13 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
   (e: 'select', projectId: string): void
-  (e: 'edit', project: Project): void
-  (e: 'create'): void
 }>()
 
 const projects = ref<Project[]>([])
 const loading = ref(false)
+const saving = ref(false)
 const isProjectDetailDialogVisible = ref(false)
+const projectToEdit = ref<Project | null>(null)
 
 const fetchProjects = async () => {
   loading.value = true
@@ -58,11 +59,27 @@ const selectProject = (project: Project) => {
 }
 
 const editProject = (project: Project) => {
-  emit('edit', project)
+  projectToEdit.value = project
+  isProjectDetailDialogVisible.value = true
 }
 
-const createProject = (project: Project) => {
-  emit('create')
+const newProject = () => {
+  projectToEdit.value = null
+  isProjectDetailDialogVisible.value = true
+}
+
+const saveProject = async (project: Partial<Project>) => {
+  saving.value = true
+  try {
+    await upsertProject(project as Project)
+    isProjectDetailDialogVisible.value = false
+    await fetchProjects() // Refresh the list
+  } catch (e) {
+    console.error(e)
+    // TODO: Show error snackbar
+  } finally {
+    saving.value = false
+  }
 }
 </script>
 
@@ -80,7 +97,7 @@ const createProject = (project: Project) => {
             color="primary"
             prepend-icon="mdi-plus"
             class="mr-2"
-            @click="createProject"
+            @click="newProject"
           >
             新規作成
           </v-btn>
@@ -120,7 +137,7 @@ const createProject = (project: Project) => {
               <span>{{ item.attribute?.description }}</span>
             </v-tooltip>
           </template>
-          <template #item.actions="{ item }">
+          <template #item.actions="{ item }: { item: Project }">
             <v-btn
               v-if="item.role === 'owner' || item.role === 'editor'"
               icon="mdi-pencil"
@@ -133,6 +150,12 @@ const createProject = (project: Project) => {
       </v-card-text>
     </v-card>
   </v-dialog>
+
+  <ProjectDetailDialog
+    v-model="isProjectDetailDialogVisible"
+    :project="projectToEdit"
+    @save="saveProject"
+  />
 </template>
 
 <style scoped>

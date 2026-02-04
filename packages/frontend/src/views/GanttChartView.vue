@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { useGanttChartView } from '@/modules/useGanttChartView'
-import type { Project } from '@functions/types/shared'
 
 const {
   // state
@@ -12,8 +11,6 @@ const {
   editingTask,
   isRowDeleteDialogVisible,
   isProjectListDialogVisible,
-  isProjectDialogVisible,
-  editingProject,
   isReadOnly,
   editingRowId,
   editingRowName,
@@ -29,13 +26,10 @@ const {
   handleRowReordered,
   handleAddRow,
   deleteRow,
-  saveProject,
-  openProjectDialog,
   handleRowHeaderDblClick,
   handleRowNameUpdate,
   cancelRowNameUpdate,
   handleRowHeaderContextMenu,
-  closeContextMenu,
   handleAddRowAbove,
   handleAddRowBelow,
   handleDeleteRowFromContextMenu,
@@ -77,20 +71,8 @@ const {
           </v-list-item>
         </template>
       </v-select>
-      <v-btn color="primary" @click="openProjectDialog(false)">
-        プロジェクト追加
-      </v-btn>
       <template v-if="!isReadOnly">
-        <v-btn
-          color="primary"
-          :disabled="!projectId"
-          @click="openProjectDialog(true)"
-        >
-          プロジェクト編集
-        </v-btn>
-        <v-btn color="secondary" class="ml-2" @click="handleAddTask">
-          タスク追加
-        </v-btn>
+        <v-btn color="secondary" @click="handleAddTask"> タスク追加 </v-btn>
         <v-btn
           color="error"
           class="ml-2"
@@ -166,19 +148,11 @@ const {
       @delete="deleteRow"
     />
 
-    <ProjectDetailDialog
-      v-model="isProjectDialogVisible"
-      :project="editingProject"
-      @save="saveProject"
-    />
-
     <ProjectListDialog
       v-model="isProjectListDialogVisible"
       :projects="projects"
       :current-project-id="projectId"
       @select="(id: string) => (projectId = id)"
-      @edit="(p: Project) => openProjectDialog(true, p)"
-      @create="() => openProjectDialog(false)"
     />
   </div>
 </template>
