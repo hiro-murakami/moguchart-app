@@ -471,12 +471,13 @@ export function useGanttChartView() {
   }
 
   // --- プロジェクト追加/編集関連 ---
+  const isProjectListDialogVisible = ref(false)
   const isProjectDialogVisible = ref(false)
   const editingProject = ref<Project | null>(null)
 
-  const openProjectDialog = (isEditMode: boolean) => {
+  const openProjectDialog = (isEditMode: boolean, projectToEdit?: Project) => {
     if (isEditMode) {
-      const project = projects.value.find((p) => p.id === projectId.value)
+      const project = projectToEdit || projects.value.find((p) => p.id === projectId.value)
       if (!project) return
       editingProject.value = { ...project }
     } else {
@@ -515,6 +516,7 @@ export function useGanttChartView() {
     }
 
     isProjectDialogVisible.value = false
+    isProjectListDialogVisible.value = false
   }
 
   return {
@@ -526,6 +528,7 @@ export function useGanttChartView() {
     isDialogVisible,
     editingTask,
     isRowDeleteDialogVisible,
+    isProjectListDialogVisible,
     isProjectDialogVisible,
     editingProject,
     currentRole,

@@ -16,6 +16,7 @@ declare module 'vue' {
     DialogProvider: typeof import('./src/components/DialogProvider.vue')['default']
     LoginPrompt: typeof import('./src/components/LoginPrompt.vue')['default']
     ProjectDetailDialog: typeof import('./src/components/ProjectDetailDialog.vue')['default']
+    ProjectListDialog: typeof import('./src/components/ProjectListDialog.vue')['default']
     RoleChip: typeof import('./src/components/RoleChip.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']

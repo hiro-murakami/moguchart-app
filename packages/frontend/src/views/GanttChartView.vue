@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useGanttChartView } from '@/modules/useGanttChartView'
+import type { Project } from '@functions/types/shared'
 
 const {
   // state
@@ -10,6 +11,7 @@ const {
   isDialogVisible,
   editingTask,
   isRowDeleteDialogVisible,
+  isProjectListDialogVisible,
   isProjectDialogVisible,
   editingProject,
   isReadOnly,
@@ -45,6 +47,12 @@ const {
     <h2 class="mb-6">Moguchart (Vue)</h2>
 
     <div class="mb-4 d-flex align-center" style="gap: 1rem">
+      <v-btn
+        icon="mdi-format-list-bulleted"
+        variant="text"
+        @click="isProjectListDialogVisible = true"
+        title="プロジェクト一覧"
+      />
       <v-select
         v-model="projectId"
         :items="projects"
@@ -162,6 +170,15 @@ const {
       v-model="isProjectDialogVisible"
       :project="editingProject"
       @save="saveProject"
+    />
+
+    <ProjectListDialog
+      v-model="isProjectListDialogVisible"
+      :projects="projects"
+      :current-project-id="projectId"
+      @select="(id: string) => (projectId = id)"
+      @edit="(p: Project) => openProjectDialog(true, p)"
+      @create="() => openProjectDialog(false)"
     />
   </div>
 </template>
