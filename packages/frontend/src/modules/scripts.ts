@@ -2,6 +2,7 @@ import { functions } from '@/firebase'
 import type {
   DeleteGanttRow,
   DeleteGanttTask,
+  DeleteProject,
   FunctionName,
   FunctionParam,
   FunctionResult,
@@ -54,6 +55,10 @@ export const upsertGanttTask: UpsertGanttTask = (param) => {
 
 export const upsertGanttRow: UpsertGanttRow = (param) => {
   return callFunction<number>('upsertGanttRow', param)
+}
+
+export const deleteProject: DeleteProject = (id) => {
+  return callFunction<void>('deleteProject', id)
 }
 
 export const deleteGanttRow: DeleteGanttRow = (id) => {

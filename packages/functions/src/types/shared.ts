@@ -17,6 +17,7 @@ export type FunctionName =
   | 'selectGanttChart'
   | 'upsertGanttTask'
   | 'upsertGanttRow'
+  | 'deleteProject'
   | 'deleteGanttRow'
   | 'deleteGanttTask'
   | 'updateGanttRowOrder'
@@ -73,6 +74,7 @@ export type UpsertGanttTask = (
   email?: string,
 ) => Promise<number>
 export type UpsertGanttRow = (row: GanttRow, email?: string) => Promise<number>
+export type DeleteProject = (id: string, email?: string) => Promise<void>
 export type DeleteGanttRow = (id: number, email?: string) => Promise<void>
 export type DeleteGanttTask = (id: number, email?: string) => Promise<void>
 export type UpdateGanttRowOrder = (

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { provideLoading } from '@/modules/useLoading'
 import { useAuth } from '@/modules/useAuth'
+import headerImage from '@/assets/header.png'
 
 const { isLoading } = provideLoading()
 const { user, signIn, signOut } = useAuth()
@@ -10,7 +11,7 @@ const { user, signIn, signOut } = useAuth()
   <DialogProvider>
     <v-app theme="dark">
       <v-app-bar>
-        <v-app-bar-title>MoguChart</v-app-bar-title>
+        <img :src="headerImage" height="34" class="header-image ml-4" />
         <v-spacer />
         <v-btn v-if="!user" @click="signIn"> Login </v-btn>
         <template v-else>
@@ -36,4 +37,8 @@ const { user, signIn, signOut } = useAuth()
   </DialogProvider>
 </template>
 
-<style scoped></style>
+<style scoped>
+.header-image {
+  border-radius: 6px;
+}
+</style>

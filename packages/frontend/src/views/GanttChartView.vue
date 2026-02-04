@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useGanttChartView } from '@/modules/useGanttChartView'
 import { computed } from 'vue'
+import splashImage from '@/assets/splash.png'
 
 const {
   // state
@@ -122,8 +123,12 @@ const currentProject = computed(() =>
       v-else
       class="d-flex flex-column align-center justify-center flex-grow-1"
     >
-      <v-icon icon="mdi-chart-gantt" size="128" color="primary" class="mb-6" />
-      <h1 class="text-h3 font-weight-bold mb-2">MoguChart</h1>
+      <img
+        :src="splashImage"
+        height="500"
+        class="splash-image mb-6"
+        alt="MoguChart"
+      />
       <p class="text-subtitle-1 text-medium-emphasis mb-8">
         プロジェクトを選択してガントチャートを表示します
       </p>
@@ -195,5 +200,8 @@ const currentProject = computed(() =>
   font-size: 14px;
   outline: none;
   box-sizing: border-box;
+}
+.splash-image {
+  border-radius: 24px;
 }
 </style>

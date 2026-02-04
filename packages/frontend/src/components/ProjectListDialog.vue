@@ -1,7 +1,13 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import {
+  deleteProject as deleteProjectScript,
+  selectProjects,
+  upsertProject,
+} from '@/modules/scripts'
+import { useConfirm } from '@/modules/useConfirm'
+import { useSnackbar } from '@/modules/useSnackbar'
 import type { Project } from '@functions/types/shared'
-import { selectProjects, upsertProject } from '@/modules/scripts'
+import { ref, watch } from 'vue'
 import ProjectDetailDialog from './ProjectDetailDialog.vue'
 
 const props = defineProps<{
@@ -16,8 +22,11 @@ const emit = defineEmits<{
 const projects = ref<Project[]>([])
 const loading = ref(false)
 const saving = ref(false)
+const deleting = ref(false)
 const isProjectDetailDialogVisible = ref(false)
 const projectToEdit = ref<Project | null>(null)
+const confirm = useConfirm()
+const snackbar = useSnackbar()
 
 const fetchProjects = async () => {
   loading.value = true
@@ -41,7 +50,7 @@ watch(
 
 const headers = [
   { title: 'プロジェクト名', key: 'name' },
-  { title: 'ロール', key: 'role' },
+  { title: '', key: 'role' },
   { title: '説明', key: 'attribute.description' },
   { title: '開始日', key: 'start' },
   { title: '終了日', key: 'end' },
@@ -80,13 +89,46 @@ const saveProject = async (project: Partial<Project>) => {
     saving.value = false
   }
 }
+
+const deleteProject = async (project: Project) => {
+  if (!project) return
+
+  if (
+    !(await confirm({
+      title: '⚠️ プロジェクトの削除',
+      message: `プロジェクト "<strong>${project.name}</strong>" を削除してもよろしいですか？<br><span class="text-error font-weight-bold">※この操作は取り消すことができません。</span>`,
+      confirmText: '削除',
+      confirmColor: 'error',
+    }))
+  )
+    return
+
+  deleting.value = true
+  try {
+    await deleteProjectScript(project.id)
+    snackbar({
+      message: 'プロジェクトを削除しました。',
+      color: 'success',
+    })
+
+    await fetchProjects() // Refresh the list
+  } catch (e) {
+    console.error(e)
+    snackbar({
+      message: 'プロジェクトの削除に失敗しました。',
+      color: 'error',
+    })
+  } finally {
+    deleting.value = false
+  }
+}
 </script>
 
 <template>
   <v-dialog
     :model-value="modelValue"
     @update:model-value="emit('update:modelValue', $event)"
-    max-width="900px"
+    max-width="1000px"
   >
     <v-card>
       <v-card-title class="d-flex justify-space-between align-center">
@@ -107,7 +149,7 @@ const saveProject = async (project: Partial<Project>) => {
         <v-data-table
           :headers="headers"
           :items="projects"
-          :loading="loading"
+          :loading="loading || deleting"
           hover
           density="compact"
           class="row-pointer"
@@ -117,6 +159,14 @@ const saveProject = async (project: Partial<Project>) => {
         >
           <template #item.role="{ item }">
             <RoleChip :role="item.role" />
+            <v-chip
+              v-if="item.public"
+              class="ml-2"
+              color="secondary"
+              size="small"
+            >
+              一般公開
+            </v-chip>
           </template>
           <template #item.attribute.description="{ item }">
             <v-tooltip
@@ -137,13 +187,33 @@ const saveProject = async (project: Partial<Project>) => {
             </v-tooltip>
           </template>
           <template #item.actions="{ item }: { item: Project }">
-            <v-btn
+            <v-tooltip
               v-if="item.role === 'owner' || item.role === 'editor'"
-              icon="mdi-pencil"
-              variant="text"
-              size="small"
-              @click.stop="editProject(item)"
-            ></v-btn>
+              location="top"
+            >
+              <template #activator="{ props }">
+                <v-btn
+                  v-bind="props"
+                  icon="mdi-pencil"
+                  variant="text"
+                  size="small"
+                  @click.stop="editProject(item)"
+                ></v-btn>
+              </template>
+              <span>編集</span>
+            </v-tooltip>
+            <v-tooltip v-if="item.role === 'owner'" location="top">
+              <template #activator="{ props }">
+                <v-btn
+                  v-bind="props"
+                  icon="mdi-delete"
+                  variant="text"
+                  size="small"
+                  @click.stop="deleteProject(item)"
+                ></v-btn>
+              </template>
+              <span>削除</span>
+            </v-tooltip>
           </template>
         </v-data-table>
       </v-card-text>

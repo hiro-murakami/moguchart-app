@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref, watch } from 'vue'
 import type { Project } from '@functions/types/shared'
 import inputRules from '@/modules/inputRules'
-import type { VForm } from 'vuetify/components'
+import { useProjectDetailDialog } from '../modules/useProjectDetailDialog'
 
 const props = defineProps<{
   modelValue: boolean
@@ -14,167 +14,143 @@ const emit = defineEmits<{
   (e: 'save', project: Partial<Project>): void
 }>()
 
-const isEdit = computed(() => !!props.project)
-const title = computed(() =>
-  isEdit.value ? 'プロジェクト編集' : 'プロジェクト追加',
-)
+const {
+  form,
+  formValid,
+  localName,
+  localDescription,
+  localStart,
+  localEnd,
+  localPublic,
+  localOwners,
+  localEditors,
+  localViewers,
+  title,
+  close,
+  save,
+} = useProjectDetailDialog(props, emit)
 
-const form = ref<VForm | null>(null)
-const formValid = ref(false)
-const localName = ref('')
-const localDescription = ref('')
-const localStart = ref('')
-const localEnd = ref('')
-const localPublic = ref(false)
-const localOwners = ref<string[]>([])
-const localEditors = ref<string[]>([])
-const localViewers = ref<string[]>([])
+const tab = ref<'general' | 'permissions'>('general')
 
 watch(
   () => props.modelValue,
-  async (isVisible) => {
-    if (isVisible) {
-      if (props.project) {
-        // 編集モード
-        localName.value = props.project.name
-        localDescription.value = props.project.attribute.description || ''
-        localStart.value = props.project.start
-        localEnd.value = props.project.end
-        localPublic.value = props.project.public
-        if (props.project.authority) {
-          const { owners, editors, viewers } = props.project.authority
-          localOwners.value = owners || []
-          localEditors.value = editors || []
-          localViewers.value = viewers || []
-        }
-        await nextTick() // DOMの更新を待つ
-        form.value?.validate()
-      } else {
-        // 新規追加モード
-        localName.value = ''
-        localDescription.value = ''
-        localStart.value = ''
-        localEnd.value = ''
-        localPublic.value = false
-        localOwners.value = []
-        localEditors.value = []
-        localViewers.value = []
-        form.value?.resetValidation()
-      }
-    } else {
-      form.value?.resetValidation()
+  (newValue) => {
+    if (newValue) {
+      tab.value = 'general'
     }
   },
 )
-
-const close = () => {
-  emit('update:modelValue', false)
-}
-
-const save = async () => {
-  if (!formValid.value) return
-
-  const projectData: Partial<Project> = {
-    name: localName.value,
-    start: localStart.value,
-    end: localEnd.value,
-    public: localPublic.value,
-    attribute: {
-      description: localDescription.value,
-    },
-    authority: {
-      owners: localOwners.value,
-      editors: localEditors.value,
-      viewers: localViewers.value,
-    },
-  }
-  if (isEdit.value && props.project) {
-    projectData.id = props.project.id
-  }
-  emit('save', projectData)
-}
 </script>
 
 <template>
   <v-dialog
     :model-value="modelValue"
     @update:model-value="emit('update:modelValue', $event)"
-    max-width="500px"
+    max-width="700px"
   >
     <v-card>
       <v-card-title>{{ title }}</v-card-title>
       <v-card-text>
         <v-form ref="form" v-model="formValid">
-          <v-row dense>
-            <v-col cols="12">
-              <v-text-field
-                v-model="localName"
-                label="プロジェクト名"
-                :rules="[inputRules.required, inputRules.within(191)]"
-                autofocus
-                autocomplete="off"
-              />
+          <v-row>
+            <v-col cols="3">
+              <v-tabs v-model="tab" direction="vertical" color="primary">
+                <v-tab value="general">
+                  <v-icon start> mdi-account </v-icon>
+                  一般
+                </v-tab>
+                <v-tab value="permissions">
+                  <v-icon start> mdi-lock </v-icon>
+                  権限
+                </v-tab>
+              </v-tabs>
             </v-col>
-            <v-col cols="12">
-              <v-textarea v-model="localDescription" label="説明" auto-grow />
-            </v-col>
-            <v-col cols="6">
-              <v-text-field
-                v-model="localStart"
-                label="開始日"
-                type="date"
-                :rules="[inputRules.required, inputRules.dateBefore(localEnd)]"
-              />
-            </v-col>
-            <v-col cols="6">
-              <v-text-field
-                v-model="localEnd"
-                label="終了日"
-                type="date"
-                :rules="[inputRules.required, inputRules.dateAfter(localStart)]"
-              />
-            </v-col>
-            <v-col cols="12">
-              <v-checkbox v-model="localPublic" label="一般公開" />
-            </v-col>
-            <v-col cols="12">
-              <div class="text-subtitle mt-4">権限</div>
-            </v-col>
-            <v-col cols="12">
-              <v-combobox
-                v-model="localOwners"
-                label="オーナー"
-                multiple
-                chips
-                deletable-chips
-                closable-chips
-                :rules="[inputRules.areMailAddresses]"
-                autocomplete="off"
-              />
-            </v-col>
-            <v-col cols="12">
-              <v-combobox
-                v-model="localEditors"
-                label="編集者"
-                multiple
-                chips
-                deletable-chips
-                closable-chips
-                :rules="[inputRules.areMailAddresses]"
-                autocomplete="off"
-              />
-            </v-col>
-            <v-col cols="12">
-              <v-combobox
-                v-model="localViewers"
-                label="閲覧者"
-                multiple
-                chips
-                deletable-chips
-                closable-chips
-                :rules="[inputRules.areMailAddresses]"
-                autocomplete="off"
-              />
+            <v-col cols="9">
+              <v-window v-model="tab" style="min-height: 450px">
+                <v-window-item value="general">
+                  <v-row dense>
+                    <v-col cols="12">
+                      <v-text-field
+                        v-model="localName"
+                        label="プロジェクト名"
+                        :rules="[inputRules.required, inputRules.within(191)]"
+                        autofocus
+                        autocomplete="off"
+                      />
+                    </v-col>
+                    <v-col cols="12">
+                      <v-textarea
+                        v-model="localDescription"
+                        label="説明"
+                        auto-grow
+                      />
+                    </v-col>
+                    <v-col cols="6">
+                      <v-text-field
+                        v-model="localStart"
+                        label="開始日"
+                        type="date"
+                        :rules="[
+                          inputRules.required,
+                          inputRules.dateBefore(localEnd),
+                        ]"
+                      />
+                    </v-col>
+                    <v-col cols="6">
+                      <v-text-field
+                        v-model="localEnd"
+                        label="終了日"
+                        type="date"
+                        :rules="[
+                          inputRules.required,
+                          inputRules.dateAfter(localStart),
+                        ]"
+                      />
+                    </v-col>
+                    <v-col cols="12">
+                      <v-checkbox v-model="localPublic" label="一般公開" />
+                    </v-col>
+                  </v-row>
+                </v-window-item>
+                <v-window-item value="permissions">
+                  <v-col cols="12">
+                    <v-combobox
+                      v-model="localOwners"
+                      label="オーナー"
+                      multiple
+                      chips
+                      deletable-chips
+                      closable-chips
+                      :rules="[inputRules.areMailAddresses]"
+                      autocomplete="off"
+                    />
+                  </v-col>
+                  <v-col cols="12">
+                    <v-combobox
+                      v-model="localEditors"
+                      label="編集者"
+                      multiple
+                      chips
+                      deletable-chips
+                      closable-chips
+                      :rules="[inputRules.areMailAddresses]"
+                      autocomplete="off"
+                    />
+                  </v-col>
+                  <v-col cols="12">
+                    <v-combobox
+                      v-model="localViewers"
+                      label="閲覧者"
+                      multiple
+                      chips
+                      deletable-chips
+                      closable-chips
+                      :rules="[inputRules.areMailAddresses]"
+                      autocomplete="off"
+                    />
+                  </v-col>
+                </v-window-item>
+              </v-window>
             </v-col>
           </v-row>
         </v-form>
