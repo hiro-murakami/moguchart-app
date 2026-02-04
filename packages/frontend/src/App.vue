@@ -10,7 +10,7 @@ const { user, signIn, signOut } = useAuth()
   <DialogProvider>
     <v-app theme="dark">
       <v-app-bar>
-        <v-app-bar-title>Moguchart</v-app-bar-title>
+        <v-app-bar-title>MoguChart</v-app-bar-title>
         <v-spacer />
         <v-btn v-if="!user" @click="signIn"> Login </v-btn>
         <template v-else>

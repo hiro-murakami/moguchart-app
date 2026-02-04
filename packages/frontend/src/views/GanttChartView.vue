@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useGanttChartView } from '@/modules/useGanttChartView'
+import { computed } from 'vue'
 
 const {
   // state
@@ -34,93 +35,105 @@ const {
   handleAddRowBelow,
   handleDeleteRowFromContextMenu,
 } = useGanttChartView()
+
+const currentProject = computed(() =>
+  projects.value.find((p) => p.id === projectId.value),
+)
 </script>
 
 <template>
   <div class="gantt-app">
-    <h2 class="mb-6">Moguchart (Vue)</h2>
-
-    <div class="mb-4 d-flex align-center" style="gap: 1rem">
-      <v-btn
-        icon="mdi-format-list-bulleted"
-        variant="text"
-        @click="isProjectListDialogVisible = true"
-        title="プロジェクト一覧"
-      />
-      <v-select
-        v-model="projectId"
-        :items="projects"
-        item-title="name"
-        item-value="id"
-        label="プロジェクトを選択"
-        :disabled="projects.length === 0"
-        density="compact"
-        hide-details
-        style="max-width: 300px"
-        autocomplete="off"
-      >
-        <template #selection="{ item }">
-          <span>{{ item.raw.name }}</span>
-          <RoleChip :role="item.raw.role" class="ml-2" />
-        </template>
-        <template #item="{ props, item }">
-          <v-list-item v-bind="props" :title="item.raw.name">
-            <template #append>
-              <RoleChip :role="item.raw.role" />
-            </template>
-          </v-list-item>
-        </template>
-      </v-select>
-      <template v-if="!isReadOnly">
-        <v-btn color="secondary" @click="handleAddTask"> タスク追加 </v-btn>
+    <template v-if="currentProject">
+      <div class="mb-4 d-flex align-center" style="gap: 1rem">
         <v-btn
-          color="error"
-          class="ml-2"
-          @click="isRowDeleteDialogVisible = true"
+          icon="mdi-format-list-bulleted"
+          variant="text"
+          @click="isProjectListDialogVisible = true"
+          title="プロジェクト一覧"
+        />
+        <div>
+          <div class="d-flex align-center">
+            <span class="text-h6">{{ currentProject.name }}</span>
+            <RoleChip :role="currentProject.role" class="ml-2" />
+          </div>
+          <div
+            v-if="currentProject.attribute.description"
+            class="text-caption text-medium-emphasis"
+          >
+            {{ currentProject.attribute.description }}
+          </div>
+        </div>
+        <v-spacer />
+        <template v-if="!isReadOnly">
+          <v-btn color="secondary" @click="handleAddTask"> タスク追加 </v-btn>
+          <v-btn
+            color="error"
+            class="ml-2"
+            @click="isRowDeleteDialogVisible = true"
+          >
+            行削除
+          </v-btn>
+        </template>
+      </div>
+
+      <div class="chart-container">
+        <gantt-chart
+          :rows="rows"
+          :option="chartOption"
+          theme="dark"
+          @task-update="handleTaskUpdate"
+          @task-dblclick="handleTaskDblClick"
+          @row-header-dblclick="handleRowHeaderDblClick"
+          @row-reordered="handleRowReordered"
+          @row-header-contextmenu="handleRowHeaderContextMenu"
+        />
+
+        <input
+          v-if="editingRowId !== null"
+          id="row-edit-input"
+          v-model="editingRowName"
+          class="row-edit-input"
+          :style="{
+            top: editingInputStyle.top,
+            left: editingInputStyle.left,
+            width: editingInputStyle.width,
+            height: editingInputStyle.height,
+          }"
+          autocomplete="off"
+          @keydown.enter="handleRowNameUpdate"
+          @keydown.esc="cancelRowNameUpdate"
+          @blur="cancelRowNameUpdate()"
+        />
+      </div>
+
+      <div v-if="!isReadOnly" class="mt-2">
+        <v-btn
+          color="primary"
+          variant="text"
+          prepend-icon="mdi-plus"
+          @click="handleAddRow()"
         >
-          行削除
+          行追加
         </v-btn>
-      </template>
-    </div>
+      </div>
+    </template>
 
-    <div class="chart-container">
-      <gantt-chart
-        :rows="rows"
-        :option="chartOption"
-        theme="dark"
-        @task-update="handleTaskUpdate"
-        @task-dblclick="handleTaskDblClick"
-        @row-header-dblclick="handleRowHeaderDblClick"
-        @row-reordered="handleRowReordered"
-        @row-header-contextmenu="handleRowHeaderContextMenu"
-      />
-
-      <input
-        v-if="editingRowId !== null"
-        id="row-edit-input"
-        v-model="editingRowName"
-        class="row-edit-input"
-        :style="{
-          top: editingInputStyle.top,
-          left: editingInputStyle.left,
-          width: editingInputStyle.width,
-          height: editingInputStyle.height,
-        }"
-        autocomplete="off"
-        @keydown.enter="handleRowNameUpdate"
-        @keydown.esc="cancelRowNameUpdate"
-        @blur="cancelRowNameUpdate()"
-      />
-    </div>
-
-    <div v-if="!isReadOnly" class="mt-2">
+    <div
+      v-else
+      class="d-flex flex-column align-center justify-center flex-grow-1"
+    >
+      <v-icon icon="mdi-chart-gantt" size="128" color="primary" class="mb-6" />
+      <h1 class="text-h3 font-weight-bold mb-2">MoguChart</h1>
+      <p class="text-subtitle-1 text-medium-emphasis mb-8">
+        プロジェクトを選択してガントチャートを表示します
+      </p>
       <v-btn
         color="primary"
-        variant="text"
-        prepend-icon="mdi-plus"
-        @click="handleAddRow()"
+        size="large"
+        prepend-icon="mdi-format-list-bulleted"
+        @click="isProjectListDialogVisible = true"
       >
-        行追加
+        プロジェクト一覧を開く
       </v-btn>
     </div>
 
@@ -150,8 +163,6 @@ const {
 
     <ProjectListDialog
       v-model="isProjectListDialogVisible"
-      :projects="projects"
-      :current-project-id="projectId"
       @select="(id: string) => (projectId = id)"
     />
   </div>
@@ -161,6 +172,9 @@ const {
 .gantt-app {
   padding: 50px;
   font-family: sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .chart-container {

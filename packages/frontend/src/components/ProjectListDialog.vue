@@ -6,7 +6,6 @@ import ProjectDetailDialog from './ProjectDetailDialog.vue'
 
 const props = defineProps<{
   modelValue: boolean
-  currentProjectId?: string
 }>()
 
 const emit = defineEmits<{

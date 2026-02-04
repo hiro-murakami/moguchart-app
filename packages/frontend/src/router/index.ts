@@ -6,6 +6,10 @@ const routes = [
     path: '/',
     component: () => import('@/views/GanttChartView.vue'),
   },
+  {
+    path: '/:id',
+    component: () => import('@/views/GanttChartView.vue'),
+  },
 ]
 
 const router = createRouter({

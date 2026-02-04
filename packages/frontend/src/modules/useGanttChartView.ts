@@ -20,9 +20,12 @@ import type {
 } from '@functions/types/shared'
 import * as moguchart from '@mogura/moguchart'
 import { computed, nextTick, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
 export const useGanttChartView = () => {
   const { user } = useAuth()
+  const route = useRoute()
+  const router = useRouter()
 
   // --- 設定値 ---
   const chartStartStr = ref('2025-12-15')
@@ -102,6 +105,13 @@ export const useGanttChartView = () => {
       currentRole.value = project.role
     }
     loadData(newProjectId)
+
+    const currentRouteId = Array.isArray(route.params.id)
+      ? route.params.id[0]
+      : route.params.id
+    if (newProjectId && currentRouteId !== newProjectId) {
+      router.push(`/${newProjectId}`)
+    }
   })
 
   watch(
@@ -110,10 +120,18 @@ export const useGanttChartView = () => {
       if (newUser) {
         // ユーザーがログインした場合、プロジェクトリストを読み込む
         projects.value = await selectProjects()
-        const firstProject = projects.value[0]
-        if (firstProject) {
-          // 最初のプロジェクトを選択状態にする
-          projectId.value = firstProject.id
+
+        const routeId = Array.isArray(route.params.id)
+          ? route.params.id[0]
+          : route.params.id
+        const targetProject = routeId
+          ? projects.value.find((p) => p.id === routeId)
+          : undefined
+
+        if (targetProject) {
+          projectId.value = targetProject.id
+        } else {
+          isProjectListDialogVisible.value = true
         }
       } else {
         // ユーザーがログアウトした場合、データをクリアする
