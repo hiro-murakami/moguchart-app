@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {
   deleteProject as deleteProjectScript,
+  duplicateProject as duplicateProjectScript,
   selectProjects,
   upsertProject,
 } from '@/modules/scripts'
@@ -17,6 +18,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
   (e: 'select', projectId: string): void
+  (e: 'update'): void
 }>()
 
 const projects = ref<Project[]>([])
@@ -25,13 +27,17 @@ const saving = ref(false)
 const deleting = ref(false)
 const isProjectDetailDialogVisible = ref(false)
 const projectToEdit = ref<Project | null>(null)
+const originalId = ref<string>()
 const confirm = useConfirm()
 const snackbar = useSnackbar()
 
-const fetchProjects = async () => {
+const fetchProjects = async (isFirst: boolean = false) => {
   loading.value = true
   try {
     projects.value = await selectProjects()
+    if (!isFirst) {
+      emit('update')
+    }
   } catch (e) {
     console.error(e)
   } finally {
@@ -43,7 +49,7 @@ watch(
   () => props.modelValue,
   (val) => {
     if (val) {
-      fetchProjects()
+      fetchProjects(true)
     }
   },
 )
@@ -68,18 +74,27 @@ const selectProject = (project: Project) => {
 
 const editProject = (project: Project) => {
   projectToEdit.value = project
+  originalId.value = undefined
   isProjectDetailDialogVisible.value = true
 }
 
 const newProject = () => {
   projectToEdit.value = null
+  originalId.value = undefined
   isProjectDetailDialogVisible.value = true
 }
 
 const saveProject = async (project: Partial<Project>) => {
   saving.value = true
   try {
-    await upsertProject(project as Project)
+    if (originalId.value) {
+      await duplicateProjectScript({
+        originalProjectId: originalId.value,
+        newProjectData: project as Project,
+      })
+    } else {
+      await upsertProject(project as Project)
+    }
     isProjectDetailDialogVisible.value = false
     await fetchProjects() // Refresh the list
   } catch (e) {
@@ -121,6 +136,16 @@ const deleteProject = async (project: Project) => {
   } finally {
     deleting.value = false
   }
+}
+
+const duplicateProject = (project: Project) => {
+  projectToEdit.value = {
+    ...project,
+    id: '', // Remove id to create a new project
+    name: `${project.name}のコピー`,
+  }
+  originalId.value = project.id
+  isProjectDetailDialogVisible.value = true
 }
 </script>
 
@@ -172,6 +197,7 @@ const deleteProject = async (project: Project) => {
             <v-tooltip
               location="top"
               open-on-hover
+              :open-delay="500"
               :disabled="!item.attribute?.description"
             >
               <template #activator="{ props }">
@@ -189,6 +215,7 @@ const deleteProject = async (project: Project) => {
           <template #item.actions="{ item }: { item: Project }">
             <v-tooltip
               v-if="item.role === 'owner' || item.role === 'editor'"
+              :open-delay="500"
               location="top"
             >
               <template #activator="{ props }">
@@ -202,7 +229,27 @@ const deleteProject = async (project: Project) => {
               </template>
               <span>編集</span>
             </v-tooltip>
-            <v-tooltip v-if="item.role === 'owner'" location="top">
+            <v-tooltip
+              v-if="item.role === 'owner'"
+              :open-delay="500"
+              location="top"
+            >
+              <template #activator="{ props }">
+                <v-btn
+                  v-bind="props"
+                  icon="mdi-content-copy"
+                  variant="text"
+                  size="small"
+                  @click.stop="duplicateProject(item)"
+                ></v-btn>
+              </template>
+              <span>複製</span>
+            </v-tooltip>
+            <v-tooltip
+              v-if="item.role === 'owner'"
+              :open-delay="500"
+              location="top"
+            >
               <template #activator="{ props }">
                 <v-btn
                   v-bind="props"

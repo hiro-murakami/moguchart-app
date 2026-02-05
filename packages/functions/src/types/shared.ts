@@ -22,6 +22,7 @@ export type FunctionName =
   | 'deleteGanttTask'
   | 'updateGanttRowOrder'
   | 'upsertProject'
+  | 'duplicateProject'
 
 export type Role = 'owner' | 'editor' | 'viewer'
 
@@ -44,6 +45,7 @@ export interface Project {
   public: boolean
   authority: Authority
   role: Role
+  originalId?: string
 }
 
 export interface GanttRow {
@@ -83,6 +85,14 @@ export type UpdateGanttRowOrder = (
 ) => Promise<void>
 export type UpsertProject = (
   project: Project,
+  email?: string,
+) => Promise<string>
+
+export type DuplicateProject = (
+  args: {
+    originalProjectId: string
+    newProjectData: Project
+  },
   email?: string,
 ) => Promise<string>
 

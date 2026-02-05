@@ -114,12 +114,16 @@ export const useGanttChartView = () => {
     }
   })
 
+  const fetchProjects = async () => {
+    projects.value = await selectProjects()
+  }
+
   watch(
     user,
     async (newUser) => {
       if (newUser) {
         // ユーザーがログインした場合、プロジェクトリストを読み込む
-        projects.value = await selectProjects()
+        await fetchProjects()
 
         const routeId = Array.isArray(route.params.id)
           ? route.params.id[0]
@@ -525,5 +529,6 @@ export const useGanttChartView = () => {
     handleAddRowAbove,
     handleAddRowBelow,
     handleDeleteRowFromContextMenu,
+    fetchProjects,
   }
 }

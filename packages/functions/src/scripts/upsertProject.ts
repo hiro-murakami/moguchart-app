@@ -4,9 +4,18 @@ import {
   getUpdateCommonColumns,
   prisma,
 } from './common/commonFunctions'
-import { Prisma } from '@prisma/client'
+import { Prisma, PrismaClient } from '@prisma/client'
 
-const upsertProject: UpsertProject = async (project, email?: string) => {
+type PrismaTransactionClient = Omit<
+  PrismaClient,
+  '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'
+>
+
+export const _upsertProject = async (
+  prismaClient: PrismaTransactionClient,
+  project: Parameters<UpsertProject>[0],
+  email?: string,
+) => {
   const { id, role, ...data } = project
   const isNew = !id
 
@@ -28,21 +37,26 @@ const upsertProject: UpsertProject = async (project, email?: string) => {
 
   if (isNew) {
     // 新規作成
-    const result = await prisma.project.create({
+    const result = await prismaClient.project.create({
       data: {
         ...dataForDb,
         ...getCreateCommonColumns(email),
       },
     })
-    return result.id
+    return result
   } else {
     // 更新
-    const result = await prisma.project.update({
+    const result = await prismaClient.project.update({
       where: { id },
       data: { ...dataForDb, ...getUpdateCommonColumns(email) },
     })
-    return result.id
+    return result
   }
+}
+
+const upsertProject: UpsertProject = async (project, email?: string) => {
+  const result = await _upsertProject(prisma, project, email)
+  return result.id
 }
 
 export default upsertProject

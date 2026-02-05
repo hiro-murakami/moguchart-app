@@ -35,6 +35,7 @@ const {
   handleAddRowAbove,
   handleAddRowBelow,
   handleDeleteRowFromContextMenu,
+  fetchProjects,
 } = useGanttChartView()
 
 const currentProject = computed(() =>
@@ -169,6 +170,7 @@ const currentProject = computed(() =>
     <ProjectListDialog
       v-model="isProjectListDialogVisible"
       @select="(id: string) => (projectId = id)"
+      @update="fetchProjects"
     />
   </div>
 </template>

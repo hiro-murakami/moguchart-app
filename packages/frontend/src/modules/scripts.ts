@@ -14,6 +14,7 @@ import type {
   UpsertGanttRow,
   UpsertGanttTask,
   UpsertProject,
+  DuplicateProject,
 } from '@functions/types/shared'
 import { httpsCallable } from 'firebase/functions'
 
@@ -75,4 +76,8 @@ export const updateGanttRowOrder: UpdateGanttRowOrder = (param) => {
 
 export const upsertProject: UpsertProject = (param) => {
   return callFunction<string>('upsertProject', param)
+}
+
+export const duplicateProject: DuplicateProject = (param) => {
+  return callFunction<string>('duplicateProject', param)
 }
