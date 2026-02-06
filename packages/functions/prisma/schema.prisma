@@ -47,6 +47,8 @@ model GanttRow {
   name     String
   /// 並び順
   order     Int      @default(0)
+  /// 表示フラグ
+  visible   Boolean  @default(true)
   /// 作成者email
   createdBy String?  @default("system")
   /// 作成日時

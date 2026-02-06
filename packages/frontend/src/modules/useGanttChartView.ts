@@ -35,6 +35,7 @@ export const useGanttChartView = () => {
   const barMargin = ref(4)
   const barCornerRadius = ref(4)
   const labelWidth = ref(150)
+  const showHiddenRows = ref(false)
 
   // --- 状態 ---
   const projects = ref<Project[]>([])
@@ -64,6 +65,7 @@ export const useGanttChartView = () => {
     },
     enableRowReordering: true,
     readOnly: isReadOnly.value,
+    showHiddenRows: showHiddenRows.value,
   }))
 
   const alert = useAlert()
@@ -272,6 +274,7 @@ export const useGanttChartView = () => {
         name: newName,
         order: targetIndex + 1,
         projectId: projectId.value,
+        visible: true,
         tasks: [],
       })
 
@@ -353,6 +356,7 @@ export const useGanttChartView = () => {
       name,
       order: (row as any).order ?? 0,
       projectId: projectId.value,
+      visible: row.visible || true,
       tasks: [],
     })
     await loadData(projectId.value)
@@ -568,5 +572,6 @@ export const useGanttChartView = () => {
     handleDeleteRowFromContextMenu,
     fetchProjects,
     handleRowSelectionChange,
+    showHiddenRows,
   }
 }

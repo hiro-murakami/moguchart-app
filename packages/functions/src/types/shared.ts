@@ -53,6 +53,7 @@ export interface GanttRow {
   projectId: string
   name: string
   order: number
+  visible: boolean
   tasks: GanttTask[]
 }
 

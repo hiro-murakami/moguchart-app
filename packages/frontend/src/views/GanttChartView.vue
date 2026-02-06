@@ -12,7 +12,7 @@ const {
   chartOption,
   isDialogVisible,
   editingTask,
-  isRowDeleteDialogVisible,
+
   isProjectListDialogVisible,
   isReadOnly,
   editingRowId,
@@ -38,6 +38,7 @@ const {
   handleDeleteRowFromContextMenu,
   fetchProjects,
   handleRowSelectionChange,
+  showHiddenRows,
 } = useGanttChartView()
 
 const currentProject = computed(() =>
@@ -68,6 +69,14 @@ const currentProject = computed(() =>
           </div>
         </div>
         <v-spacer />
+        <v-switch
+          v-model="showHiddenRows"
+          label="非表示行を表示"
+          color="primary"
+          hide-details
+          density="compact"
+          class="mr-4"
+        />
         <template v-if="!isReadOnly">
           <v-btn color="secondary" @click="handleAddTask"> タスク追加 </v-btn>
         </template>
