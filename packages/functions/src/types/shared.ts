@@ -77,7 +77,7 @@ export type UpsertGanttTask = (
 ) => Promise<number>
 export type UpsertGanttRow = (row: GanttRow, email?: string) => Promise<number>
 export type DeleteProject = (id: string, email?: string) => Promise<void>
-export type DeleteGanttRow = (id: number, email?: string) => Promise<void>
+export type DeleteGanttRow = (ids: number[], email?: string) => Promise<void>
 export type DeleteGanttTask = (id: number, email?: string) => Promise<void>
 export type UpdateGanttRowOrder = (
   rowOrders: GanttRowOrder[],

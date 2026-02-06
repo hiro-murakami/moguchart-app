@@ -41,6 +41,7 @@ export const useGanttChartView = () => {
   const projectId = ref<string>('')
   const currentRole = ref<Role>('viewer') // デフォルト値を viewer に
   const rows = ref<moguchart.GanttRow[]>([])
+  const selectedRowIds = ref<string[]>([])
 
   const isReadOnly = computed(() => currentRole.value === 'viewer')
 
@@ -462,11 +463,10 @@ export const useGanttChartView = () => {
   }
 
   // --- 行削除関連 ---
-  const isRowDeleteDialogVisible = ref(false)
 
-  const deleteRow = async (rowId: string) => {
-    await deleteGanttRow(Number(rowId))
-    isRowDeleteDialogVisible.value = false
+  const deleteRow = async (rowIds: string[]) => {
+    await deleteGanttRow(rowIds.map(Number))
+    // isRowDeleteDialogVisible は削除済み
     await loadData(projectId.value)
   }
 
@@ -476,33 +476,70 @@ export const useGanttChartView = () => {
 
     closeContextMenu()
 
-    const targetRow = rows.value.find((r) => Number(r.id) === rowId)
-    const rowName = targetRow ? targetRow.name : '選択した行'
+    const targetRowIdStr = String(rowId)
+    const isMultiSelect =
+      selectedRowIds.value.includes(targetRowIdStr) &&
+      selectedRowIds.value.length > 1
 
-    const result = await confirm({
-      title: '行削除の確認',
-      message: `「<b>${rowName}</b>」を削除してもよろしいですか？<br>含まれるタスクもすべて削除されます。`,
-      confirmText: '削除',
-      confirmColor: 'error',
-    })
+    if (isMultiSelect) {
+      const count = selectedRowIds.value.length
+      const result = await confirm({
+        title: '行削除の確認',
+        message: `選択された<b>${count}件</b>の行を削除してもよろしいですか？<br>含まれるタスクもすべて削除されます。`,
+        confirmText: '削除',
+        confirmColor: 'error',
+      })
 
-    if (result) {
-      await deleteRow(String(rowId))
+      if (result) {
+        setIsLoading(true)
+        try {
+          await deleteRow(selectedRowIds.value) // 一括削除
+          selectedRowIds.value = [] // 選択解除
+        } catch (err) {
+          console.error('Failed to delete rows:', err)
+          alert({
+            title: 'エラー',
+            message: '行の削除に失敗しました。',
+          })
+        } finally {
+          setIsLoading(false)
+        }
+      }
+    } else {
+      const targetRow = rows.value.find((r) => Number(r.id) === rowId)
+      const rowName = targetRow ? targetRow.name : '選択した行'
+
+      const result = await confirm({
+        title: '行削除の確認',
+        message: `「<b>${rowName}</b>」を削除してもよろしいですか？<br>含まれるタスクもすべて削除されます。`,
+        confirmText: '削除',
+        confirmColor: 'error',
+      })
+
+      if (result) {
+        await deleteRow([String(rowId)])
+      }
     }
   }
 
   // --- プロジェクト追加/編集関連 ---
   const isProjectListDialogVisible = ref(false)
 
+  const handleRowSelectionChange = (
+    e: CustomEvent<moguchart.RowSelectionChangeEventDetail>,
+  ) => {
+    selectedRowIds.value = e.detail.selectedIds
+  }
+
   return {
     // state
     projects,
     projectId,
     rows,
+    selectedRowIds,
     chartOption,
     isDialogVisible,
     editingTask,
-    isRowDeleteDialogVisible,
     isProjectListDialogVisible,
     currentRole,
     isReadOnly,
@@ -530,5 +567,6 @@ export const useGanttChartView = () => {
     handleAddRowBelow,
     handleDeleteRowFromContextMenu,
     fetchProjects,
+    handleRowSelectionChange,
   }
 }

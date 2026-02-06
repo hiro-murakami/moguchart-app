@@ -62,8 +62,8 @@ export const deleteProject: DeleteProject = (id) => {
   return callFunction<void>('deleteProject', id)
 }
 
-export const deleteGanttRow: DeleteGanttRow = (id) => {
-  return callFunction<void>('deleteGanttRow', id)
+export const deleteGanttRow: DeleteGanttRow = (ids) => {
+  return callFunction<void>('deleteGanttRow', ids)
 }
 
 export const deleteGanttTask: DeleteGanttTask = (id) => {

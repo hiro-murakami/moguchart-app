@@ -8,6 +8,7 @@ const {
   projects,
   projectId,
   rows,
+  selectedRowIds,
   chartOption,
   isDialogVisible,
   editingTask,
@@ -36,6 +37,7 @@ const {
   handleAddRowBelow,
   handleDeleteRowFromContextMenu,
   fetchProjects,
+  handleRowSelectionChange,
 } = useGanttChartView()
 
 const currentProject = computed(() =>
@@ -68,19 +70,13 @@ const currentProject = computed(() =>
         <v-spacer />
         <template v-if="!isReadOnly">
           <v-btn color="secondary" @click="handleAddTask"> タスク追加 </v-btn>
-          <v-btn
-            color="error"
-            class="ml-2"
-            @click="isRowDeleteDialogVisible = true"
-          >
-            行削除
-          </v-btn>
         </template>
       </div>
 
       <div class="chart-container">
         <gantt-chart
           :rows="rows"
+          :selected-row-ids="selectedRowIds"
           :option="chartOption"
           theme="dark"
           @task-update="handleTaskUpdate"
@@ -88,6 +84,7 @@ const currentProject = computed(() =>
           @row-header-dblclick="handleRowHeaderDblClick"
           @row-reordered="handleRowReordered"
           @row-header-contextmenu="handleRowHeaderContextMenu"
+          @row-selection-change="handleRowSelectionChange"
         />
 
         <input
@@ -148,6 +145,8 @@ const currentProject = computed(() =>
       v-model="contextMenu.visible"
       :x="contextMenu.x"
       :y="contextMenu.y"
+      :selected-row-ids="selectedRowIds"
+      :row-id="contextMenu.rowId"
       @add-row-above="handleAddRowAbove"
       @add-row-below="handleAddRowBelow"
       @delete-row="handleDeleteRowFromContextMenu"
@@ -159,12 +158,6 @@ const currentProject = computed(() =>
       :rows="rows"
       @save="saveTask"
       @delete="deleteTask"
-    />
-
-    <RowDeleteDialog
-      v-model="isRowDeleteDialogVisible"
-      :rows="rows"
-      @delete="deleteRow"
     />
 
     <ProjectListDialog

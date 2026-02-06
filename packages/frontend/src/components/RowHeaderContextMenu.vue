@@ -5,6 +5,8 @@ const props = defineProps<{
   modelValue: boolean
   x: number
   y: number
+  selectedRowIds?: string[]
+  rowId?: number | null
 }>()
 
 const emit = defineEmits<{
@@ -17,6 +19,17 @@ const emit = defineEmits<{
 const isVisible = computed({
   get: () => props.modelValue,
   set: (val) => emit('update:modelValue', val),
+})
+
+const deleteLabel = computed(() => {
+  if (
+    props.rowId != null &&
+    props.selectedRowIds?.includes(String(props.rowId)) &&
+    props.selectedRowIds.length > 1
+  ) {
+    return `選択した${props.selectedRowIds.length}行を削除`
+  }
+  return '行を削除'
 })
 </script>
 
@@ -46,7 +59,7 @@ const isVisible = computed({
         <v-divider />
         <v-list-item
           prepend-icon="mdi-delete"
-          title="行を削除"
+          :title="deleteLabel"
           @click="emit('delete-row')"
         />
       </v-list>
