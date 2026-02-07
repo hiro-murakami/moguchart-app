@@ -72,25 +72,13 @@ export type GanttRowOrder = {
 
 export type SelectProjects = (_?: any, email?: string) => Promise<Project[]>
 export type SelectGanttChart = (projectId: string) => Promise<GanttRow[]>
-export type UpsertGanttTask = (
-  task: GanttTask,
-  email?: string,
-) => Promise<number>
-export type UpsertGanttRow = (
-  row: GanttRow | GanttRow[],
-  email?: string,
-) => Promise<number | number[]>
+export type UpsertGanttTask = (task: GanttTask, email?: string) => Promise<number>
+export type UpsertGanttRow = (row: GanttRow | GanttRow[], email?: string) => Promise<number | number[]>
 export type DeleteProject = (id: string, email?: string) => Promise<void>
 export type DeleteGanttRow = (ids: number[], email?: string) => Promise<void>
 export type DeleteGanttTask = (id: number, email?: string) => Promise<void>
-export type UpdateGanttRowOrder = (
-  rowOrders: GanttRowOrder[],
-  email?: string,
-) => Promise<void>
-export type UpsertProject = (
-  project: Project,
-  email?: string,
-) => Promise<string>
+export type UpdateGanttRowOrder = (rowOrders: GanttRowOrder[], email?: string) => Promise<void>
+export type UpsertProject = (project: Project, email?: string) => Promise<string>
 
 export type DuplicateProject = (
   args: {

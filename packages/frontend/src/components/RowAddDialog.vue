@@ -33,26 +33,15 @@ const save = () => {
 </script>
 
 <template>
-  <v-dialog
-    :model-value="modelValue"
-    @update:model-value="emit('update:modelValue', $event)"
-    max-width="400px"
-  >
+  <v-dialog :model-value="modelValue" @update:model-value="emit('update:modelValue', $event)" max-width="400px">
     <v-card>
       <v-card-title>行追加</v-card-title>
       <v-card-text>
-        <v-text-field
-          v-model="localName"
-          label="行の名前"
-          autofocus
-          autocomplete="off"
-        ></v-text-field>
+        <v-text-field v-model="localName" label="行の名前" autofocus autocomplete="off"></v-text-field>
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn color="blue-darken-1" variant="text" @click="close">
-          キャンセル
-        </v-btn>
+        <v-btn color="blue-darken-1" variant="text" @click="close"> キャンセル </v-btn>
         <v-btn color="blue-darken-1" variant="text" @click="save"> OK </v-btn>
       </v-card-actions>
     </v-card>

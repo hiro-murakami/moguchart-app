@@ -12,12 +12,7 @@ import { useAuth } from '@/modules/useAuth'
 import { useConfirm } from '@/modules/useConfirm'
 import { useLoading } from '@/modules/useLoading'
 import { toDateString } from '@/modules/utils'
-import type {
-  GanttRow,
-  GanttTask,
-  Project,
-  Role,
-} from '@functions/types/shared'
+import type { GanttRow, GanttTask, Project, Role } from '@functions/types/shared'
 import * as moguchart from '@mogura/moguchart'
 import { computed, nextTick, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -109,9 +104,7 @@ export const useGanttChartView = () => {
     }
     loadData(newProjectId)
 
-    const currentRouteId = Array.isArray(route.params.id)
-      ? route.params.id[0]
-      : route.params.id
+    const currentRouteId = Array.isArray(route.params.id) ? route.params.id[0] : route.params.id
     if (newProjectId && currentRouteId !== newProjectId) {
       router.push(`/${newProjectId}`)
     }
@@ -128,12 +121,8 @@ export const useGanttChartView = () => {
         // ユーザーがログインした場合、プロジェクトリストを読み込む
         await fetchProjects()
 
-        const routeId = Array.isArray(route.params.id)
-          ? route.params.id[0]
-          : route.params.id
-        const targetProject = routeId
-          ? projects.value.find((p) => p.id === routeId)
-          : undefined
+        const routeId = Array.isArray(route.params.id) ? route.params.id[0] : route.params.id
+        const targetProject = routeId ? projects.value.find((p) => p.id === routeId) : undefined
 
         if (targetProject) {
           projectId.value = targetProject.id
@@ -151,9 +140,7 @@ export const useGanttChartView = () => {
     { immediate: true }, // コンポーネントのマウント時に即時実行する
   )
 
-  const handleTaskUpdate = async (
-    e: CustomEvent<moguchart.TaskUpdateEventDetail>,
-  ) => {
+  const handleTaskUpdate = async (e: CustomEvent<moguchart.TaskUpdateEventDetail>) => {
     if (e.detail.isDragging) {
       return
     }
@@ -179,9 +166,7 @@ export const useGanttChartView = () => {
     end: '',
   })
 
-  const handleTaskDblClick = (
-    e: CustomEvent<moguchart.TaskClickEventDetail>,
-  ) => {
+  const handleTaskDblClick = (e: CustomEvent<moguchart.TaskClickEventDetail>) => {
     const detail = e.detail
     const taskId = String(detail.task.id)
     const row = rows.value.find((r) => r.tasks.some((t) => t.id === taskId))
@@ -236,9 +221,7 @@ export const useGanttChartView = () => {
     await loadData(projectId.value)
   }
 
-  const handleRowReordered = async (
-    e: CustomEvent<moguchart.RowReorderEventDetail>,
-  ) => {
+  const handleRowReordered = async (e: CustomEvent<moguchart.RowReorderEventDetail>) => {
     setIsLoading(true)
     try {
       const orderedRows = e.detail.rows.map((row, index) => ({
@@ -311,13 +294,7 @@ export const useGanttChartView = () => {
     setTimeout(() => {
       // 名前を含む要素を探す (XPath)
       const xpath = `//div[text()="${name}"] | //span[text()="${name}"]`
-      const result = document.evaluate(
-        xpath,
-        document,
-        null,
-        XPathResult.ORDERED_NODE_SNAPSHOT_TYPE,
-        null,
-      )
+      const result = document.evaluate(xpath, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null)
 
       let target: HTMLElement | null = null
       if (result.snapshotLength > 0) {
@@ -372,9 +349,7 @@ export const useGanttChartView = () => {
     height: '0px',
   })
 
-  const handleRowHeaderDblClick = (
-    e: CustomEvent<moguchart.RowHeaderDblClickEventDetail>,
-  ) => {
+  const handleRowHeaderDblClick = (e: CustomEvent<moguchart.RowHeaderDblClickEventDetail>) => {
     if (isReadOnly.value) return
     if (editingRowId.value !== null) return // Already editing
 
@@ -427,9 +402,7 @@ export const useGanttChartView = () => {
     isHidden: false,
   })
 
-  const handleRowHeaderContextMenu = (
-    e: CustomEvent<moguchart.RowHeaderContextMenuEventDetail>,
-  ) => {
+  const handleRowHeaderContextMenu = (e: CustomEvent<moguchart.RowHeaderContextMenuEventDetail>) => {
     e.preventDefault()
     if (isReadOnly.value) return
     const { row, event } = e.detail
@@ -450,9 +423,7 @@ export const useGanttChartView = () => {
 
   const handleAddRowAbove = async () => {
     if (contextMenu.value.rowId === null) return
-    const index = rows.value.findIndex(
-      (r) => Number(r.id) === contextMenu.value.rowId,
-    )
+    const index = rows.value.findIndex((r) => Number(r.id) === contextMenu.value.rowId)
     if (index !== -1) {
       await handleAddRow(index)
     }
@@ -460,9 +431,7 @@ export const useGanttChartView = () => {
 
   const handleAddRowBelow = async () => {
     if (contextMenu.value.rowId === null) return
-    const index = rows.value.findIndex(
-      (r) => Number(r.id) === contextMenu.value.rowId,
-    )
+    const index = rows.value.findIndex((r) => Number(r.id) === contextMenu.value.rowId)
     if (index !== -1) {
       await handleAddRow(index + 1)
     }
@@ -473,9 +442,7 @@ export const useGanttChartView = () => {
     if (rowId === null) return
 
     const targetRowIdStr = String(rowId)
-    const isMultiSelect =
-      selectedRowIds.value.includes(targetRowIdStr) &&
-      selectedRowIds.value.length > 1
+    const isMultiSelect = selectedRowIds.value.includes(targetRowIdStr) && selectedRowIds.value.length > 1
 
     const targetRows = isMultiSelect
       ? rows.value.filter((r) => selectedRowIds.value.includes(String(r.id)))
@@ -484,8 +451,7 @@ export const useGanttChartView = () => {
     if (targetRows.length === 0) return
 
     // 右クリックされた行の状態を基準にする（反転させる）
-    const baseRow =
-      rows.value.find((r) => Number(r.id) === rowId) ?? targetRows[0]
+    const baseRow = rows.value.find((r) => Number(r.id) === rowId) ?? targetRows[0]
 
     if (!baseRow) return
     const newVisible = !(baseRow.visible ?? true)
@@ -528,9 +494,7 @@ export const useGanttChartView = () => {
     closeContextMenu()
 
     const targetRowIdStr = String(rowId)
-    const isMultiSelect =
-      selectedRowIds.value.includes(targetRowIdStr) &&
-      selectedRowIds.value.length > 1
+    const isMultiSelect = selectedRowIds.value.includes(targetRowIdStr) && selectedRowIds.value.length > 1
 
     if (isMultiSelect) {
       const count = selectedRowIds.value.length
@@ -576,9 +540,7 @@ export const useGanttChartView = () => {
   // --- プロジェクト追加/編集関連 ---
   const isProjectListDialogVisible = ref(false)
 
-  const handleRowSelectionChange = (
-    e: CustomEvent<moguchart.RowSelectionChangeEventDetail>,
-  ) => {
+  const handleRowSelectionChange = (e: CustomEvent<moguchart.RowSelectionChangeEventDetail>) => {
     selectedRowIds.value = e.detail.selectedIds
   }
 

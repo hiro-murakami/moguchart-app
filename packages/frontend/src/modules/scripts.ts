@@ -19,10 +19,7 @@ import type {
 import { httpsCallable } from 'firebase/functions'
 
 const callFunction = async <T>(name: FunctionName, param = {}) => {
-  const callable = httpsCallable<FunctionParam, FunctionResult>(
-    functions,
-    'gantt-functions',
-  )
+  const callable = httpsCallable<FunctionParam, FunctionResult>(functions, 'gantt-functions')
 
   try {
     const result = await callable({ name, param })

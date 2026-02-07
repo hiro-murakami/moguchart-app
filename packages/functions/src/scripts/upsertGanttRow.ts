@@ -1,17 +1,9 @@
 import { Prisma } from '@prisma/client'
 import type { UpsertGanttRow, GanttRow } from '../types/shared'
-import {
-  getCreateCommonColumns,
-  getUpdateCommonColumns,
-  prisma,
-} from './common/commonFunctions'
+import { getCreateCommonColumns, getUpdateCommonColumns, prisma } from './common/commonFunctions'
 import { fromGanttRow } from './common/converters'
 
-const executeUpsert = async (
-  tx: Prisma.TransactionClient,
-  row: GanttRow,
-  email?: string,
-) => {
+const executeUpsert = async (tx: Prisma.TransactionClient, row: GanttRow, email?: string) => {
   const data = fromGanttRow(row)
   // id はDB側で自動採番されるので入力データからは除外する
   const { id, ...createOrUpdateData } = data
@@ -52,11 +44,7 @@ const upsertGanttRow: UpsertGanttRow = async (row, email?: string) => {
   }
 
   // 単一更新
-  return await executeUpsert(
-    prisma as unknown as Prisma.TransactionClient,
-    row,
-    email,
-  )
+  return await executeUpsert(prisma as unknown as Prisma.TransactionClient, row, email)
 }
 
 export default upsertGanttRow

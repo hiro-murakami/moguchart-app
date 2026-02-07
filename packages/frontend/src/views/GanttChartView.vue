@@ -42,9 +42,7 @@ const {
   toggleRowVisibility,
 } = useGanttChartView()
 
-const currentProject = computed(() =>
-  projects.value.find((p) => p.id === projectId.value),
-)
+const currentProject = computed(() => projects.value.find((p) => p.id === projectId.value))
 </script>
 
 <template>
@@ -62,10 +60,7 @@ const currentProject = computed(() =>
             <span class="text-h6">{{ currentProject.name }}</span>
             <RoleChip :role="currentProject.role" class="ml-2" />
           </div>
-          <div
-            v-if="currentProject.attribute.description"
-            class="text-caption text-medium-emphasis"
-          >
+          <div v-if="currentProject.attribute.description" class="text-caption text-medium-emphasis">
             {{ currentProject.attribute.description }}
           </div>
         </div>
@@ -116,30 +111,13 @@ const currentProject = computed(() =>
       </div>
 
       <div v-if="!isReadOnly" class="mt-2">
-        <v-btn
-          color="primary"
-          variant="text"
-          prepend-icon="mdi-plus"
-          @click="handleAddRow()"
-        >
-          行追加
-        </v-btn>
+        <v-btn color="primary" variant="text" prepend-icon="mdi-plus" @click="handleAddRow()"> 行追加 </v-btn>
       </div>
     </template>
 
-    <div
-      v-else
-      class="d-flex flex-column align-center justify-center flex-grow-1"
-    >
-      <img
-        :src="splashImage"
-        height="500"
-        class="splash-image mb-6"
-        alt="MoguChart"
-      />
-      <p class="text-subtitle-1 text-medium-emphasis mb-8">
-        プロジェクトを選択してガントチャートを表示します
-      </p>
+    <div v-else class="d-flex flex-column align-center justify-center flex-grow-1">
+      <img :src="splashImage" height="500" class="splash-image mb-6" alt="MoguChart" />
+      <p class="text-subtitle-1 text-medium-emphasis mb-8">プロジェクトを選択してガントチャートを表示します</p>
       <v-btn
         color="primary"
         size="large"
@@ -164,13 +142,7 @@ const currentProject = computed(() =>
       @toggle-visibility="toggleRowVisibility"
     />
 
-    <TaskEditDialog
-      v-model="isDialogVisible"
-      :task="editingTask"
-      :rows="rows"
-      @save="saveTask"
-      @delete="deleteTask"
-    />
+    <TaskEditDialog v-model="isDialogVisible" :task="editingTask" :rows="rows" @save="saveTask" @delete="deleteTask" />
 
     <ProjectListDialog
       v-model="isProjectListDialogVisible"

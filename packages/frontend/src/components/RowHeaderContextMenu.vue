@@ -24,11 +24,7 @@ const isVisible = computed({
 })
 
 const deleteLabel = computed(() => {
-  if (
-    props.rowId != null &&
-    props.selectedRowIds?.includes(String(props.rowId)) &&
-    props.selectedRowIds.length > 1
-  ) {
+  if (props.rowId != null && props.selectedRowIds?.includes(String(props.rowId)) && props.selectedRowIds.length > 1) {
     return `選択した${props.selectedRowIds.length}行を削除`
   }
   return '行を削除'
@@ -62,16 +58,8 @@ const visibilityLabel = computed(() => {
   >
     <v-menu v-model="isVisible" activator="parent">
       <v-list density="compact">
-        <v-list-item
-          prepend-icon="mdi-arrow-up"
-          title="上に行を追加"
-          @click="emit('add-row-above')"
-        />
-        <v-list-item
-          prepend-icon="mdi-arrow-down"
-          title="下に行を追加"
-          @click="emit('add-row-below')"
-        />
+        <v-list-item prepend-icon="mdi-arrow-up" title="上に行を追加" @click="emit('add-row-above')" />
+        <v-list-item prepend-icon="mdi-arrow-down" title="下に行を追加" @click="emit('add-row-below')" />
         <v-divider />
         <v-list-item
           :prepend-icon="isHidden ? 'mdi-eye' : 'mdi-eye-off'"
@@ -79,11 +67,7 @@ const visibilityLabel = computed(() => {
           @click="emit('toggle-visibility')"
         />
         <v-divider />
-        <v-list-item
-          prepend-icon="mdi-delete"
-          :title="deleteLabel"
-          @click="emit('delete-row')"
-        />
+        <v-list-item prepend-icon="mdi-delete" :title="deleteLabel" @click="emit('delete-row')" />
       </v-list>
     </v-menu>
   </div>

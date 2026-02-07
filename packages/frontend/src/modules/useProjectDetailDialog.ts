@@ -12,10 +12,7 @@ export type ProjectDetailDialogEmits = {
   (e: 'save', project: Partial<Project>): void
 }
 
-export function useProjectDetailDialog(
-  props: ProjectDetailDialogProps,
-  emit: ProjectDetailDialogEmits,
-) {
+export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: ProjectDetailDialogEmits) {
   const form = ref<VForm | null>(null)
   const formValid = ref(false)
   const localName = ref('')
@@ -28,9 +25,7 @@ export function useProjectDetailDialog(
   const localViewers = ref<string[]>([])
 
   const isEdit = computed(() => !!props.project)
-  const title = computed(() =>
-    isEdit.value ? 'プロジェクト編集' : 'プロジェクト追加',
-  )
+  const title = computed(() => (isEdit.value ? 'プロジェクト編集' : 'プロジェクト追加'))
 
   watch(
     () => props.modelValue,

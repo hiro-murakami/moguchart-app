@@ -1,10 +1,7 @@
 import { getUpdateCommonColumns, prisma } from './common/commonFunctions'
 import type { UpdateGanttRowOrder } from '../types/shared'
 
-const updateGanttRowOrder: UpdateGanttRowOrder = async (
-  rowOrders,
-  email?: string,
-) => {
+const updateGanttRowOrder: UpdateGanttRowOrder = async (rowOrders, email?: string) => {
   const updates = rowOrders.map((rowOrder) =>
     prisma.ganttRow.update({
       where: { id: rowOrder.id },

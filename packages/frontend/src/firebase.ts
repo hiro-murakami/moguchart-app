@@ -1,10 +1,6 @@
 import { initializeApp, type FirebaseApp } from 'firebase/app'
 import { getAuth, type Auth } from 'firebase/auth'
-import {
-  getFunctions,
-  connectFunctionsEmulator,
-  type Functions,
-} from 'firebase/functions'
+import { getFunctions, connectFunctionsEmulator, type Functions } from 'firebase/functions'
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,

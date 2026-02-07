@@ -26,11 +26,7 @@ const { user, signIn, signOut } = useAuth()
         <router-view v-if="user" />
         <LoginPrompt v-else />
       </v-main>
-      <v-overlay
-        v-model="isLoading"
-        class="align-center justify-center"
-        persistent
-      >
+      <v-overlay v-model="isLoading" class="align-center justify-center" persistent>
         <v-progress-circular indeterminate size="64" />
       </v-overlay>
     </v-app>

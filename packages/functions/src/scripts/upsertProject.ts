@@ -1,9 +1,5 @@
 import type { UpsertProject } from '../types/shared'
-import {
-  getCreateCommonColumns,
-  getUpdateCommonColumns,
-  prisma,
-} from './common/commonFunctions'
+import { getCreateCommonColumns, getUpdateCommonColumns, prisma } from './common/commonFunctions'
 import { Prisma, PrismaClient } from '@prisma/client'
 
 type PrismaTransactionClient = Omit<

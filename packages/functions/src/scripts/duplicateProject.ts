@@ -2,10 +2,7 @@ import type { DuplicateProject } from '../types/shared'
 import { prisma } from './common/commonFunctions'
 import { _upsertProject } from './upsertProject'
 
-const duplicateProject: DuplicateProject = async (
-  { originalProjectId, newProjectData },
-  email?,
-) => {
+const duplicateProject: DuplicateProject = async ({ originalProjectId, newProjectData }, email?) => {
   // 元のプロジェクトの情報を取得
   const originalRows = await prisma.ganttRow.findMany({
     where: { projectId: originalProjectId },

@@ -1,9 +1,5 @@
 import type { UpsertGanttTask } from '../types/shared'
-import {
-  getCreateCommonColumns,
-  getUpdateCommonColumns,
-  prisma,
-} from './common/commonFunctions'
+import { getCreateCommonColumns, getUpdateCommonColumns, prisma } from './common/commonFunctions'
 import { fromGanttTask } from './common/converters'
 
 const upsertGanttTask: UpsertGanttTask = async (task, email?: string) => {

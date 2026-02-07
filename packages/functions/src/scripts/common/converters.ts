@@ -1,17 +1,6 @@
-import {
-  GanttRow as PrismaGanttRow,
-  GanttTask as PrismaGanttTask,
-  Project as PrismaProject,
-} from '@prisma/client'
+import { GanttRow as PrismaGanttRow, GanttTask as PrismaGanttTask, Project as PrismaProject } from '@prisma/client'
 import { omit } from 'lodash'
-import type {
-  GanttRow,
-  GanttTask,
-  Project,
-  Role,
-  Authority,
-  ProjectAttribute,
-} from '../../types/shared'
+import type { GanttRow, GanttTask, Project, Role, Authority, ProjectAttribute } from '../../types/shared'
 import { toDateString, toDateTimeString } from './commonFunctions'
 
 type CommonColumns = 'createdBy' | 'createdAt' | 'updatedBy' | 'updatedAt'
@@ -24,9 +13,7 @@ export const toGanttTask = (task: PrismaGanttTask): GanttTask => {
   }
 }
 
-export const fromGanttTask = (
-  task: GanttTask,
-): Omit<PrismaGanttTask, CommonColumns> => {
+export const fromGanttTask = (task: GanttTask): Omit<PrismaGanttTask, CommonColumns> => {
   return {
     ...task,
     start: new Date(task.start),
@@ -34,18 +21,14 @@ export const fromGanttTask = (
   }
 }
 
-export const toGanttRow = (
-  row: PrismaGanttRow & { tasks: PrismaGanttTask[] },
-): GanttRow => {
+export const toGanttRow = (row: PrismaGanttRow & { tasks: PrismaGanttTask[] }): GanttRow => {
   return {
     ...omit(row, ['createdBy', 'createdAt', 'updatedBy', 'updatedAt']),
     tasks: row.tasks.map(toGanttTask),
   }
 }
 
-export const fromGanttRow = (
-  row: GanttRow,
-): Omit<PrismaGanttRow, CommonColumns> => {
+export const fromGanttRow = (row: GanttRow): Omit<PrismaGanttRow, CommonColumns> => {
   return {
     // tasksはリレーションデータなので、Rowテーブルの更新データからは除外する
     ...omit(row, 'tasks'),

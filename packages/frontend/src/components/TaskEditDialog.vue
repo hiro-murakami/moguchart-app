@@ -60,22 +60,14 @@ const handleDelete = async () => {
 </script>
 
 <template>
-  <v-dialog
-    :model-value="modelValue"
-    @update:model-value="emit('update:modelValue', $event)"
-    max-width="500px"
-  >
+  <v-dialog :model-value="modelValue" @update:model-value="emit('update:modelValue', $event)" max-width="500px">
     <v-card>
       <v-card-title>タスク編集</v-card-title>
       <v-card-text>
         <v-container>
           <v-row>
             <v-col cols="12">
-              <v-text-field
-                v-model="localTask.name"
-                label="タスク名"
-                autocomplete="off"
-              ></v-text-field>
+              <v-text-field v-model="localTask.name" label="タスク名" autocomplete="off"></v-text-field>
             </v-col>
             <v-col cols="12">
               <v-select
@@ -88,35 +80,18 @@ const handleDelete = async () => {
               ></v-select>
             </v-col>
             <v-col cols="12" sm="6">
-              <v-text-field
-                v-model="localTask.start"
-                label="開始日"
-                type="date"
-              ></v-text-field>
+              <v-text-field v-model="localTask.start" label="開始日" type="date"></v-text-field>
             </v-col>
             <v-col cols="12" sm="6">
-              <v-text-field
-                v-model="localTask.end"
-                label="終了日"
-                type="date"
-              ></v-text-field>
+              <v-text-field v-model="localTask.end" label="終了日" type="date"></v-text-field>
             </v-col>
           </v-row>
         </v-container>
       </v-card-text>
       <v-card-actions>
-        <v-btn
-          v-if="localTask.id !== '0'"
-          color="error"
-          variant="text"
-          @click="handleDelete"
-        >
-          削除
-        </v-btn>
+        <v-btn v-if="localTask.id !== '0'" color="error" variant="text" @click="handleDelete"> 削除 </v-btn>
         <v-spacer></v-spacer>
-        <v-btn color="blue-darken-1" variant="text" @click="close">
-          キャンセル
-        </v-btn>
+        <v-btn color="blue-darken-1" variant="text" @click="close"> キャンセル </v-btn>
         <v-btn color="blue-darken-1" variant="text" @click="save"> 保存 </v-btn>
       </v-card-actions>
     </v-card>

@@ -10,19 +10,14 @@ const inputRules = {
     }
     return !!value || message.ERROR_INPUT_REQUIRE
   },
-  within: (max: number) => (value: string) =>
-    !value || value.length <= max || message.ERROR_INPUT_WITHIN(max),
+  within: (max: number) => (value: string) => !value || value.length <= max || message.ERROR_INPUT_WITHIN(max),
   length: (length: number) => (value: string) =>
     !value || value.length === length || message.ERROR_INPUT_LENGTH(length),
   isMailAddress: (value: string) =>
-    !value ||
-    /^[\w\-._]+@[\w\-._]+\.[A-Za-z]+$/.test(value) ||
-    message.ERROR_INVALID_MAIL_ADDRESS,
+    !value || /^[\w\-._]+@[\w\-._]+\.[A-Za-z]+$/.test(value) || message.ERROR_INVALID_MAIL_ADDRESS,
   areMailAddresses: (values: string[]) => {
     if (!values || values.length === 0) return true
-    const hasInvalid = values.some(
-      (value) => !/^[\w\-._]+@[\w\-._]+\.[A-Za-z]+$/.test(value),
-    )
+    const hasInvalid = values.some((value) => !/^[\w\-._]+@[\w\-._]+\.[A-Za-z]+$/.test(value))
     return !hasInvalid || message.ERROR_INVALID_MAIL_ADDRESS
   },
   dateBefore: (target: string) => (value: string) => {

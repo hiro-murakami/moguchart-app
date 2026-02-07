@@ -43,11 +43,7 @@ watch(
 </script>
 
 <template>
-  <v-dialog
-    :model-value="modelValue"
-    @update:model-value="emit('update:modelValue', $event)"
-    max-width="700px"
-  >
+  <v-dialog :model-value="modelValue" @update:model-value="emit('update:modelValue', $event)" max-width="700px">
     <v-card>
       <v-card-title>{{ title }}</v-card-title>
       <v-card-text>
@@ -79,21 +75,14 @@ watch(
                       />
                     </v-col>
                     <v-col cols="12">
-                      <v-textarea
-                        v-model="localDescription"
-                        label="説明"
-                        auto-grow
-                      />
+                      <v-textarea v-model="localDescription" label="説明" auto-grow />
                     </v-col>
                     <v-col cols="6">
                       <v-text-field
                         v-model="localStart"
                         label="開始日"
                         type="date"
-                        :rules="[
-                          inputRules.required,
-                          inputRules.dateBefore(localEnd),
-                        ]"
+                        :rules="[inputRules.required, inputRules.dateBefore(localEnd)]"
                       />
                     </v-col>
                     <v-col cols="6">
@@ -101,10 +90,7 @@ watch(
                         v-model="localEnd"
                         label="終了日"
                         type="date"
-                        :rules="[
-                          inputRules.required,
-                          inputRules.dateAfter(localStart),
-                        ]"
+                        :rules="[inputRules.required, inputRules.dateAfter(localStart)]"
                       />
                     </v-col>
                     <v-col cols="12">
@@ -157,9 +143,7 @@ watch(
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn color="blue-darken-1" variant="text" @click="close">
-          キャンセル
-        </v-btn>
+        <v-btn color="blue-darken-1" variant="text" @click="close"> キャンセル </v-btn>
         <v-btn color="blue-darken-1" variant="text" @click="save"> OK </v-btn>
       </v-card-actions>
     </v-card>

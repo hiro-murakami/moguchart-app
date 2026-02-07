@@ -14,50 +14,39 @@ export const prisma = new PrismaClient()
  * @param {FirebaseFunction} targetFunctions 実行する関数情報
  * @return {Function} プロキシ関数
  */
-export const setupFirebaseFunction = (
-  targetFunctions: FirebaseFunction,
-): Function => {
+export const setupFirebaseFunction = (targetFunctions: FirebaseFunction): Function => {
   // FYI:onCallを使うことで、Authorizationヘッダに認証済みのトークンが設定されていることが自動でチェックできる
-  return functions.https.onCall(
-    { region: 'asia-northeast1', cors: true },
-    async (data) => {
-      functions.logger.log('request:', data)
+  return functions.https.onCall({ region: 'asia-northeast1', cors: true }, async (data) => {
+    functions.logger.log('request:', data)
 
-      // 認証チェック
-      // Authorizationヘッダがない、または不正な値が設定されていた場合はエラーとする
-      if (!data.auth) {
-        throw new Error('認証されていません')
-      }
+    // 認証チェック
+    // Authorizationヘッダがない、または不正な値が設定されていた場合はエラーとする
+    if (!data.auth) {
+      throw new Error('認証されていません')
+    }
 
-      // メイン処理を実行する
-      const result: FunctionResult = {
-        status: 'succeeded',
-      }
+    // メイン処理を実行する
+    const result: FunctionResult = {
+      status: 'succeeded',
+    }
 
-      const requestData = data.data as FunctionParam
+    const requestData = data.data as FunctionParam
 
-      await targetFunctions[requestData.name](
-        requestData.param,
-        data.auth.token.email,
-      )
-        .then((resultData: any) => {
-          result.data = resultData
-        })
-        .catch((e: Error) => {
-          result.status = 'failed'
-          result.message = e.message
-        })
+    await targetFunctions[requestData.name](requestData.param, data.auth.token.email)
+      .then((resultData: any) => {
+        result.data = resultData
+      })
+      .catch((e: Error) => {
+        result.status = 'failed'
+        result.message = e.message
+      })
 
-      functions.logger.log('response:', result)
-      return result
-    },
-  )
+    functions.logger.log('response:', result)
+    return result
+  })
 }
 
-export const toDateString = (
-  value: Date | dayjs.Dayjs,
-  format: string = 'YYYY-MM-DD',
-): string => {
+export const toDateString = (value: Date | dayjs.Dayjs, format: string = 'YYYY-MM-DD'): string => {
   return dayjs(value).format(format)
 }
 
