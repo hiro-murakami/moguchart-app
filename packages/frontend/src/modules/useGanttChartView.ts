@@ -151,6 +151,7 @@ export const useGanttChartView = () => {
       name: e.detail.name || '',
       start: toDateString(e.detail.start),
       end: toDateString(e.detail.end),
+      attribute: {},
     }
     await upsertGanttTask(data)
     await loadData(projectId.value)
@@ -209,6 +210,7 @@ export const useGanttChartView = () => {
       name: taskData.name,
       start: taskData.start,
       end: taskData.end,
+      attribute: {},
     }
     await upsertGanttTask(data)
     isDialogVisible.value = false
@@ -258,6 +260,7 @@ export const useGanttChartView = () => {
         order: targetIndex + 1,
         projectId: projectId.value,
         visible: true,
+        attribute: {},
         tasks: [],
       })) as number
 
@@ -334,6 +337,7 @@ export const useGanttChartView = () => {
       order: (row as any).order ?? 0,
       projectId: projectId.value,
       visible: row.visible || true,
+      attribute: {},
       tasks: [],
     })
     await loadData(projectId.value)
@@ -465,6 +469,7 @@ export const useGanttChartView = () => {
           order: (row as any).order ?? 0,
           projectId: projectId.value,
           visible: newVisible,
+          attribute: {},
           tasks: [],
         })),
       )

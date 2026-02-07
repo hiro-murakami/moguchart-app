@@ -21,7 +21,6 @@ declare module 'vue' {
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     RowAddDialog: typeof import('./src/components/RowAddDialog.vue')['default']
-    RowDeleteDialog: typeof import('./src/components/RowDeleteDialog.vue')['default']
     RowHeaderContextMenu: typeof import('./src/components/RowHeaderContextMenu.vue')['default']
     Snackbar: typeof import('./src/components/Snackbar.vue')['default']
     TaskEditDialog: typeof import('./src/components/TaskEditDialog.vue')['default']

@@ -49,6 +49,8 @@ model GanttRow {
   order     Int      @default(0)
   /// 表示フラグ
   visible   Boolean  @default(true)
+  /// 属性
+  attribute Json     @default("{}")
   /// 作成者email
   createdBy String?  @default("system")
   /// 作成日時
@@ -76,6 +78,8 @@ model GanttTask {
   start     DateTime
   /// 終了日時
   end       DateTime
+  /// 属性
+  attribute Json     @default("{}")
   /// 作成者email
   createdBy String?  @default("system")
   /// 作成日時

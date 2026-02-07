@@ -1,6 +1,15 @@
 import { GanttRow as PrismaGanttRow, GanttTask as PrismaGanttTask, Project as PrismaProject } from '@prisma/client'
 import { omit } from 'lodash'
-import type { GanttRow, GanttTask, Project, Role, Authority, ProjectAttribute } from '../../types/shared'
+import type {
+  GanttRow,
+  GanttTask,
+  Project,
+  Role,
+  Authority,
+  ProjectAttribute,
+  TaskAttribute,
+  RowAttribute,
+} from '../../types/shared'
 import { toDateString, toDateTimeString } from './commonFunctions'
 
 type CommonColumns = 'createdBy' | 'createdAt' | 'updatedBy' | 'updatedAt'
@@ -10,6 +19,7 @@ export const toGanttTask = (task: PrismaGanttTask): GanttTask => {
     ...omit(task, ['createdBy', 'createdAt', 'updatedBy', 'updatedAt']),
     start: toDateTimeString(task.start),
     end: toDateTimeString(task.end),
+    attribute: (task.attribute ?? {}) as TaskAttribute,
   }
 }
 
@@ -25,6 +35,7 @@ export const toGanttRow = (row: PrismaGanttRow & { tasks: PrismaGanttTask[] }): 
   return {
     ...omit(row, ['createdBy', 'createdAt', 'updatedBy', 'updatedAt']),
     tasks: row.tasks.map(toGanttTask),
+    attribute: (row.attribute ?? {}) as RowAttribute,
   }
 }
 

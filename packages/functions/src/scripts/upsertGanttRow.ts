@@ -6,7 +6,11 @@ import { fromGanttRow } from './common/converters'
 const executeUpsert = async (tx: Prisma.TransactionClient, row: GanttRow, email?: string) => {
   const data = fromGanttRow(row)
   // id はDB側で自動採番されるので入力データからは除外する
-  const { id, ...createOrUpdateData } = data
+  const { id, ...rawData } = data
+  const createOrUpdateData = {
+    ...rawData,
+    attribute: rawData.attribute as Prisma.InputJsonValue,
+  }
 
   if (id === 0) {
     // 新規作成

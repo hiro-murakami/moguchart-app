@@ -6,19 +6,6 @@ import { useProjectDetailDialog } from '../modules/useProjectDetailDialog'
 import { VColorInput } from 'vuetify/labs/VColorInput'
 import * as moguchart from '@mogura/moguchart'
 
-const patterns: moguchart.GanttTaskPattern[] = [
-  moguchart.PATTERN_DIAGONAL_STRIPE,
-  moguchart.PATTERN_DIAGONAL_STRIPE_REVERSE,
-  moguchart.PATTERN_VERTICAL_STRIPE,
-  moguchart.PATTERN_HORIZONTAL_STRIPE,
-  moguchart.PATTERN_CHECKERBOARD,
-  moguchart.PATTERN_DOTS,
-  moguchart.PATTERN_TRIANGLE,
-  moguchart.PATTERN_CIRCLE,
-  moguchart.PATTERN_GRID,
-  moguchart.PATTERN_DIAGONAL_GRID,
-]
-
 const props = defineProps<{
   modelValue: boolean
   project?: Project | null
@@ -208,7 +195,7 @@ watch(
                                 <v-col cols="12" sm="3">
                                   <v-select
                                     v-model="palette.pattern.type"
-                                    :items="patterns"
+                                    :items="moguchart.ALL_BAR_PATTERNS"
                                     item-title="type"
                                     item-value="type"
                                     label="タイプ"
@@ -218,7 +205,7 @@ watch(
                                     <template #selection="{ item }">
                                       <div class="d-flex align-center">
                                         <div
-                                          :style="`width: 80px; height: 16px; border: 1px solid #ccc; flex-shrink: 0; background-repeat: repeat; background-color: ${palette.color || '#ffffff'}; ${moguchart.getPatternStyle({ type: item.raw.type, color: palette.pattern.color || '#000000' })}`"
+                                          :style="`width: 80px; height: 16px; border: 1px solid #ccc; flex-shrink: 0; background-repeat: repeat; background-color: ${palette.color || '#ffffff'}; ${moguchart.getPatternStyle({ type: item.raw, color: palette.pattern.color || '#000000' })}`"
                                         ></div>
                                       </div>
                                     </template>
@@ -227,7 +214,7 @@ watch(
                                         <template #prepend>
                                           <div
                                             class="mr-2"
-                                            :style="`width: 40px; height: 16px; border: 1px solid #ccc; flex-shrink: 0; background-repeat: repeat; background-color: ${palette.color || '#ffffff'}; ${moguchart.getPatternStyle({ type: item.raw.type, color: palette.pattern.color || '#000000' })}`"
+                                            :style="`width: 40px; height: 16px; border: 1px solid #ccc; flex-shrink: 0; background-repeat: repeat; background-color: ${palette.color || '#ffffff'}; ${moguchart.getPatternStyle({ type: item.raw, color: palette.pattern.color || '#000000' })}`"
                                           ></div>
                                         </template>
                                       </v-list-item>

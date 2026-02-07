@@ -39,6 +39,15 @@ export type ProjectAttribute = {
   colorPalettes?: ColorPalette[]
 }
 
+export type RowAttribute = {
+  description?: string
+}
+
+export type TaskAttribute = {
+  description?: string
+  colorPalette?: ColorPalette
+}
+
 export type Authority = {
   owners?: string[]
   editors?: string[]
@@ -63,6 +72,7 @@ export interface GanttRow {
   name: string
   order: number
   visible: boolean
+  attribute: RowAttribute
   tasks: GanttTask[]
 }
 
@@ -72,6 +82,7 @@ export interface GanttTask {
   name: string
   start: string
   end: string
+  attribute: TaskAttribute
 }
 
 export type GanttRowOrder = {
