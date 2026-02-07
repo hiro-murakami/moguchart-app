@@ -1,4 +1,4 @@
-import type { Project } from '@functions/types/shared'
+import type { ColorPalette, Project } from '@functions/types/shared'
 import { computed, nextTick, ref, watch } from 'vue'
 import type { VForm } from 'vuetify/components'
 
@@ -23,6 +23,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
   const localOwners = ref<string[]>([])
   const localEditors = ref<string[]>([])
   const localViewers = ref<string[]>([])
+  const localColorPalettes = ref<ColorPalette[]>([])
 
   const isEdit = computed(() => !!props.project)
   const title = computed(() => (isEdit.value ? 'プロジェクト編集' : 'プロジェクト追加'))
@@ -44,6 +45,9 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
             localEditors.value = editors || []
             localViewers.value = viewers || []
           }
+          localColorPalettes.value = props.project.attribute.colorPalettes
+            ? props.project.attribute.colorPalettes.map((p) => ({ ...p }))
+            : []
           await nextTick() // DOMの更新を待つ
           form.value?.validate()
         } else {
@@ -56,6 +60,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
           localOwners.value = []
           localEditors.value = []
           localViewers.value = []
+          localColorPalettes.value = []
           form.value?.resetValidation()
         }
       } else {
@@ -78,6 +83,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
       public: localPublic.value,
       attribute: {
         description: localDescription.value,
+        colorPalettes: localColorPalettes.value,
       },
       authority: {
         owners: localOwners.value,
@@ -102,6 +108,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
     localOwners,
     localEditors,
     localViewers,
+    localColorPalettes,
     title,
     close,
     save,

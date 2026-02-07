@@ -26,8 +26,17 @@ export type FunctionName =
 
 export type Role = 'owner' | 'editor' | 'viewer'
 
+export type ColorPalette = {
+  color: string
+  pattern?: {
+    type: string
+    color: string
+  }
+}
+
 export type ProjectAttribute = {
   description?: string
+  colorPalettes?: ColorPalette[]
 }
 
 export type Authority = {
