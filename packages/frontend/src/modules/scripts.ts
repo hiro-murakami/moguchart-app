@@ -55,7 +55,7 @@ export const upsertGanttTask: UpsertGanttTask = (param) => {
 }
 
 export const upsertGanttRow: UpsertGanttRow = (param) => {
-  return callFunction<number>('upsertGanttRow', param)
+  return callFunction<number | number[]>('upsertGanttRow', param)
 }
 
 export const deleteProject: DeleteProject = (id) => {

@@ -39,6 +39,7 @@ const {
   fetchProjects,
   handleRowSelectionChange,
   showHiddenRows,
+  toggleRowVisibility,
 } = useGanttChartView()
 
 const currentProject = computed(() =>
@@ -156,9 +157,11 @@ const currentProject = computed(() =>
       :y="contextMenu.y"
       :selected-row-ids="selectedRowIds"
       :row-id="contextMenu.rowId"
+      :is-hidden="contextMenu.isHidden"
       @add-row-above="handleAddRowAbove"
       @add-row-below="handleAddRowBelow"
       @delete-row="handleDeleteRowFromContextMenu"
+      @toggle-visibility="toggleRowVisibility"
     />
 
     <TaskEditDialog

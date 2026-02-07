@@ -269,14 +269,14 @@ export const useGanttChartView = () => {
       const newName = '新規行'
 
       // 新規行を追加
-      const newRowId = await upsertGanttRow({
+      const newRowId = (await upsertGanttRow({
         id: 0,
         name: newName,
         order: targetIndex + 1,
         projectId: projectId.value,
         visible: true,
         tasks: [],
-      })
+      })) as number
 
       // 挿入位置に関わらず順序を更新して正規化する
       // (既存のorderが連番でない場合に意図しない位置に入るのを防ぐため)
@@ -424,6 +424,7 @@ export const useGanttChartView = () => {
     x: 0,
     y: 0,
     rowId: null as number | null,
+    isHidden: false,
   })
 
   const handleRowHeaderContextMenu = (
@@ -439,6 +440,7 @@ export const useGanttChartView = () => {
       x: event.clientX,
       y: event.clientY,
       rowId: Number(row.id),
+      isHidden: !(row.visible ?? true),
     }
   }
 
@@ -463,6 +465,51 @@ export const useGanttChartView = () => {
     )
     if (index !== -1) {
       await handleAddRow(index + 1)
+    }
+  }
+
+  const toggleRowVisibility = async () => {
+    const rowId = contextMenu.value.rowId
+    if (rowId === null) return
+
+    const targetRowIdStr = String(rowId)
+    const isMultiSelect =
+      selectedRowIds.value.includes(targetRowIdStr) &&
+      selectedRowIds.value.length > 1
+
+    const targetRows = isMultiSelect
+      ? rows.value.filter((r) => selectedRowIds.value.includes(String(r.id)))
+      : rows.value.filter((r) => Number(r.id) === rowId)
+
+    if (targetRows.length === 0) return
+
+    // 右クリックされた行の状態を基準にする（反転させる）
+    const baseRow =
+      rows.value.find((r) => Number(r.id) === rowId) ?? targetRows[0]
+
+    if (!baseRow) return
+    const newVisible = !(baseRow.visible ?? true)
+
+    try {
+      // 一括更新
+      await upsertGanttRow(
+        targetRows.map((row) => ({
+          id: Number(row.id),
+          name: row.name,
+          order: (row as any).order ?? 0,
+          projectId: projectId.value,
+          visible: newVisible,
+          tasks: [],
+        })),
+      )
+      await loadData(projectId.value)
+      closeContextMenu()
+    } catch (err) {
+      console.error('Failed to toggle row visibility:', err)
+      alert({
+        title: 'エラー',
+        message: '行の表示切り替えに失敗しました。',
+      })
     }
   }
 
@@ -573,5 +620,6 @@ export const useGanttChartView = () => {
     fetchProjects,
     handleRowSelectionChange,
     showHiddenRows,
+    toggleRowVisibility,
   }
 }

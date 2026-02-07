@@ -7,6 +7,7 @@ const props = defineProps<{
   y: number
   selectedRowIds?: string[]
   rowId?: number | null
+  isHidden?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -14,6 +15,7 @@ const emit = defineEmits<{
   (e: 'add-row-above'): void
   (e: 'add-row-below'): void
   (e: 'delete-row'): void
+  (e: 'toggle-visibility'): void
 }>()
 
 const isVisible = computed({
@@ -30,6 +32,20 @@ const deleteLabel = computed(() => {
     return `選択した${props.selectedRowIds.length}行を削除`
   }
   return '行を削除'
+})
+
+const visibilityLabel = computed(() => {
+  const isMultiSelect =
+    props.rowId != null &&
+    props.selectedRowIds?.includes(String(props.rowId)) &&
+    (props.selectedRowIds?.length ?? 0) > 1
+
+  if (isMultiSelect) {
+    return props.isHidden
+      ? `選択した${props.selectedRowIds!.length}行を表示`
+      : `選択した${props.selectedRowIds!.length}行を非表示`
+  }
+  return props.isHidden ? '行を表示' : '行を非表示'
 })
 </script>
 
@@ -55,6 +71,12 @@ const deleteLabel = computed(() => {
           prepend-icon="mdi-arrow-down"
           title="下に行を追加"
           @click="emit('add-row-below')"
+        />
+        <v-divider />
+        <v-list-item
+          :prepend-icon="isHidden ? 'mdi-eye' : 'mdi-eye-off'"
+          :title="visibilityLabel"
+          @click="emit('toggle-visibility')"
         />
         <v-divider />
         <v-list-item
