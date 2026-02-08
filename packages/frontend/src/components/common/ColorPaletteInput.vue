@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { VColorInput } from 'vuetify/labs/VColorInput'
 import * as moguchart from '@mogura/moguchart'
 import type { ColorPalette } from '@functions/types/shared'
+import ColorInput from './ColorInput.vue'
 
 const props = defineProps<{
   modelValue: ColorPalette
@@ -29,129 +29,114 @@ const pattern = computed({
 })
 
 const patternType = computed({
-  get: () => props.modelValue.pattern?.type,
+  get: () => props.modelValue.pattern?.type ?? 'none',
   set: (val) => {
-    if (props.modelValue.pattern) {
+    if (!val || val === 'none') {
+      const { pattern: _, ...rest } = props.modelValue
+      emit('update:modelValue', rest)
+    } else {
       emit('update:modelValue', {
         ...props.modelValue,
-        pattern: { ...props.modelValue.pattern, type: val as string },
+        pattern: {
+          type: val as string,
+          color: props.modelValue.pattern?.color ?? '#ffffff',
+        },
       })
     }
   },
 })
 
 const patternColor = computed({
-  get: () => props.modelValue.pattern?.color,
+  get: () => props.modelValue.pattern?.color ?? '',
   set: (val) => {
-    if (props.modelValue.pattern) {
+    if (props.modelValue.pattern && val) {
       emit('update:modelValue', {
         ...props.modelValue,
-        pattern: { ...props.modelValue.pattern, color: val as string },
+        pattern: { ...props.modelValue.pattern, color: val },
       })
     }
   },
 })
 
-const addPattern = () => {
-  emit('update:modelValue', {
-    ...props.modelValue,
-    pattern: { type: 'dots', color: '#ffffff' },
-  })
-}
-
-const removePattern = () => {
-  // Create a new object without pattern property
-  const { pattern: _, ...rest } = props.modelValue
-  emit('update:modelValue', rest)
-}
+const patternOptions = computed(() => [
+  { type: 'none', label: 'なし' },
+  ...moguchart.ALL_BAR_PATTERNS.map((type) => ({ type, label: type })),
+])
 </script>
 
 <template>
   <v-card variant="outlined" class="pa-2">
-    <v-row dense align="center">
-      <v-col cols="auto">
-        <v-btn icon="mdi-delete" variant="text" color="error" size="small" @click="emit('delete')" />
-      </v-col>
-      <v-col>
+    <div class="d-flex">
+      <!-- プレビューエリア -->
+      <div class="mr-4 d-flex flex-column align-center justify-center">
+        <div
+          :style="`
+            width: 80px;
+            height: 40px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-repeat: repeat;
+            background-color: ${backgroundColor || '#ffffff'};
+            ${patternType && patternColor ? moguchart.getPatternStyle({ type: patternType, color: patternColor }) : ''}
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: ${color || '#000000'};
+            font-weight: bold;
+          `"
+        >
+          Sample
+        </div>
+        <v-btn icon="mdi-delete" variant="text" color="error" size="small" class="mt-2" @click="emit('delete')" />
+      </div>
+
+      <!-- 設定エリア -->
+      <div class="flex-grow-1">
         <v-row dense>
-          <v-col cols="12" sm="4">
-            <v-color-input
-              v-model="color"
-              label="文字色"
+          <v-col cols="12" sm="3">
+            <ColorInput v-model="color" label="文字" />
+          </v-col>
+          <v-col cols="12" sm="3">
+            <ColorInput v-model="backgroundColor" label="背景" />
+          </v-col>
+
+          <v-col cols="12" sm="3">
+            <v-select
+              v-model="patternType"
+              :items="patternOptions"
+              item-title="type"
+              item-value="type"
+              label="パターンタイプ"
               hide-details
               density="compact"
-              mode="hexa"
-              :modes="['hexa']"
-              prepend-icon=""
-              color-pip
-              show-swatches
-            />
-          </v-col>
-          <v-col cols="12" sm="4">
-            <v-color-input
-              v-model="backgroundColor"
-              label="背景色"
-              hide-details
-              density="compact"
-              mode="hexa"
-              :modes="['hexa']"
-              prepend-icon=""
-              color-pip
-              show-swatches
-            />
-          </v-col>
-          <v-col cols="12" sm="8" v-if="!pattern">
-            <v-btn variant="text" size="small" @click="addPattern"> パターン追加 </v-btn>
-          </v-col>
-          <template v-else>
-            <v-col cols="12" sm="3">
-              <v-select
-                v-model="patternType"
-                :items="moguchart.ALL_BAR_PATTERNS"
-                item-title="type"
-                item-value="type"
-                label="タイプ"
-                hide-details
-                density="compact"
-              >
-                <template #selection="{ item }">
-                  <div class="d-flex align-center">
+              variant="outlined"
+            >
+              <template #selection="{ item }">
+                <div class="d-flex align-center" v-if="item.raw.type !== 'none'">
+                  <div
+                    :style="`width: 60px; height: 24px; border: 1px solid #ccc; background-repeat: repeat; background-color: ${backgroundColor || '#ffffff'}; ${moguchart.getPatternStyle({ type: item.raw.type, color: patternColor || '#000000' })}`"
+                  ></div>
+                </div>
+                <div v-else>なし</div>
+              </template>
+              <template #item="{ props, item }">
+                <v-list-item v-bind="props" :title="item.raw.type === 'none' ? 'なし' : ''">
+                  <template #prepend v-if="item.raw.type !== 'none'">
                     <div
-                      :style="`width: 80px; height: 16px; border: 1px solid #ccc; flex-shrink: 0; background-repeat: repeat; background-color: ${backgroundColor || '#ffffff'}; ${moguchart.getPatternStyle({ type: item.raw, color: patternColor || '#000000' })}`"
+                      class="mr-2"
+                      :style="`width: 60px; height: 24px; border: 1px solid #ccc; background-repeat: repeat; background-color: ${backgroundColor || '#ffffff'}; ${moguchart.getPatternStyle({ type: item.raw.type, color: patternColor || '#000000' })}`"
                     ></div>
-                  </div>
-                </template>
-                <template #item="{ props, item }">
-                  <v-list-item v-bind="props" title="">
-                    <template #prepend>
-                      <div
-                        class="mr-2"
-                        :style="`width: 40px; height: 16px; border: 1px solid #ccc; flex-shrink: 0; background-repeat: repeat; background-color: ${backgroundColor || '#ffffff'}; ${moguchart.getPatternStyle({ type: item.raw, color: patternColor || '#000000' })}`"
-                      ></div>
-                    </template>
-                  </v-list-item>
-                </template>
-              </v-select>
-            </v-col>
-            <v-col cols="12" sm="4">
-              <v-color-input
-                v-model="patternColor"
-                label="パターンカラー"
-                hide-details
-                density="compact"
-                mode="hexa"
-                :modes="['hexa']"
-                prepend-icon=""
-                color-pip
-                show-swatches
-              />
-            </v-col>
-            <v-col cols="auto">
-              <v-btn icon="mdi-close" variant="text" size="medium" density="compact" @click="removePattern" />
-            </v-col>
-          </template>
+                  </template>
+                </v-list-item>
+              </template>
+            </v-select>
+          </v-col>
+
+          <v-col cols="12" sm="3" v-if="patternType !== 'none'">
+            <ColorInput v-model="patternColor" label="パターン" />
+          </v-col>
         </v-row>
-      </v-col>
-    </v-row>
+      </div>
+    </div>
   </v-card>
 </template>
