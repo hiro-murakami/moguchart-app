@@ -9,6 +9,25 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+/// ユーザー
+model User {
+  /// メールアドレス
+  email     String   @id
+  /// 表示名
+  displayName String?
+  /// 属性
+  attribute Json     @default("{}")
+  /// 作成者email
+  createdBy String?  @default("system")
+  /// 作成日時
+  createdAt DateTime? @default(now()) @db.Timestamp(3)
+  /// 更新者email
+  updatedBy String?  @default("system")
+  /// 更新日時
+  updatedAt DateTime? @default(now()) @db.Timestamp(3)
+}
+
+
 /// プロジェクト
 model Project {
   /// プロジェクトID
@@ -92,3 +111,4 @@ model GanttTask {
   /// 行
   row       GanttRow      @relation(fields: [rowId], references: [id], onDelete: Cascade)
 }
+

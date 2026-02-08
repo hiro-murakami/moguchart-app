@@ -10,11 +10,14 @@ import type {
   Project,
   SelectGanttChart,
   SelectProjects,
+  SelectUser,
   UpdateGanttRowOrder,
   UpsertGanttRow,
   UpsertGanttTask,
   UpsertProject,
+  UpsertUser,
   DuplicateProject,
+  User,
 } from '@functions/types/shared'
 import { httpsCallable } from 'firebase/functions'
 
@@ -77,4 +80,12 @@ export const upsertProject: UpsertProject = (param) => {
 
 export const duplicateProject: DuplicateProject = (param) => {
   return callFunction<string>('duplicateProject', param)
+}
+
+export const selectUser: SelectUser = (email) => {
+  return callFunction<User | null>('selectUser', email)
+}
+
+export const upsertUser: UpsertUser = (user) => {
+  return callFunction<void>('upsertUser', user)
 }

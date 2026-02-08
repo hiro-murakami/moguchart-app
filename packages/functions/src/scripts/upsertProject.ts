@@ -50,7 +50,7 @@ export const _upsertProject = async (
   }
 }
 
-const upsertProject: UpsertProject = async (project, email?: string) => {
+const upsertProject: UpsertProject = async (project, email) => {
   const result = await _upsertProject(prisma, project, email)
   return result.id
 }

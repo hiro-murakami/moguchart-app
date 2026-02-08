@@ -23,6 +23,8 @@ export type FunctionName =
   | 'updateGanttRowOrder'
   | 'upsertProject'
   | 'duplicateProject'
+  | 'selectUser'
+  | 'upsertUser'
 
 export type Role = 'owner' | 'editor' | 'viewer'
 
@@ -33,6 +35,10 @@ export type ColorPalette = {
     type: string
     color: string
   }
+}
+
+export type UserAttribute = {
+  theme?: 'light' | 'dark' | 'system'
 }
 
 export type ProjectAttribute = {
@@ -53,6 +59,12 @@ export type Authority = {
   owners?: string[]
   editors?: string[]
   viewers?: string[]
+}
+
+export interface User {
+  email: string
+  displayName?: string
+  attribute: UserAttribute
 }
 
 export interface Project {
@@ -108,5 +120,8 @@ export type DuplicateProject = (
   },
   email?: string,
 ) => Promise<string>
+
+export type SelectUser = (email: string) => Promise<User | null>
+export type UpsertUser = (user: User, email?: string) => Promise<void>
 
 // --- フロントエンドとバックエンドで実装を共有しない型 ---
