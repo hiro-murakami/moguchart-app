@@ -24,7 +24,7 @@ export const useUserStore = defineStore('user', {
     isAuthenticated(state): boolean {
       return !!state.firebaseUser
     },
-    currentTheme(state): string | undefined {
+    currentTheme(state): 'light' | 'dark' | 'system' | undefined {
       return state.user?.attribute.theme
     },
   },

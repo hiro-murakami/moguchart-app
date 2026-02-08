@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
+import { toDateString } from '@/modules/utils'
 import { useUserStore } from '@/stores/useUserStore'
 import type { User } from '@functions/types/shared'
+import { computed, ref, watch } from 'vue'
 
 const props = defineProps<{
   modelValue: boolean
@@ -63,13 +64,25 @@ const close = () => {
               <v-text-field label="メールアドレス" :model-value="user.email" readonly variant="filled" />
             </v-col>
             <v-col cols="12">
-              <v-text-field label="最終ログイン" :model-value="user.attribute.lastLoginAt" readonly variant="filled" />
+              <v-text-field
+                label="最終ログイン"
+                :model-value="toDateString(user.attribute.lastLoginAt, 'YYYY/MM/DD HH:mm:ss')"
+                readonly
+                variant="filled"
+              />
             </v-col>
             <v-col cols="12">
               <v-text-field v-model="localDisplayName" label="表示名" autofocus autocomplete="off" />
             </v-col>
             <v-col cols="12">
-              <v-select v-model="localTheme" :items="themeOptions" label="テーマ" />
+              <v-radio-group v-model="localTheme" inline label="テーマ" hide-details>
+                <v-radio
+                  v-for="option in themeOptions"
+                  :key="option.value"
+                  :label="option.title"
+                  :value="option.value"
+                ></v-radio>
+              </v-radio-group>
             </v-col>
           </v-row>
         </v-form>

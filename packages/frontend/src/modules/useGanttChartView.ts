@@ -9,7 +9,7 @@ import {
 import { useAlert } from '@/modules/useAlert'
 import { useConfirm } from '@/modules/useConfirm'
 import { useLoading } from '@/modules/useLoading'
-import { toDateTimeString } from '@/modules/utils'
+import { toDateString } from '@/modules/utils'
 import { useProjectStore } from '@/stores/useProjectStore'
 import { useUserStore } from '@/stores/useUserStore'
 import type { ColorPalette, GanttRow, GanttTask, TaskAttribute } from '@functions/types/shared'
@@ -64,6 +64,7 @@ export const useGanttChartView = () => {
     enableRowReordering: true,
     readOnly: isReadOnly.value,
     showHiddenRows: showHiddenRows.value,
+    theme: currentTheme.value,
   }))
 
   const alert = useAlert()
@@ -172,8 +173,8 @@ export const useGanttChartView = () => {
       id: e.detail.mode === 'copy' ? 0 : Number(e.detail.id),
       rowId: Number(e.detail.targetRowId),
       name: e.detail.name || '',
-      start: toDateTimeString(e.detail.start),
-      end: toDateTimeString(e.detail.end),
+      start: toDateString(e.detail.start),
+      end: toDateString(e.detail.end),
       attribute: {},
     }
 
@@ -220,8 +221,8 @@ export const useGanttChartView = () => {
         id: task.id,
         rowId: row.id,
         name: task.name || '',
-        start: toDateTimeString(task.start),
-        end: toDateTimeString(task.end),
+        start: toDateString(task.start),
+        end: toDateString(task.end),
         colorPalette: taskWithAttr.attribute?.colorPalette ? { ...taskWithAttr.attribute.colorPalette } : undefined,
       }
       isDialogVisible.value = true
@@ -613,7 +614,6 @@ export const useGanttChartView = () => {
     contextMenu,
     currentProject,
     showHiddenRows,
-    currentTheme,
 
     // methods
     handleTaskUpdate,

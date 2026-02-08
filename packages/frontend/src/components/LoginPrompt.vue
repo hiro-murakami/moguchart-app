@@ -16,7 +16,7 @@ const userStore = useUserStore()
             <p class="text-center">この機能を利用するにはログインが必要です。</p>
           </v-card-text>
           <v-card-actions class="justify-center">
-            <v-btn class="text-none" color="white" min-width="220" variant="flat" @click="userStore.signIn">
+            <v-btn class="text-none mb-2" color="white" min-width="220" variant="flat" @click="userStore.signIn">
               <template v-slot:prepend>
                 <GoogleIcon />
               </template>

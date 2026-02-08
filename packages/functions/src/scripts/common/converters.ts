@@ -10,15 +10,15 @@ import type {
   TaskAttribute,
   RowAttribute,
 } from '../../types/shared'
-import { toDateString, toDateTimeString } from './commonFunctions'
+import { toDateString } from './commonFunctions'
 
 type CommonColumns = 'createdBy' | 'createdAt' | 'updatedBy' | 'updatedAt'
 
 export const toGanttTask = (task: PrismaGanttTask): GanttTask => {
   return {
     ...omit(task, ['createdBy', 'createdAt', 'updatedBy', 'updatedAt']),
-    start: toDateTimeString(task.start),
-    end: toDateTimeString(task.end),
+    start: toDateString(task.start),
+    end: toDateString(task.end),
     attribute: (task.attribute ?? {}) as TaskAttribute,
   }
 }

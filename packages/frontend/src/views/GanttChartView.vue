@@ -17,7 +17,6 @@ const {
   contextMenu,
   currentProject,
   showHiddenRows,
-  currentTheme,
 
   // methods
   handleTaskUpdate,
@@ -80,7 +79,6 @@ const {
           :rows="rows"
           :selected-row-ids="selectedRowIds"
           :option="chartOption"
-          :theme="currentTheme"
           @task-update="handleTaskUpdate"
           @task-dblclick="handleTaskDblClick"
           @row-header-dblclick="handleRowHeaderDblClick"
@@ -160,14 +158,6 @@ const {
   flex-direction: column;
 }
 
-.chart-container {
-  display: block;
-  width: 100%;
-  overflow-x: auto;
-  border: 1px solid #444;
-  background: #1e1e1e;
-  box-sizing: border-box;
-}
 .row-edit-input {
   position: fixed;
   background: #333;

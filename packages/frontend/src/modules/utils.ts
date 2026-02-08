@@ -1,6 +1,6 @@
 import dayjs from 'dayjs'
 
-export const toDateString = (value?: string | Date | dayjs.Dayjs, format: string = 'YYYY-MM-DDTHH:mm:ss'): string => {
+export const toDateString = (value?: string | Date | dayjs.Dayjs, format: string = 'YYYY-MM-DD'): string => {
   return dayjs(value).format(format)
 }
 
