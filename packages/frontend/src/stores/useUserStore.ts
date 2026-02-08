@@ -10,6 +10,9 @@ import {
 } from 'firebase/auth'
 import { auth } from '@/firebase'
 import { toDateTimeString } from '@/modules/utils'
+import headerImageLight from '@/assets/header.light.png'
+import headerImageDark from '@/assets/header.dark.png'
+import vuetify from '@/plugins/vuetify'
 
 export const useUserStore = defineStore('user', {
   state: () => ({
@@ -26,6 +29,12 @@ export const useUserStore = defineStore('user', {
     },
     currentTheme(state): 'light' | 'dark' | 'system' | undefined {
       return state.user?.attribute.theme
+    },
+    headerImage(): string {
+      const currentTheme = this.currentTheme
+      if (currentTheme === 'light') return headerImageLight
+      if (currentTheme === 'dark') return headerImageDark
+      return vuetify.theme.global.current.value.dark ? headerImageDark : headerImageLight
     },
   },
 

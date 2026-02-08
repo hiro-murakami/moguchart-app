@@ -2,12 +2,11 @@
 import { provideLoading } from '@/modules/useLoading'
 import { useUserStore } from '@/stores/useUserStore'
 import { storeToRefs } from 'pinia'
-import headerImage from '@/assets/header.png'
 import { onMounted, ref } from 'vue'
 
 const { isLoading } = provideLoading()
 const userStore = useUserStore()
-const { user: appUser, firebaseUser, currentTheme } = storeToRefs(userStore)
+const { user: appUser, firebaseUser, headerImage, currentTheme } = storeToRefs(userStore)
 const showUserDetail = ref(false)
 
 onMounted(() => {
@@ -18,7 +17,7 @@ onMounted(() => {
 <template>
   <DialogProvider>
     <v-app :theme="currentTheme">
-      <v-app-bar>
+      <v-app-bar color="moguChartColor">
         <img :src="headerImage" height="34" class="header-image ml-4" />
         <v-spacer />
         <v-btn v-if="!firebaseUser" @click="userStore.signIn"> Login </v-btn>
@@ -26,7 +25,10 @@ onMounted(() => {
           <v-avatar class="mr-4 cursor-pointer" @click="showUserDetail = true">
             <v-img :src="firebaseUser.photoURL ?? ''" />
           </v-avatar>
-          <span>{{ appUser?.displayName ?? firebaseUser.displayName }}</span>
+          <div class="d-flex flex-column">
+            <span class="text-subtitle-2">{{ appUser?.displayName ?? firebaseUser.displayName }}</span>
+            <span class="text-caption text-medium-emphasis">{{ appUser?.email ?? firebaseUser.email }}</span>
+          </div>
           <v-btn class="ml-4" @click="userStore.signOut"> Logout </v-btn>
         </template>
       </v-app-bar>

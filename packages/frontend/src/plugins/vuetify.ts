@@ -15,5 +15,17 @@ import { createVuetify } from 'vuetify'
 export default createVuetify({
   theme: {
     defaultTheme: 'system',
+    themes: {
+      light: {
+        colors: {
+          moguChartColor: '#a7d1e5',
+        },
+      },
+      dark: {
+        colors: {
+          moguChartColor: '#507B80',
+        },
+      },
+    },
   },
 })

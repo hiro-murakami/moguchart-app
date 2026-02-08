@@ -151,9 +151,9 @@ const {
 
 <style scoped>
 .gantt-app {
-  padding: 50px;
+  padding: 30px;
   font-family: sans-serif;
-  min-height: 100vh;
+  min-height: calc(100vh - 64px);
   display: flex;
   flex-direction: column;
 }
