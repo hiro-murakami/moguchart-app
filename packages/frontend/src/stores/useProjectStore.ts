@@ -44,6 +44,7 @@ export const useProjectStore = defineStore('project', {
   actions: {
     async fetchProjects() {
       this.projects = await selectProjects()
+      return this.projects
     },
 
     setProjectId(id: string) {

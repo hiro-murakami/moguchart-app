@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { useAuth } from '@/modules/useAuth'
+import { useUserStore } from '@/stores/useUserStore'
 
-const { signIn } = useAuth()
+const userStore = useUserStore()
 </script>
 
 <template>
@@ -16,7 +16,7 @@ const { signIn } = useAuth()
             <p class="text-center">この機能を利用するにはログインが必要です。</p>
           </v-card-text>
           <v-card-actions class="justify-center">
-            <v-btn class="text-none" color="white" min-width="220" variant="flat" @click="signIn">
+            <v-btn class="text-none" color="white" min-width="220" variant="flat" @click="userStore.signIn">
               <template v-slot:prepend>
                 <GoogleIcon />
               </template>

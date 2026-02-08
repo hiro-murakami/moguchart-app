@@ -1,6 +1,6 @@
+import { PrismaClient } from '@prisma/client'
 import type { UpsertProject } from '../types/shared'
 import { getCreateCommonColumns, getUpdateCommonColumns, prisma } from './common/commonFunctions'
-import { Prisma, PrismaClient } from '@prisma/client'
 
 type PrismaTransactionClient = Omit<
   PrismaClient,
@@ -27,8 +27,8 @@ export const _upsertProject = async (
     ...data,
     start: new Date(data.start),
     end: new Date(data.end),
-    attribute: data.attribute as Prisma.InputJsonValue,
-    authority: data.authority as Prisma.InputJsonValue,
+    attribute: data.attribute,
+    authority: data.authority,
   }
 
   if (isNew) {

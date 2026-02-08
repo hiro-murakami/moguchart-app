@@ -2,27 +2,26 @@ import {
   deleteGanttRow,
   deleteGanttTask,
   selectGanttChart,
-  selectProjects,
   updateGanttRowOrder,
   upsertGanttRow,
   upsertGanttTask,
 } from '@/modules/scripts'
 import { useAlert } from '@/modules/useAlert'
-import { useAuth } from '@/modules/useAuth'
 import { useConfirm } from '@/modules/useConfirm'
 import { useLoading } from '@/modules/useLoading'
 import { toDateString } from '@/modules/utils'
-import type { GanttRow, GanttTask, Project, Role, ColorPalette, TaskAttribute } from '@functions/types/shared'
+import { useProjectStore } from '@/stores/useProjectStore'
+import { useUserStore } from '@/stores/useUserStore'
+import type { ColorPalette, GanttRow, GanttTask, TaskAttribute } from '@functions/types/shared'
 import * as moguchart from '@mogura/moguchart'
+import { storeToRefs } from 'pinia'
 import { computed, nextTick, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useProjectStore } from '@/stores/useProjectStore'
-import { storeToRefs } from 'pinia'
 
 export const useGanttChartView = () => {
-  const { user } = useAuth()
   const route = useRoute()
   const router = useRouter()
+  const userStore = useUserStore()
 
   // --- 設定値 ---
   const chartStartStr = ref('2025-12-15')
@@ -36,7 +35,7 @@ export const useGanttChartView = () => {
 
   // --- 状態 ---
   const projectStore = useProjectStore()
-  const { projects, currentProjectId: projectId, currentRole } = storeToRefs(projectStore)
+  const { projects, currentProjectId: projectId, currentRole, currentProject } = storeToRefs(projectStore)
   const { fetchProjects, setProjectId, clear: clearProjectStore } = projectStore
 
   const rows = ref<moguchart.GanttRow[]>([])
@@ -140,7 +139,7 @@ export const useGanttChartView = () => {
   })
 
   watch(
-    user,
+    () => userStore.user,
     async (newUser) => {
       if (newUser) {
         // ユーザーがログインした場合、プロジェクトリストを読み込む
@@ -611,6 +610,8 @@ export const useGanttChartView = () => {
     editingRowName,
     editingInputStyle,
     contextMenu,
+    currentProject,
+    showHiddenRows,
 
     // methods
     handleTaskUpdate,
@@ -632,7 +633,7 @@ export const useGanttChartView = () => {
     handleDeleteRowFromContextMenu,
     fetchProjects,
     handleRowSelectionChange,
-    showHiddenRows,
     toggleRowVisibility,
+    setProjectId,
   }
 }

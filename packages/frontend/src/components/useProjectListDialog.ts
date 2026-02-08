@@ -1,13 +1,15 @@
 import {
   deleteProject as deleteProjectScript,
   duplicateProject as duplicateProjectScript,
-  selectProjects,
   upsertProject,
 } from '@/modules/scripts'
 import { useConfirm } from '@/modules/useConfirm'
 import { useSnackbar } from '@/modules/useSnackbar'
 import type { Project } from '@functions/types/shared'
 import { ref, watch, type Ref } from 'vue'
+
+import { useProjectStore } from '@/stores/useProjectStore'
+import { storeToRefs } from 'pinia'
 
 export const useProjectListDialog = (
   props: { modelValue: boolean },
@@ -17,7 +19,8 @@ export const useProjectListDialog = (
     (e: 'update'): void
   },
 ) => {
-  const projects = ref<Project[]>([])
+  const projectStore = useProjectStore()
+  const { projects } = storeToRefs(projectStore)
   const loading = ref(false)
   const saving = ref(false)
   const deleting = ref(false)
@@ -30,7 +33,7 @@ export const useProjectListDialog = (
   const fetchProjects = async (isFirst: boolean = false) => {
     loading.value = true
     try {
-      projects.value = await selectProjects()
+      await projectStore.fetchProjects()
       if (!isFirst) {
         emit('update')
       }

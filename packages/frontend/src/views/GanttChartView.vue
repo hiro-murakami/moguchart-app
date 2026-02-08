@@ -1,24 +1,22 @@
 <script setup lang="ts">
-import { useGanttChartView } from '@/modules/useGanttChartView'
-import { computed } from 'vue'
 import splashImage from '@/assets/splash.png'
+import { useGanttChartView } from '@/modules/useGanttChartView'
 
 const {
   // state
-  projects,
-  projectId,
   rows,
   selectedRowIds,
   chartOption,
   isDialogVisible,
   editingTask,
-
   isProjectListDialogVisible,
   isReadOnly,
   editingRowId,
   editingRowName,
   editingInputStyle,
   contextMenu,
+  currentProject,
+  showHiddenRows,
 
   // methods
   handleTaskUpdate,
@@ -38,11 +36,9 @@ const {
   handleDeleteRowFromContextMenu,
   fetchProjects,
   handleRowSelectionChange,
-  showHiddenRows,
   toggleRowVisibility,
+  setProjectId,
 } = useGanttChartView()
-
-const currentProject = computed(() => projects.value.find((p) => p.id === projectId.value))
 </script>
 
 <template>
@@ -150,11 +146,7 @@ const currentProject = computed(() => projects.value.find((p) => p.id === projec
       @delete="deleteTask"
     />
 
-    <ProjectListDialog
-      v-model="isProjectListDialogVisible"
-      @select="(id: string) => (projectId = id)"
-      @update="fetchProjects"
-    />
+    <ProjectListDialog v-model="isProjectListDialogVisible" @select="setProjectId" @update="fetchProjects" />
   </div>
 </template>
 
