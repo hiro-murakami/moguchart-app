@@ -12,7 +12,7 @@ import { useAuth } from '@/modules/useAuth'
 import { useConfirm } from '@/modules/useConfirm'
 import { useLoading } from '@/modules/useLoading'
 import { toDateString } from '@/modules/utils'
-import type { GanttRow, GanttTask, Project, Role } from '@functions/types/shared'
+import type { GanttRow, GanttTask, Project, Role, ColorPalette, TaskAttribute } from '@functions/types/shared'
 import * as moguchart from '@mogura/moguchart'
 import { computed, nextTick, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -159,7 +159,14 @@ export const useGanttChartView = () => {
 
   // --- ダイアログ関連 ---
   const isDialogVisible = ref(false)
-  const editingTask = ref({
+  const editingTask = ref<{
+    id: string
+    rowId: string
+    name: string
+    start: string
+    end: string
+    colorPalette?: ColorPalette
+  }>({
     id: '',
     rowId: '',
     name: '',
@@ -174,12 +181,14 @@ export const useGanttChartView = () => {
     const task = row?.tasks.find((t) => t.id === taskId)
 
     if (row && task) {
+      const taskWithAttr = task as unknown as { attribute?: TaskAttribute }
       editingTask.value = {
         id: task.id,
         rowId: row.id,
         name: task.name || '',
         start: toDateString(task.start, 'YYYY-MM-DD'),
         end: toDateString(task.end, 'YYYY-MM-DD'),
+        colorPalette: taskWithAttr.attribute?.colorPalette ? { ...taskWithAttr.attribute.colorPalette } : undefined,
       }
       isDialogVisible.value = true
     }
@@ -199,6 +208,7 @@ export const useGanttChartView = () => {
       name: '新規タスク',
       start: chartStartStr.value,
       end: chartStartStr.value,
+      colorPalette: undefined,
     }
     isDialogVisible.value = true
   }
@@ -210,7 +220,9 @@ export const useGanttChartView = () => {
       name: taskData.name,
       start: taskData.start,
       end: taskData.end,
-      attribute: {},
+      attribute: {
+        colorPalette: taskData.colorPalette,
+      },
     }
     await upsertGanttTask(data)
     isDialogVisible.value = false

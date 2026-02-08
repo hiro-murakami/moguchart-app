@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useConfirm } from '@/modules/useConfirm'
+import type { ColorPalette } from '@functions/types/shared'
 
 interface TaskData {
   id: string
@@ -8,6 +9,7 @@ interface TaskData {
   name: string
   start: string
   end: string
+  colorPalette?: ColorPalette
 }
 
 interface RowData {
@@ -84,6 +86,26 @@ const handleDelete = async () => {
             </v-col>
             <v-col cols="12" sm="6">
               <v-text-field v-model="localTask.end" label="終了日" type="date"></v-text-field>
+            </v-col>
+            <v-col cols="12">
+              <div class="d-flex align-center mb-2">
+                <span class="text-subtitle-1 mr-2">色設定</span>
+                <v-btn
+                  v-if="!localTask.colorPalette"
+                  variant="text"
+                  prepend-icon="mdi-plus"
+                  color="primary"
+                  density="compact"
+                  @click="localTask.colorPalette = { color: '#000000', backgroundColor: '#ffffff' }"
+                >
+                  追加
+                </v-btn>
+              </div>
+              <ColorPaletteInput
+                v-if="localTask.colorPalette"
+                v-model="localTask.colorPalette"
+                @delete="localTask.colorPalette = undefined"
+              />
             </v-col>
           </v-row>
         </v-container>
