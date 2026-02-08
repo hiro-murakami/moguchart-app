@@ -12,6 +12,7 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     AlertDialog: typeof import('./src/components/AlertDialog.vue')['default']
+    ColorPaletteInput: typeof import('./src/components/common/ColorPaletteInput.vue')['default']
     ConfirmDialog: typeof import('./src/components/ConfirmDialog.vue')['default']
     DialogProvider: typeof import('./src/components/DialogProvider.vue')['default']
     LoginPrompt: typeof import('./src/components/LoginPrompt.vue')['default']

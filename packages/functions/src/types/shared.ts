@@ -28,6 +28,7 @@ export type Role = 'owner' | 'editor' | 'viewer'
 
 export type ColorPalette = {
   color: string
+  backgroundColor: string
   pattern?: {
     type: string
     color: string
