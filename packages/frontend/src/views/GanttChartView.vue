@@ -142,7 +142,13 @@ const currentProject = computed(() => projects.value.find((p) => p.id === projec
       @toggle-visibility="toggleRowVisibility"
     />
 
-    <TaskEditDialog v-model="isDialogVisible" :task="editingTask" :rows="rows" @save="saveTask" @delete="deleteTask" />
+    <TaskDetailDialog
+      v-model="isDialogVisible"
+      :task="editingTask"
+      :rows="rows"
+      @save="saveTask"
+      @delete="deleteTask"
+    />
 
     <ProjectListDialog
       v-model="isProjectListDialogVisible"
