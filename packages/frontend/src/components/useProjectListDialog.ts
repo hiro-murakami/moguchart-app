@@ -5,6 +5,7 @@ import {
 } from '@/modules/scripts'
 import { useConfirm } from '@/modules/useConfirm'
 import { useSnackbar } from '@/modules/useSnackbar'
+import { toDateString } from '@/modules/utils'
 import type { Project } from '@functions/types/shared'
 import { ref, watch, type Ref } from 'vue'
 
@@ -57,8 +58,8 @@ export const useProjectListDialog = (
     { title: 'プロジェクト名', key: 'name' },
     { title: '', key: 'role' },
     { title: '説明', key: 'attribute.description' },
-    { title: '開始日', key: 'start' },
-    { title: '終了日', key: 'end' },
+    { title: '開始日', key: 'start', value: (item: Project) => toDateString(item.start, 'YYYY/MM/DD') },
+    { title: '終了日', key: 'end', value: (item: Project) => toDateString(item.end, 'YYYY/MM/DD') },
     { title: '操作', key: 'actions', sortable: false },
   ]
 

@@ -13,6 +13,7 @@ import { toDateString } from '@/modules/utils'
 import { useProjectStore } from '@/stores/useProjectStore'
 import { useUserStore } from '@/stores/useUserStore'
 import type { ColorPalette, GanttRow, GanttTask, TaskAttribute } from '@functions/types/shared'
+import * as holiday_jp from '@holiday-jp/holiday_jp'
 import * as moguchart from '@mogura/moguchart'
 import { storeToRefs } from 'pinia'
 import { computed, nextTick, ref, watch } from 'vue'
@@ -57,6 +58,7 @@ export const useGanttChartView = () => {
       start: new Date(chartStartStr.value),
       end: new Date(chartEndStr.value),
       pxPerDay: pxPerDay.value,
+      isHoliday: holiday_jp.isHoliday,
     },
     rowHeader: {
       maxWidth: 400,
@@ -210,6 +212,7 @@ export const useGanttChartView = () => {
   })
 
   const handleTaskDblClick = (e: CustomEvent<moguchart.TaskClickEventDetail>) => {
+    if (isReadOnly.value) return
     const detail = e.detail
     const taskId = String(detail.task.id)
     const row = rows.value.find((r) => r.tasks.some((t) => t.id === taskId))
@@ -230,6 +233,7 @@ export const useGanttChartView = () => {
   }
 
   const handleAddTask = async () => {
+    if (isReadOnly.value) return
     if (rows.value.length === 0) {
       await alert({ message: '先に行を追加してください。' })
       return
