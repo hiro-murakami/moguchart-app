@@ -3,6 +3,7 @@ import { ref } from 'vue'
 
 export interface Props {
   label: string
+  minWidth?: string | number
 }
 
 defineProps<Props>()
@@ -38,6 +39,7 @@ const onApply = () => {
         append-icon="mdi-menu-down"
         class="text-button font-weight-bold"
         v-bind="props"
+        :min-width="minWidth"
       >
         <div
           class="mr-2"

@@ -62,7 +62,7 @@ const handleDelete = async () => {
 </script>
 
 <template>
-  <v-dialog :model-value="modelValue" @update:model-value="emit('update:modelValue', $event)" max-width="500px">
+  <v-dialog :model-value="modelValue" @update:model-value="emit('update:modelValue', $event)" max-width="600px">
     <v-card>
       <v-card-title>タスク編集</v-card-title>
       <v-card-text>

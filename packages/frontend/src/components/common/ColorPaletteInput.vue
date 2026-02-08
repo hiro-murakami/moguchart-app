@@ -68,11 +68,12 @@ const patternOptions = computed(() => [
   <v-card variant="outlined" class="pa-2">
     <div class="d-flex">
       <!-- プレビューエリア -->
-      <div class="mr-4 d-flex flex-column align-center justify-center">
+      <div class="mr-4 d-flex align-center justify-center">
+        <v-btn icon="mdi-delete" variant="text" color="error" size="small" @click="emit('delete')" />
         <div
           :style="`
             width: 80px;
-            height: 40px;
+            height: 38px;
             border: 1px solid #ccc;
             border-radius: 4px;
             background-repeat: repeat;
@@ -87,20 +88,19 @@ const patternOptions = computed(() => [
         >
           Sample
         </div>
-        <v-btn icon="mdi-delete" variant="text" color="error" size="small" class="mt-2" @click="emit('delete')" />
       </div>
 
       <!-- 設定エリア -->
       <div class="flex-grow-1">
         <v-row dense>
-          <v-col cols="12" sm="3">
-            <ColorInput v-model="color" label="文字" />
+          <v-col cols="auto">
+            <ColorInput v-model="color" label="文字色" min-width="120px" />
           </v-col>
-          <v-col cols="12" sm="3">
-            <ColorInput v-model="backgroundColor" label="背景" />
+          <v-col cols="auto">
+            <ColorInput v-model="backgroundColor" label="背景色" min-width="120px" />
           </v-col>
 
-          <v-col cols="12" sm="3">
+          <v-col cols="auto">
             <v-select
               v-model="patternType"
               :items="patternOptions"
@@ -132,8 +132,8 @@ const patternOptions = computed(() => [
             </v-select>
           </v-col>
 
-          <v-col cols="12" sm="3" v-if="patternType !== 'none'">
-            <ColorInput v-model="patternColor" label="パターン" />
+          <v-col cols="auto" v-if="patternType !== 'none'">
+            <ColorInput v-model="patternColor" label="パターン色" min-width="100px" />
           </v-col>
         </v-row>
       </div>

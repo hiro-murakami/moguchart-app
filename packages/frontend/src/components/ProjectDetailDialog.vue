@@ -44,7 +44,7 @@ watch(
 </script>
 
 <template>
-  <v-dialog :model-value="modelValue" @update:model-value="emit('update:modelValue', $event)" max-width="950px">
+  <v-dialog :model-value="modelValue" @update:model-value="emit('update:modelValue', $event)" max-width="1000px">
     <v-card>
       <v-card-title>{{ title }}</v-card-title>
       <v-card-text>
