@@ -16,7 +16,12 @@ const { signIn } = useAuth()
             <p class="text-center">この機能を利用するにはログインが必要です。</p>
           </v-card-text>
           <v-card-actions class="justify-center">
-            <v-btn color="primary" @click="signIn">Login with Google</v-btn>
+            <v-btn class="text-none" color="white" min-width="220" variant="flat" @click="signIn">
+              <template v-slot:prepend>
+                <GoogleIcon />
+              </template>
+              Sign in with Google
+            </v-btn>
           </v-card-actions>
         </v-card>
       </v-col>
