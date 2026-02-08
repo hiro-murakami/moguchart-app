@@ -77,12 +77,39 @@ export const useGanttChartView = () => {
       rows.value = data.map((row: GanttRow) => ({
         ...row,
         id: row.id.toString(),
-        tasks: row.tasks.map((task: GanttTask) => ({
-          ...task,
-          id: task.id.toString(),
-          start: new Date(task.start),
-          end: new Date(task.end),
-        })),
+        tasks: row.tasks.map((task: GanttTask) => {
+          const attribute = (task as any).attribute as TaskAttribute | undefined
+          const colorPalette = attribute?.colorPalette
+
+          let style: string | undefined
+          let labelStyle: string | undefined
+          let pattern: moguchart.GanttTaskPattern | undefined
+
+          if (colorPalette) {
+            if (colorPalette.backgroundColor) {
+              style = `background-color: ${colorPalette.backgroundColor}; border-color: ${colorPalette.backgroundColor}; ${style || ''}`
+            }
+            if (colorPalette.color) {
+              labelStyle = `color: ${colorPalette.color}; ${labelStyle || ''}`
+            }
+            if (colorPalette.pattern) {
+              pattern = {
+                type: colorPalette.pattern.type as moguchart.BarPattern,
+                color: colorPalette.pattern.color,
+              }
+            }
+          }
+
+          return {
+            ...task,
+            id: task.id.toString(),
+            start: new Date(task.start),
+            end: new Date(task.end),
+            style,
+            labelStyle,
+            pattern,
+          }
+        }),
       }))
     } catch (err) {
       console.error('Failed to load data:', err)
@@ -153,6 +180,17 @@ export const useGanttChartView = () => {
       end: toDateString(e.detail.end),
       attribute: {},
     }
+
+    const taskIdStr = String(data.id)
+    const row = rows.value.find((r) => r.tasks.some((t) => t.id === taskIdStr))
+    const task = row?.tasks.find((t) => t.id === taskIdStr)
+    if (task) {
+      const attribute = (task as any).attribute as TaskAttribute | undefined
+      if (attribute) {
+        data.attribute = { ...attribute }
+      }
+    }
+
     await upsertGanttTask(data)
     await loadData(projectId.value)
   }
