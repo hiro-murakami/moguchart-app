@@ -9,6 +9,7 @@ import {
   type User as FirebaseUser,
 } from 'firebase/auth'
 import { auth } from '@/firebase'
+import { toDateTimeString } from '@/modules/utils'
 
 export const useUserStore = defineStore('user', {
   state: () => ({
@@ -55,10 +56,28 @@ export const useUserStore = defineStore('user', {
     },
 
     initializeAuthListener() {
-      onAuthStateChanged(auth, async (user) => {
-        this.firebaseUser = user
-        if (user?.email) {
-          await this.fetchUser(user.email)
+      onAuthStateChanged(auth, async (firebaseUser) => {
+        this.firebaseUser = firebaseUser
+        if (firebaseUser?.email) {
+          await this.fetchUser(firebaseUser.email)
+
+          if (this.user) {
+            this.user.attribute = {
+              ...this.user.attribute,
+              lastLoginAt: toDateTimeString(),
+            }
+          } else {
+            this.user = {
+              email: firebaseUser.email!,
+              displayName: firebaseUser.displayName || '',
+              attribute: {
+                lastLoginAt: toDateTimeString(),
+              },
+            }
+          }
+          if (this.user) {
+            await this.saveUser(this.user)
+          }
         } else {
           this.clear()
         }

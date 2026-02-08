@@ -8,13 +8,11 @@ const upsertUser: UpsertUser = async (user, email) => {
   await prisma.user.upsert({
     where: { email: user.email },
     update: {
-      displayName: user.displayName,
-      attribute: user.attribute,
+      ...user,
       ...getUpdateCommonColumns(email),
     },
     create: {
-      email: user.email,
-      displayName: user.displayName,
+      ...user,
       ...getCreateCommonColumns(email),
     },
   })

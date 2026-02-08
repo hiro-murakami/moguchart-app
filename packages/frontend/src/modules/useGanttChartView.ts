@@ -9,7 +9,7 @@ import {
 import { useAlert } from '@/modules/useAlert'
 import { useConfirm } from '@/modules/useConfirm'
 import { useLoading } from '@/modules/useLoading'
-import { toDateString } from '@/modules/utils'
+import { toDateTimeString } from '@/modules/utils'
 import { useProjectStore } from '@/stores/useProjectStore'
 import { useUserStore } from '@/stores/useUserStore'
 import type { ColorPalette, GanttRow, GanttTask, TaskAttribute } from '@functions/types/shared'
@@ -171,8 +171,8 @@ export const useGanttChartView = () => {
       id: e.detail.mode === 'copy' ? 0 : Number(e.detail.id),
       rowId: Number(e.detail.targetRowId),
       name: e.detail.name || '',
-      start: toDateString(e.detail.start),
-      end: toDateString(e.detail.end),
+      start: toDateTimeString(e.detail.start),
+      end: toDateTimeString(e.detail.end),
       attribute: {},
     }
 
@@ -219,8 +219,8 @@ export const useGanttChartView = () => {
         id: task.id,
         rowId: row.id,
         name: task.name || '',
-        start: toDateString(task.start, 'YYYY-MM-DD'),
-        end: toDateString(task.end, 'YYYY-MM-DD'),
+        start: toDateTimeString(task.start),
+        end: toDateTimeString(task.end),
         colorPalette: taskWithAttr.attribute?.colorPalette ? { ...taskWithAttr.attribute.colorPalette } : undefined,
       }
       isDialogVisible.value = true
