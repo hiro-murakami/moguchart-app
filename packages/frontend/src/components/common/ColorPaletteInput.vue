@@ -69,7 +69,12 @@ const patternOptions = computed(() => [
     <div class="d-flex">
       <!-- プレビューエリア -->
       <div class="mr-4 d-flex align-center justify-center">
-        <v-btn icon="mdi-delete" variant="text" color="error" size="small" @click="emit('delete')" />
+        <v-tooltip location="top" open-delay="500">
+          <template #activator="{ props }">
+            <v-btn v-bind="props" icon="mdi-delete" variant="text" color="error" size="small" @click="emit('delete')" />
+          </template>
+          <span>削除</span>
+        </v-tooltip>
         <div
           :style="`
             width: 80px;
