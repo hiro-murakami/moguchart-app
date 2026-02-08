@@ -36,6 +36,7 @@ export const useGanttChartView = () => {
   // --- 状態 ---
   const projectStore = useProjectStore()
   const { projects, currentProjectId: projectId, currentRole, currentProject } = storeToRefs(projectStore)
+  const { currentTheme } = storeToRefs(userStore)
   const { fetchProjects, setProjectId, clear: clearProjectStore } = projectStore
 
   const rows = ref<moguchart.GanttRow[]>([])
@@ -612,6 +613,7 @@ export const useGanttChartView = () => {
     contextMenu,
     currentProject,
     showHiddenRows,
+    currentTheme,
 
     // methods
     handleTaskUpdate,

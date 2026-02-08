@@ -17,6 +17,7 @@ const {
   contextMenu,
   currentProject,
   showHiddenRows,
+  currentTheme,
 
   // methods
   handleTaskUpdate,
@@ -79,7 +80,7 @@ const {
           :rows="rows"
           :selected-row-ids="selectedRowIds"
           :option="chartOption"
-          theme="dark"
+          :theme="currentTheme"
           @task-update="handleTaskUpdate"
           @task-dblclick="handleTaskDblClick"
           @row-header-dblclick="handleRowHeaderDblClick"
