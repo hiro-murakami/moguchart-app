@@ -39,7 +39,7 @@ const patternType = computed({
         ...props.modelValue,
         pattern: {
           type: val as string,
-          color: props.modelValue.pattern?.color ?? '#ffffff',
+          color: props.modelValue.pattern?.color ?? '#000000',
         },
       })
     }
@@ -110,6 +110,7 @@ const patternOptions = computed(() => [
               hide-details
               density="compact"
               variant="outlined"
+              min-width="131px"
             >
               <template #selection="{ item }">
                 <div class="d-flex align-center" v-if="item.raw.type !== 'none'">

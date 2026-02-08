@@ -6,6 +6,7 @@ import type { ColorPalette } from '@functions/types/shared'
 const props = defineProps<{
   palettes: ColorPalette[]
   buttonLabel?: string
+  textSample?: string
 }>()
 
 const emit = defineEmits<{
@@ -28,7 +29,7 @@ const onSelect = (palette: ColorPalette) => {
       </v-btn>
     </template>
 
-    <v-card min-width="200">
+    <v-card min-width="200px" max-height="500px" class="overflow-y-auto">
       <v-list density="compact">
         <template v-if="palettes.length === 0">
           <v-list-item>
@@ -37,15 +38,15 @@ const onSelect = (palette: ColorPalette) => {
         </template>
         <template v-else>
           <v-list-item v-for="(palette, index) in palettes" :key="index" @click="onSelect(palette)" link>
-            <template #prepend>
-              <div
-                class="mr-2"
-                :style="`
-                  width: 40px;
-                  height: 24px;
+            <div
+              class="d-flex align-center justify-center rounded px-2"
+              :style="`
+                  width: 100%;
+                  height: 32px;
                   border: 1px solid #ccc;
                   background-repeat: repeat;
                   background-color: ${palette.backgroundColor || '#ffffff'};
+                  color: ${palette.color || '#000000'};
                   ${
                     palette.pattern
                       ? moguchart.getPatternStyle({
@@ -55,11 +56,11 @@ const onSelect = (palette: ColorPalette) => {
                       : ''
                   }
                 `"
-              ></div>
-            </template>
-            <v-list-item-title>
-              <span :style="{ color: palette.color || '#000000' }"> テキストサンプル </span>
-            </v-list-item-title>
+            >
+              <span class="text-truncate" style="max-width: 100%">
+                {{ textSample || 'テキストサンプル' }}
+              </span>
+            </div>
           </v-list-item>
         </template>
       </v-list>

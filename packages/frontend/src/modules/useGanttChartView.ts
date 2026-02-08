@@ -16,6 +16,8 @@ import type { GanttRow, GanttTask, Project, Role, ColorPalette, TaskAttribute } 
 import * as moguchart from '@mogura/moguchart'
 import { computed, nextTick, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useProjectStore } from '@/stores/useProjectStore'
+import { storeToRefs } from 'pinia'
 
 export const useGanttChartView = () => {
   const { user } = useAuth()
@@ -33,9 +35,10 @@ export const useGanttChartView = () => {
   const showHiddenRows = ref(false)
 
   // --- 状態 ---
-  const projects = ref<Project[]>([])
-  const projectId = ref<string>('')
-  const currentRole = ref<Role>('viewer') // デフォルト値を viewer に
+  const projectStore = useProjectStore()
+  const { projects, currentProjectId: projectId, currentRole } = storeToRefs(projectStore)
+  const { fetchProjects, setProjectId, clear: clearProjectStore } = projectStore
+
   const rows = ref<moguchart.GanttRow[]>([])
   const selectedRowIds = ref<string[]>([])
 
@@ -127,7 +130,6 @@ export const useGanttChartView = () => {
     if (project) {
       chartStartStr.value = project.start
       chartEndStr.value = project.end
-      currentRole.value = project.role
     }
     loadData(newProjectId)
 
@@ -136,10 +138,6 @@ export const useGanttChartView = () => {
       router.push(`/${newProjectId}`)
     }
   })
-
-  const fetchProjects = async () => {
-    projects.value = await selectProjects()
-  }
 
   watch(
     user,
@@ -152,16 +150,14 @@ export const useGanttChartView = () => {
         const targetProject = routeId ? projects.value.find((p) => p.id === routeId) : undefined
 
         if (targetProject) {
-          projectId.value = targetProject.id
+          setProjectId(targetProject.id)
         } else {
           isProjectListDialogVisible.value = true
         }
       } else {
         // ユーザーがログアウトした場合、データをクリアする
         rows.value = []
-        projects.value = []
-        projectId.value = ''
-        currentRole.value = 'viewer' // ロールもリセット
+        clearProjectStore()
       }
     },
     { immediate: true }, // コンポーネントのマウント時に即時実行する

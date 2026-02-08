@@ -2,6 +2,9 @@
 import { ref, watch } from 'vue'
 import { useConfirm } from '@/modules/useConfirm'
 import type { ColorPalette } from '@functions/types/shared'
+import { useProjectStore } from '@/stores/useProjectStore'
+import { storeToRefs } from 'pinia'
+import ColorPaletteSelect from './common/ColorPaletteSelect.vue'
 
 interface TaskData {
   id: string
@@ -59,6 +62,16 @@ const handleDelete = async () => {
     emit('delete', localTask.value.id)
   }
 }
+
+const projectStore = useProjectStore()
+const { colorPalettes } = storeToRefs(projectStore)
+
+const onSelectPalette = (palette: ColorPalette) => {
+  localTask.value.colorPalette = {
+    ...palette,
+    pattern: palette.pattern ? { ...palette.pattern } : undefined,
+  }
+}
 </script>
 
 <template>
@@ -90,16 +103,7 @@ const handleDelete = async () => {
             <v-col cols="12">
               <div class="d-flex align-center mb-2">
                 <span class="text-subtitle-1 mr-2">色設定</span>
-                <v-btn
-                  v-if="!localTask.colorPalette"
-                  variant="text"
-                  prepend-icon="mdi-plus"
-                  color="primary"
-                  density="compact"
-                  @click="localTask.colorPalette = { color: '#000000', backgroundColor: '#ffffff' }"
-                >
-                  追加
-                </v-btn>
+                <ColorPaletteSelect :palettes="colorPalettes" :text-sample="localTask.name" @select="onSelectPalette" />
               </div>
               <ColorPaletteInput
                 v-if="localTask.colorPalette"
