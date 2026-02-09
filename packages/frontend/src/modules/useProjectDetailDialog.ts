@@ -1,6 +1,8 @@
 import type { ColorPalette, Project } from '@functions/types/shared'
+import { isEqual } from 'lodash'
 import { computed, nextTick, ref, watch } from 'vue'
 import type { VForm } from 'vuetify/components'
+import { useDiscardConfirm } from './useConfirm'
 
 export interface ProjectDetailDialogProps {
   modelValue: boolean
@@ -13,6 +15,7 @@ export type ProjectDetailDialogEmits = {
 }
 
 export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: ProjectDetailDialogEmits) {
+  const { confirmAndClose } = useDiscardConfirm()
   const form = ref<VForm | null>(null)
   const formValid = ref(false)
   const localName = ref('')
@@ -69,8 +72,44 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
     },
   )
 
-  const close = () => {
-    emit('update:modelValue', false)
+  const hasChanges = computed(() => {
+    if (!props.project) {
+      // 新規追加モード: 何か入力されていれば変更とみなす
+      return (
+        localName.value !== '' ||
+        localDescription.value !== '' ||
+        localStart.value !== '' ||
+        localEnd.value !== '' ||
+        localPublic.value !== false ||
+        localOwners.value.length > 0 ||
+        localEditors.value.length > 0 ||
+        localViewers.value.length > 0 ||
+        localColorPalettes.value.length > 0
+      )
+    }
+    // 編集モード: 元の値と比較
+    const originalColorPalettes = props.project.attribute.colorPalettes || []
+    return (
+      localName.value !== props.project.name ||
+      localDescription.value !== (props.project.attribute.description || '') ||
+      localStart.value !== props.project.start ||
+      localEnd.value !== props.project.end ||
+      localPublic.value !== props.project.public ||
+      !isEqual(localOwners.value, props.project.authority?.owners || []) ||
+      !isEqual(localEditors.value, props.project.authority?.editors || []) ||
+      !isEqual(localViewers.value, props.project.authority?.viewers || []) ||
+      !isEqual(localColorPalettes.value, originalColorPalettes)
+    )
+  })
+
+  const closeDialog = () => emit('update:modelValue', false)
+
+  const close = () => confirmAndClose(hasChanges, closeDialog)
+
+  const handleBeforeClose = (value: boolean) => {
+    if (!value) {
+      close()
+    }
   }
 
   const save = async () => {
@@ -111,6 +150,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
     localColorPalettes,
     title,
     close,
+    handleBeforeClose,
     save,
   }
 }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useConfirm } from '@/modules/useConfirm'
+import { useConfirm, useDiscardConfirm } from '@/modules/useConfirm'
 import { useProjectStore } from '@/stores/useProjectStore'
 import type { ColorPalette } from '@functions/types/shared'
 import { isEqual } from 'lodash'
@@ -35,6 +35,7 @@ const emit = defineEmits<{
 
 const localTask = ref<TaskData>({ ...props.task })
 const confirm = useConfirm()
+const { confirmAndClose } = useDiscardConfirm()
 
 watch(
   () => props.task,
@@ -48,20 +49,9 @@ const hasChanges = computed(() => {
   return !isEqual(props.task, localTask.value)
 })
 
-const close = async () => {
-  if (hasChanges.value) {
-    const result = await confirm({
-      title: '確認',
-      message: '入力内容が変更されています。破棄してダイアログを閉じますか？',
-      confirmText: '破棄して閉じる',
-      confirmColor: 'warning',
-    })
-    if (!result) {
-      return
-    }
-  }
-  emit('update:modelValue', false)
-}
+const closeDialog = () => emit('update:modelValue', false)
+
+const close = () => confirmAndClose(hasChanges, closeDialog)
 
 const handleBeforeClose = (value: boolean) => {
   if (!value) {

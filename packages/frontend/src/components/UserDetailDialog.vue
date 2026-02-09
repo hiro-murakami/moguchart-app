@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useDiscardConfirm } from '@/modules/useConfirm'
 import { toDateString } from '@/modules/utils'
 import { useUserStore } from '@/stores/useUserStore'
 import type { User } from '@functions/types/shared'
@@ -24,6 +25,8 @@ const themeOptions = [
   { title: 'システム', value: 'system' },
 ]
 
+const { confirmAndClose } = useDiscardConfirm()
+
 watch(
   () => props.modelValue,
   (val) => {
@@ -33,6 +36,14 @@ watch(
     }
   },
 )
+
+const hasChanges = computed(() => {
+  if (!user.value) return false
+  return (
+    localDisplayName.value !== (user.value.displayName || '') ||
+    localTheme.value !== (user.value.attribute.theme || 'system')
+  )
+})
 
 const save = async () => {
   if (!user.value) return
@@ -48,13 +59,19 @@ const save = async () => {
   emit('update:modelValue', false)
 }
 
-const close = () => {
-  emit('update:modelValue', false)
+const closeDialog = () => emit('update:modelValue', false)
+
+const close = () => confirmAndClose(hasChanges, closeDialog)
+
+const handleBeforeClose = (value: boolean) => {
+  if (!value) {
+    close()
+  }
 }
 </script>
 
 <template>
-  <v-dialog :model-value="modelValue" @update:model-value="emit('update:modelValue', $event)" max-width="500px">
+  <v-dialog :model-value="modelValue" @update:model-value="handleBeforeClose" max-width="500px">
     <v-card v-if="user">
       <v-card-title>ユーザー設定</v-card-title>
       <v-card-text>

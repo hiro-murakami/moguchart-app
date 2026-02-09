@@ -28,6 +28,7 @@ const {
   localColorPalettes,
   title,
   close,
+  handleBeforeClose,
   save,
 } = useProjectDetailDialog(props, emit)
 
@@ -44,7 +45,7 @@ watch(
 </script>
 
 <template>
-  <v-dialog :model-value="modelValue" @update:model-value="emit('update:modelValue', $event)" max-width="900px">
+  <v-dialog :model-value="modelValue" @update:model-value="handleBeforeClose" max-width="900px">
     <v-card>
       <v-card-title>{{ title }}</v-card-title>
       <v-card-text>
