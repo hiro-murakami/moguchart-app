@@ -39,6 +39,7 @@ export type ColorPalette = {
 
 export type UserAttribute = {
   theme?: 'light' | 'dark' | 'system'
+  pxPerDayByProject?: Record<string, number>
   lastLoginAt?: string
 }
 

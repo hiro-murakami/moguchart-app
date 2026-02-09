@@ -18,6 +18,7 @@ const {
   taskContextMenu,
   currentProject,
   showHiddenRows,
+  pxPerDay,
 
   // methods
   handleTaskUpdate,
@@ -72,6 +73,28 @@ const {
           hide-details
           density="compact"
           class="mr-4"
+        />
+        <v-btn
+          icon="mdi-magnify-minus"
+          variant="text"
+          density="compact"
+          @click="pxPerDay = Math.max(10, pxPerDay - 5)"
+        />
+        <v-slider
+          v-model="pxPerDay"
+          :min="10"
+          :max="80"
+          :step="5"
+          hide-details
+          density="compact"
+          style="max-width: 150px"
+          class="mx-1"
+        />
+        <v-btn
+          icon="mdi-magnify-plus"
+          variant="text"
+          density="compact"
+          @click="pxPerDay = Math.min(80, pxPerDay + 5)"
         />
         <template v-if="!isReadOnly">
           <v-btn color="secondary" @click="handleAddTask"> タスク追加 </v-btn>

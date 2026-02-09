@@ -18,6 +18,7 @@ import * as moguchart from '@mogura/moguchart'
 import { storeToRefs } from 'pinia'
 import { computed, nextTick, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { debounce } from 'lodash'
 
 export const useGanttChartView = () => {
   const route = useRoute()
@@ -39,6 +40,37 @@ export const useGanttChartView = () => {
   const { projects, currentProjectId: projectId, currentRole, currentProject } = storeToRefs(projectStore)
   const { currentTheme } = storeToRefs(userStore)
   const { fetchProjects, setProjectId, clear: clearProjectStore } = projectStore
+
+  // pxPerDay変更時にユーザー属性を保存（debounce付き）
+  const savePxPerDay = debounce(async (value: number) => {
+    if (userStore.user && projectId.value) {
+      const pxPerDayByProject = { ...userStore.user.attribute.pxPerDayByProject }
+      pxPerDayByProject[projectId.value] = value
+      userStore.user.attribute = {
+        ...userStore.user.attribute,
+        pxPerDayByProject,
+      }
+      await userStore.saveUser(userStore.user)
+    }
+  }, 500)
+
+  // プロジェクトまたはユーザーが変わったらpxPerDayを復元
+  watch(
+    [() => userStore.user, projectId],
+    ([newUser, newProjectId]) => {
+      if (newUser?.attribute?.pxPerDayByProject && newProjectId) {
+        const savedValue = newUser.attribute.pxPerDayByProject[newProjectId]
+        pxPerDay.value = savedValue ?? 28
+      } else {
+        pxPerDay.value = 28
+      }
+    },
+    { immediate: true },
+  )
+
+  watch(pxPerDay, (newValue) => {
+    savePxPerDay(newValue)
+  })
 
   const rows = ref<moguchart.GanttRow[]>([])
   const selectedRowIds = ref<string[]>([])
@@ -686,6 +718,7 @@ export const useGanttChartView = () => {
     taskContextMenu,
     currentProject,
     showHiddenRows,
+    pxPerDay,
 
     // methods
     handleTaskUpdate,

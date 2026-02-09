@@ -18,7 +18,7 @@ onMounted(() => {
   <DialogProvider>
     <v-app :theme="currentTheme">
       <v-app-bar color="moguChartColor">
-        <img :src="headerImage" height="34" class="header-image ml-4" />
+        <img :src="headerImage" height="42" class="header-image ml-4" />
         <v-spacer />
         <v-btn v-if="!firebaseUser" @click="userStore.signIn"> Login </v-btn>
         <template v-else>
