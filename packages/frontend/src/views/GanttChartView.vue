@@ -15,6 +15,7 @@ const {
   editingRowName,
   editingInputStyle,
   contextMenu,
+  taskContextMenu,
   currentProject,
   showHiddenRows,
 
@@ -38,6 +39,9 @@ const {
   handleRowSelectionChange,
   toggleRowVisibility,
   setProjectId,
+  handleTaskContextMenu,
+  handleEditTaskFromContextMenu,
+  handleDeleteTaskFromContextMenu,
 } = useGanttChartView()
 </script>
 
@@ -81,6 +85,7 @@ const {
           :option="chartOption"
           @task-update="handleTaskUpdate"
           @task-dblclick="handleTaskDblClick"
+          @task-contextmenu="handleTaskContextMenu"
           @row-header-dblclick="handleRowHeaderDblClick"
           @row-reordered="handleRowReordered"
           @row-header-contextmenu="handleRowHeaderContextMenu"
@@ -123,7 +128,7 @@ const {
       </v-btn>
     </div>
 
-    <!-- Context Menu -->
+    <!-- Row Context Menu -->
     <RowHeaderContextMenu
       v-model="contextMenu.visible"
       :x="contextMenu.x"
@@ -135,6 +140,16 @@ const {
       @add-row-below="handleAddRowBelow"
       @delete-row="handleDeleteRowFromContextMenu"
       @toggle-visibility="toggleRowVisibility"
+    />
+
+    <!-- Task Context Menu -->
+    <TaskContextMenu
+      v-model="taskContextMenu.visible"
+      :x="taskContextMenu.x"
+      :y="taskContextMenu.y"
+      :task-id="taskContextMenu.taskId"
+      @edit="handleEditTaskFromContextMenu"
+      @delete="handleDeleteTaskFromContextMenu"
     />
 
     <TaskDetailDialog

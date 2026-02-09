@@ -27,6 +27,7 @@ declare module 'vue' {
     RowAddDialog: typeof import('./src/components/RowAddDialog.vue')['default']
     RowHeaderContextMenu: typeof import('./src/components/RowHeaderContextMenu.vue')['default']
     Snackbar: typeof import('./src/components/Snackbar.vue')['default']
+    TaskContextMenu: typeof import('./src/components/TaskContextMenu.vue')['default']
     TaskDetailDialog: typeof import('./src/components/TaskDetailDialog.vue')['default']
     UserDetailDialog: typeof import('./src/components/UserDetailDialog.vue')['default']
   }

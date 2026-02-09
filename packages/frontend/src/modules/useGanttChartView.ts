@@ -459,6 +459,71 @@ export const useGanttChartView = () => {
     isHidden: false,
   })
 
+  // --- タスクコンテキストメニュー関連 ---
+  const taskContextMenu = ref({
+    visible: false,
+    x: 0,
+    y: 0,
+    taskId: null as string | null,
+  })
+
+  const handleTaskContextMenu = (e: CustomEvent<moguchart.TaskContextMenuEventDetail>) => {
+    if (isReadOnly.value) return
+    const { task, event } = e.detail
+    event.preventDefault()
+
+    taskContextMenu.value = {
+      visible: true,
+      x: event.clientX,
+      y: event.clientY,
+      taskId: String(task.id),
+    }
+  }
+
+  const handleEditTaskFromContextMenu = () => {
+    const taskId = taskContextMenu.value.taskId
+    if (!taskId) return
+
+    const row = rows.value.find((r) => r.tasks.some((t) => t.id === taskId))
+    const task = row?.tasks.find((t) => t.id === taskId)
+
+    if (row && task) {
+      const taskWithAttr = task as unknown as { attribute?: TaskAttribute }
+      editingTask.value = {
+        id: task.id,
+        rowId: row.id,
+        name: task.name || '',
+        start: toDateString(task.start),
+        end: toDateString(task.end),
+        colorPalette: taskWithAttr.attribute?.colorPalette ? { ...taskWithAttr.attribute.colorPalette } : undefined,
+      }
+      isDialogVisible.value = true
+    }
+    taskContextMenu.value.visible = false
+  }
+
+  const handleDeleteTaskFromContextMenu = async () => {
+    const taskId = taskContextMenu.value.taskId
+    if (!taskId) return
+
+    const row = rows.value.find((r) => r.tasks.some((t) => t.id === taskId))
+    const task = row?.tasks.find((t) => t.id === taskId)
+    const taskName = task?.name || '選択したタスク'
+
+    taskContextMenu.value.visible = false
+
+    const result = await confirm({
+      title: 'タスク削除の確認',
+      message: `「<b>${taskName}</b>」を削除してもよろしいですか？`,
+      confirmText: '削除',
+      confirmColor: 'error',
+    })
+
+    if (result) {
+      await deleteTask(taskId)
+    }
+  }
+
   const handleRowHeaderContextMenu = (e: CustomEvent<moguchart.RowHeaderContextMenuEventDetail>) => {
     e.preventDefault()
     if (isReadOnly.value) return
@@ -618,6 +683,7 @@ export const useGanttChartView = () => {
     editingRowName,
     editingInputStyle,
     contextMenu,
+    taskContextMenu,
     currentProject,
     showHiddenRows,
 
@@ -643,5 +709,8 @@ export const useGanttChartView = () => {
     handleRowSelectionChange,
     toggleRowVisibility,
     setProjectId,
+    handleTaskContextMenu,
+    handleEditTaskFromContextMenu,
+    handleDeleteTaskFromContextMenu,
   }
 }

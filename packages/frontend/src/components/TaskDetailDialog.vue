@@ -63,18 +63,6 @@ const save = () => {
   emit('save', localTask.value)
 }
 
-const handleDelete = async () => {
-  const result = await confirm({
-    title: '削除確認',
-    message: `「${localTask.value.name}」を本当に削除しますか？`,
-    confirmText: '削除',
-    confirmColor: 'error',
-  })
-  if (result) {
-    emit('delete', localTask.value.id)
-  }
-}
-
 const projectStore = useProjectStore()
 const { colorPalettes } = storeToRefs(projectStore)
 
@@ -127,7 +115,6 @@ const onSelectPalette = (palette: ColorPalette) => {
         </v-container>
       </v-card-text>
       <v-card-actions>
-        <v-btn v-if="localTask.id !== '0'" color="error" variant="text" @click="handleDelete"> 削除 </v-btn>
         <v-spacer></v-spacer>
         <v-btn color="blue-darken-1" variant="text" @click="close"> キャンセル </v-btn>
         <v-btn color="blue-darken-1" variant="text" @click="save"> 保存 </v-btn>
