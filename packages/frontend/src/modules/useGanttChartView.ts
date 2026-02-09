@@ -9,7 +9,7 @@ import {
 import { useAlert } from '@/modules/useAlert'
 import { useConfirm } from '@/modules/useConfirm'
 import { useLoading } from '@/modules/useLoading'
-import { toDateString } from '@/modules/utils'
+import { toDateString, toLocalDate } from '@/modules/utils'
 import { useProjectStore } from '@/stores/useProjectStore'
 import { useUserStore } from '@/stores/useUserStore'
 import type { ColorPalette, GanttRow, GanttTask, TaskAttribute } from '@functions/types/shared'
@@ -55,8 +55,8 @@ export const useGanttChartView = () => {
       width: labelWidth.value,
     },
     calendar: {
-      start: new Date(chartStartStr.value),
-      end: new Date(chartEndStr.value),
+      start: toLocalDate(chartStartStr.value),
+      end: toLocalDate(chartEndStr.value),
       pxPerDay: pxPerDay.value,
       isHoliday: holiday_jp.isHoliday,
       showCurrentTime: true,
@@ -111,8 +111,8 @@ export const useGanttChartView = () => {
           return {
             ...task,
             id: task.id.toString(),
-            start: new Date(task.start),
-            end: new Date(task.end),
+            start: toLocalDate(task.start),
+            end: toLocalDate(task.end),
             style,
             labelStyle,
             pattern,
