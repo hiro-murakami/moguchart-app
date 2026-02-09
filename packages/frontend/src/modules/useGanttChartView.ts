@@ -60,6 +60,7 @@ export const useGanttChartView = () => {
       pxPerDay: pxPerDay.value,
       isHoliday: holiday_jp.isHoliday,
       showCurrentTime: true,
+      currentTimeUpdateInterval: 1000 * 60,
     },
     rowHeader: {
       maxWidth: 400,

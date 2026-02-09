@@ -29,7 +29,7 @@ onMounted(() => {
             <span class="text-subtitle-2">{{ appUser?.displayName ?? firebaseUser.displayName }}</span>
             <span class="text-caption text-medium-emphasis">{{ appUser?.email ?? firebaseUser.email }}</span>
           </div>
-          <v-btn class="ml-4" @click="userStore.signOut"> Logout </v-btn>
+          <v-btn icon="mdi-logout" class="ml-4" @click="userStore.signOut" />
         </template>
       </v-app-bar>
       <v-main>
