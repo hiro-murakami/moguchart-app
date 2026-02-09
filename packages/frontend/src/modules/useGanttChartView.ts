@@ -59,6 +59,7 @@ export const useGanttChartView = () => {
       end: new Date(chartEndStr.value),
       pxPerDay: pxPerDay.value,
       isHoliday: holiday_jp.isHoliday,
+      showCurrentTime: true,
     },
     rowHeader: {
       maxWidth: 400,

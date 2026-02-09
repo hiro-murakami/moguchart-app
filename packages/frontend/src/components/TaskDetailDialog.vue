@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
 import { useConfirm } from '@/modules/useConfirm'
-import type { ColorPalette } from '@functions/types/shared'
 import { useProjectStore } from '@/stores/useProjectStore'
+import type { ColorPalette } from '@functions/types/shared'
+import { isEqual } from 'lodash'
 import { storeToRefs } from 'pinia'
+import { computed, ref, watch } from 'vue'
 import ColorPaletteSelect from './common/ColorPaletteSelect.vue'
 
 interface TaskData {
@@ -43,8 +44,29 @@ watch(
   { deep: true },
 )
 
-const close = () => {
+const hasChanges = computed(() => {
+  return !isEqual(props.task, localTask.value)
+})
+
+const close = async () => {
+  if (hasChanges.value) {
+    const result = await confirm({
+      title: '確認',
+      message: '入力内容が変更されています。破棄してダイアログを閉じますか？',
+      confirmText: '破棄して閉じる',
+      confirmColor: 'warning',
+    })
+    if (!result) {
+      return
+    }
+  }
   emit('update:modelValue', false)
+}
+
+const handleBeforeClose = (value: boolean) => {
+  if (!value) {
+    close()
+  }
 }
 
 const save = () => {
@@ -75,7 +97,7 @@ const onSelectPalette = (palette: ColorPalette) => {
 </script>
 
 <template>
-  <v-dialog :model-value="modelValue" @update:model-value="emit('update:modelValue', $event)" max-width="600px">
+  <v-dialog :model-value="modelValue" @update:model-value="handleBeforeClose" max-width="600px">
     <v-card>
       <v-card-title>タスク編集</v-card-title>
       <v-card-text>
