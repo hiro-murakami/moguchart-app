@@ -74,6 +74,7 @@ export const useGanttChartView = () => {
 
   const rows = ref<moguchart.GanttRow[]>([])
   const selectedRowIds = ref<string[]>([])
+  const selectedTaskIds = ref<string[]>([])
 
   const isReadOnly = computed(() => currentRole.value === 'viewer')
 
@@ -314,7 +315,7 @@ export const useGanttChartView = () => {
   }
 
   const deleteTask = async (taskId: string) => {
-    await deleteGanttTask(Number(taskId))
+    await deleteGanttTask([Number(taskId)])
     isDialogVisible.value = false
     await loadData(projectId.value)
   }
@@ -549,21 +550,50 @@ export const useGanttChartView = () => {
     const taskId = taskContextMenu.value.taskId
     if (!taskId) return
 
-    const row = rows.value.find((r) => r.tasks.some((t) => t.id === taskId))
-    const task = row?.tasks.find((t) => t.id === taskId)
-    const taskName = task?.name || '選択したタスク'
-
     taskContextMenu.value.visible = false
 
-    const result = await confirm({
-      title: 'タスク削除の確認',
-      message: `「<b>${taskName}</b>」を削除してもよろしいですか？`,
-      confirmText: '削除',
-      confirmColor: 'error',
-    })
+    const isMultiSelect = selectedTaskIds.value.includes(taskId) && selectedTaskIds.value.length > 1
 
-    if (result) {
-      await deleteTask(taskId)
+    if (isMultiSelect) {
+      const count = selectedTaskIds.value.length
+      const result = await confirm({
+        title: 'タスク削除の確認',
+        message: `選択された<b>${count}件</b>のタスクを削除してもよろしいですか？`,
+        confirmText: '削除',
+        confirmColor: 'error',
+      })
+
+      if (result) {
+        setIsLoading(true)
+        try {
+          await deleteGanttTask(selectedTaskIds.value.map(Number))
+          selectedTaskIds.value = []
+          await loadData(projectId.value)
+        } catch (err) {
+          console.error('Failed to delete tasks:', err)
+          alert({
+            title: 'エラー',
+            message: 'タスクの削除に失敗しました。',
+          })
+        } finally {
+          setIsLoading(false)
+        }
+      }
+    } else {
+      const row = rows.value.find((r) => r.tasks.some((t) => t.id === taskId))
+      const task = row?.tasks.find((t) => t.id === taskId)
+      const taskName = task?.name || '選択したタスク'
+
+      const result = await confirm({
+        title: 'タスク削除の確認',
+        message: `「<b>${taskName}</b>」を削除してもよろしいですか？`,
+        confirmText: '削除',
+        confirmColor: 'error',
+      })
+
+      if (result) {
+        await deleteTask(taskId)
+      }
     }
   }
 
@@ -710,12 +740,17 @@ export const useGanttChartView = () => {
     selectedRowIds.value = e.detail.selectedIds
   }
 
+  const handleBarSelectionChange = (e: CustomEvent<moguchart.BarSelectionChangeEventDetail>) => {
+    selectedTaskIds.value = e.detail.selectedIds
+  }
+
   return {
     // state
     projects,
     projectId,
     rows,
     selectedRowIds,
+    selectedTaskIds,
     chartOption,
     isDialogVisible,
     editingTask,
@@ -751,6 +786,7 @@ export const useGanttChartView = () => {
     handleDeleteRowFromContextMenu,
     fetchProjects,
     handleRowSelectionChange,
+    handleBarSelectionChange,
     toggleRowVisibility,
     setProjectId,
     handleTaskContextMenu,

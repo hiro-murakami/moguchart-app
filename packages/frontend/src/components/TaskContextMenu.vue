@@ -6,6 +6,7 @@ const props = defineProps<{
   x: number
   y: number
   taskId?: string | null
+  selectedTaskIds?: string[]
 }>()
 
 const emit = defineEmits<{
@@ -17,6 +18,13 @@ const emit = defineEmits<{
 const isVisible = computed({
   get: () => props.modelValue,
   set: (val) => emit('update:modelValue', val),
+})
+
+const deleteTitle = computed(() => {
+  if (props.taskId && props.selectedTaskIds?.includes(props.taskId) && (props.selectedTaskIds?.length || 0) > 1) {
+    return `選択した${props.selectedTaskIds!.length}個を削除`
+  }
+  return '削除'
 })
 </script>
 
@@ -35,7 +43,7 @@ const isVisible = computed({
       <v-list density="compact">
         <v-list-item prepend-icon="mdi-pencil" title="編集" @click="emit('edit')" />
         <v-divider />
-        <v-list-item prepend-icon="mdi-delete" title="削除" base-color="red" @click="emit('delete')" />
+        <v-list-item prepend-icon="mdi-delete" :title="deleteTitle" base-color="red" @click="emit('delete')" />
       </v-list>
     </v-menu>
   </div>

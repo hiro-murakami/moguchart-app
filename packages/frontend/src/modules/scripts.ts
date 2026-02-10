@@ -66,8 +66,8 @@ export const deleteGanttRow: DeleteGanttRow = (ids) => {
   return callFunction<void>('deleteGanttRow', ids)
 }
 
-export const deleteGanttTask: DeleteGanttTask = (id) => {
-  return callFunction<void>('deleteGanttTask', id)
+export const deleteGanttTask: DeleteGanttTask = (ids) => {
+  return callFunction<void>('deleteGanttTask', ids)
 }
 
 export const updateGanttRowOrder: UpdateGanttRowOrder = (param) => {

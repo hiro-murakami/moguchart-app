@@ -6,6 +6,7 @@ const {
   // state
   rows,
   selectedRowIds,
+  selectedTaskIds,
   chartOption,
   isDialogVisible,
   editingTask,
@@ -43,6 +44,7 @@ const {
   handleTaskContextMenu,
   handleEditTaskFromContextMenu,
   handleDeleteTaskFromContextMenu,
+  handleBarSelectionChange,
 } = useGanttChartView()
 </script>
 
@@ -113,6 +115,7 @@ const {
           @row-reordered="handleRowReordered"
           @row-header-contextmenu="handleRowHeaderContextMenu"
           @row-selection-change="handleRowSelectionChange"
+          @bar-selection-change="handleBarSelectionChange"
         />
 
         <input
@@ -171,6 +174,7 @@ const {
       :x="taskContextMenu.x"
       :y="taskContextMenu.y"
       :task-id="taskContextMenu.taskId"
+      :selected-task-ids="selectedTaskIds"
       @edit="handleEditTaskFromContextMenu"
       @delete="handleDeleteTaskFromContextMenu"
     />
