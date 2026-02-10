@@ -35,7 +35,7 @@ const isVisible = computed({
       <v-list density="compact">
         <v-list-item prepend-icon="mdi-pencil" title="編集" @click="emit('edit')" />
         <v-divider />
-        <v-list-item prepend-icon="mdi-delete" title="削除" @click="emit('delete')" />
+        <v-list-item prepend-icon="mdi-delete" title="削除" base-color="red" @click="emit('delete')" />
       </v-list>
     </v-menu>
   </div>

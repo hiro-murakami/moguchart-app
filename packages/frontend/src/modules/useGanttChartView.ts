@@ -222,6 +222,17 @@ export const useGanttChartView = () => {
       if (attribute) {
         data.attribute = { ...attribute }
       }
+
+      // 変更がない場合は何もしない
+      if (
+        data.id !== 0 && // 新規作成(コピー)でない
+        data.rowId === Number(row?.id) &&
+        data.name === task.name &&
+        data.start === toDateString(task.start) &&
+        data.end === toDateString(task.end)
+      ) {
+        return
+      }
     }
 
     await upsertGanttTask(data)

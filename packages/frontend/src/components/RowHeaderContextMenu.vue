@@ -67,7 +67,7 @@ const visibilityLabel = computed(() => {
           @click="emit('toggle-visibility')"
         />
         <v-divider />
-        <v-list-item prepend-icon="mdi-delete" :title="deleteLabel" @click="emit('delete-row')" />
+        <v-list-item prepend-icon="mdi-delete" :title="deleteLabel" base-color="red" @click="emit('delete-row')" />
       </v-list>
     </v-menu>
   </div>
