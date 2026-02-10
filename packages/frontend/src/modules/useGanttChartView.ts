@@ -215,9 +215,10 @@ export const useGanttChartView = () => {
       attribute: {},
     }
 
-    const taskIdStr = String(data.id)
-    const row = rows.value.find((r) => r.tasks.some((t) => t.id === taskIdStr))
-    const task = row?.tasks.find((t) => t.id === taskIdStr)
+    // コピー時はdata.idが0なので、元タスクのIDで検索する
+    const sourceTaskIdStr = String(e.detail.id)
+    const row = rows.value.find((r) => r.tasks.some((t) => t.id === sourceTaskIdStr))
+    const task = row?.tasks.find((t) => t.id === sourceTaskIdStr)
     if (task) {
       const attribute = (task as any).attribute as TaskAttribute | undefined
       if (attribute) {
