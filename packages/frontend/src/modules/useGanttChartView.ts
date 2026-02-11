@@ -350,28 +350,32 @@ export const useGanttChartView = () => {
   }
 
   // --- 行追加関連 ---
-  const handleAddRow = async (index?: number) => {
+  const handleAddRow = async (index?: number, count: number = 1) => {
     setIsLoading(true)
     try {
       const targetIndex = index ?? rows.value.length
       const newName = '新規行'
+      const newRowIds: number[] = []
 
-      // 新規行を追加
-      const newRowId = (await upsertGanttRow({
-        id: 0,
-        name: newName,
-        order: targetIndex + 1,
-        projectId: projectId.value,
-        visible: true,
-        attribute: {},
-        tasks: [],
-      })) as number
+      // 指定された数だけ新規行を追加
+      for (let i = 0; i < count; i++) {
+        const newRowId = (await upsertGanttRow({
+          id: 0,
+          name: newName,
+          order: targetIndex + 1 + i,
+          projectId: projectId.value,
+          visible: true,
+          attribute: {},
+          tasks: [],
+        })) as number
+        newRowIds.push(newRowId)
+      }
 
       // 挿入位置に関わらず順序を更新して正規化する
       // (既存のorderが連番でない場合に意図しない位置に入るのを防ぐため)
       const currentRows = [...rows.value]
-      const newRowStub = { id: String(newRowId) } as any
-      currentRows.splice(targetIndex, 0, newRowStub)
+      const newRowStubs = newRowIds.map((id) => ({ id: String(id) }) as any)
+      currentRows.splice(targetIndex, 0, ...newRowStubs)
 
       const orderedRows = currentRows.map((row, idx) => ({
         id: Number(row.id),
@@ -381,7 +385,11 @@ export const useGanttChartView = () => {
       await updateGanttRowOrder(orderedRows)
 
       await loadData(projectId.value)
-      startEditingRowByName(newRowId, newName)
+      // 最後に追加した行の名前を編集状態にする
+      const lastRowId = newRowIds[newRowIds.length - 1]
+      if (lastRowId !== undefined) {
+        startEditingRowByName(lastRowId, newName)
+      }
     } catch (err) {
       console.error('Failed to add row:', err)
       alert({
@@ -623,19 +631,76 @@ export const useGanttChartView = () => {
     contextMenu.value.visible = false
   }
 
+  const getSelectedRowCount = (): number => {
+    if (contextMenu.value.rowId === null) return 1
+    const targetRowIdStr = String(contextMenu.value.rowId)
+    if (selectedRowIds.value.includes(targetRowIdStr) && selectedRowIds.value.length > 1) {
+      // 選択行が連続しているかチェック
+      const selectedIndices = selectedRowIds.value
+        .map((id) => rows.value.findIndex((r) => r.id === id))
+        .filter((i) => i !== -1)
+        .sort((a, b) => a - b)
+
+      const isContiguous = selectedIndices.every((val, i) => i === 0 || val === selectedIndices[i - 1]! + 1)
+      if (isContiguous) {
+        return selectedRowIds.value.length
+      }
+    }
+    return 1
+  }
+
+  const addRowCount = computed(() => {
+    if (contextMenu.value.rowId === null) return 1
+    const targetRowIdStr = String(contextMenu.value.rowId)
+    if (selectedRowIds.value.includes(targetRowIdStr) && selectedRowIds.value.length > 1) {
+      const selectedIndices = selectedRowIds.value
+        .map((id) => rows.value.findIndex((r) => r.id === id))
+        .filter((i) => i !== -1)
+        .sort((a, b) => a - b)
+
+      const isContiguous = selectedIndices.every((val, i) => i === 0 || val === selectedIndices[i - 1]! + 1)
+      if (isContiguous) {
+        return selectedRowIds.value.length
+      }
+    }
+    return 1
+  })
+
   const handleAddRowAbove = async () => {
     if (contextMenu.value.rowId === null) return
-    const index = rows.value.findIndex((r) => Number(r.id) === contextMenu.value.rowId)
-    if (index !== -1) {
-      await handleAddRow(index)
+    const count = getSelectedRowCount()
+
+    if (count > 1) {
+      // 複数選択時は選択行ブロックの最上部に挿入
+      const selectedIndices = selectedRowIds.value
+        .map((id) => rows.value.findIndex((r) => r.id === id))
+        .filter((i) => i !== -1)
+      const minIndex = Math.min(...selectedIndices)
+      await handleAddRow(minIndex, count)
+    } else {
+      const index = rows.value.findIndex((r) => Number(r.id) === contextMenu.value.rowId)
+      if (index !== -1) {
+        await handleAddRow(index, 1)
+      }
     }
   }
 
   const handleAddRowBelow = async () => {
     if (contextMenu.value.rowId === null) return
-    const index = rows.value.findIndex((r) => Number(r.id) === contextMenu.value.rowId)
-    if (index !== -1) {
-      await handleAddRow(index + 1)
+    const count = getSelectedRowCount()
+
+    if (count > 1) {
+      // 複数選択時は選択行ブロックの最下部の下に挿入
+      const selectedIndices = selectedRowIds.value
+        .map((id) => rows.value.findIndex((r) => r.id === id))
+        .filter((i) => i !== -1)
+      const maxIndex = Math.max(...selectedIndices)
+      await handleAddRow(maxIndex + 1, count)
+    } else {
+      const index = rows.value.findIndex((r) => Number(r.id) === contextMenu.value.rowId)
+      if (index !== -1) {
+        await handleAddRow(index + 1, 1)
+      }
     }
   }
 
@@ -772,6 +837,7 @@ export const useGanttChartView = () => {
     currentProject,
     showHiddenRows,
     pxPerDay,
+    addRowCount,
 
     // methods
     handleTaskUpdate,

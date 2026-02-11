@@ -20,6 +20,7 @@ const {
   currentProject,
   showHiddenRows,
   pxPerDay,
+  addRowCount,
 
   // methods
   handleTaskUpdate,
@@ -162,6 +163,7 @@ const {
       :selected-row-ids="selectedRowIds"
       :row-id="contextMenu.rowId"
       :is-hidden="contextMenu.isHidden"
+      :add-row-count="addRowCount"
       @add-row-above="handleAddRowAbove"
       @add-row-below="handleAddRowBelow"
       @delete-row="handleDeleteRowFromContextMenu"

@@ -8,6 +8,7 @@ const props = defineProps<{
   selectedRowIds?: string[]
   rowId?: number | null
   isHidden?: boolean
+  addRowCount?: number
 }>()
 
 const emit = defineEmits<{
@@ -23,23 +24,42 @@ const isVisible = computed({
   set: (val) => emit('update:modelValue', val),
 })
 
+const isMultiSelected = computed(() => {
+  return (
+    props.rowId != null &&
+    props.selectedRowIds?.includes(String(props.rowId)) &&
+    (props.selectedRowIds?.length ?? 0) > 1
+  )
+})
+
+const selectedCount = computed(() => props.selectedRowIds?.length ?? 1)
+
+const addRowAboveLabel = computed(() => {
+  const count = props.addRowCount ?? 1
+  if (count > 1) {
+    return `上に${count}行を追加`
+  }
+  return '上に行を追加'
+})
+
+const addRowBelowLabel = computed(() => {
+  const count = props.addRowCount ?? 1
+  if (count > 1) {
+    return `下に${count}行を追加`
+  }
+  return '下に行を追加'
+})
+
 const deleteLabel = computed(() => {
-  if (props.rowId != null && props.selectedRowIds?.includes(String(props.rowId)) && props.selectedRowIds.length > 1) {
-    return `選択した${props.selectedRowIds.length}行を削除`
+  if (isMultiSelected.value) {
+    return `選択した${selectedCount.value}行を削除`
   }
   return '行を削除'
 })
 
 const visibilityLabel = computed(() => {
-  const isMultiSelect =
-    props.rowId != null &&
-    props.selectedRowIds?.includes(String(props.rowId)) &&
-    (props.selectedRowIds?.length ?? 0) > 1
-
-  if (isMultiSelect) {
-    return props.isHidden
-      ? `選択した${props.selectedRowIds!.length}行を表示`
-      : `選択した${props.selectedRowIds!.length}行を非表示`
+  if (isMultiSelected.value) {
+    return props.isHidden ? `選択した${selectedCount.value}行を表示` : `選択した${selectedCount.value}行を非表示`
   }
   return props.isHidden ? '行を表示' : '行を非表示'
 })
@@ -58,8 +78,8 @@ const visibilityLabel = computed(() => {
   >
     <v-menu v-model="isVisible" activator="parent">
       <v-list density="compact">
-        <v-list-item prepend-icon="mdi-arrow-up" title="上に行を追加" @click="emit('add-row-above')" />
-        <v-list-item prepend-icon="mdi-arrow-down" title="下に行を追加" @click="emit('add-row-below')" />
+        <v-list-item prepend-icon="mdi-arrow-up" :title="addRowAboveLabel" @click="emit('add-row-above')" />
+        <v-list-item prepend-icon="mdi-arrow-down" :title="addRowBelowLabel" @click="emit('add-row-below')" />
         <v-divider />
         <v-list-item
           :prepend-icon="isHidden ? 'mdi-eye' : 'mdi-eye-off'"
