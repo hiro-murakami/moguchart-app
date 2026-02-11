@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import splashImage from '@/assets/splash.png'
 import { useGanttChartView } from '@/modules/useGanttChartView'
-import dayjs from 'dayjs'
 import * as moguchart from '@mogura/moguchart'
+import dayjs from 'dayjs'
 
 const {
   // state
@@ -23,16 +23,16 @@ const {
   showHiddenRows,
   pxPerDay,
   addRowCount,
+  unassignedTasks,
+  isUnassignedTasksOpen,
 
   // methods
   handleTaskUpdate,
   handleTaskDblClick,
-  handleAddTask,
   saveTask,
   deleteTask,
   handleRowReordered,
   handleAddRow,
-  deleteRow,
   handleRowHeaderDblClick,
   handleRowNameUpdate,
   cancelRowNameUpdate,
@@ -48,8 +48,6 @@ const {
   handleEditTaskFromContextMenu,
   handleDeleteTaskFromContextMenu,
   handleBarSelectionChange,
-  unassignedTasks,
-  isUnassignedTasksOpen,
   handleTaskDragStart,
   handleTaskDragEnd,
   handleTaskDrop,
@@ -108,9 +106,6 @@ const {
           size="small"
           @click="pxPerDay = Math.min(80, pxPerDay + 5)"
         />
-        <template v-if="!isReadOnly">
-          <v-btn color="secondary" @click="handleAddTask"> タスク追加 </v-btn>
-        </template>
       </div>
 
       <div

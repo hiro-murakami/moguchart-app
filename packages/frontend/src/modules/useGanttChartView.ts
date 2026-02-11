@@ -15,10 +15,10 @@ import { useUserStore } from '@/stores/useUserStore'
 import type { ColorPalette, GanttRow, GanttTask, TaskAttribute } from '@functions/types/shared'
 import * as holiday_jp from '@holiday-jp/holiday_jp'
 import * as moguchart from '@mogura/moguchart'
+import { debounce } from 'lodash'
 import { storeToRefs } from 'pinia'
 import { computed, nextTick, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { debounce } from 'lodash'
 
 // GanttTask型にはstyleやpatternが含まれていないため、拡張する
 interface DraggableTask extends moguchart.GanttTask {
@@ -403,27 +403,6 @@ export const useGanttChartView = () => {
       }
       isDialogVisible.value = true
     }
-  }
-
-  const handleAddTask = async () => {
-    if (isReadOnly.value) return
-    if (rows.value.length === 0) {
-      await alert({ message: '先に行を追加してください。' })
-      return
-    }
-    if (!rows.value[0]?.id) {
-      return
-    }
-    editingTask.value = {
-      id: '0',
-      rowId: rows.value[0].id,
-      name: '新規タスク',
-      start: chartStartStr.value,
-      end: chartStartStr.value,
-      description: '',
-      colorPalette: undefined,
-    }
-    isDialogVisible.value = true
   }
 
   const saveTask = async (taskData: typeof editingTask.value) => {
@@ -961,11 +940,12 @@ export const useGanttChartView = () => {
     showHiddenRows,
     pxPerDay,
     addRowCount,
+    unassignedTasks,
+    isUnassignedTasksOpen,
 
     // methods
     handleTaskUpdate,
     handleTaskDblClick,
-    handleAddTask,
     saveTask,
     deleteTask,
     handleRowReordered,
@@ -988,8 +968,6 @@ export const useGanttChartView = () => {
     handleTaskContextMenu,
     handleEditTaskFromContextMenu,
     handleDeleteTaskFromContextMenu,
-    unassignedTasks,
-    isUnassignedTasksOpen,
     handleTaskDragStart,
     handleTaskDragEnd,
     handleTaskDrop,
