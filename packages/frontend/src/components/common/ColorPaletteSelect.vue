@@ -44,7 +44,6 @@ const onSelect = (palette: ColorPalette) => {
                   width: 100%;
                   height: 32px;
                   border: 1px solid #ccc;
-                  background-repeat: repeat;
                   background-color: ${palette.backgroundColor || '#ffffff'};
                   color: ${palette.color || '#000000'};
                   ${

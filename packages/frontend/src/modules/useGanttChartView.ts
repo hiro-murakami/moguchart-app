@@ -1,3 +1,4 @@
+import { DEFAULT_TASK_COLOR } from '@/modules/constants'
 import {
   deleteGanttRow,
   deleteGanttTask,
@@ -20,13 +21,6 @@ import { storeToRefs } from 'pinia'
 import { computed, nextTick, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-// GanttTask型にはstyleやpatternが含まれていないため、拡張する
-interface DraggableTask extends moguchart.GanttTask {
-  style?: string
-  pattern?: moguchart.GanttTaskPattern
-  labelStyle?: string
-}
-
 export const useGanttChartView = () => {
   const route = useRoute()
   const router = useRouter()
@@ -42,45 +36,28 @@ export const useGanttChartView = () => {
   const labelWidth = ref(150)
   const showHiddenRows = ref(false)
 
-  // 追加候補のタスク一覧（デモ用データ）
-  // 実際にはAPIから取得するか、空で初期化してUIで追加できるようにする想定
-  const unassignedTasks = ref<DraggableTask[]>([
+  // 追加候補のタスク一覧（固定分）
+  const unassignedTasks = ref<moguchart.GanttTask[]>([
     {
       id: 'new-1',
-      name: '新規タスクA',
+      name: '新規タスク',
       start: new Date(), // 期間計算用のダミー
-      end: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2日間
-      style: 'background-color: #8b5cf6;',
+      end: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 3日間
+      style: `background-color: ${DEFAULT_TASK_COLOR};`,
     },
     {
       id: 'new-2',
-      name: '新規タスクB',
-      start: new Date(),
+      name: '新規タスク',
+      start: new Date(), // 期間計算用のダミー
       end: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), // 5日間
-      style: 'background-color: #ec4899;',
+      style: `background-color: #f63b82;`,
     },
     {
       id: 'new-3',
-      name: '会議設定',
-      start: new Date(),
-      end: new Date(Date.now() + 1 * 60 * 60 * 1000), // 1時間
-      style: 'background-color: #10b981;',
-    },
-    {
-      id: 'new-4',
-      name: 'パターン付きタスク',
-      start: new Date(),
-      end: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3日間
-      style: 'background-color: #f59e0b;',
-      pattern: { type: 'diagonal-stripe', color: 'rgba(255, 255, 255, 0.5)' },
-    },
-    {
-      id: 'new-5',
-      name: 'ラベルスタイル付き',
-      start: new Date(),
-      end: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000), // 4日間
-      style: 'background-color: #3b82f6;',
-      labelStyle: 'font-weight: bold; font-size: 14px; color: yellow;',
+      name: '新規タスク',
+      start: new Date(), // 期間計算用のダミー
+      end: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000), // 8日間
+      style: `background-color: #82f63b;`,
     },
   ])
   const isUnassignedTasksOpen = ref(false)
@@ -292,7 +269,7 @@ export const useGanttChartView = () => {
   }
 
   // --- ドラッグ＆ドロップ関連 ---
-  const handleTaskDragStart = (e: DragEvent, task: DraggableTask) => {
+  const handleTaskDragStart = (e: DragEvent, task: moguchart.GanttTask) => {
     if (e.dataTransfer) {
       e.dataTransfer.setData('application/json', JSON.stringify(task))
       e.dataTransfer.effectAllowed = 'copy'
