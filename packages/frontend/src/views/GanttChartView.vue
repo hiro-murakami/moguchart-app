@@ -81,6 +81,7 @@ const {
           icon="mdi-magnify-minus"
           variant="text"
           density="compact"
+          size="small"
           @click="pxPerDay = Math.max(10, pxPerDay - 5)"
         />
         <v-slider
@@ -90,13 +91,14 @@ const {
           :step="5"
           hide-details
           density="compact"
-          style="max-width: 150px"
-          class="mx-1"
+          style="max-width: 120px"
+          class="mx-0"
         />
         <v-btn
           icon="mdi-magnify-plus"
           variant="text"
           density="compact"
+          size="small"
           @click="pxPerDay = Math.min(80, pxPerDay + 5)"
         />
         <template v-if="!isReadOnly">
