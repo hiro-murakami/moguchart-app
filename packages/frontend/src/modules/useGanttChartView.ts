@@ -58,6 +58,8 @@ export const useGanttChartView = () => {
       start: new Date(), // 期間計算用のダミー
       end: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000), // 8日間
       style: `background-color: #82f63b;`,
+      labelStyle: `color: #000000;`,
+      pattern: { type: 'diagonal-stripe', color: 'rgba(255, 255, 255, 0.5)' },
     },
   ])
   const isUnassignedTasksOpen = ref(false)
@@ -288,7 +290,7 @@ export const useGanttChartView = () => {
         display: flex;
         align-items: center;
         font-size: 12px;
-        color: white;
+        ${task.labelStyle || 'color: #ffffff'};
         font-weight: bold;
         box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         background-color: #3b82f6;
@@ -324,8 +326,8 @@ export const useGanttChartView = () => {
         id: tempId,
         rowId: Number(targetRowId),
         name: task.name || '',
-        start: toDateString(newStart),
-        end: toDateString(newEnd),
+        start: newStart,
+        end: newEnd,
         style: `${(task as any).style || ''}; transform-origin: center; animation: pop-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;`,
       }
 
@@ -337,6 +339,20 @@ export const useGanttChartView = () => {
       })
 
       // 新規タスク作成
+      const taskAny = task as any
+      let colorPalette = taskAny.attribute?.colorPalette
+
+      if (!colorPalette && taskAny.style) {
+        const bgMatch = taskAny.style.match(/background-color:\s*([^;]+)/)
+        if (bgMatch) {
+          colorPalette = {
+            backgroundColor: bgMatch[1].trim(),
+            color: taskAny.labelStyle?.match(/color:\s*([^;]+)/)?.[1].trim() || '#ffffff',
+            pattern: taskAny.pattern,
+          }
+        }
+      }
+
       await upsertGanttTask({
         id: 0, // 新規作成
         rowId: Number(targetRowId),
@@ -344,7 +360,8 @@ export const useGanttChartView = () => {
         start: toDateString(newStart),
         end: toDateString(newEnd),
         attribute: {
-          description: '',
+          description: taskAny.attribute?.description || '',
+          colorPalette,
         },
       })
       await loadData(projectId.value)
