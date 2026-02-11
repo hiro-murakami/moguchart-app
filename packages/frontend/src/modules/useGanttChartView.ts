@@ -249,6 +249,7 @@ export const useGanttChartView = () => {
     name: string
     start: string
     end: string
+    description?: string
     colorPalette?: ColorPalette
   }>({
     id: '',
@@ -256,6 +257,7 @@ export const useGanttChartView = () => {
     name: '',
     start: '',
     end: '',
+    description: '',
   })
 
   const handleTaskDblClick = (e: CustomEvent<moguchart.TaskClickEventDetail>) => {
@@ -273,6 +275,7 @@ export const useGanttChartView = () => {
         name: task.name || '',
         start: toDateString(task.start),
         end: toDateString(task.end),
+        description: taskWithAttr.attribute?.description || '',
         colorPalette: taskWithAttr.attribute?.colorPalette ? { ...taskWithAttr.attribute.colorPalette } : undefined,
       }
       isDialogVisible.value = true
@@ -294,6 +297,7 @@ export const useGanttChartView = () => {
       name: '新規タスク',
       start: chartStartStr.value,
       end: chartStartStr.value,
+      description: '',
       colorPalette: undefined,
     }
     isDialogVisible.value = true
@@ -307,6 +311,7 @@ export const useGanttChartView = () => {
       start: taskData.start,
       end: taskData.end,
       attribute: {
+        description: taskData.description || undefined,
         colorPalette: taskData.colorPalette,
       },
     }
@@ -540,6 +545,7 @@ export const useGanttChartView = () => {
         name: task.name || '',
         start: toDateString(task.start),
         end: toDateString(task.end),
+        description: taskWithAttr.attribute?.description || '',
         colorPalette: taskWithAttr.attribute?.colorPalette ? { ...taskWithAttr.attribute.colorPalette } : undefined,
       }
       isDialogVisible.value = true

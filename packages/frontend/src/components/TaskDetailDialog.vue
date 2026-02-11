@@ -13,6 +13,7 @@ interface TaskData {
   name: string
   start: string
   end: string
+  description?: string
   colorPalette?: ColorPalette
 }
 
@@ -110,6 +111,15 @@ const onSelectPalette = (palette: ColorPalette) => {
                 v-model="localTask.colorPalette"
                 @delete="localTask.colorPalette = undefined"
               />
+            </v-col>
+            <v-col cols="12">
+              <v-textarea
+                v-model="localTask.description"
+                label="説明"
+                rows="3"
+                auto-grow
+                autocomplete="off"
+              ></v-textarea>
             </v-col>
           </v-row>
         </v-container>
