@@ -422,10 +422,35 @@ export const useGanttChartView = () => {
     await loadData(projectId.value)
   }
 
-  const deleteTask = async (taskId: string) => {
-    await deleteGanttTask([Number(taskId)])
-    isDialogVisible.value = false
+  const execDeleteTasksWithAnimation = async (taskIds: string[]) => {
+    // 1. アニメーション適用
+    rows.value = rows.value.map((row) => ({
+      ...row,
+      tasks: row.tasks.map((t) => {
+        if (taskIds.includes(String(t.id))) {
+          return {
+            ...t,
+            style: `${(t as any).style || ''}; animation: fade-out 0.3s ease-out forwards; pointer-events: none;`,
+          }
+        }
+        return t
+      }),
+    }))
+
+    // 2. 待機
+    await new Promise((resolve) => setTimeout(resolve, 300))
+
+    // 3. API削除
+    await deleteGanttTask(taskIds.map(Number))
+
+    // 4. データリロード
+    selectedTaskIds.value = []
     await loadData(projectId.value)
+  }
+
+  const deleteTask = async (taskId: string) => {
+    isDialogVisible.value = false
+    await execDeleteTasksWithAnimation([taskId])
   }
 
   const handleRowReordered = async (e: CustomEvent<moguchart.RowReorderEventDetail>) => {
@@ -683,9 +708,7 @@ export const useGanttChartView = () => {
       if (result) {
         setIsLoading(true)
         try {
-          await deleteGanttTask(selectedTaskIds.value.map(Number))
-          selectedTaskIds.value = []
-          await loadData(projectId.value)
+          await execDeleteTasksWithAnimation(selectedTaskIds.value)
         } catch (err) {
           console.error('Failed to delete tasks:', err)
           alert({

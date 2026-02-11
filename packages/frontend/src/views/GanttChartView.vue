@@ -215,6 +215,17 @@ const {
 </template>
 
 <style scoped>
+@keyframes fade-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+}
+
 .gantt-app {
   padding: 30px;
   font-family: sans-serif;
