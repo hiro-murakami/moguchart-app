@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import splashImage from '@/assets/splash.png'
 import { useGanttChartView } from '@/modules/useGanttChartView'
-import * as moguchart from '@mogura/moguchart'
-import dayjs from 'dayjs'
 
 const {
   // state
@@ -134,40 +132,13 @@ const {
           />
         </div>
 
-        <div
+        <UnassignedTaskSidebar
           v-if="!isReadOnly"
-          :style="{
-            width: isUnassignedTasksOpen ? '240px' : '50px',
-            padding: isUnassignedTasksOpen ? '16px' : '0',
-          }"
-          class="unassigned-tasks-sidebar"
-        >
-          <h3
-            class="sidebar-header"
-            :class="{ open: isUnassignedTasksOpen }"
-            @click="isUnassignedTasksOpen = !isUnassignedTasksOpen"
-          >
-            <span>◯ 追加候補タスク</span>
-          </h3>
-          <div v-if="isUnassignedTasksOpen" class="sidebar-content">
-            <div
-              v-for="task in unassignedTasks"
-              :key="task.id"
-              class="draggable-task"
-              draggable="true"
-              @dragstart="(e) => handleTaskDragStart(e, task)"
-              @dragend="handleTaskDragEnd"
-            >
-              <div
-                class="task-bar-preview"
-                :style="`${task.style || ''}; ${moguchart.getPatternStyle(task.pattern)}`"
-              ></div>
-              <div class="task-name">{{ task.name }}</div>
-              <div class="task-duration">期間: {{ dayjs(task.end).diff(dayjs(task.start), 'day') }} 日</div>
-            </div>
-            <div v-if="unassignedTasks.length === 0" class="empty-message">タスクはありません</div>
-          </div>
-        </div>
+          v-model:is-open="isUnassignedTasksOpen"
+          :tasks="unassignedTasks"
+          @drag-start="handleTaskDragStart"
+          @drag-end="handleTaskDragEnd"
+        />
 
         <input
           v-if="editingRowId !== null"
