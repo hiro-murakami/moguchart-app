@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import splashImage from '@/assets/splash.png'
 import { useGanttChartView } from '@/modules/useGanttChartView'
+import dayjs from 'dayjs'
+import * as moguchart from '@mogura/moguchart'
 
 const {
   // state
@@ -46,6 +48,11 @@ const {
   handleEditTaskFromContextMenu,
   handleDeleteTaskFromContextMenu,
   handleBarSelectionChange,
+  unassignedTasks,
+  isUnassignedTasksOpen,
+  handleTaskDragStart,
+  handleTaskDragEnd,
+  handleTaskDrop,
 } = useGanttChartView()
 </script>
 
@@ -106,20 +113,66 @@ const {
         </template>
       </div>
 
-      <div class="chart-container">
-        <gantt-chart
-          :rows="rows"
-          :selected-row-ids="selectedRowIds"
-          :option="chartOption"
-          @task-update="handleTaskUpdate"
-          @task-dblclick="handleTaskDblClick"
-          @task-contextmenu="handleTaskContextMenu"
-          @row-header-dblclick="handleRowHeaderDblClick"
-          @row-reordered="handleRowReordered"
-          @row-header-contextmenu="handleRowHeaderContextMenu"
-          @row-selection-change="handleRowSelectionChange"
-          @bar-selection-change="handleBarSelectionChange"
-        />
+      <div
+        class="chart-container"
+        :style="{
+          position: 'relative',
+          minWidth: 0,
+          paddingRight: isUnassignedTasksOpen ? '256px' : '66px',
+          transition: 'padding-right 0.3s ease',
+        }"
+      >
+        <div>
+          <gantt-chart
+            :rows="rows"
+            :selected-row-ids="selectedRowIds"
+            :option="chartOption"
+            @task-update="handleTaskUpdate"
+            @task-dblclick="handleTaskDblClick"
+            @task-contextmenu="handleTaskContextMenu"
+            @row-header-dblclick="handleRowHeaderDblClick"
+            @row-reordered="handleRowReordered"
+            @row-header-contextmenu="handleRowHeaderContextMenu"
+            @row-selection-change="handleRowSelectionChange"
+            @bar-selection-change="handleBarSelectionChange"
+            @task-drop="handleTaskDrop"
+          />
+        </div>
+
+        <div
+          v-if="!isReadOnly"
+          :style="{
+            width: isUnassignedTasksOpen ? '240px' : '50px',
+            padding: isUnassignedTasksOpen ? '16px' : '0',
+          }"
+          class="unassigned-tasks-sidebar"
+        >
+          <h3
+            class="sidebar-header"
+            :class="{ open: isUnassignedTasksOpen }"
+            @click="isUnassignedTasksOpen = !isUnassignedTasksOpen"
+          >
+            <span>◯ 追加候補タスク</span>
+          </h3>
+          <div v-if="isUnassignedTasksOpen" class="sidebar-content">
+            <div
+              v-for="task in unassignedTasks"
+              :key="task.id"
+              class="draggable-task"
+              draggable="true"
+              @dragstart="(e) => handleTaskDragStart(e, task)"
+              @dragend="handleTaskDragEnd"
+            >
+              <div
+                class="task-bar-preview"
+                :style="`${task.style || ''}; ${moguchart.getPatternStyle(task.pattern)}`"
+              ></div>
+              <div class="task-name">{{ task.name }}</div>
+              <div class="task-duration">期間: {{ dayjs(task.end).diff(dayjs(task.start), 'day') }} 日</div>
+            </div>
+            <div v-if="unassignedTasks.length === 0" class="empty-message">タスクはありません</div>
+          </div>
+        </div>
 
         <input
           v-if="editingRowId !== null"
@@ -217,5 +270,103 @@ const {
 }
 .splash-image {
   border-radius: 24px;
+}
+
+.unassigned-tasks-sidebar {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  transition:
+    width 0.3s ease,
+    padding 0.3s ease;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .unassigned-tasks-sidebar {
+    background: #1e293b;
+    border-color: #334155;
+  }
+}
+
+.sidebar-header {
+  margin: 0;
+  padding: 10px;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  font-size: 16px;
+  cursor: pointer;
+  user-select: none;
+  writing-mode: vertical-rl;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+}
+
+.sidebar-header.open {
+  padding: 0;
+  height: auto;
+  writing-mode: horizontal-tb;
+  gap: 4px;
+}
+
+.sidebar-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  flex-grow: 1;
+  margin-top: 12px;
+}
+
+.draggable-task {
+  padding: 12px;
+  background: white;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  cursor: grab;
+  user-select: none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+@media (prefers-color-scheme: dark) {
+  .draggable-task {
+    background: #334155;
+    border-color: #475569;
+  }
+}
+
+.task-bar-preview {
+  height: 16px;
+  width: 100%;
+  border-radius: 2px;
+  margin-bottom: 8px;
+}
+
+.task-name {
+  font-weight: bold;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.task-duration {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.empty-message {
+  opacity: 0.5;
+  font-size: 14px;
+  text-align: center;
+  padding: 20px;
 }
 </style>

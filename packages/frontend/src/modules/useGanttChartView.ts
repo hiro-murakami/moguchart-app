@@ -20,6 +20,13 @@ import { computed, nextTick, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { debounce } from 'lodash'
 
+// GanttTask型にはstyleやpatternが含まれていないため、拡張する
+interface DraggableTask extends moguchart.GanttTask {
+  style?: string
+  pattern?: moguchart.GanttTaskPattern
+  labelStyle?: string
+}
+
 export const useGanttChartView = () => {
   const route = useRoute()
   const router = useRouter()
@@ -34,6 +41,49 @@ export const useGanttChartView = () => {
   const barCornerRadius = ref(4)
   const labelWidth = ref(150)
   const showHiddenRows = ref(false)
+
+  // 追加候補のタスク一覧（デモ用データ）
+  // 実際にはAPIから取得するか、空で初期化してUIで追加できるようにする想定
+  const unassignedTasks = ref<DraggableTask[]>([
+    {
+      id: 'new-1',
+      name: '新規タスクA',
+      start: new Date(), // 期間計算用のダミー
+      end: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2日間
+      style: 'background-color: #8b5cf6;',
+    },
+    {
+      id: 'new-2',
+      name: '新規タスクB',
+      start: new Date(),
+      end: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), // 5日間
+      style: 'background-color: #ec4899;',
+    },
+    {
+      id: 'new-3',
+      name: '会議設定',
+      start: new Date(),
+      end: new Date(Date.now() + 1 * 60 * 60 * 1000), // 1時間
+      style: 'background-color: #10b981;',
+    },
+    {
+      id: 'new-4',
+      name: 'パターン付きタスク',
+      start: new Date(),
+      end: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3日間
+      style: 'background-color: #f59e0b;',
+      pattern: { type: 'diagonal-stripe', color: 'rgba(255, 255, 255, 0.5)' },
+    },
+    {
+      id: 'new-5',
+      name: 'ラベルスタイル付き',
+      start: new Date(),
+      end: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000), // 4日間
+      style: 'background-color: #3b82f6;',
+      labelStyle: 'font-weight: bold; font-size: 14px; color: yellow;',
+    },
+  ])
+  const isUnassignedTasksOpen = ref(false)
 
   // --- 状態 ---
   const projectStore = useProjectStore()
@@ -239,6 +289,79 @@ export const useGanttChartView = () => {
 
     await upsertGanttTask(data)
     await loadData(projectId.value)
+  }
+
+  // --- ドラッグ＆ドロップ関連 ---
+  const handleTaskDragStart = (e: DragEvent, task: DraggableTask) => {
+    if (e.dataTransfer) {
+      e.dataTransfer.setData('application/json', JSON.stringify(task))
+      e.dataTransfer.effectAllowed = 'copy'
+
+      // ドラッグイメージをカスタマイズ
+      const dragImage = document.createElement('div')
+      dragImage.id = 'custom-drag-image'
+      dragImage.style.cssText = `
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+        width: 180px;
+        height: ${barHeight.value}px;
+        border-radius: 4px;
+        padding: 0 8px;
+        display: flex;
+        align-items: center;
+        font-size: 12px;
+        color: white;
+        font-weight: bold;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        background-color: #3b82f6;
+        ${task.style || ''};
+        ${moguchart.getPatternStyle(task.pattern)};
+      `
+      dragImage.textContent = task.name || ''
+      document.body.appendChild(dragImage)
+
+      e.dataTransfer.setDragImage(dragImage, 0, 0)
+    }
+  }
+
+  const handleTaskDragEnd = () => {
+    // カスタムドラッグイメージのクリーンアップ
+    const dragImage = document.getElementById('custom-drag-image')
+    if (dragImage) {
+      dragImage.remove()
+    }
+  }
+
+  const handleTaskDrop = async (e: CustomEvent<moguchart.TaskDropEventDetail>) => {
+    const { task, dropDate, targetRowId } = e.detail
+    try {
+      const newStart = new Date(dropDate)
+      const duration = new Date(task.end).getTime() - new Date(task.start).getTime()
+      const newEnd = new Date(newStart.getTime() + duration)
+
+      // 新規タスク作成
+      await upsertGanttTask({
+        id: 0, // 新規作成
+        rowId: Number(targetRowId),
+        name: task.name || '',
+        start: toDateString(newStart),
+        end: toDateString(newEnd),
+        attribute: {
+          description: '',
+          // 色やパターンがあれば保存する（GanttTask型には含まれないが、main.tsのデモデータにはstyle等がある）
+          // 実際の実装ではTaskAttributeに合わせて調整が必要
+          // colorPalette: ...
+        },
+      })
+      await loadData(projectId.value)
+    } catch (err) {
+      console.error('Failed to drop task:', err)
+      await alert({
+        title: 'エラー',
+        message: 'タスクの作成に失敗しました。',
+      })
+    }
   }
 
   // --- ダイアログ関連 ---
@@ -865,5 +988,10 @@ export const useGanttChartView = () => {
     handleTaskContextMenu,
     handleEditTaskFromContextMenu,
     handleDeleteTaskFromContextMenu,
+    unassignedTasks,
+    isUnassignedTasksOpen,
+    handleTaskDragStart,
+    handleTaskDragEnd,
+    handleTaskDrop,
   }
 }
