@@ -111,7 +111,7 @@ const {
         :style="{
           position: 'relative',
           minWidth: 0,
-          paddingRight: isUnassignedTasksOpen ? '256px' : '66px',
+          paddingRight: isUnassignedTasksOpen ? '248px' : '58px',
           transition: 'padding-right 0.3s ease',
         }"
       >
@@ -223,6 +223,17 @@ const {
   to {
     opacity: 0;
     transform: scale(0.9);
+  }
+}
+
+@keyframes pop-in {
+  0% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
   }
 }
 

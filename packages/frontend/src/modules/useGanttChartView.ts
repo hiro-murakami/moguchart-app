@@ -340,6 +340,25 @@ export const useGanttChartView = () => {
       const duration = new Date(task.end).getTime() - new Date(task.start).getTime()
       const newEnd = new Date(newStart.getTime() + duration)
 
+      // 楽観的UI更新: アニメーション用の仮タスクを表示
+      const tempId = -Date.now()
+      const optimisticTask = {
+        ...task,
+        id: tempId,
+        rowId: Number(targetRowId),
+        name: task.name || '',
+        start: toDateString(newStart),
+        end: toDateString(newEnd),
+        style: `${(task as any).style || ''}; transform-origin: center; animation: pop-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;`,
+      }
+
+      rows.value = rows.value.map((r) => {
+        if (String(r.id) === String(targetRowId)) {
+          return { ...r, tasks: [...r.tasks, optimisticTask as any] }
+        }
+        return r
+      })
+
       // 新規タスク作成
       await upsertGanttTask({
         id: 0, // 新規作成
@@ -349,9 +368,6 @@ export const useGanttChartView = () => {
         end: toDateString(newEnd),
         attribute: {
           description: '',
-          // 色やパターンがあれば保存する（GanttTask型には含まれないが、main.tsのデモデータにはstyle等がある）
-          // 実際の実装ではTaskAttributeに合わせて調整が必要
-          // colorPalette: ...
         },
       })
       await loadData(projectId.value)
