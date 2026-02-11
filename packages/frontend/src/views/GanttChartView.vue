@@ -23,6 +23,7 @@ const {
   addRowCount,
   unassignedTasks,
   isUnassignedTasksOpen,
+  ganttChartRef,
 
   // methods
   handleTaskUpdate,
@@ -117,6 +118,7 @@ const {
       >
         <div>
           <gantt-chart
+            ref="ganttChartRef"
             :rows="rows"
             :selected-row-ids="selectedRowIds"
             :option="chartOption"

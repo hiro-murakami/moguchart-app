@@ -271,6 +271,8 @@ export const useGanttChartView = () => {
   }
 
   // --- ドラッグ＆ドロップ関連 ---
+  const ganttChartRef = ref<any | null>(null)
+
   const handleTaskDragStart = (e: DragEvent, task: moguchart.GanttTask) => {
     if (e.dataTransfer) {
       e.dataTransfer.setData('application/json', JSON.stringify(task))
@@ -302,9 +304,17 @@ export const useGanttChartView = () => {
 
       e.dataTransfer.setDragImage(dragImage, 0, 0)
     }
+
+    if (ganttChartRef.value) {
+      ganttChartRef.value.externalDraggingTask = task
+    }
   }
 
   const handleTaskDragEnd = () => {
+    if (ganttChartRef.value) {
+      ganttChartRef.value.externalDraggingTask = null
+    }
+
     // カスタムドラッグイメージのクリーンアップ
     const dragImage = document.getElementById('custom-drag-image')
     if (dragImage) {
@@ -975,6 +985,7 @@ export const useGanttChartView = () => {
     addRowCount,
     unassignedTasks,
     isUnassignedTasksOpen,
+    ganttChartRef,
 
     // methods
     handleTaskUpdate,
