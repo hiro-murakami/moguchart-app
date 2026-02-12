@@ -37,7 +37,7 @@ onMounted(() => {
               </v-list-item>
             </v-list>
           </v-menu>
-          <div class="d-flex flex-column">
+          <div class="d-flex flex-column mr-4">
             <span class="text-subtitle-2">{{ appUser?.displayName ?? firebaseUser.displayName }}</span>
             <span class="text-caption text-medium-emphasis">{{ appUser?.email ?? firebaseUser.email }}</span>
           </div>

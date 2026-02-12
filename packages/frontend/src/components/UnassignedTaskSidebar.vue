@@ -33,7 +33,10 @@ const toggle = () => {
     }"
   >
     <h3 class="sidebar-header" :class="{ open: isOpen }" @click="toggle">
-      <span>◯ 追加候補タスク</span>
+      <v-icon>
+        {{ isOpen ? 'mdi-chevron-right' : 'mdi-chevron-left' }}
+      </v-icon>
+      <span>追加候補タスク</span>
     </h3>
     <div v-if="isOpen" class="sidebar-content">
       <div
