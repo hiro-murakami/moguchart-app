@@ -50,6 +50,9 @@ const {
   handleTaskDragStart,
   handleTaskDragEnd,
   handleTaskDrop,
+  chartContextMenu,
+  handleChartContextMenu,
+  handleCreateNewTask,
 } = useGanttChartView()
 </script>
 
@@ -131,6 +134,7 @@ const {
             @row-selection-change="handleRowSelectionChange"
             @bar-selection-change="handleBarSelectionChange"
             @task-drop="handleTaskDrop"
+            @chart-contextmenu="handleChartContextMenu"
           />
         </div>
 
@@ -202,6 +206,16 @@ const {
       :selected-task-ids="selectedTaskIds"
       @edit="handleEditTaskFromContextMenu"
       @delete="handleDeleteTaskFromContextMenu"
+    />
+
+    <!-- Chart Context Menu -->
+    <ChartContextMenu
+      v-model="chartContextMenu.visible"
+      :x="chartContextMenu.x"
+      :y="chartContextMenu.y"
+      :date="chartContextMenu.date"
+      :row-id="chartContextMenu.rowId"
+      @new-task="handleCreateNewTask"
     />
 
     <TaskDetailDialog

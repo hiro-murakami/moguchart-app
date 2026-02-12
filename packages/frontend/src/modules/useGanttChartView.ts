@@ -426,6 +426,39 @@ export const useGanttChartView = () => {
   }
 
   const saveTask = async (taskData: typeof editingTask.value) => {
+    // 新規作成の場合、アニメーション用の楽観的UI更新を行う
+    if (!taskData.id) {
+      const tempId = -Date.now()
+      const start = toLocalDate(taskData.start)
+      const end = toLocalDate(taskData.end)
+
+      // スタイルの構築
+      let style = ''
+      if (taskData.colorPalette?.backgroundColor) {
+        style = `background-color: ${taskData.colorPalette.backgroundColor}; border-color: ${taskData.colorPalette.backgroundColor};`
+      } else {
+        style = `background-color: ${DEFAULT_TASK_COLOR};`
+      }
+
+      // アニメーションの追加
+      style += ` transform-origin: center; animation: pop-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;`
+
+      const optimisticTask = {
+        id: tempId,
+        name: taskData.name,
+        start,
+        end,
+        style,
+      }
+
+      rows.value = rows.value.map((r) => {
+        if (Number(r.id) === Number(taskData.rowId)) {
+          return { ...r, tasks: [...r.tasks, optimisticTask as any] }
+        }
+        return r
+      })
+    }
+
     const data = {
       id: Number(taskData.id),
       rowId: Number(taskData.rowId),
@@ -437,8 +470,11 @@ export const useGanttChartView = () => {
         colorPalette: taskData.colorPalette,
       },
     }
-    await upsertGanttTask(data)
+
+    // ダイアログを閉じる
     isDialogVisible.value = false
+
+    await upsertGanttTask(data)
     await loadData(projectId.value)
   }
 
@@ -961,6 +997,42 @@ export const useGanttChartView = () => {
     selectedTaskIds.value = e.detail.selectedIds
   }
 
+  // --- Chart Context Menu ---
+  const chartContextMenu = ref({
+    visible: false,
+    x: 0,
+    y: 0,
+    date: undefined as Date | undefined,
+    rowId: undefined as string | undefined,
+  })
+
+  const handleChartContextMenu = (e: CustomEvent<moguchart.ChartContextMenuEventDetail>) => {
+    if (isReadOnly.value) return
+    const { event, date, rowId } = e.detail
+    // event.preventDefault() は gantt-chart 側で行われている
+
+    chartContextMenu.value = {
+      visible: true,
+      x: event.clientX,
+      y: event.clientY,
+      date,
+      rowId,
+    }
+  }
+
+  const handleCreateNewTask = (date: Date, rowId: string) => {
+    editingTask.value = {
+      id: '', // 新規作成
+      rowId: rowId,
+      name: '新規タスク',
+      start: toDateString(date),
+      end: toDateString(new Date(date.getTime() + 2 * 24 * 60 * 60 * 1000)), // デフォルト2日
+      description: '',
+    }
+    isDialogVisible.value = true
+    chartContextMenu.value.visible = false
+  }
+
   return {
     // state
     projects,
@@ -979,6 +1051,7 @@ export const useGanttChartView = () => {
     editingInputStyle,
     contextMenu,
     taskContextMenu,
+    chartContextMenu,
     currentProject,
     showHiddenRows,
     pxPerDay,
@@ -1015,5 +1088,7 @@ export const useGanttChartView = () => {
     handleTaskDragStart,
     handleTaskDragEnd,
     handleTaskDrop,
+    handleChartContextMenu,
+    handleCreateNewTask,
   }
 }
