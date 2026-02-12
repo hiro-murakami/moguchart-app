@@ -22,14 +22,25 @@ onMounted(() => {
         <v-spacer />
         <v-btn v-if="!firebaseUser" @click="userStore.signIn"> Login </v-btn>
         <template v-else>
-          <v-avatar class="mr-4 cursor-pointer" @click="showUserDetail = true">
-            <v-img :src="firebaseUser.photoURL ?? ''" />
-          </v-avatar>
+          <v-menu location="bottom end">
+            <template v-slot:activator="{ props }">
+              <v-avatar class="mr-4 cursor-pointer" v-bind="props">
+                <v-img :src="firebaseUser.photoURL ?? ''" />
+              </v-avatar>
+            </template>
+            <v-list>
+              <v-list-item prepend-icon="mdi-account-cog" @click="showUserDetail = true">
+                <v-list-item-title>ユーザー設定</v-list-item-title>
+              </v-list-item>
+              <v-list-item prepend-icon="mdi-logout" @click="userStore.signOut">
+                <v-list-item-title>ログアウト</v-list-item-title>
+              </v-list-item>
+            </v-list>
+          </v-menu>
           <div class="d-flex flex-column">
             <span class="text-subtitle-2">{{ appUser?.displayName ?? firebaseUser.displayName }}</span>
             <span class="text-caption text-medium-emphasis">{{ appUser?.email ?? firebaseUser.email }}</span>
           </div>
-          <v-btn icon="mdi-logout" class="ml-4" @click="userStore.signOut" />
         </template>
       </v-app-bar>
       <v-main>

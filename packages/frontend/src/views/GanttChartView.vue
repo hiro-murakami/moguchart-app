@@ -24,6 +24,7 @@ const {
   unassignedTasks,
   isUnassignedTasksOpen,
   ganttChartRef,
+  chartContextMenu,
 
   // methods
   handleTaskUpdate,
@@ -50,7 +51,6 @@ const {
   handleTaskDragStart,
   handleTaskDragEnd,
   handleTaskDrop,
-  chartContextMenu,
   handleChartContextMenu,
   handleCreateNewTask,
 } = useGanttChartView()
@@ -115,7 +115,7 @@ const {
         :style="{
           position: 'relative',
           minWidth: 0,
-          paddingRight: isUnassignedTasksOpen ? '248px' : '58px',
+          paddingRight: isReadOnly ? undefined : isUnassignedTasksOpen ? '248px' : '58px',
           transition: 'padding-right 0.3s ease',
         }"
       >
