@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import type { Label } from '@functions/types/shared'
 import ColorInput from './ColorInput.vue'
+import { getContrastColor } from '../../modules/utils'
 
 const props = defineProps<{
   modelValue: Label
@@ -33,26 +34,16 @@ const color = computed({
           </template>
           <span>削除</span>
         </v-tooltip>
-        <div
-          :style="`
-            width: 80px;
-            height: 24px;
-            border-radius: 12px;
-            background-color: ${color || '#cccccc'};
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #ffffff;
-            font-size: 12px;
-            font-weight: bold;
-            padding: 0 8px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-          `"
+        <v-chip
+          :color="color || '#cccccc'"
+          variant="flat"
+          label
+          size="small"
+          class="font-weight-bold"
+          :style="{ color: getContrastColor(color || '#cccccc') }"
         >
           {{ name || 'Label' }}
-        </div>
+        </v-chip>
       </div>
 
       <div class="flex-grow-1">

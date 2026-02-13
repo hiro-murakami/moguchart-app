@@ -15,3 +15,12 @@ export const toDateTimeString = (value?: string | Date | dayjs.Dayjs): string =>
 export const toLocalDate = (value: string | Date): Date => {
   return dayjs(value).toDate()
 }
+
+export const getContrastColor = (hex: string): string => {
+  if (!hex || hex.length !== 7) return '#000000'
+  const r = parseInt(hex.substring(1, 3), 16)
+  const g = parseInt(hex.substring(3, 5), 16)
+  const b = parseInt(hex.substring(5, 7), 16)
+  const yiq = (r * 299 + g * 587 + b * 114) / 1000
+  return yiq >= 128 ? '#000000' : '#ffffff'
+}
