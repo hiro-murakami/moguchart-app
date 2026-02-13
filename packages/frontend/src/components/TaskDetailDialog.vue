@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { useConfirm, useDiscardConfirm } from '@/modules/useConfirm'
 import { useProjectStore } from '@/stores/useProjectStore'
-import type { ColorPalette } from '@functions/types/shared'
+import type { ColorPalette, Label } from '@functions/types/shared'
+import { getContrastColor } from '@/modules/utils'
 import { isEqual } from 'lodash'
 import { storeToRefs } from 'pinia'
 import { computed, ref, watch } from 'vue'
@@ -15,6 +16,7 @@ interface TaskData {
   end: string
   description?: string
   colorPalette?: ColorPalette
+  labels?: Label[]
 }
 
 interface RowData {
@@ -65,7 +67,7 @@ const save = () => {
 }
 
 const projectStore = useProjectStore()
-const { colorPalettes } = storeToRefs(projectStore)
+const { colorPalettes, labels } = storeToRefs(projectStore)
 
 const onSelectPalette = (palette: ColorPalette) => {
   localTask.value.colorPalette = {
@@ -111,6 +113,52 @@ const onSelectPalette = (palette: ColorPalette) => {
                 v-model="localTask.colorPalette"
                 @delete="localTask.colorPalette = undefined"
               />
+            </v-col>
+            <v-col cols="12">
+              <v-autocomplete
+                v-model="localTask.labels"
+                :items="labels"
+                item-title="name"
+                return-object
+                label="ラベル"
+                multiple
+                chips
+                closable-chips
+                autocomplete="off"
+              >
+                <template #chip="{ props, item }">
+                  <v-chip
+                    v-bind="props"
+                    :color="item.raw.color"
+                    variant="flat"
+                    label
+                    size="small"
+                    class="font-weight-bold"
+                    :style="{ color: getContrastColor(item.raw.color) }"
+                  >
+                    {{ item.raw.name }}
+                  </v-chip>
+                </template>
+                <template #item="{ props, item }">
+                  <v-list-item v-bind="props" title="">
+                    <template #prepend>
+                      <v-chip
+                        :color="item.raw.color"
+                        variant="flat"
+                        label
+                        size="small"
+                        class="mr-2 font-weight-bold"
+                        :style="{ color: getContrastColor(item.raw.color) }"
+                      >
+                        {{ item.raw.name }}
+                      </v-chip>
+                    </template>
+                    <v-list-item-title>
+                      {{ item.raw.name }}
+                    </v-list-item-title>
+                  </v-list-item>
+                </template>
+              </v-autocomplete>
             </v-col>
             <v-col cols="12">
               <v-textarea

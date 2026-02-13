@@ -10,7 +10,7 @@ import {
 import { useAlert } from '@/modules/useAlert'
 import { useConfirm } from '@/modules/useConfirm'
 import { useLoading } from '@/modules/useLoading'
-import { toDateString, toLocalDate } from '@/modules/utils'
+import { toDateString, toLocalDate, getContrastColor } from '@/modules/utils'
 import { useProjectStore } from '@/stores/useProjectStore'
 import { useUserStore } from '@/stores/useUserStore'
 import type { ColorPalette, GanttRow, GanttTask, TaskAttribute } from '@functions/types/shared'
@@ -178,6 +178,15 @@ export const useGanttChartView = () => {
             style,
             labelStyle,
             pattern,
+            html:
+              attribute?.labels && attribute.labels.length > 0
+                ? `<div style="display: flex; gap: 4px; padding: 2px 4px; overflow: hidden;">${attribute?.labels
+                    .map(
+                      (l) =>
+                        `<span style="background-color: ${l.color}; color: ${getContrastColor(l.color)}; padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; white-space: nowrap;">${l.name}</span>`,
+                    )
+                    .join('')}</div>`
+                : undefined,
           }
         }),
       }))
@@ -394,6 +403,7 @@ export const useGanttChartView = () => {
     end: string
     description?: string
     colorPalette?: ColorPalette
+    labels?: { name: string; color: string }[]
   }>({
     id: '',
     rowId: '',
@@ -401,6 +411,7 @@ export const useGanttChartView = () => {
     start: '',
     end: '',
     description: '',
+    labels: [],
   })
 
   const handleTaskDblClick = (e: CustomEvent<moguchart.TaskClickEventDetail>) => {
@@ -420,6 +431,7 @@ export const useGanttChartView = () => {
         end: toDateString(task.end),
         description: taskWithAttr.attribute?.description || '',
         colorPalette: taskWithAttr.attribute?.colorPalette ? { ...taskWithAttr.attribute.colorPalette } : undefined,
+        labels: taskWithAttr.attribute?.labels ? [...taskWithAttr.attribute.labels] : [],
       }
       isDialogVisible.value = true
     }
@@ -468,6 +480,7 @@ export const useGanttChartView = () => {
       attribute: {
         description: taskData.description || undefined,
         colorPalette: taskData.colorPalette,
+        labels: taskData.labels,
       },
     }
 

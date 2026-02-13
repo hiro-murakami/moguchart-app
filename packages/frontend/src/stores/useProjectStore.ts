@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import type { Project, Role, ColorPalette } from '@functions/types/shared'
+import type { Project, Role, ColorPalette, Label } from '@functions/types/shared'
 import { selectProjects } from '@/modules/scripts'
 
 // 共通カラーパレット (16色固定)
@@ -38,6 +38,9 @@ export const useProjectStore = defineStore('project', {
     colorPalettes(): ColorPalette[] {
       const projectPalettes = this.currentProject?.attribute.colorPalettes ?? []
       return [...DEFAULT_COLOR_PALETTES, ...projectPalettes]
+    },
+    labels(): Label[] {
+      return this.currentProject?.attribute.labels ?? []
     },
   },
 
