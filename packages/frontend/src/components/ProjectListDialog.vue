@@ -18,6 +18,7 @@ const {
   loading,
   saving,
   deleting,
+  downloading,
   isProjectDetailDialogVisible,
   projectToEdit,
   headers,
@@ -27,6 +28,7 @@ const {
   saveProject,
   deleteProject,
   duplicateProject,
+  downloadProjectJson,
   close,
 } = useProjectListDialog(props, emit)
 </script>
@@ -45,7 +47,7 @@ const {
         <v-data-table
           :headers="headers"
           :items="projects"
-          :loading="loading || deleting"
+          :loading="loading || deleting || downloading"
           hover
           density="compact"
           class="row-pointer"
@@ -66,42 +68,56 @@ const {
             </v-tooltip>
           </template>
           <template #item.actions="{ item }: { item: Project }">
-            <v-tooltip v-if="item.role === 'owner' || item.role === 'editor'" :open-delay="500" location="top">
-              <template #activator="{ props }">
-                <v-btn
-                  v-bind="props"
-                  icon="mdi-pencil"
-                  variant="text"
-                  size="small"
-                  @click.stop="editProject(item)"
-                ></v-btn>
-              </template>
-              <span>編集</span>
-            </v-tooltip>
-            <v-tooltip v-if="item.role === 'owner'" :open-delay="500" location="top">
-              <template #activator="{ props }">
-                <v-btn
-                  v-bind="props"
-                  icon="mdi-content-copy"
-                  variant="text"
-                  size="small"
-                  @click.stop="duplicateProject(item)"
-                ></v-btn>
-              </template>
-              <span>複製</span>
-            </v-tooltip>
-            <v-tooltip v-if="item.role === 'owner'" :open-delay="500" location="top">
-              <template #activator="{ props }">
-                <v-btn
-                  v-bind="props"
-                  icon="mdi-delete"
-                  variant="text"
-                  size="small"
-                  @click.stop="deleteProject(item)"
-                ></v-btn>
-              </template>
-              <span>削除</span>
-            </v-tooltip>
+            <div class="d-flex justify-end align-center">
+              <v-tooltip v-if="item.role === 'owner' || item.role === 'editor'" :open-delay="500" location="top">
+                <template #activator="{ props }">
+                  <v-btn
+                    v-bind="props"
+                    icon="mdi-pencil"
+                    variant="text"
+                    size="small"
+                    @click.stop="editProject(item)"
+                  ></v-btn>
+                </template>
+                <span>編集</span>
+              </v-tooltip>
+              <v-tooltip v-if="item.role === 'owner'" :open-delay="500" location="top">
+                <template #activator="{ props }">
+                  <v-btn
+                    v-bind="props"
+                    icon="mdi-content-copy"
+                    variant="text"
+                    size="small"
+                    @click.stop="duplicateProject(item)"
+                  ></v-btn>
+                </template>
+                <span>複製</span>
+              </v-tooltip>
+              <v-tooltip v-if="item.role === 'owner'" :open-delay="500" location="top">
+                <template #activator="{ props }">
+                  <v-btn
+                    v-bind="props"
+                    icon="mdi-delete"
+                    variant="text"
+                    size="small"
+                    @click.stop="deleteProject(item)"
+                  ></v-btn>
+                </template>
+                <span>削除</span>
+              </v-tooltip>
+              <v-tooltip v-if="item.role" :open-delay="500" location="top">
+                <template #activator="{ props }">
+                  <v-btn
+                    v-bind="props"
+                    icon="mdi-download"
+                    variant="text"
+                    size="small"
+                    @click.stop="downloadProjectJson(item)"
+                  ></v-btn>
+                </template>
+                <span>ダウンロード</span>
+              </v-tooltip>
+            </div>
           </template>
         </v-data-table>
       </v-card-text>

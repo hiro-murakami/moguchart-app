@@ -11,6 +11,7 @@ import upsertProject from './scripts/upsertProject.js'
 import duplicateProject from './scripts/duplicateProject.js'
 import selectUser from './scripts/selectUser.js'
 import upsertUser from './scripts/upsertUser.js'
+import getGanttDataJson from './scripts/getGanttDataJson.js'
 import { FirebaseFunction } from './types/index.js'
 
 const functions: FirebaseFunction = {
@@ -26,6 +27,7 @@ const functions: FirebaseFunction = {
   duplicateProject,
   selectUser,
   upsertUser,
+  getGanttDataJson,
 }
 
 export const gantt = {

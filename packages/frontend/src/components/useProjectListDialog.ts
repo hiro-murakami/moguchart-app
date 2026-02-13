@@ -2,6 +2,7 @@ import {
   deleteProject as deleteProjectScript,
   duplicateProject as duplicateProjectScript,
   upsertProject,
+  getGanttDataJson,
 } from '@/modules/scripts'
 import { useConfirm } from '@/modules/useConfirm'
 import { useSnackbar } from '@/modules/useSnackbar'
@@ -25,6 +26,7 @@ export const useProjectListDialog = (
   const loading = ref(false)
   const saving = ref(false)
   const deleting = ref(false)
+  const downloading = ref(false)
   const isProjectDetailDialogVisible = ref(false)
   const projectToEdit = ref<Project | null>(null)
   const originalId = ref<string>()
@@ -148,11 +150,37 @@ export const useProjectListDialog = (
     isProjectDetailDialogVisible.value = true
   }
 
+  const downloadProjectJson = async (project: Project) => {
+    downloading.value = true
+
+    try {
+      const data = await getGanttDataJson(project.id)
+      const blob = new Blob([JSON.stringify(data, null, 2)], {
+        type: 'application/json',
+      })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${project.name}.json`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch (e) {
+      console.error(e)
+      snackbar({
+        message: 'ダウンロードに失敗しました。',
+        color: 'error',
+      })
+    } finally {
+      downloading.value = false
+    }
+  }
+
   return {
     projects,
     loading,
     saving,
     deleting,
+    downloading,
     isProjectDetailDialogVisible,
     projectToEdit,
     originalId,
@@ -164,6 +192,7 @@ export const useProjectListDialog = (
     saveProject,
     deleteProject,
     duplicateProject,
+    downloadProjectJson,
     close,
   }
 }

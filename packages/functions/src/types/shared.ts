@@ -33,6 +33,7 @@ export type FunctionName =
   | 'duplicateProject'
   | 'selectUser'
   | 'upsertUser'
+  | 'getGanttDataJson'
 
 /** ユーザーの権限ロール */
 export type Role = 'owner' | 'editor' | 'viewer'
@@ -202,5 +203,8 @@ export type DuplicateProject = (
 export type SelectUser = (email: string) => Promise<User | null>
 /** ユーザー情報を作成または更新する関数の型 */
 export type UpsertUser = (user: User, email?: string) => Promise<void>
+
+/** プロジェクトとガントチャートデータを取得する関数の型 */
+export type GetGanttDataJson = (projectId: string, email?: string) => Promise<{ project: any; rows: any[] }>
 
 // --- フロントエンドとバックエンドで実装を共有しない型 ---
