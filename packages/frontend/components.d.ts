@@ -19,6 +19,7 @@ declare module 'vue' {
     ConfirmDialog: typeof import('./src/components/ConfirmDialog.vue')['default']
     DialogProvider: typeof import('./src/components/DialogProvider.vue')['default']
     GoogleIcon: typeof import('./src/components/icons/GoogleIcon.vue')['default']
+    LabelInput: typeof import('./src/components/common/LabelInput.vue')['default']
     LoginPrompt: typeof import('./src/components/LoginPrompt.vue')['default']
     ProjectDetailDialog: typeof import('./src/components/ProjectDetailDialog.vue')['default']
     ProjectListDialog: typeof import('./src/components/ProjectListDialog.vue')['default']

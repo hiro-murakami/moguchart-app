@@ -1,4 +1,4 @@
-import type { ColorPalette, Project } from '@functions/types/shared'
+import type { ColorPalette, Label, Project } from '@functions/types/shared'
 import { isEqual } from 'lodash'
 import { computed, nextTick, ref, watch } from 'vue'
 import type { VForm } from 'vuetify/components'
@@ -27,6 +27,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
   const localEditors = ref<string[]>([])
   const localViewers = ref<string[]>([])
   const localColorPalettes = ref<ColorPalette[]>([])
+  const localLabels = ref<Label[]>([])
 
   const isEdit = computed(() => !!props.project)
   const title = computed(() => (isEdit.value ? 'プロジェクト編集' : 'プロジェクト追加'))
@@ -51,6 +52,9 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
           localColorPalettes.value = props.project.attribute.colorPalettes
             ? props.project.attribute.colorPalettes.map((p) => ({ ...p }))
             : []
+          localLabels.value = props.project.attribute.labels
+            ? props.project.attribute.labels.map((l) => ({ ...l }))
+            : []
           await nextTick() // DOMの更新を待つ
           form.value?.validate()
         } else {
@@ -64,6 +68,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
           localEditors.value = []
           localViewers.value = []
           localColorPalettes.value = []
+          localLabels.value = []
           form.value?.resetValidation()
         }
       } else {
@@ -84,11 +89,13 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
         localOwners.value.length > 0 ||
         localEditors.value.length > 0 ||
         localViewers.value.length > 0 ||
-        localColorPalettes.value.length > 0
+        localColorPalettes.value.length > 0 ||
+        localLabels.value.length > 0
       )
     }
     // 編集モード: 元の値と比較
     const originalColorPalettes = props.project.attribute.colorPalettes || []
+    const originalLabels = props.project.attribute.labels || []
     return (
       localName.value !== props.project.name ||
       localDescription.value !== (props.project.attribute.description || '') ||
@@ -98,7 +105,8 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
       !isEqual(localOwners.value, props.project.authority?.owners || []) ||
       !isEqual(localEditors.value, props.project.authority?.editors || []) ||
       !isEqual(localViewers.value, props.project.authority?.viewers || []) ||
-      !isEqual(localColorPalettes.value, originalColorPalettes)
+      !isEqual(localColorPalettes.value, originalColorPalettes) ||
+      !isEqual(localLabels.value, originalLabels)
     )
   })
 
@@ -123,6 +131,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
       attribute: {
         description: localDescription.value,
         colorPalettes: localColorPalettes.value,
+        labels: localLabels.value,
       },
       authority: {
         owners: localOwners.value,
@@ -148,6 +157,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
     localEditors,
     localViewers,
     localColorPalettes,
+    localLabels,
     title,
     close,
     handleBeforeClose,

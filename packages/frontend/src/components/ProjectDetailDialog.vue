@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import type { Project, ColorPalette } from '@functions/types/shared'
+import type { Project, ColorPalette, Label } from '@functions/types/shared'
 import inputRules from '@/modules/inputRules'
 import { useProjectDetailDialog } from '../modules/useProjectDetailDialog'
 
@@ -26,13 +26,14 @@ const {
   localEditors,
   localViewers,
   localColorPalettes,
+  localLabels,
   title,
   close,
   handleBeforeClose,
   save,
 } = useProjectDetailDialog(props, emit)
 
-const tab = ref<'general' | 'permissions' | 'colorPalettes'>('general')
+const tab = ref<'general' | 'permissions' | 'colorPalettes' | 'labels'>('general')
 
 watch(
   () => props.modelValue,
@@ -64,6 +65,10 @@ watch(
                 <v-tab value="colorPalettes">
                   <v-icon start> mdi-palette </v-icon>
                   カラーパレット
+                </v-tab>
+                <v-tab value="labels">
+                  <v-icon start> mdi-label </v-icon>
+                  ラベル
                 </v-tab>
               </v-tabs>
             </v-col>
@@ -159,6 +164,27 @@ watch(
                         :model-value="palette"
                         @update:model-value="(val: ColorPalette) => (localColorPalettes[i] = val)"
                         @delete="localColorPalettes.splice(i, 1)"
+                      />
+                    </v-col>
+                  </v-row>
+                </v-window-item>
+                <v-window-item value="labels">
+                  <v-row dense>
+                    <v-col cols="12">
+                      <v-btn
+                        variant="text"
+                        prepend-icon="mdi-plus"
+                        color="primary"
+                        @click="localLabels.push({ name: 'New Label', color: '#cccccc' })"
+                      >
+                        ラベル追加
+                      </v-btn>
+                    </v-col>
+                    <v-col v-for="(label, i) in localLabels" :key="i" cols="12">
+                      <LabelInput
+                        :model-value="label"
+                        @update:model-value="(val: Label) => (localLabels[i] = val)"
+                        @delete="localLabels.splice(i, 1)"
                       />
                     </v-col>
                   </v-row>

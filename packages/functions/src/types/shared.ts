@@ -54,6 +54,13 @@ export type ColorPalette = {
   }
 }
 
+export type Label = {
+  /** ラベル名 */
+  name: string
+  /** カラーコード */
+  color: string
+}
+
 /** ユーザー固有の設定属性 */
 export type UserAttribute = {
   /** UIテーマ設定（light / dark / system） */
@@ -70,12 +77,16 @@ export type ProjectAttribute = {
   description?: string
   /** プロジェクトで使用可能なカラーパレット一覧 */
   colorPalettes?: ColorPalette[]
+  /** プロジェクトで使用可能なラベル一覧 */
+  labels?: Label[]
 }
 
 /** 行（グループ）の追加属性 */
 export type RowAttribute = {
   /** 行の説明 */
   description?: string
+  /** 行に適用するラベル */
+  labels?: Label[]
 }
 
 /** タスクの追加属性 */
@@ -84,6 +95,8 @@ export type TaskAttribute = {
   description?: string
   /** タスクバーに適用するカラーパレット */
   colorPalette?: ColorPalette
+  /** タスクに適用するラベル */
+  labels?: Label[]
 }
 
 /** プロジェクトのアクセス権限管理 */
