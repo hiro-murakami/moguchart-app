@@ -2,6 +2,7 @@
 import ProjectDetailDialog from './ProjectDetailDialog.vue'
 import { useProjectListDialog } from './useProjectListDialog'
 import type { Project } from '@functions/types/shared'
+import { ref } from 'vue'
 
 const props = defineProps<{
   modelValue: boolean
@@ -19,6 +20,7 @@ const {
   saving,
   deleting,
   downloading,
+  restoring,
   isProjectDetailDialogVisible,
   projectToEdit,
   headers,
@@ -29,8 +31,26 @@ const {
   deleteProject,
   duplicateProject,
   downloadProjectJson,
+  restoreProjectFromFile,
   close,
 } = useProjectListDialog(props, emit)
+
+const fileInput = ref<HTMLInputElement | null>(null)
+
+const handleRestoreClick = () => {
+  fileInput.value?.click()
+}
+
+const handleFileChange = (e: Event) => {
+  const target = e.target as HTMLInputElement
+  if (target.files && target.files.length > 0) {
+    const file = target.files[0]
+    if (file) {
+      restoreProjectFromFile(file)
+    }
+  }
+  target.value = ''
+}
 </script>
 
 <template>
@@ -39,6 +59,16 @@ const {
       <v-card-title class="d-flex justify-space-between align-center">
         <span>プロジェクト一覧</span>
         <div>
+          <input ref="fileInput" type="file" accept=".json" style="display: none" @change="handleFileChange" />
+          <v-btn
+            color="secondary"
+            prepend-icon="mdi-upload"
+            class="mr-2"
+            :loading="restoring"
+            @click="handleRestoreClick"
+          >
+            バックアップから復元
+          </v-btn>
           <v-btn color="primary" prepend-icon="mdi-plus" class="mr-2" @click="newProject"> 新規作成 </v-btn>
           <v-btn icon="mdi-close" variant="text" @click="close"></v-btn>
         </div>
@@ -47,7 +77,7 @@ const {
         <v-data-table
           :headers="headers"
           :items="projects"
-          :loading="loading || deleting || downloading"
+          :loading="loading || deleting || downloading || restoring"
           hover
           density="compact"
           class="row-pointer"

@@ -19,6 +19,7 @@ import type {
   DuplicateProject,
   User,
   GetGanttDataJson,
+  RestoreProject,
 } from '@functions/types/shared'
 import { httpsCallable } from 'firebase/functions'
 
@@ -93,4 +94,8 @@ export const upsertUser: UpsertUser = (user) => {
 
 export const getGanttDataJson: GetGanttDataJson = (projectId) => {
   return callFunction<{ project: any; rows: any[] }>('getGanttDataJson', projectId)
+}
+
+export const restoreProject: RestoreProject = (data) => {
+  return callFunction<string>('restoreProject', data)
 }

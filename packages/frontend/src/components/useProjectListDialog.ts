@@ -3,6 +3,7 @@ import {
   duplicateProject as duplicateProjectScript,
   upsertProject,
   getGanttDataJson,
+  restoreProject as restoreProjectScript,
 } from '@/modules/scripts'
 import { useConfirm } from '@/modules/useConfirm'
 import { useSnackbar } from '@/modules/useSnackbar'
@@ -27,6 +28,7 @@ export const useProjectListDialog = (
   const saving = ref(false)
   const deleting = ref(false)
   const downloading = ref(false)
+  const restoring = ref(false)
   const isProjectDetailDialogVisible = ref(false)
   const projectToEdit = ref<Project | null>(null)
   const originalId = ref<string>()
@@ -150,6 +152,34 @@ export const useProjectListDialog = (
     isProjectDetailDialogVisible.value = true
   }
 
+  const restoreProjectFromFile = async (file: File) => {
+    restoring.value = true
+    try {
+      const text = await file.text()
+      const data = JSON.parse(text)
+
+      if (!data.project || !data.rows) {
+        throw new Error('Invalid backup file format')
+      }
+
+      await restoreProjectScript(data)
+
+      snackbar({
+        message: 'プロジェクトを復元しました。',
+        color: 'success',
+      })
+      await fetchProjects()
+    } catch (e: any) {
+      console.error(e)
+      snackbar({
+        message: `復元に失敗しました: ${e.message}`,
+        color: 'error',
+      })
+    } finally {
+      restoring.value = false
+    }
+  }
+
   const downloadProjectJson = async (project: Project) => {
     downloading.value = true
 
@@ -181,6 +211,7 @@ export const useProjectListDialog = (
     saving,
     deleting,
     downloading,
+    restoring,
     isProjectDetailDialogVisible,
     projectToEdit,
     originalId,
@@ -193,6 +224,7 @@ export const useProjectListDialog = (
     deleteProject,
     duplicateProject,
     downloadProjectJson,
+    restoreProjectFromFile,
     close,
   }
 }
