@@ -18,10 +18,10 @@ const updateDependencies = (attribute: any, taskIdMap: Map<number, number>): any
 }
 
 const restoreProject: RestoreProject = async (data, email) => {
-  const { project, rows } = data
+  const { project, rows, force } = data
 
   return await prisma.$transaction(async (tx) => {
-    // 1. プロジェクトの作成
+    // 1. プロジェクトの作成または更新
     const { id: oldProjectId, ...projectData } = project
 
     // メタデータの更新
@@ -34,19 +34,54 @@ const restoreProject: RestoreProject = async (data, email) => {
       viewers: [],
     }
 
-    const newProject = await tx.project.create({
-      data: {
-        name: projectData.name, // 必須項目
-        start: new Date(projectData.start),
-        end: new Date(projectData.end),
-        attribute: projectData.attribute ?? {},
-        public: false, // 復元時は非公開をデフォルトにする
-        authority: newAuthority,
-        ...commonColumns,
-      },
+    // 既存プロジェクトのチェック
+    let newProjectId: string
+    const existingProject = await tx.project.findUnique({
+      where: { id: oldProjectId },
     })
 
-    const newProjectId = newProject.id
+    if (existingProject) {
+      if (!force) {
+        throw new Error('PROJECT_EXISTS')
+      }
+
+      // 既存プロジェクトを更新（ガント行・タスクは一度すべて削除して作り直すのが安全）
+      // プロジェクト自体の更新
+      await tx.project.update({
+        where: { id: oldProjectId },
+        data: {
+          name: projectData.name,
+          start: new Date(projectData.start),
+          end: new Date(projectData.end),
+          attribute: projectData.attribute ?? {},
+          public: false, // 復元時は非公開をデフォルトにする
+          authority: newAuthority, // 権限もリセットするか？ここではリセットする
+          ...getUpdateCommonColumns(email),
+        },
+      })
+      newProjectId = oldProjectId
+
+      // 既存の行を削除（Cascade でタスクも消えるはずだが、念のため）
+      await tx.ganttRow.deleteMany({
+        where: { projectId: newProjectId },
+      })
+    } else {
+      // 新規作成（IDを指定して作成）
+      const newProject = await tx.project.create({
+        data: {
+          id: oldProjectId, // 元のIDを使用
+          name: projectData.name,
+          start: new Date(projectData.start),
+          end: new Date(projectData.end),
+          attribute: projectData.attribute ?? {},
+          public: false,
+          authority: newAuthority,
+          ...commonColumns,
+        },
+      })
+      newProjectId = newProject.id
+    }
+
     const taskIdMap = new Map<number, number>()
     const createdTasks: { newId: number; attribute: any }[] = []
 

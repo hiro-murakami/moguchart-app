@@ -171,6 +171,32 @@ export const useProjectListDialog = (
       await fetchProjects()
     } catch (e: any) {
       console.error(e)
+      if (e.message.includes('PROJECT_EXISTS')) {
+        const confirmed = await confirm({
+          title: 'プロジェクトの復元',
+          message: '同じIDを持つプロジェクトが既に存在します。上書きして復元しますか？現在のデータは削除されます。',
+        })
+        if (confirmed) {
+          try {
+            const text = await file.text()
+            const data = JSON.parse(text)
+            await restoreProjectScript({ ...data, force: true })
+            snackbar({
+              message: 'プロジェクトを復元しました。',
+              color: 'success',
+            })
+            await fetchProjects()
+            return
+          } catch (retryError: any) {
+            console.error(retryError)
+            snackbar({
+              message: `復元に失敗しました: ${retryError.message}`,
+              color: 'error',
+            })
+            return
+          }
+        }
+      }
       snackbar({
         message: `復元に失敗しました: ${e.message}`,
         color: 'error',

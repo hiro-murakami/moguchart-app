@@ -209,6 +209,6 @@ export type UpsertUser = (user: User, email?: string) => Promise<void>
 export type GetGanttDataJson = (projectId: string, email?: string) => Promise<{ project: any; rows: any[] }>
 
 /** プロジェクトとガントチャートデータを復元する関数の型 */
-export type RestoreProject = (data: { project: any; rows: any[] }, email?: string) => Promise<string>
+export type RestoreProject = (data: { project: any; rows: any[]; force?: boolean }, email?: string) => Promise<string>
 
 // --- フロントエンドとバックエンドで実装を共有しない型 ---
