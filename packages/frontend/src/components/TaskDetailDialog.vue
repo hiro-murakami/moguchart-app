@@ -77,61 +77,90 @@ const onSelectPalette = (palette: ColorPalette) => {
 </script>
 
 <template>
-  <v-dialog :model-value="modelValue" @update:model-value="handleBeforeClose" max-width="600px">
+  <v-dialog :model-value="modelValue" @update:model-value="handleBeforeClose" max-width="500px">
     <v-card>
-      <v-card-title>タスク編集</v-card-title>
-      <v-card-text>
-        <v-container>
-          <v-row>
-            <v-col cols="12">
-              <v-text-field v-model="localTask.name" label="タスク名" autocomplete="off"></v-text-field>
-            </v-col>
-            <v-col cols="12">
-              <v-select
-                v-model="localTask.rowId"
-                :items="rows"
-                item-title="name"
-                item-value="id"
-                label="行"
-                autocomplete="off"
-              ></v-select>
-            </v-col>
-            <v-col cols="12" sm="6">
-              <v-text-field v-model="localTask.start" label="開始日" type="date"></v-text-field>
-            </v-col>
-            <v-col cols="12" sm="6">
-              <v-text-field v-model="localTask.end" label="終了日" type="date"></v-text-field>
-            </v-col>
-            <v-col cols="12">
-              <div class="d-flex align-center mb-2">
-                <span class="text-subtitle-1 mr-2">色設定</span>
-                <ColorPaletteSelect :palettes="colorPalettes" :text-sample="localTask.name" @select="onSelectPalette" />
-              </div>
-              <ColorPaletteInput
-                v-if="localTask.colorPalette"
-                v-model="localTask.colorPalette"
-                @delete="localTask.colorPalette = undefined"
-              />
-            </v-col>
-            <v-col cols="12">
-              <LabelSelect v-model="localTask.labels" :items="labels" />
-            </v-col>
-            <v-col cols="12">
-              <v-textarea
-                v-model="localTask.description"
-                label="説明"
-                rows="3"
-                auto-grow
-                autocomplete="off"
-              ></v-textarea>
-            </v-col>
-          </v-row>
-        </v-container>
+      <v-card-title class="pa-8 pb-0">タスク編集</v-card-title>
+      <v-card-text class="pa-8">
+        <v-row dense>
+          <v-col cols="12">
+            <v-text-field
+              v-model="localTask.name"
+              label="タスク名"
+              density="compact"
+              variant="outlined"
+              hide-details
+              autocomplete="off"
+              class="mb-3"
+            ></v-text-field>
+          </v-col>
+          <v-col cols="12">
+            <v-select
+              v-model="localTask.rowId"
+              :items="rows"
+              item-title="name"
+              item-value="id"
+              label="行"
+              density="compact"
+              variant="outlined"
+              hide-details
+              autocomplete="off"
+              class="mb-3"
+            ></v-select>
+          </v-col>
+          <v-col cols="6">
+            <v-text-field
+              v-model="localTask.start"
+              label="開始日"
+              type="date"
+              density="compact"
+              variant="outlined"
+              hide-details
+              class="mb-3"
+            ></v-text-field>
+          </v-col>
+          <v-col cols="6">
+            <v-text-field
+              v-model="localTask.end"
+              label="終了日"
+              type="date"
+              density="compact"
+              variant="outlined"
+              hide-details
+              class="mb-3"
+            ></v-text-field>
+          </v-col>
+          <v-col cols="12" class="mb-3">
+            <div class="d-flex align-center mb-1">
+              <span class="text-caption font-weight-bold mr-2">色設定</span>
+              <ColorPaletteSelect :palettes="colorPalettes" :text-sample="localTask.name" @select="onSelectPalette" />
+            </div>
+            <ColorPaletteInput
+              v-if="localTask.colorPalette"
+              v-model="localTask.colorPalette"
+              @delete="localTask.colorPalette = undefined"
+            />
+          </v-col>
+          <v-col cols="12" class="mb-3">
+            <LabelSelect v-model="localTask.labels" :items="labels" />
+          </v-col>
+          <v-col cols="12">
+            <v-textarea
+              v-model="localTask.description"
+              label="説明"
+              rows="3"
+              auto-grow
+              density="compact"
+              variant="outlined"
+              hide-details
+              autocomplete="off"
+            ></v-textarea>
+          </v-col>
+        </v-row>
       </v-card-text>
-      <v-card-actions>
+      <v-card-actions class="pa-8 pt-0">
         <v-spacer></v-spacer>
-        <v-btn color="blue-darken-1" variant="text" @click="close"> キャンセル </v-btn>
-        <v-btn color="blue-darken-1" variant="text" @click="save"> 保存 </v-btn>
+        <v-btn color="grey-darken-1" variant="text" @click="close"> キャンセル </v-btn>
+        <v-btn color="primary" variant="flat" @click="save" class="ml-2"> 保存 </v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>

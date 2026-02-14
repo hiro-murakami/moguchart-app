@@ -19,6 +19,9 @@ const modelValue = defineModel<Label[]>({ default: () => [] })
     multiple
     chips
     closable-chips
+    density="compact"
+    variant="outlined"
+    hide-details
     autocomplete="off"
   >
     <template #chip="{ props, item }">

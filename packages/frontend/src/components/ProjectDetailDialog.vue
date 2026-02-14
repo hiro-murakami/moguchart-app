@@ -46,10 +46,10 @@ watch(
 </script>
 
 <template>
-  <v-dialog :model-value="modelValue" @update:model-value="handleBeforeClose" max-width="900px">
+  <v-dialog :model-value="modelValue" @update:model-value="handleBeforeClose" max-width="800px">
     <v-card>
-      <v-card-title>{{ title }}</v-card-title>
-      <v-card-text>
+      <v-card-title class="pa-8 pb-0">{{ title }}</v-card-title>
+      <v-card-text class="pa-8">
         <v-form ref="form" v-model="formValid">
           <v-row>
             <v-col cols="3">
@@ -75,25 +75,41 @@ watch(
             <v-col cols="9">
               <v-window v-model="tab" style="min-height: 450px">
                 <v-window-item value="general">
-                  <v-row dense>
+                  <v-row dense class="pt-2">
                     <v-col cols="12">
                       <v-text-field
                         v-model="localName"
                         label="プロジェクト名"
                         :rules="[inputRules.required, inputRules.within(191)]"
                         autofocus
+                        density="compact"
+                        variant="outlined"
+                        hide-details
                         autocomplete="off"
+                        class="mb-3"
                       />
                     </v-col>
                     <v-col cols="12">
-                      <v-textarea v-model="localDescription" label="説明" auto-grow />
+                      <v-textarea
+                        v-model="localDescription"
+                        label="説明"
+                        auto-grow
+                        density="compact"
+                        variant="outlined"
+                        hide-details
+                        class="mb-3"
+                      />
                     </v-col>
                     <v-col cols="6">
                       <v-text-field
                         v-model="localStart"
                         label="開始日"
                         type="date"
+                        density="compact"
+                        variant="outlined"
+                        hide-details
                         :rules="[inputRules.required, inputRules.dateBefore(localEnd)]"
+                        class="mb-3"
                       />
                     </v-col>
                     <v-col cols="6">
@@ -101,51 +117,68 @@ watch(
                         v-model="localEnd"
                         label="終了日"
                         type="date"
+                        density="compact"
+                        variant="outlined"
+                        hide-details
                         :rules="[inputRules.required, inputRules.dateAfter(localStart)]"
+                        class="mb-3"
                       />
                     </v-col>
                     <v-col cols="12">
-                      <v-checkbox v-model="localPublic" label="一般公開" />
+                      <v-checkbox v-model="localPublic" label="一般公開" density="compact" hide-details />
                     </v-col>
                   </v-row>
                 </v-window-item>
                 <v-window-item value="permissions">
-                  <v-col cols="12">
-                    <v-combobox
-                      v-model="localOwners"
-                      label="オーナー"
-                      multiple
-                      chips
-                      deletable-chips
-                      closable-chips
-                      :rules="[inputRules.areMailAddresses]"
-                      autocomplete="off"
-                    />
-                  </v-col>
-                  <v-col cols="12">
-                    <v-combobox
-                      v-model="localEditors"
-                      label="編集者"
-                      multiple
-                      chips
-                      deletable-chips
-                      closable-chips
-                      :rules="[inputRules.areMailAddresses]"
-                      autocomplete="off"
-                    />
-                  </v-col>
-                  <v-col cols="12">
-                    <v-combobox
-                      v-model="localViewers"
-                      label="閲覧者"
-                      multiple
-                      chips
-                      deletable-chips
-                      closable-chips
-                      :rules="[inputRules.areMailAddresses]"
-                      autocomplete="off"
-                    />
-                  </v-col>
+                  <v-row dense class="pt-2">
+                    <v-col cols="12">
+                      <v-combobox
+                        v-model="localOwners"
+                        label="オーナー"
+                        multiple
+                        chips
+                        deletable-chips
+                        closable-chips
+                        density="compact"
+                        variant="outlined"
+                        hide-details
+                        class="mb-3"
+                        :rules="[inputRules.areMailAddresses]"
+                        autocomplete="off"
+                      />
+                    </v-col>
+                    <v-col cols="12">
+                      <v-combobox
+                        v-model="localEditors"
+                        label="編集者"
+                        multiple
+                        chips
+                        deletable-chips
+                        closable-chips
+                        density="compact"
+                        variant="outlined"
+                        hide-details
+                        class="mb-3"
+                        :rules="[inputRules.areMailAddresses]"
+                        autocomplete="off"
+                      />
+                    </v-col>
+                    <v-col cols="12">
+                      <v-combobox
+                        v-model="localViewers"
+                        label="閲覧者"
+                        multiple
+                        chips
+                        deletable-chips
+                        closable-chips
+                        density="compact"
+                        variant="outlined"
+                        hide-details
+                        :rules="[inputRules.areMailAddresses]"
+                        autocomplete="off"
+                      />
+                    </v-col>
+                  </v-row>
                 </v-window-item>
                 <v-window-item value="colorPalettes">
                   <v-row dense>
@@ -194,10 +227,10 @@ watch(
           </v-row>
         </v-form>
       </v-card-text>
-      <v-card-actions>
+      <v-card-actions class="pa-8 pt-0">
         <v-spacer></v-spacer>
-        <v-btn color="blue-darken-1" variant="text" @click="close"> キャンセル </v-btn>
-        <v-btn color="blue-darken-1" variant="text" @click="save"> OK </v-btn>
+        <v-btn color="grey-darken-1" variant="text" @click="close"> キャンセル </v-btn>
+        <v-btn color="primary" variant="flat" @click="save" class="ml-2"> OK </v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
