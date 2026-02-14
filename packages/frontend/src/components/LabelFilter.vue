@@ -1,16 +1,21 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { getContrastColor } from '@/modules/utils'
+import { UNLABELED_VALUE } from '@/modules/constants'
 
 interface Label {
   name: string
   color: string
+  isUnlabeled?: boolean
 }
 
-defineProps<{
+const props = defineProps<{
   availableLabels: Label[]
 }>()
 
 const selectedLabels = defineModel<string[]>({ default: () => [] })
+
+const items = computed(() => [{ name: 'ラベルなし', color: '#9e9e9e', isUnlabeled: true }, ...props.availableLabels])
 
 const emit = defineEmits<{
   selectAll: []
@@ -21,9 +26,9 @@ const emit = defineEmits<{
 <template>
   <v-select
     v-model="selectedLabels"
-    :items="availableLabels"
+    :items="items"
     item-title="name"
-    item-value="name"
+    :item-value="(item: any) => (item.isUnlabeled ? UNLABELED_VALUE : item.name)"
     label="ラベル絞り込み"
     multiple
     chips
@@ -59,6 +64,7 @@ const emit = defineEmits<{
         variant="flat"
         size="small"
         label
+        :class="{ 'font-weight-bold': item.raw.isUnlabeled }"
       >
         {{ item.raw.name }}
       </v-chip>
@@ -78,9 +84,6 @@ const emit = defineEmits<{
             {{ item.raw.name }}
           </v-chip>
         </template>
-        <v-list-item-title>
-          {{ item.raw.name }}
-        </v-list-item-title>
       </v-list-item>
     </template>
   </v-select>

@@ -51,9 +51,6 @@ const modelValue = defineModel<Label[]>({ default: () => [] })
             {{ item.raw.name }}
           </v-chip>
         </template>
-        <v-list-item-title>
-          {{ item.raw.name }}
-        </v-list-item-title>
       </v-list-item>
     </template>
   </v-autocomplete>

@@ -1,4 +1,4 @@
-import { DEFAULT_TASK_COLOR } from '@/modules/constants'
+import { DEFAULT_TASK_COLOR, UNLABELED_VALUE } from '@/modules/constants'
 import {
   deleteGanttRow,
   deleteGanttTask,
@@ -119,6 +119,11 @@ export const useGanttChartView = () => {
       tasks: row.tasks.filter((task) => {
         const attribute = (task as any).attribute as TaskAttribute | undefined
         const taskLabels = attribute?.labels || []
+
+        if (selectedFilterLabelNames.value.includes(UNLABELED_VALUE) && taskLabels.length === 0) {
+          return true
+        }
+
         return taskLabels.some((l) => selectedFilterLabelNames.value.includes(l.name))
       }),
     }))
@@ -1128,7 +1133,7 @@ export const useGanttChartView = () => {
   }
 
   const selectAllLabels = () => {
-    selectedFilterLabelNames.value = availableLabels.value.map((l) => l.name)
+    selectedFilterLabelNames.value = [...availableLabels.value.map((l) => l.name), UNLABELED_VALUE]
   }
 
   const clearAllLabels = () => {
