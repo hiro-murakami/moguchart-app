@@ -2,7 +2,6 @@
 import { useConfirm, useDiscardConfirm } from '@/modules/useConfirm'
 import { useProjectStore } from '@/stores/useProjectStore'
 import type { ColorPalette, Label } from '@functions/types/shared'
-import { getContrastColor } from '@/modules/utils'
 import { isEqual } from 'lodash'
 import { storeToRefs } from 'pinia'
 import { computed, ref, watch } from 'vue'
@@ -115,50 +114,7 @@ const onSelectPalette = (palette: ColorPalette) => {
               />
             </v-col>
             <v-col cols="12">
-              <v-autocomplete
-                v-model="localTask.labels"
-                :items="labels"
-                item-title="name"
-                return-object
-                label="ラベル"
-                multiple
-                chips
-                closable-chips
-                autocomplete="off"
-              >
-                <template #chip="{ props, item }">
-                  <v-chip
-                    v-bind="props"
-                    :color="item.raw.color"
-                    variant="flat"
-                    label
-                    size="small"
-                    class="font-weight-bold"
-                    :style="{ color: getContrastColor(item.raw.color) }"
-                  >
-                    {{ item.raw.name }}
-                  </v-chip>
-                </template>
-                <template #item="{ props, item }">
-                  <v-list-item v-bind="props" title="">
-                    <template #prepend>
-                      <v-chip
-                        :color="item.raw.color"
-                        variant="flat"
-                        label
-                        size="small"
-                        class="mr-2 font-weight-bold"
-                        :style="{ color: getContrastColor(item.raw.color) }"
-                      >
-                        {{ item.raw.name }}
-                      </v-chip>
-                    </template>
-                    <v-list-item-title>
-                      {{ item.raw.name }}
-                    </v-list-item-title>
-                  </v-list-item>
-                </template>
-              </v-autocomplete>
+              <LabelSelect v-model="localTask.labels" :items="labels" />
             </v-col>
             <v-col cols="12">
               <v-textarea

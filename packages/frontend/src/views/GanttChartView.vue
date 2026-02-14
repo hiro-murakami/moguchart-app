@@ -58,7 +58,6 @@ const {
   handleCreateNewTask,
   selectAllLabels,
   clearAllLabels,
-  getContrastColor,
 } = useGanttChartView()
 </script>
 
@@ -82,68 +81,13 @@ const {
           </div>
         </div>
         <v-spacer />
-        <v-select
+        <LabelFilter
           v-model="selectedFilterLabelNames"
-          :items="availableLabels"
-          item-title="name"
-          item-value="name"
-          label="ラベル絞り込み"
-          multiple
-          chips
-          closable-chips
-          density="compact"
-          hide-details
-          variant="outlined"
-          class="mr-4 filter-labels-select"
-          autocomplete="off"
-        >
-          <template #prepend-item>
-            <v-list-item title="すべて選択" @click="selectAllLabels">
-              <template #prepend>
-                <v-icon icon="mdi-check-all" color="primary" />
-              </template>
-            </v-list-item>
-            <v-list-item title="選択解除" @click="clearAllLabels">
-              <template #prepend>
-                <v-icon icon="mdi-close-circle-outline" color="error" />
-              </template>
-            </v-list-item>
-            <v-divider class="mt-2" />
-          </template>
-
-          <template #chip="{ props, item }">
-            <v-chip
-              v-bind="props"
-              :style="{
-                backgroundColor: item.raw.color,
-                color: getContrastColor(item.raw.color),
-                borderColor: 'rgba(0,0,0,0.1)',
-              }"
-              variant="flat"
-              size="small"
-              label
-            >
-              {{ item.raw.name }}
-            </v-chip>
-          </template>
-
-          <template #item="{ props, item }">
-            <v-list-item v-bind="props" :title="item.raw.name">
-              <template #prepend>
-                <div
-                  :style="{
-                    width: '12px',
-                    height: '12px',
-                    borderRadius: '50%',
-                    backgroundColor: item.raw.color,
-                    marginRight: '12px',
-                    border: '1px solid rgba(0,0,0,0.1)',
-                  }"
-                ></div>
-              </template>
-            </v-list-item>
-          </template>
-        </v-select>
+          :available-labels="availableLabels"
+          @select-all="selectAllLabels"
+          @clear-all="clearAllLabels"
+          class="mr-4"
+        />
         <v-switch
           v-model="showHiddenRows"
           label="非表示行を表示"
@@ -327,11 +271,6 @@ const {
   min-height: calc(100vh - 64px);
   display: flex;
   flex-direction: column;
-}
-
-.filter-labels-select {
-  max-width: 300px;
-  min-width: 200px;
 }
 
 .row-edit-input {
