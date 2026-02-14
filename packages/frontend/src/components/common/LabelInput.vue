@@ -25,7 +25,7 @@ const color = computed({
 </script>
 
 <template>
-  <v-card variant="outlined" class="pa-2">
+  <v-card variant="outlined" class="pa-2" style="border-color: rgba(var(--v-border-color), 0.38)">
     <div class="d-flex align-center">
       <div class="mr-4 d-flex align-center justify-center">
         <v-tooltip location="top" open-delay="500">

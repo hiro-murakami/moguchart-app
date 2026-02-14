@@ -43,7 +43,7 @@ const onSelect = (palette: ColorPalette) => {
               :style="`
                   width: 100%;
                   height: 32px;
-                  border: 1px solid #ccc;
+                  border: 1px solid rgba(var(--v-border-color), 0.38);
                   background-color: ${palette.backgroundColor || '#ffffff'};
                   color: ${palette.color || '#000000'};
                   ${

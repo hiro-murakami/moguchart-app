@@ -47,7 +47,7 @@ const onApply = () => {
             backgroundColor: model || '#FFFFFF',
             width: '20px',
             height: '20px',
-            border: '1px solid #ccc',
+            border: '1px solid rgba(var(--v-border-color), 0.38)',
           }"
         ></div>
         {{ label }}

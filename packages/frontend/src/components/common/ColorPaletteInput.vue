@@ -65,7 +65,7 @@ const patternOptions = computed(() => [
 </script>
 
 <template>
-  <v-card variant="outlined" class="pa-2">
+  <v-card variant="outlined" class="pa-2" style="border-color: rgba(var(--v-border-color), 0.38)">
     <div class="d-flex">
       <!-- プレビューエリア -->
       <div class="mr-4 d-flex align-center justify-center">
@@ -79,7 +79,7 @@ const patternOptions = computed(() => [
           :style="`
             width: 80px;
             height: 38px;
-            border: 1px solid #ccc;
+            border: 1px solid rgba(var(--v-border-color), 0.38);
             border-radius: 4px;
             background-repeat: repeat;
             background-color: ${backgroundColor || '#ffffff'};
@@ -120,7 +120,7 @@ const patternOptions = computed(() => [
               <template #selection="{ item }">
                 <div class="d-flex align-center" v-if="item.raw.type !== 'none'">
                   <div
-                    :style="`width: 60px; height: 24px; border: 1px solid #ccc; background-repeat: repeat; background-color: ${backgroundColor || '#ffffff'}; ${moguchart.getPatternStyle({ type: item.raw.type, color: patternColor || '#000000' })}`"
+                    :style="`width: 60px; height: 24px; border: 1px solid rgba(var(--v-border-color), 0.38); background-repeat: repeat; background-color: ${backgroundColor || '#ffffff'}; ${moguchart.getPatternStyle({ type: item.raw.type, color: patternColor || '#000000' })}`"
                   ></div>
                 </div>
                 <div v-else>なし</div>
@@ -130,7 +130,7 @@ const patternOptions = computed(() => [
                   <template #prepend v-if="item.raw.type !== 'none'">
                     <div
                       class="mr-2"
-                      :style="`width: 60px; height: 24px; border: 1px solid #ccc; background-repeat: repeat; background-color: ${backgroundColor || '#ffffff'}; ${moguchart.getPatternStyle({ type: item.raw.type, color: patternColor || '#000000' })}`"
+                      :style="`width: 60px; height: 24px; border: 1px solid rgba(var(--v-border-color), 0.38); background-repeat: repeat; background-color: ${backgroundColor || '#ffffff'}; ${moguchart.getPatternStyle({ type: item.raw.type, color: patternColor || '#000000' })}`"
                     ></div>
                   </template>
                 </v-list-item>
