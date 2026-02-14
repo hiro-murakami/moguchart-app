@@ -3,6 +3,7 @@ node_modules
 dist
 .firebase
 lib
+mysql_test_data
 
 # local env files
 .env.local
