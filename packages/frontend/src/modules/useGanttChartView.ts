@@ -104,6 +104,25 @@ export const useGanttChartView = () => {
   const rows = ref<moguchart.GanttRow[]>([])
   const selectedRowIds = ref<string[]>([])
   const selectedTaskIds = ref<string[]>([])
+  const selectedFilterLabelNames = ref<string[]>([])
+
+  const availableLabels = computed(() => {
+    return currentProject.value?.attribute?.labels || []
+  })
+
+  const filteredRows = computed(() => {
+    if (selectedFilterLabelNames.value.length === 0) {
+      return rows.value
+    }
+    return rows.value.map((row) => ({
+      ...row,
+      tasks: row.tasks.filter((task) => {
+        const attribute = (task as any).attribute as TaskAttribute | undefined
+        const taskLabels = attribute?.labels || []
+        return taskLabels.some((l) => selectedFilterLabelNames.value.includes(l.name))
+      }),
+    }))
+  })
 
   const isReadOnly = computed(() => currentRole.value === 'viewer')
 
@@ -1108,6 +1127,14 @@ export const useGanttChartView = () => {
     chartContextMenu.value.visible = false
   }
 
+  const selectAllLabels = () => {
+    selectedFilterLabelNames.value = availableLabels.value.map((l) => l.name)
+  }
+
+  const clearAllLabels = () => {
+    selectedFilterLabelNames.value = []
+  }
+
   return {
     // state
     projects,
@@ -1134,6 +1161,9 @@ export const useGanttChartView = () => {
     unassignedTasks,
     isUnassignedTasksOpen,
     ganttChartRef,
+    availableLabels,
+    selectedFilterLabelNames,
+    filteredRows,
 
     // methods
     handleTaskUpdate,
@@ -1165,5 +1195,8 @@ export const useGanttChartView = () => {
     handleTaskDrop,
     handleChartContextMenu,
     handleCreateNewTask,
+    selectAllLabels,
+    clearAllLabels,
+    getContrastColor,
   }
 }
