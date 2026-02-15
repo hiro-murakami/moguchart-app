@@ -11,6 +11,7 @@ import { useAlert } from '@/modules/useAlert'
 import { useConfirm } from '@/modules/useConfirm'
 import { useLoading } from '@/modules/useLoading'
 import { toDateString, toLocalDate, getContrastColor } from '@/modules/utils'
+import { barContent, tooltip } from '@/modules/ganttChartCustomRendering'
 import { useProjectStore } from '@/stores/useProjectStore'
 import { useUserStore } from '@/stores/useUserStore'
 import type { ColorPalette, GanttRow, GanttTask, TaskAttribute } from '@functions/types/shared'
@@ -27,6 +28,7 @@ export const useGanttChartView = () => {
   const userStore = useUserStore()
 
   // --- 設定値 ---
+  const selectedFilterLabelNames = ref<string[]>([])
   const chartStartStr = ref('2025-12-15')
   const chartEndStr = ref('2026-03-31')
   const pxPerDay = ref(28)
@@ -35,7 +37,6 @@ export const useGanttChartView = () => {
   const barCornerRadius = ref(4)
   const labelWidth = ref(150)
   const showHiddenRows = ref(false)
-  const selectedFilterLabelNames = ref<string[]>([])
 
   // 追加候補のタスク一覧（固定分）
   const unassignedTasks = ref<moguchart.GanttTask[]>([
@@ -196,66 +197,8 @@ export const useGanttChartView = () => {
     showHiddenRows: showHiddenRows.value,
     theme: currentTheme.value,
     customRendering: {
-      barContent: (task: moguchart.GanttTask) => {
-        const taskWithAttr = task as any
-        const labels = taskWithAttr.attribute?.labels as { name: string; color: string }[] | undefined
-        const description = taskWithAttr.attribute?.description as string | undefined
-
-        const container = document.createElement('div')
-        container.style.display = 'flex'
-        container.style.flexDirection = 'column'
-        container.style.justifyContent = 'flex-start'
-        container.style.alignItems = 'flex-start'
-        container.style.height = '100%'
-        container.style.whiteSpace = 'nowrap'
-        container.style.overflow = 'hidden'
-        container.style.padding = '2px 8px'
-        container.style.gap = '1px'
-        container.style.pointerEvents = 'none'
-        container.style.userSelect = 'none'
-
-        const headerContainer = document.createElement('div')
-        headerContainer.style.display = 'flex'
-        headerContainer.style.alignItems = 'center'
-        headerContainer.style.gap = '6px'
-        headerContainer.style.width = '100%'
-        headerContainer.style.overflow = 'hidden'
-
-        const nameSpan = document.createElement('span')
-        nameSpan.style.cssText = `font-weight: bold; font-size: 12px; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); color: white; white-space: nowrap; ${task.labelStyle || ''}`
-        nameSpan.textContent = task.name || ''
-        headerContainer.appendChild(nameSpan)
-
-        if (labels && labels.length > 0) {
-          const labelsContainer = document.createElement('div')
-          labelsContainer.style.display = 'flex'
-          labelsContainer.style.gap = '4px'
-          labelsContainer.style.flexShrink = '0'
-
-          labels.forEach((l) => {
-            const labelSpan = document.createElement('span')
-            labelSpan.style.backgroundColor = l.color
-            labelSpan.style.color = getContrastColor(l.color)
-            labelSpan.style.padding = '0px 6px'
-            labelSpan.style.borderRadius = '3px'
-            labelSpan.style.fontSize = '10px'
-            labelSpan.style.fontWeight = 'bold'
-            labelSpan.textContent = l.name
-            labelsContainer.appendChild(labelSpan)
-          })
-          headerContainer.appendChild(labelsContainer)
-        }
-        container.appendChild(headerContainer)
-
-        if (description) {
-          const descSpan = document.createElement('span')
-          descSpan.style.cssText = `font-size: 10px; opacity: 0.9; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); color: white; overflow: hidden; text-overflow: ellipsis; width: 100%; display: block; ${task.labelStyle || ''}`
-          descSpan.textContent = description
-          container.appendChild(descSpan)
-        }
-
-        return container
-      },
+      barContent,
+      tooltip,
     },
   }))
 
