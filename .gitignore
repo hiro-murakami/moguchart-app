@@ -6,6 +6,7 @@ lib
 mysql_test_data
 
 # local env files
+.env
 .env.local
 .env.*.local
 

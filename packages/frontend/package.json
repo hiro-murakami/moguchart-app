@@ -5,6 +5,7 @@
   "version": "0.0.0",
   "scripts": {
     "dev": "VITE_APP_MODE=mock vite --force",
+    "setup:env": "node scripts/fetch-env.js",
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
     "build-only": "vite build",
@@ -24,8 +25,9 @@
     "vuetify": "^3.10.1"
   },
   "devDependencies": {
-    "@types/lodash": "^4.17.23",
+    "@google-cloud/secret-manager": "^6.1.1",
     "@tsconfig/node22": "^22.0.0",
+    "@types/lodash": "^4.17.23",
     "@types/node": "^22.9.0",
     "@vitejs/plugin-vue": "^6.0.1",
     "@vue/tsconfig": "^0.8.1",
