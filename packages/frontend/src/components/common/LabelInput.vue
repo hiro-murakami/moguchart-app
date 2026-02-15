@@ -27,7 +27,7 @@ const color = computed({
 <template>
   <v-card variant="outlined" class="pa-2" style="border-color: rgba(var(--v-border-color), 0.38)">
     <div class="d-flex align-center">
-      <div class="mr-4 d-flex align-center justify-center">
+      <div class="mr-4 d-flex align-center justify-start" style="width: 30%">
         <v-tooltip location="top" open-delay="500">
           <template #activator="{ props }">
             <v-btn v-bind="props" icon="mdi-delete" variant="text" color="error" size="small" @click="emit('delete')" />
@@ -49,10 +49,17 @@ const color = computed({
       <div class="flex-grow-1">
         <v-row dense>
           <v-col cols="8">
-            <v-text-field v-model="name" label="ラベル名" density="compact" variant="outlined" hide-details />
+            <v-text-field
+              v-model="name"
+              label="ラベル名"
+              density="compact"
+              variant="outlined"
+              hide-details
+              class="small-input"
+            />
           </v-col>
           <v-col cols="4">
-            <ColorInput v-model="color" label="色" min-width="100px" />
+            <ColorInput v-model="color" label="色" min-width="100px" class="small-input" />
           </v-col>
         </v-row>
       </div>

@@ -18,6 +18,7 @@ import '@/firebase'
 
 // Styles
 import 'unfonts.css'
+import '@/styles/common.css'
 
 const app = createApp(App)
 
