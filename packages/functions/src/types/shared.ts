@@ -80,6 +80,15 @@ export type UserAttribute = {
   lastLoginAt?: string
 }
 
+export type NewTaskTemplate = {
+  /** タスク名 */
+  name: string
+  /** タスク期間（日数） */
+  duration: number
+  /** タスクの追加属性 */
+  attribute: TaskAttribute
+}
+
 /** プロジェクトの追加属性 */
 export type ProjectAttribute = {
   /** プロジェクトの説明 */
@@ -88,6 +97,8 @@ export type ProjectAttribute = {
   colorPalettes?: ColorPalette[]
   /** プロジェクトで使用可能なラベル一覧 */
   labels?: Label[]
+  /** 新規タスクテンプレート一覧 */
+  newTaskTemplates?: NewTaskTemplate[]
 }
 
 /** 行（グループ）の追加属性 */

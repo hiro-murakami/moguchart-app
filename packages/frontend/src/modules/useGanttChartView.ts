@@ -48,32 +48,6 @@ export const useGanttChartView = () => {
   const showHiddenRows = ref(false)
   const manualAddRowCount = ref(1)
 
-  // 追加候補のタスク一覧（固定分）
-  const unassignedTasks = ref<moguchart.GanttTask[]>([
-    {
-      id: 'new-1',
-      name: '新規タスク',
-      start: new Date(), // 期間計算用のダミー
-      end: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 3日間
-      style: `background-color: ${DEFAULT_TASK_COLOR};`,
-    },
-    {
-      id: 'new-2',
-      name: '新規タスク',
-      start: new Date(), // 期間計算用のダミー
-      end: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), // 5日間
-      style: `background-color: #f63b82;`,
-    },
-    {
-      id: 'new-3',
-      name: '新規タスク',
-      start: new Date(), // 期間計算用のダミー
-      end: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000), // 8日間
-      style: `background-color: #82f63b;`,
-      labelStyle: `color: #000000;`,
-      pattern: { type: 'diagonal-stripe', color: 'rgba(255, 255, 255, 0.5)' },
-    },
-  ])
   const isUnassignedTasksOpen = ref(false)
 
   // --- 状態 ---
@@ -1219,7 +1193,7 @@ export const useGanttChartView = () => {
     pxPerDay,
     addRowCount,
     manualAddRowCount,
-    unassignedTasks,
+
     isUnassignedTasksOpen,
     ganttChartRef,
     availableLabels,

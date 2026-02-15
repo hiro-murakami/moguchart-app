@@ -22,7 +22,6 @@ const {
   pxPerDay,
   addRowCount,
   manualAddRowCount,
-  unassignedTasks,
   isUnassignedTasksOpen,
   ganttChartRef,
   chartContextMenu,
@@ -171,7 +170,6 @@ const rowCountRules = [(v: number) => (v >= 1 && v <= 10) || '1〜10の範囲で
         <UnassignedTaskSidebar
           v-if="!isReadOnly"
           v-model:is-open="isUnassignedTasksOpen"
-          :tasks="unassignedTasks"
           @drag-start="handleTaskDragStart"
           @drag-end="handleTaskDragEnd"
         />
