@@ -195,6 +195,7 @@ const rowCountRules = [(v: number) => (v >= 1 && v <= 10) || '1〜10の範囲で
       </div>
 
       <div v-if="!isReadOnly" class="mt-2 d-flex align-center">
+        <v-icon icon="mdi-plus" size="small" class="mr-2" />
         <v-text-field
           v-model.number="manualAddRowCount"
           type="number"
@@ -206,13 +207,12 @@ const rowCountRules = [(v: number) => (v >= 1 && v <= 10) || '1〜10の範囲で
           max="10"
           :rules="rowCountRules"
           style="max-width: 80px"
-          class="mr-2 bg-surface"
+          class="bg-surface"
           autocomplete="off"
         />
         <v-btn
           color="primary"
           variant="text"
-          prepend-icon="mdi-plus"
           :disabled="!manualAddRowCount || manualAddRowCount < 1 || manualAddRowCount > 10"
           @click="handleAddRow(undefined, manualAddRowCount)"
         >
