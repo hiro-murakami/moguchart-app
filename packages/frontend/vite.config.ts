@@ -1,11 +1,11 @@
-import { fileURLToPath, URL } from "node:url";
+import { fileURLToPath, URL } from 'node:url'
 
-import { defineConfig } from "vite";
-import vue from "@vitejs/plugin-vue";
-import vuetify, { transformAssetUrls } from "vite-plugin-vuetify";
-import Unfonts from "unplugin-fonts/vite";
-import Components from "unplugin-vue-components/vite";
-import path from "node:path";
+import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+import vuetify, { transformAssetUrls } from 'vite-plugin-vuetify'
+import Unfonts from 'unplugin-fonts/vite'
+import Components from 'unplugin-vue-components/vite'
+import path from 'node:path'
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -14,13 +14,19 @@ export default defineConfig({
   },
   css: {
     devSourcemap: true,
+    preprocessorOptions: {
+      scss: {
+        additionalData: `@use "@/styles/_variables.scss" as *;`,
+        api: 'modern-compiler',
+      },
+    },
   },
   plugins: [
     vue({
       template: {
         transformAssetUrls,
         compilerOptions: {
-          isCustomElement: (tag) => tag.startsWith("gantt-"),
+          isCustomElement: (tag) => tag.startsWith('gantt-'),
         },
       },
     }),
@@ -33,8 +39,8 @@ export default defineConfig({
       google: {
         families: [
           {
-            name: "Roboto",
-            styles: "100;300;400;500;700;900",
+            name: 'Roboto',
+            styles: '100;300;400;500;700;900',
           },
         ],
       },
@@ -42,28 +48,27 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      "@": fileURLToPath(new URL("./src", import.meta.url)),
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
       // 以下を追加: functionsへのエイリアス
-      "@functions/types": path.resolve(__dirname, "../functions/src/types"),
+      '@functions/types': path.resolve(__dirname, '../functions/src/types'),
     },
-    extensions: [".js", ".json", ".jsx", ".mjs", ".ts", ".tsx", ".vue"],
+    extensions: ['.js', '.json', '.jsx', '.mjs', '.ts', '.tsx', '.vue'],
   },
   optimizeDeps: {
     // リンクされたパッケージを事前バンドルから除外する（これで dedupe が効くようになります）
-    exclude: ["@mogura/moguchart"],
+    exclude: ['@mogura/moguchart'],
   },
   server: {
     proxy: {
-      "/api": {
+      '/api': {
         // firebase-debug.log に出力されているエミュレータのURLを指定
-        target:
-          "http://127.0.0.1:5001/firestore-sample-c7300/asia-northeast1/api",
+        target: 'http://127.0.0.1:5001/firestore-sample-c7300/asia-northeast1/api',
         changeOrigin: true,
       },
     },
     fs: {
       // リンクされたパッケージがモノレポ外にある場合のために許可範囲を広げる
-      allow: ["..", "../../../"],
+      allow: ['..', '../../../'],
     },
   },
-});
+})

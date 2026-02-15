@@ -55,7 +55,7 @@ onMounted(() => {
   </DialogProvider>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .header-image {
   border-radius: 6px;
 }
