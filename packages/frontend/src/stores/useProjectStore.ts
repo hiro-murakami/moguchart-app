@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import type { Project, Role, ColorPalette, Label } from '@functions/types/shared'
-import { selectProjects } from '@/modules/scripts'
+import { selectProjects, upsertProject } from '@/modules/scripts'
 
 // 共通カラーパレット (16色固定)
 const DEFAULT_COLOR_PALETTES: ColorPalette[] = [
@@ -52,6 +52,19 @@ export const useProjectStore = defineStore('project', {
 
     setProjectId(id: string) {
       this.currentProjectId = id
+    },
+
+    async updateProject(project: Project) {
+      // サーバー更新
+      // TODO: 型定義の不整合を修正するまでは一時的にanyで回避
+      await upsertProject(project as any)
+      // ストア内のプロジェクト情報も更新
+      const index = this.projects.findIndex((p) => p.id === project.id)
+      if (index !== -1) {
+        this.projects[index] = { ...this.projects[index], ...project }
+      }
+      // 最新情報を再取得して整合性を保つ
+      await this.fetchProjects()
     },
 
     clear() {

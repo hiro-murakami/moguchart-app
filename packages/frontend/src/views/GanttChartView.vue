@@ -63,6 +63,8 @@ const {
   editingRowData,
   handleEditRowFromContextMenu,
   saveRow,
+  isProjectDetailDialogVisible,
+  updateProject,
 } = useGanttChartView()
 
 const rowCountRules = [(v: number) => (v >= 1 && v <= 10) || '1〜10の範囲で入力してください']
@@ -81,6 +83,15 @@ const rowCountRules = [(v: number) => (v >= 1 && v <= 10) || '1〜10の範囲で
         <div>
           <div class="d-flex align-center">
             <span class="text-h6">{{ currentProject.name }}</span>
+            <v-btn
+              v-if="!isReadOnly"
+              icon="mdi-pencil"
+              variant="text"
+              density="compact"
+              size="small"
+              class="ml-2"
+              @click="isProjectDetailDialogVisible = true"
+            />
             <RoleChip :role="currentProject.role" class="ml-2" />
           </div>
           <div v-if="currentProject.attribute.description" class="text-caption text-medium-emphasis">
@@ -269,7 +280,12 @@ const rowCountRules = [(v: number) => (v >= 1 && v <= 10) || '1〜10の範囲で
     />
 
     <RowEditDialog v-model="isRowEditDialogVisible" :row="editingRowData" @save="saveRow" />
-
+    <ProjectDetailDialog
+      v-if="currentProject"
+      v-model="isProjectDetailDialogVisible"
+      :project="currentProject"
+      @save="updateProject"
+    />
     <ProjectListDialog v-model="isProjectListDialogVisible" @select="setProjectId" @update="fetchProjects" />
   </div>
 </template>

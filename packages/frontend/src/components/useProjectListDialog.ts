@@ -1,7 +1,6 @@
 import {
   deleteProject as deleteProjectScript,
   duplicateProject as duplicateProjectScript,
-  upsertProject,
   getGanttDataJson,
   restoreProject as restoreProjectScript,
 } from '@/modules/scripts'
@@ -97,7 +96,7 @@ export const useProjectListDialog = (
           newProjectData: project as Project,
         })
       } else {
-        await upsertProject(project as Project)
+        await projectStore.updateProject(project as Project)
       }
       isProjectDetailDialogVisible.value = false
       await fetchProjects() // Refresh the list
