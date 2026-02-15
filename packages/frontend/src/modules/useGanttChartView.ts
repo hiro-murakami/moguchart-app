@@ -369,7 +369,11 @@ export const useGanttChartView = () => {
     }
 
     if (ganttChartRef.value) {
-      ganttChartRef.value.externalDraggingTask = task
+      ganttChartRef.value.externalDraggingTask = {
+        ...task,
+        type: 'normal',
+        attribute: (task as any).attribute,
+      }
     }
   }
 
@@ -429,14 +433,15 @@ export const useGanttChartView = () => {
       await upsertGanttTask({
         id: 0, // 新規作成
         rowId: Number(targetRowId),
-        name: task.name || '',
+        name: task.name,
         start: toDateString(newStart),
         end: toDateString(newEnd),
         attribute: {
+          ...(taskAny.attribute || {}),
           description: taskAny.attribute?.description || '',
           colorPalette,
         },
-      })
+      } as any)
       await loadData(projectId.value)
     } catch (err) {
       console.error('Failed to drop task:', err)

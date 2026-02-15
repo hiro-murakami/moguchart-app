@@ -7,6 +7,7 @@ import type { TaskAttribute, NewTaskTemplate } from '@functions/types/shared'
 import TaskTemplateDialog from './TaskTemplateDialog.vue'
 import TemplateContextMenu from './TemplateContextMenu.vue'
 import { useConfirm } from '@/modules/useConfirm'
+import { getContrastColor } from '@/modules/utils'
 
 interface DraggableTask extends moguchart.GanttTask {
   style?: string
@@ -232,9 +233,29 @@ const saveTemplate = async (template: NewTaskTemplate) => {
         @dblclick="handleTaskDblClick(task)"
         @contextmenu.prevent="handleTaskContextMenu($event, task)"
       >
-        <div class="task-bar-preview" :style="`${task.style || ''}; ${moguchart.getPatternStyle(task.pattern)}`"></div>
-        <div class="task-name">{{ task.name }}</div>
-        <div class="task-duration">期間: {{ dayjs(task.end).diff(dayjs(task.start), 'day') }} 日</div>
+        <div class="task-header">
+          <div
+            class="task-bar-preview"
+            :style="`${task.style || ''}; ${moguchart.getPatternStyle(task.pattern)}`"
+          ></div>
+          <div class="task-name">{{ task.name }}</div>
+        </div>
+        <div class="task-meta">
+          <div class="task-duration">期間: {{ dayjs(task.end).diff(dayjs(task.start), 'day') }} 日</div>
+          <div v-if="task.attribute?.labels?.length" class="task-labels">
+            <span
+              v-for="label in task.attribute.labels"
+              :key="label.name"
+              class="task-label-chip"
+              :style="{ backgroundColor: label.color, color: getContrastColor(label.color) }"
+            >
+              {{ label.name }}
+            </span>
+          </div>
+        </div>
+        <div v-if="task.attribute?.description" class="task-description">
+          {{ task.attribute.description }}
+        </div>
       </div>
       <div v-if="tasks.length === 0" class="empty-message">タスクはありません</div>
     </div>
@@ -343,9 +364,44 @@ const saveTemplate = async (template: NewTaskTemplate) => {
   margin-bottom: 4px;
 }
 
+.task-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
 .task-duration {
   font-size: 12px;
   opacity: 0.7;
+}
+
+.task-labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.task-label-chip {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-weight: bold;
+  white-space: nowrap;
+  line-height: normal;
+}
+
+.task-description {
+  font-size: 11px;
+  opacity: 0.6;
+  margin-top: 4px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2; /* Limit to 2 lines */
+  line-clamp: 2;
+  white-space: pre-wrap;
 }
 
 .empty-message {
