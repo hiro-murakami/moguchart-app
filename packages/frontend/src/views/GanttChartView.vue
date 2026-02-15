@@ -21,6 +21,7 @@ const {
   showHiddenRows,
   pxPerDay,
   addRowCount,
+  manualAddRowCount,
   unassignedTasks,
   isUnassignedTasksOpen,
   ganttChartRef,
@@ -59,6 +60,8 @@ const {
   selectAllLabels,
   clearAllLabels,
 } = useGanttChartView()
+
+const rowCountRules = [(v: number) => (v >= 1 && v <= 10) || '1〜10の範囲で入力してください']
 </script>
 
 <template>
@@ -176,8 +179,30 @@ const {
         />
       </div>
 
-      <div v-if="!isReadOnly" class="mt-2">
-        <v-btn color="primary" variant="text" prepend-icon="mdi-plus" @click="handleAddRow()"> 行追加 </v-btn>
+      <div v-if="!isReadOnly" class="mt-2 d-flex align-center">
+        <v-text-field
+          v-model.number="manualAddRowCount"
+          type="number"
+          label="行数"
+          density="compact"
+          hide-details="auto"
+          variant="outlined"
+          min="1"
+          max="10"
+          :rules="rowCountRules"
+          style="max-width: 80px"
+          class="mr-2 bg-surface"
+          autocomplete="off"
+        />
+        <v-btn
+          color="primary"
+          variant="text"
+          prepend-icon="mdi-plus"
+          :disabled="!manualAddRowCount || manualAddRowCount < 1 || manualAddRowCount > 10"
+          @click="handleAddRow(undefined, manualAddRowCount)"
+        >
+          行追加
+        </v-btn>
       </div>
     </template>
 

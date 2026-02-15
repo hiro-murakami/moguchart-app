@@ -37,6 +37,7 @@ export const useGanttChartView = () => {
   const barCornerRadius = ref(4)
   const labelWidth = ref(150)
   const showHiddenRows = ref(false)
+  const manualAddRowCount = ref(1)
 
   // 追加候補のタスク一覧（固定分）
   const unassignedTasks = ref<moguchart.GanttTask[]>([
@@ -1146,6 +1147,7 @@ export const useGanttChartView = () => {
     showHiddenRows,
     pxPerDay,
     addRowCount,
+    manualAddRowCount,
     unassignedTasks,
     isUnassignedTasksOpen,
     ganttChartRef,
