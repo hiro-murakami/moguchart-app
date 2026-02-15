@@ -310,7 +310,7 @@ const rowCountRules = [(v: number) => (v >= 1 && v <= 10) || '1〜10の範囲で
   background: #333;
   color: white;
   border: 1px solid #007bff;
-  padding: 0 4px;
+  padding: 0 6px;
   z-index: 1000;
   font-size: 14px;
   outline: none;

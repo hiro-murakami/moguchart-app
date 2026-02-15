@@ -11,7 +11,7 @@ import { useAlert } from '@/modules/useAlert'
 import { useConfirm } from '@/modules/useConfirm'
 import { useLoading } from '@/modules/useLoading'
 import { toDateString, toLocalDate, getContrastColor } from '@/modules/utils'
-import { barContent, tooltip } from '@/modules/ganttChartCustomRendering'
+import { barContent, tooltip, rowHeaderContent } from '@/modules/ganttChartCustomRendering'
 import { useProjectStore } from '@/stores/useProjectStore'
 import { useUserStore } from '@/stores/useUserStore'
 import type { ColorPalette, GanttRow, GanttTask, TaskAttribute, RowAttribute } from '@functions/types/shared'
@@ -200,6 +200,7 @@ export const useGanttChartView = () => {
     customRendering: {
       barContent,
       tooltip,
+      rowHeaderContent,
     },
   }))
 
@@ -708,13 +709,15 @@ export const useGanttChartView = () => {
     const row = rows.value.find((r) => Number(r.id) === rowId)
     if (!row) return
 
+    const attribute = (row as any).attribute as RowAttribute | undefined
+
     await upsertGanttRow({
       id: rowId,
       name,
       order: (row as any).order ?? 0,
       projectId: projectId.value,
       visible: row.visible || true,
-      attribute: {},
+      attribute: attribute || {},
       tasks: [],
     })
     await loadData(projectId.value)
@@ -771,6 +774,7 @@ export const useGanttChartView = () => {
       projectId: projectId.value,
       visible: row.visible || true,
       attribute: {
+        ...((row as any).attribute || {}),
         description: data.description || undefined,
       },
       tasks: [],
@@ -798,7 +802,7 @@ export const useGanttChartView = () => {
         left: `${targetRect.left}px`,
         // Ensure minimum dimensions for better UX
         width: `${Math.max(targetRect.width, 140)}px`,
-        height: `${barHeight.value + barMargin.value * 2}px`,
+        height: `${barHeight.value - 6}px`,
       }
 
       // Focus the input next tick
@@ -1045,7 +1049,7 @@ export const useGanttChartView = () => {
           order: (row as any).order ?? 0,
           projectId: projectId.value,
           visible: newVisible,
-          attribute: {},
+          attribute: (row as any).attribute || {},
           tasks: [],
         })),
       )

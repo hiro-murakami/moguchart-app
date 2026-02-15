@@ -130,3 +130,45 @@ export const tooltip = (task: moguchart.GanttTask) => {
 
   return container
 }
+
+export const rowHeaderContent = (row: moguchart.GanttRow) => {
+  const rowWithAttr = row as any
+  const description = rowWithAttr.attribute?.description as string | undefined
+
+  const container = document.createElement('div')
+  container.style.display = 'flex'
+  container.style.flexDirection = 'column'
+  container.style.justifyContent = 'start'
+  container.style.height = '100%'
+  container.style.padding = '4px 8px'
+  container.style.overflow = 'hidden'
+  container.style.width = '100%'
+  container.style.position = 'relative'
+  container.style.zIndex = '1'
+  container.style.pointerEvents = 'none'
+  container.style.userSelect = 'none'
+
+  const nameDiv = document.createElement('div')
+  nameDiv.style.fontWeight = 'bold'
+  nameDiv.style.fontSize = '14px'
+  nameDiv.style.whiteSpace = 'nowrap'
+  nameDiv.style.overflow = 'hidden'
+  nameDiv.style.textOverflow = 'ellipsis'
+  nameDiv.style.color = 'rgb(var(--v-theme-on-surface))'
+  nameDiv.textContent = row.name
+  container.appendChild(nameDiv)
+
+  if (description) {
+    const descDiv = document.createElement('div')
+    descDiv.style.fontSize = '11px'
+    descDiv.style.color = 'rgba(var(--v-theme-on-surface), 0.6)'
+    descDiv.style.marginTop = '2px'
+    descDiv.style.whiteSpace = 'nowrap'
+    descDiv.style.overflow = 'hidden'
+    descDiv.style.textOverflow = 'ellipsis'
+    descDiv.textContent = description
+    container.appendChild(descDiv)
+  }
+
+  return container
+}
