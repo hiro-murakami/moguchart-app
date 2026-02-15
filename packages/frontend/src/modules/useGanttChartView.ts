@@ -35,6 +35,7 @@ export const useGanttChartView = () => {
   const barCornerRadius = ref(4)
   const labelWidth = ref(150)
   const showHiddenRows = ref(false)
+  const selectedFilterLabelNames = ref<string[]>([])
 
   // 追加候補のタスク一覧（固定分）
   const unassignedTasks = ref<moguchart.GanttTask[]>([
@@ -70,41 +71,80 @@ export const useGanttChartView = () => {
   const { currentTheme } = storeToRefs(userStore)
   const { fetchProjects, setProjectId, clear: clearProjectStore } = projectStore
 
-  // pxPerDay変更時にユーザー属性を保存（debounce付き）
-  const savePxPerDay = debounce(async (value: number) => {
-    if (userStore.user && projectId.value) {
-      const pxPerDayByProject = { ...userStore.user.attribute.pxPerDayByProject }
-      pxPerDayByProject[projectId.value] = value
-      userStore.user.attribute = {
-        ...userStore.user.attribute,
-        pxPerDayByProject,
-      }
-      await userStore.saveUser(userStore.user)
-    }
-  }, 500)
+  // プロジェクト設定を保存する共通関数（debounce付き）
+  const saveProjectSettings = debounce(
+    async (settings: { pxPerDay?: number; selectedLabels?: string[]; showHiddenRows?: boolean }) => {
+      if (userStore.user && projectId.value) {
+        const currentSettings = userStore.user.attribute.projectSettings?.[projectId.value] || {}
+        const newSettings = { ...currentSettings, ...settings }
 
-  // プロジェクトまたはユーザーが変わったらpxPerDayを復元
+        const projectSettings = { ...userStore.user.attribute.projectSettings }
+        projectSettings[projectId.value] = newSettings
+
+        userStore.user.attribute = {
+          ...userStore.user.attribute,
+          projectSettings,
+        }
+        await userStore.saveUser(userStore.user)
+      }
+    },
+    500,
+  )
+
+  // pxPerDay変更時に保存
+  watch(pxPerDay, (newValue) => {
+    saveProjectSettings({ pxPerDay: newValue })
+  })
+
+  // 選択ラベル変更時に保存
+  watch(
+    selectedFilterLabelNames,
+    (newLabels) => {
+      saveProjectSettings({ selectedLabels: newLabels })
+    },
+    { deep: true },
+  )
+
+  // 非表示行の表示設定変更時に保存
+  watch(showHiddenRows, (newValue) => {
+    saveProjectSettings({ showHiddenRows: newValue })
+  })
+
+  // プロジェクトまたはユーザーが変わったら設定を復元
   watch(
     [() => userStore.user, projectId],
     ([newUser, newProjectId]) => {
-      if (newUser?.attribute?.pxPerDayByProject && newProjectId) {
-        const savedValue = newUser.attribute.pxPerDayByProject[newProjectId]
-        pxPerDay.value = savedValue ?? 28
-      } else {
-        pxPerDay.value = 28
+      if (newUser && newProjectId) {
+        const settings = newUser.attribute?.projectSettings?.[newProjectId]
+
+        // pxPerDayの復元
+        if (settings?.pxPerDay) {
+          pxPerDay.value = settings.pxPerDay
+        } else {
+          pxPerDay.value = 28
+        }
+
+        // selectedFilterLabelNamesの復元
+        if (settings?.selectedLabels) {
+          selectedFilterLabelNames.value = settings.selectedLabels
+        } else {
+          selectedFilterLabelNames.value = []
+        }
+
+        // showHiddenRowsの復元
+        if (settings?.showHiddenRows !== undefined) {
+          showHiddenRows.value = settings.showHiddenRows
+        } else {
+          showHiddenRows.value = false
+        }
       }
     },
     { immediate: true },
   )
 
-  watch(pxPerDay, (newValue) => {
-    savePxPerDay(newValue)
-  })
-
   const rows = ref<moguchart.GanttRow[]>([])
   const selectedRowIds = ref<string[]>([])
   const selectedTaskIds = ref<string[]>([])
-  const selectedFilterLabelNames = ref<string[]>([])
 
   const availableLabels = computed(() => {
     return currentProject.value?.attribute?.labels || []

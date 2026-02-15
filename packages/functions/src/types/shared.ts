@@ -65,8 +65,18 @@ export type Label = {
 export type UserAttribute = {
   /** UIテーマ設定（light / dark / system） */
   theme?: 'light' | 'dark' | 'system'
-  /** プロジェクトごとのズームレベル（1日あたりのpx数） */
-  pxPerDayByProject?: Record<string, number>
+  /** プロジェクトごとの設定 */
+  projectSettings?: Record<
+    string,
+    {
+      /** ズームレベル（1日あたりのpx数） */
+      pxPerDay?: number
+      /** 選択されたラベル（フィルタリング用） */
+      selectedLabels?: string[]
+      /** 非表示行を表示するかどうか */
+      showHiddenRows?: boolean
+    }
+  >
   /** 最終ログイン日時（ISO 8601形式） */
   lastLoginAt?: string
 }
