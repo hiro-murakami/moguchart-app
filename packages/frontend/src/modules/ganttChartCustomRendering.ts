@@ -82,7 +82,7 @@ export const tooltip = (task: moguchart.GanttTask) => {
   const start = dayjs(task.start)
   const end = dayjs(task.end)
   const days = end.diff(start, 'day') + 1
-  dateSpan.textContent = `${toDateString(task.start)} - ${toDateString(task.end)} (${days}日)`
+  dateSpan.textContent = `${toDateString(task.start, 'YYYY/MM/DD')} - ${toDateString(task.end, 'YYYY/MM/DD')} (${days}日)`
   container.appendChild(dateSpan)
 
   // タスク名
