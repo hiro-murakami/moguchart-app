@@ -95,8 +95,6 @@ export type ProjectAttribute = {
 export type RowAttribute = {
   /** 行の説明 */
   description?: string
-  /** 行に適用するラベル */
-  labels?: Label[]
 }
 
 /** タスクの追加属性 */

@@ -59,6 +59,10 @@ const {
   handleCreateNewTask,
   selectAllLabels,
   clearAllLabels,
+  isRowEditDialogVisible,
+  editingRowData,
+  handleEditRowFromContextMenu,
+  saveRow,
 } = useGanttChartView()
 
 const rowCountRules = [(v: number) => (v >= 1 && v <= 10) || '1〜10の範囲で入力してください']
@@ -230,6 +234,7 @@ const rowCountRules = [(v: number) => (v >= 1 && v <= 10) || '1〜10の範囲で
       :add-row-count="addRowCount"
       @add-row-above="handleAddRowAbove"
       @add-row-below="handleAddRowBelow"
+      @edit-row="handleEditRowFromContextMenu"
       @delete-row="handleDeleteRowFromContextMenu"
       @toggle-visibility="toggleRowVisibility"
     />
@@ -262,6 +267,8 @@ const rowCountRules = [(v: number) => (v >= 1 && v <= 10) || '1〜10の範囲で
       @save="saveTask"
       @delete="deleteTask"
     />
+
+    <RowEditDialog v-model="isRowEditDialogVisible" :row="editingRowData" @save="saveRow" />
 
     <ProjectListDialog v-model="isProjectListDialogVisible" @select="setProjectId" @update="fetchProjects" />
   </div>

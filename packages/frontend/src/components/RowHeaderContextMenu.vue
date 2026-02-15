@@ -13,6 +13,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
+  (e: 'edit-row'): void
   (e: 'add-row-above'): void
   (e: 'add-row-below'): void
   (e: 'delete-row'): void
@@ -78,6 +79,8 @@ const visibilityLabel = computed(() => {
   >
     <v-menu v-model="isVisible" activator="parent">
       <v-list density="compact">
+        <v-list-item prepend-icon="mdi-pencil" title="行を編集" :disabled="isMultiSelected" @click="emit('edit-row')" />
+        <v-divider />
         <v-list-item prepend-icon="mdi-arrow-up" :title="addRowAboveLabel" @click="emit('add-row-above')" />
         <v-list-item prepend-icon="mdi-arrow-down" :title="addRowBelowLabel" @click="emit('add-row-below')" />
         <v-divider />

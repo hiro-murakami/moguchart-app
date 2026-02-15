@@ -14,7 +14,7 @@ import { toDateString, toLocalDate, getContrastColor } from '@/modules/utils'
 import { barContent, tooltip } from '@/modules/ganttChartCustomRendering'
 import { useProjectStore } from '@/stores/useProjectStore'
 import { useUserStore } from '@/stores/useUserStore'
-import type { ColorPalette, GanttRow, GanttTask, TaskAttribute } from '@functions/types/shared'
+import type { ColorPalette, GanttRow, GanttTask, TaskAttribute, RowAttribute } from '@functions/types/shared'
 import * as holiday_jp from '@holiday-jp/holiday_jp'
 import * as moguchart from '@mogura/moguchart'
 import { debounce } from 'lodash'
@@ -730,6 +730,55 @@ export const useGanttChartView = () => {
     height: '0px',
   })
 
+  // --- Row Edit Dialog ---
+  const isRowEditDialogVisible = ref(false)
+  const editingRowData = ref<{
+    id: number
+    name: string
+    description?: string
+  }>({
+    id: 0,
+    name: '',
+    description: '',
+  })
+
+  const handleEditRowFromContextMenu = () => {
+    const rowId = contextMenu.value.rowId
+    if (rowId === null) return
+
+    const row = rows.value.find((r) => Number(r.id) === rowId)
+    if (!row) return
+
+    const attribute = (row as any).attribute as RowAttribute | undefined
+
+    editingRowData.value = {
+      id: rowId,
+      name: row.name,
+      description: attribute?.description || '',
+    }
+    isRowEditDialogVisible.value = true
+    closeContextMenu()
+  }
+
+  const saveRow = async (data: { id: number; name: string; description?: string }) => {
+    const row = rows.value.find((r) => Number(r.id) === data.id)
+    if (!row) return
+
+    await upsertGanttRow({
+      id: data.id,
+      name: data.name,
+      order: (row as any).order ?? 0,
+      projectId: projectId.value,
+      visible: row.visible || true,
+      attribute: {
+        description: data.description || undefined,
+      },
+      tasks: [],
+    })
+    isRowEditDialogVisible.value = false
+    await loadData(projectId.value)
+  }
+
   const handleRowHeaderDblClick = (e: CustomEvent<moguchart.RowHeaderDblClickEventDetail>) => {
     if (isReadOnly.value) return
     if (editingRowId.value !== null) return // Already editing
@@ -1154,6 +1203,8 @@ export const useGanttChartView = () => {
     availableLabels,
     selectedFilterLabelNames,
     filteredRows,
+    isRowEditDialogVisible,
+    editingRowData,
 
     // methods
     handleTaskUpdate,
@@ -1188,5 +1239,7 @@ export const useGanttChartView = () => {
     selectAllLabels,
     clearAllLabels,
     getContrastColor,
+    handleEditRowFromContextMenu,
+    saveRow,
   }
 }
