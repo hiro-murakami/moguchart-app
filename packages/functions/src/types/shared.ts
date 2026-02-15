@@ -61,22 +61,21 @@ export type Label = {
   color: string
 }
 
+export type ProjectSettings = {
+  /** ズームレベル（1日あたりのpx数） */
+  pxPerDay?: number
+  /** 選択されたラベル（フィルタリング用） */
+  selectedLabels?: string[]
+  /** 非表示行を表示するかどうか */
+  showHiddenRows?: boolean
+}
+
 /** ユーザー固有の設定属性 */
 export type UserAttribute = {
   /** UIテーマ設定（light / dark / system） */
   theme?: 'light' | 'dark' | 'system'
   /** プロジェクトごとの設定 */
-  projectSettings?: Record<
-    string,
-    {
-      /** ズームレベル（1日あたりのpx数） */
-      pxPerDay?: number
-      /** 選択されたラベル（フィルタリング用） */
-      selectedLabels?: string[]
-      /** 非表示行を表示するかどうか */
-      showHiddenRows?: boolean
-    }
-  >
+  projectSettings?: Record<string, ProjectSettings>
   /** 最終ログイン日時（ISO 8601形式） */
   lastLoginAt?: string
 }
@@ -105,6 +104,31 @@ export type TaskAttribute = {
   colorPalette?: ColorPalette
   /** タスクに適用するラベル */
   labels?: Label[]
+}
+
+/** フロントエンドの編集用：行データ */
+export interface EditingRowData {
+  id: number
+  name: string
+  description?: string
+}
+
+/** フロントエンドの編集用：タスクデータ */
+export interface EditingTaskData {
+  id: string
+  rowId: string
+  name: string
+  start: string
+  end: string
+  description?: string
+  colorPalette?: ColorPalette
+  labels?: Label[]
+}
+
+/** 簡易的な行情報（ドロップダウン選択用など） */
+export interface SimpleRowData {
+  id: string | number
+  name: string
 }
 
 /** プロジェクトのアクセス権限管理 */

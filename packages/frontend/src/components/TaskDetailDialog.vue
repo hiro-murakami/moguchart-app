@@ -1,41 +1,25 @@
 <script setup lang="ts">
 import { useConfirm, useDiscardConfirm } from '@/modules/useConfirm'
 import { useProjectStore } from '@/stores/useProjectStore'
-import type { ColorPalette, Label } from '@functions/types/shared'
+import type { ColorPalette, Label, EditingTaskData, SimpleRowData } from '@functions/types/shared'
 import { isEqual } from 'lodash'
 import { storeToRefs } from 'pinia'
 import { computed, ref, watch } from 'vue'
 import ColorPaletteSelect from './common/ColorPaletteSelect.vue'
 
-interface TaskData {
-  id: string
-  rowId: string
-  name: string
-  start: string
-  end: string
-  description?: string
-  colorPalette?: ColorPalette
-  labels?: Label[]
-}
-
-interface RowData {
-  id: string
-  name: string
-}
-
 const props = defineProps<{
   modelValue: boolean
-  task: TaskData
-  rows: RowData[]
+  task: EditingTaskData
+  rows: SimpleRowData[]
 }>()
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
-  (e: 'save', task: TaskData): void
+  (e: 'save', task: EditingTaskData): void
   (e: 'delete', id: string): void
 }>()
 
-const localTask = ref<TaskData>({ ...props.task })
+const localTask = ref<EditingTaskData>({ ...props.task })
 const confirm = useConfirm()
 const { confirmAndClose } = useDiscardConfirm()
 

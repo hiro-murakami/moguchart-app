@@ -1,18 +1,16 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 
+import type { EditingRowData } from '@functions/types/shared'
+
 const props = defineProps<{
   modelValue: boolean
-  row?: {
-    id: number
-    name: string
-    description?: string
-  }
+  row?: EditingRowData
 }>()
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
-  (e: 'save', data: { id: number; name: string; description?: string }): void
+  (e: 'save', data: EditingRowData): void
 }>()
 
 const isVisible = computed({

@@ -14,7 +14,16 @@ import { toDateString, toLocalDate, getContrastColor } from '@/modules/utils'
 import { barContent, tooltip, rowHeaderContent } from '@/modules/ganttChartCustomRendering'
 import { useProjectStore } from '@/stores/useProjectStore'
 import { useUserStore } from '@/stores/useUserStore'
-import type { ColorPalette, GanttRow, GanttTask, TaskAttribute, RowAttribute, Project } from '@functions/types/shared'
+import type {
+  ColorPalette,
+  GanttRow,
+  GanttTask,
+  TaskAttribute,
+  RowAttribute,
+  Project,
+  EditingRowData,
+  EditingTaskData,
+} from '@functions/types/shared'
 import * as holiday_jp from '@holiday-jp/holiday_jp'
 import * as moguchart from '@mogura/moguchart'
 import { debounce } from 'lodash'
@@ -466,16 +475,7 @@ export const useGanttChartView = () => {
 
   // --- ダイアログ関連 ---
   const isDialogVisible = ref(false)
-  const editingTask = ref<{
-    id: string
-    rowId: string
-    name: string
-    start: string
-    end: string
-    description?: string
-    colorPalette?: ColorPalette
-    labels?: { name: string; color: string }[]
-  }>({
+  const editingTask = ref<EditingTaskData>({
     id: '',
     rowId: '',
     name: '',
@@ -735,11 +735,7 @@ export const useGanttChartView = () => {
 
   // --- Row Edit Dialog ---
   const isRowEditDialogVisible = ref(false)
-  const editingRowData = ref<{
-    id: number
-    name: string
-    description?: string
-  }>({
+  const editingRowData = ref<EditingRowData>({
     id: 0,
     name: '',
     description: '',
