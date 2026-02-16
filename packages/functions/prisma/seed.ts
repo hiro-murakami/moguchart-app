@@ -4,91 +4,325 @@ const prisma = new PrismaClient()
 
 const projectId = '3f333df6-90a4-4fda-8dd3-9485d27cee36'
 
+// ============================================================
+// カラーパレット定義
+// ============================================================
+const colorPalettes = {
+  blue: { color: '#1e3a5f', backgroundColor: '#4a90d9' },
+  green: { color: '#1b5e20', backgroundColor: '#66bb6a' },
+  orange: { color: '#e65100', backgroundColor: '#ffa726' },
+  purple: { color: '#4a148c', backgroundColor: '#ab47bc' },
+  red: { color: '#b71c1c', backgroundColor: '#ef5350' },
+  teal: { color: '#004d40', backgroundColor: '#26a69a' },
+  pending: {
+    color: '#546e7a',
+    backgroundColor: '#b0bec5',
+    pattern: { type: 'stripe', color: '#90a4ae' },
+  },
+  onHold: {
+    color: '#6d4c41',
+    backgroundColor: '#d7ccc8',
+    pattern: { type: 'stripe', color: '#bcaaa4' },
+  },
+}
+
+// ============================================================
+// ラベル定義
+// ============================================================
+const labels = {
+  high: { name: '高優先', color: '#e53935' },
+  medium: { name: '中優先', color: '#fb8c00' },
+  low: { name: '低優先', color: '#43a047' },
+  review: { name: 'レビュー待ち', color: '#8e24aa' },
+  blocked: { name: 'ブロック中', color: '#d32f2f' },
+  external: { name: '外部依存', color: '#1e88e5' },
+}
+
+// ============================================================
+// プロジェクト
+// ============================================================
 const projects = [
   {
     id: projectId,
     name: 'サンプルプロジェクト',
     start: new Date('2025-12-01'),
-    end: new Date('2026-03-31'),
-    attribute: {},
+    end: new Date('2026-04-30'),
+    public: true,
+    attribute: {
+      description: 'カラーパレット・ラベル・タスクテンプレートの各パターンを網羅したデモプロジェクトです。',
+      colorPalettes: Object.values(colorPalettes),
+      labels: Object.values(labels),
+      newTaskTemplates: [
+        {
+          name: '通常タスク',
+          duration: 5,
+          attribute: { colorPalette: colorPalettes.blue },
+        },
+        {
+          name: 'レビュー',
+          duration: 2,
+          attribute: {
+            colorPalette: colorPalettes.purple,
+            labels: [labels.review],
+          },
+        },
+        {
+          name: 'マイルストーン',
+          duration: 1,
+          attribute: {
+            colorPalette: colorPalettes.red,
+            labels: [labels.high],
+          },
+        },
+        {
+          name: '長期タスク',
+          duration: 14,
+          attribute: { colorPalette: colorPalettes.green },
+        },
+        {
+          name: '調査・検討',
+          duration: 3,
+          attribute: { colorPalette: colorPalettes.teal },
+        },
+      ],
+    },
   },
 ]
 
+// ============================================================
+// ガント行
+// ============================================================
 const ganttRows = [
-  { id: 1, projectId, name: '要件定義' },
-  { id: 2, projectId, name: '設計' },
-  { id: 3, projectId, name: '実装' },
-  { id: 4, projectId, name: 'テスト' },
-  { id: 5, projectId, name: 'リリース' },
+  { id: 1, projectId, name: '要件定義', order: 1 },
+  { id: 2, projectId, name: 'UI/UXデザイン', order: 2 },
+  { id: 3, projectId, name: '基本設計', order: 3 },
+  { id: 4, projectId, name: 'フロントエンド開発', order: 4 },
+  { id: 5, projectId, name: 'バックエンド開発', order: 5 },
+  { id: 6, projectId, name: 'インフラ・CI/CD', order: 6 },
+  { id: 7, projectId, name: 'テスト', order: 7 },
+  { id: 8, projectId, name: 'リリース', order: 8 },
 ]
 
+// ============================================================
+// ガントタスク
+// ============================================================
 const ganttTasks = [
+  // ── 要件定義 ──
   {
     rowId: 1,
-    name: 'ヒヤリング',
-    start: new Date('2025-12-15'),
-    end: new Date('2025-12-18'),
+    name: 'ヒアリング・要望整理',
+    start: new Date('2025-12-01'),
+    end: new Date('2025-12-05'),
+    attribute: {
+      description: 'ステークホルダーへのヒアリングを実施し、要望を整理する。',
+      colorPalette: colorPalettes.blue,
+      labels: [labels.high],
+    },
   },
   {
     rowId: 1,
     name: '要件定義書作成',
-    start: new Date('2025-12-19'),
-    end: new Date('2025-12-24'),
+    start: new Date('2025-12-08'),
+    end: new Date('2025-12-16'),
+    attribute: {
+      colorPalette: colorPalettes.blue,
+      labels: [labels.medium],
+    },
+  },
+  {
+    rowId: 1,
+    name: '要件レビュー',
+    start: new Date('2025-12-17'),
+    end: new Date('2025-12-19'),
+    attribute: {
+      colorPalette: colorPalettes.purple,
+      labels: [labels.review],
+    },
+  },
+
+  // ── UI/UXデザイン ──
+  {
+    rowId: 2,
+    name: 'ワイヤーフレーム作成',
+    start: new Date('2025-12-15'),
+    end: new Date('2025-12-26'),
+    attribute: {
+      description: '主要画面のワイヤーフレームを作成する。',
+      colorPalette: colorPalettes.teal,
+    },
   },
   {
     rowId: 2,
-    name: '基本設計',
-    start: new Date('2025-12-22'),
-    end: new Date('2025-12-30'),
+    name: 'デザインモックアップ',
+    start: new Date('2025-12-29'),
+    end: new Date('2026-01-09'),
+    attribute: {
+      colorPalette: colorPalettes.teal,
+      labels: [labels.external],
+    },
   },
+
+  // ── 基本設計 ──
   {
-    rowId: 2,
-    name: '詳細設計',
+    rowId: 3,
+    name: 'アーキテクチャ設計',
     start: new Date('2026-01-05'),
     end: new Date('2026-01-16'),
+    attribute: {
+      description: 'システム全体のアーキテクチャを設計し、技術選定を行う。',
+      colorPalette: colorPalettes.green,
+      labels: [labels.high],
+    },
   },
   {
     rowId: 3,
-    name: 'フロントエンド実装',
-    start: new Date('2026-01-19'),
-    end: new Date('2026-02-13'),
+    name: 'DB設計',
+    start: new Date('2026-01-12'),
+    end: new Date('2026-01-23'),
+    attribute: {
+      colorPalette: colorPalettes.green,
+    },
   },
   {
     rowId: 3,
-    name: 'バックエンド実装',
-    start: new Date('2026-01-19'),
+    name: 'API設計レビュー',
+    start: new Date('2026-01-26'),
+    end: new Date('2026-01-28'),
+    attribute: {
+      colorPalette: colorPalettes.purple,
+      labels: [labels.review, labels.blocked],
+    },
+  },
+
+  // ── フロントエンド開発 ──
+  {
+    rowId: 4,
+    name: '共通コンポーネント実装',
+    start: new Date('2026-01-26'),
     end: new Date('2026-02-13'),
+    attribute: {
+      colorPalette: colorPalettes.blue,
+      labels: [labels.medium],
+    },
   },
   {
     rowId: 4,
-    name: '単体テスト',
+    name: '画面実装（一覧・詳細）',
     start: new Date('2026-02-16'),
-    end: new Date('2026-02-27'),
+    end: new Date('2026-03-06'),
+    attribute: {
+      colorPalette: colorPalettes.blue,
+    },
   },
+
+  // ── バックエンド開発 ──
   {
-    rowId: 4,
-    name: '結合テスト',
-    start: new Date('2026-03-02'),
-    end: new Date('2026-03-13'),
+    rowId: 5,
+    name: 'API実装',
+    start: new Date('2026-01-26'),
+    end: new Date('2026-02-20'),
+    attribute: {
+      description: 'REST API のエンドポイントを実装する。',
+      colorPalette: colorPalettes.orange,
+      labels: [labels.high],
+    },
   },
   {
     rowId: 5,
-    name: 'リリース準備',
-    start: new Date('2026-03-16'),
+    name: '認証・認可実装',
+    start: new Date('2026-02-23'),
+    end: new Date('2026-03-06'),
+    attribute: {
+      colorPalette: colorPalettes.orange,
+      labels: [labels.high, labels.external],
+    },
+  },
+
+  // ── インフラ・CI/CD ──
+  {
+    rowId: 6,
+    name: 'CI/CDパイプライン構築',
+    start: new Date('2026-01-12'),
+    end: new Date('2026-01-23'),
+    attribute: {
+      colorPalette: colorPalettes.teal,
+      labels: [labels.low],
+    },
+  },
+  {
+    rowId: 6,
+    name: 'ステージング環境構築',
+    start: new Date('2026-02-02'),
+    end: new Date('2026-02-06'),
+    attribute: {
+      colorPalette: colorPalettes.pending,
+      description: 'クラウド基盤のセットアップが未完了のため保留中。',
+    },
+  },
+
+  // ── テスト ──
+  {
+    rowId: 7,
+    name: '単体テスト',
+    start: new Date('2026-03-09'),
     end: new Date('2026-03-20'),
+    attribute: {
+      colorPalette: colorPalettes.green,
+    },
   },
   {
-    rowId: 5,
-    name: '本番リリース',
+    rowId: 7,
+    name: '結合テスト',
     start: new Date('2026-03-23'),
-    end: new Date('2026-03-23'),
+    end: new Date('2026-04-03'),
+    attribute: {
+      colorPalette: colorPalettes.green,
+      labels: [labels.medium],
+    },
+  },
+  {
+    rowId: 7,
+    name: 'UAT（ユーザー受入テスト）',
+    start: new Date('2026-04-06'),
+    end: new Date('2026-04-10'),
+    attribute: {
+      colorPalette: colorPalettes.onHold,
+      labels: [labels.blocked],
+      description: 'クライアント側のスケジュール調整中のため保留。',
+    },
+  },
+
+  // ── リリース ──
+  {
+    rowId: 8,
+    name: 'リリース準備',
+    start: new Date('2026-04-13'),
+    end: new Date('2026-04-17'),
+    attribute: {
+      colorPalette: colorPalettes.red,
+      labels: [labels.high],
+    },
+  },
+  {
+    rowId: 8,
+    name: '本番リリース',
+    start: new Date('2026-04-20'),
+    end: new Date('2026-04-20'),
+    attribute: {
+      description: 'v1.0 本番リリース（マイルストーン）',
+      colorPalette: colorPalettes.red,
+      labels: [labels.high],
+    },
   },
 ]
 
+// ============================================================
+// Seed 実行
+// ============================================================
 const main = async () => {
   console.log('Start seeding ...')
 
-  // 既存のデータをクリアする場合（必要に応じて）
+  // 既存のデータをクリア
   await prisma.ganttTask.deleteMany()
   await prisma.ganttRow.deleteMany()
   await prisma.project.deleteMany()
