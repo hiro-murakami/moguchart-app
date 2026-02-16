@@ -11,7 +11,8 @@
     "deploy:functions": "pnpm run build && firebase deploy --only functions",
     "deploy:frontend": "pnpm run build && firebase deploy --only hosting",
     "serve:functions": "firebase emulators:start --only functions",
-    "refresh:packages": "rm -rf node_modules pnpm-lock.yaml packages/frontend/node_modules packages/functions/node_modules && pnpm i && pnpm --filter ./packages/functions run prisma:generate"
+    "refresh:packages": "rm -rf node_modules pnpm-lock.yaml packages/frontend/node_modules packages/functions/node_modules && pnpm i && pnpm --filter ./packages/functions run prisma:generate",
+    "setup:env": "pnpm -r run setup:env"
   },
   "devDependencies": {
     "npm-run-all2": "^8.0.4",
