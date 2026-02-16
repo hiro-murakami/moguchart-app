@@ -2,21 +2,39 @@
 import { provideLoading } from '@/modules/useLoading'
 import { useUserStore } from '@/stores/useUserStore'
 import { storeToRefs } from 'pinia'
-import { onMounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref, computed } from 'vue'
 
 const { isLoading } = provideLoading()
 const userStore = useUserStore()
 const { user: appUser, firebaseUser, headerImage, currentTheme } = storeToRefs(userStore)
 const showUserDetail = ref(false)
 
+const systemTheme = ref<'light' | 'dark'>(window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+
+const effectiveTheme = computed(() => {
+  if (!currentTheme.value || currentTheme.value === 'system') {
+    return systemTheme.value
+  }
+  return currentTheme.value
+})
+
+const updateSystemTheme = (e: MediaQueryListEvent) => {
+  systemTheme.value = e.matches ? 'dark' : 'light'
+}
+
 onMounted(() => {
   userStore.initializeAuthListener()
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateSystemTheme)
+})
+
+onUnmounted(() => {
+  window.matchMedia('(prefers-color-scheme: dark)').removeEventListener('change', updateSystemTheme)
 })
 </script>
 
 <template>
   <DialogProvider>
-    <v-app :theme="currentTheme">
+    <v-app :theme="effectiveTheme">
       <v-app-bar color="moguChartColor">
         <img :src="headerImage" height="42" class="header-image ml-4" />
         <v-spacer />

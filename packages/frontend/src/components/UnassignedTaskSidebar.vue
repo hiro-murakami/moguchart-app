@@ -2,6 +2,8 @@
 import * as moguchart from '@mogura/moguchart'
 import dayjs from 'dayjs'
 import { computed, ref } from 'vue'
+import { useTheme } from 'vuetify'
+
 import { useProjectStore } from '@/stores/useProjectStore'
 import type { TaskAttribute, NewTaskTemplate } from '@functions/types/shared'
 import TaskTemplateDialog from './TaskTemplateDialog.vue'
@@ -29,6 +31,21 @@ const emit = defineEmits<{
 
 const projectStore = useProjectStore()
 const confirm = useConfirm()
+const theme = useTheme()
+
+const isDark = computed(() => theme.current.value.dark)
+
+const sidebarBaseStyle = computed(() => {
+  return isDark.value
+    ? {
+        backgroundColor: '#0f172a',
+        borderColor: '#263040',
+      }
+    : {
+        backgroundColor: '#f1f5f9',
+        borderColor: '#cbd5e1',
+      }
+})
 
 const tasks = computed<DraggableTask[]>(() => {
   const templates = projectStore.currentProject?.attribute.newTaskTemplates || []
@@ -204,6 +221,7 @@ const saveTemplate = async (template: NewTaskTemplate) => {
     :style="{
       width: isOpen ? '240px' : '50px',
       padding: isOpen ? '16px' : '0',
+      ...sidebarBaseStyle,
     }"
   >
     <h3 class="sidebar-header" :class="{ open: isOpen }" @click="toggle">
@@ -283,8 +301,7 @@ const saveTemplate = async (template: NewTaskTemplate) => {
   right: 0;
   top: 0;
   bottom: 0;
-  background: white;
-  border: 1px solid #e2e8f0;
+  border: 1px solid transparent; /* Placeholder to be overridden */
   border-radius: 8px;
   transition:
     width 0.3s ease,
@@ -292,14 +309,6 @@ const saveTemplate = async (template: NewTaskTemplate) => {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-}
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .unassigned-tasks-sidebar {
-    background: #1e293b;
-    border-color: #334155;
-  }
 }
 
 .sidebar-header {
@@ -336,19 +345,12 @@ const saveTemplate = async (template: NewTaskTemplate) => {
 
 .draggable-task {
   padding: 12px;
-  background: white;
-  border: 1px solid #cbd5e1;
+  background: rgb(var(--v-theme-surface));
+  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
   border-radius: 4px;
   cursor: grab;
   user-select: none;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-}
-
-@media (prefers-color-scheme: dark) {
-  .draggable-task {
-    background: #334155;
-    border-color: #475569;
-  }
 }
 
 .task-bar-preview {
