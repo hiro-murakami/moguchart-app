@@ -47,6 +47,8 @@ const duplicateProject: DuplicateProject = async ({ originalProjectId, newProjec
         data: {
           name: row.name,
           order: row.order,
+          visible: row.visible,
+          attribute: row.attribute ?? {},
           project: {
             connect: { id: newProject.id },
           },
@@ -55,6 +57,7 @@ const duplicateProject: DuplicateProject = async ({ originalProjectId, newProjec
               name: task.name,
               start: task.start,
               end: task.end,
+              attribute: task.attribute ?? {},
               createdBy: email,
               updatedBy: email,
             })),

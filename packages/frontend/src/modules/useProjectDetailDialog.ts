@@ -129,6 +129,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
       end: localEnd.value,
       public: localPublic.value,
       attribute: {
+        ...props.project?.attribute,
         description: localDescription.value,
         colorPalettes: localColorPalettes.value,
         labels: localLabels.value,
