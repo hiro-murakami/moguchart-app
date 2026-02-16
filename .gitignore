@@ -6,9 +6,8 @@ lib
 mysql_test_data
 
 # local env files
-.env
-.env.*
-.env.firestore-sample-c7300
+.env*
+!.env.example
 
 # Log files
 npm-debug.log*

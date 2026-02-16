@@ -10,6 +10,7 @@
     "serve": "pnpm run build && firebase emulators:start --only functions",
     "shell": "pnpm run build && firebase functions:shell",
     "start": "pnpm run shell",
+    "setup:env": "node scripts/fetch-env.cjs",
     "deploy": "firebase deploy --only functions",
     "logs": "firebase functions:log",
     "prisma:generate": "npx prisma generate",
@@ -29,6 +30,7 @@
     "lodash": "^4.17.21"
   },
   "devDependencies": {
+    "@google-cloud/secret-manager": "^6.1.1",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/lodash": "^4.17.23",

@@ -112,6 +112,9 @@ importers:
         specifier: ^4.17.21
         version: 4.17.23
     devDependencies:
+      '@google-cloud/secret-manager':
+        specifier: ^6.1.1
+        version: 6.1.1
       '@types/cors':
         specifier: ^2.8.19
         version: 2.8.19
