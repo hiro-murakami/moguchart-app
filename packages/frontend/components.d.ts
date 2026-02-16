@@ -34,6 +34,7 @@ declare module 'vue' {
     Snackbar: typeof import('./src/components/Snackbar.vue')['default']
     TaskContextMenu: typeof import('./src/components/TaskContextMenu.vue')['default']
     TaskDetailDialog: typeof import('./src/components/TaskDetailDialog.vue')['default']
+    TaskFormDialog: typeof import('./src/components/TaskFormDialog.vue')['default']
     TaskTemplateDialog: typeof import('./src/components/TaskTemplateDialog.vue')['default']
     TemplateContextMenu: typeof import('./src/components/TemplateContextMenu.vue')['default']
     UnassignedTaskSidebar: typeof import('./src/components/UnassignedTaskSidebar.vue')['default']
