@@ -1,10 +1,25 @@
 -- CreateTable
+CREATE TABLE `User` (
+    `email` VARCHAR(191) NOT NULL,
+    `displayName` VARCHAR(191) NULL,
+    `attribute` JSON NOT NULL,
+    `createdBy` VARCHAR(191) NULL DEFAULT 'system',
+    `createdAt` TIMESTAMP(3) NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedBy` VARCHAR(191) NULL DEFAULT 'system',
+    `updatedAt` TIMESTAMP(3) NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    PRIMARY KEY (`email`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
 CREATE TABLE `Project` (
     `id` CHAR(36) NOT NULL,
     `name` VARCHAR(191) NOT NULL,
-    `start` DATETIME(3) NOT NULL,
-    `end` DATETIME(3) NOT NULL,
+    `start` DATE NOT NULL,
+    `end` DATE NOT NULL,
     `attribute` JSON NOT NULL,
+    `public` BOOLEAN NOT NULL DEFAULT false,
+    `authority` JSON NOT NULL,
     `createdBy` VARCHAR(191) NULL DEFAULT 'system',
     `createdAt` TIMESTAMP(3) NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedBy` VARCHAR(191) NULL DEFAULT 'system',
@@ -19,6 +34,8 @@ CREATE TABLE `GanttRow` (
     `projectId` CHAR(36) NOT NULL,
     `name` VARCHAR(191) NOT NULL,
     `order` INTEGER NOT NULL DEFAULT 0,
+    `visible` BOOLEAN NOT NULL DEFAULT true,
+    `attribute` JSON NOT NULL,
     `createdBy` VARCHAR(191) NULL DEFAULT 'system',
     `createdAt` TIMESTAMP(3) NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedBy` VARCHAR(191) NULL DEFAULT 'system',
@@ -34,6 +51,7 @@ CREATE TABLE `GanttTask` (
     `name` VARCHAR(191) NOT NULL,
     `start` DATETIME(3) NOT NULL,
     `end` DATETIME(3) NOT NULL,
+    `attribute` JSON NOT NULL,
     `createdBy` VARCHAR(191) NULL DEFAULT 'system',
     `createdAt` TIMESTAMP(3) NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedBy` VARCHAR(191) NULL DEFAULT 'system',
