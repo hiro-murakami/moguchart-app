@@ -146,6 +146,7 @@ export const useProjectListDialog = (
       ...project,
       id: '', // Remove id to create a new project
       name: `${project.name}のコピー`,
+      public: false,
     }
     originalId.value = project.id
     isProjectDetailDialogVisible.value = true

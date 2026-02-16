@@ -54,7 +54,7 @@ const handleFileChange = (e: Event) => {
 </script>
 
 <template>
-  <v-dialog :model-value="modelValue" @update:model-value="emit('update:modelValue', $event)" max-width="1000px">
+  <v-dialog :model-value="modelValue" @update:model-value="emit('update:modelValue', $event)" max-width="1100px">
     <v-card>
       <v-card-title class="d-flex justify-space-between align-center">
         <span>プロジェクト一覧</span>
@@ -99,49 +99,57 @@ const handleFileChange = (e: Event) => {
           </template>
           <template #item.actions="{ item }: { item: Project }">
             <div class="d-flex justify-end align-center">
-              <v-tooltip v-if="item.role === 'owner' || item.role === 'editor'" :open-delay="500" location="top">
+              <v-tooltip
+                :disabled="!(item.role === 'owner' || item.role === 'editor')"
+                :open-delay="500"
+                location="top"
+              >
                 <template #activator="{ props }">
                   <v-btn
                     v-bind="props"
                     icon="mdi-pencil"
                     variant="text"
                     size="small"
+                    :style="{ visibility: item.role === 'owner' || item.role === 'editor' ? 'visible' : 'hidden' }"
                     @click.stop="editProject(item)"
                   ></v-btn>
                 </template>
                 <span>編集</span>
               </v-tooltip>
-              <v-tooltip v-if="item.role === 'owner'" :open-delay="500" location="top">
+              <v-tooltip :disabled="!item.role" :open-delay="500" location="top">
                 <template #activator="{ props }">
                   <v-btn
                     v-bind="props"
                     icon="mdi-content-copy"
                     variant="text"
                     size="small"
+                    :style="{ visibility: item.role ? 'visible' : 'hidden' }"
                     @click.stop="duplicateProject(item)"
                   ></v-btn>
                 </template>
                 <span>複製</span>
               </v-tooltip>
-              <v-tooltip v-if="item.role === 'owner'" :open-delay="500" location="top">
+              <v-tooltip :disabled="item.role !== 'owner'" :open-delay="500" location="top">
                 <template #activator="{ props }">
                   <v-btn
                     v-bind="props"
                     icon="mdi-delete"
                     variant="text"
                     size="small"
+                    :style="{ visibility: item.role === 'owner' ? 'visible' : 'hidden' }"
                     @click.stop="deleteProject(item)"
                   ></v-btn>
                 </template>
                 <span>削除</span>
               </v-tooltip>
-              <v-tooltip v-if="item.role" :open-delay="500" location="top">
+              <v-tooltip :disabled="!item.role" :open-delay="500" location="top">
                 <template #activator="{ props }">
                   <v-btn
                     v-bind="props"
                     icon="mdi-download"
                     variant="text"
                     size="small"
+                    :style="{ visibility: item.role ? 'visible' : 'hidden' }"
                     @click.stop="downloadProjectJson(item)"
                   ></v-btn>
                 </template>
