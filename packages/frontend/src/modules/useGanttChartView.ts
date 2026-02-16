@@ -41,6 +41,7 @@ export const useGanttChartView = () => {
   const chartStartStr = ref('2025-12-15')
   const chartEndStr = ref('2026-03-31')
   const pxPerDay = ref(28)
+  const rowHeaderWidth = ref(200)
   const barHeight = ref(38)
   const barMargin = ref(4)
   const barCornerRadius = ref(4)
@@ -58,7 +59,12 @@ export const useGanttChartView = () => {
 
   // プロジェクト設定を保存する共通関数（debounce付き）
   const saveProjectSettings = debounce(
-    async (settings: { pxPerDay?: number; selectedLabels?: string[]; showHiddenRows?: boolean }) => {
+    async (settings: {
+      pxPerDay?: number
+      selectedLabels?: string[]
+      showHiddenRows?: boolean
+      rowHeaderWidth?: number
+    }) => {
       if (userStore.user && projectId.value) {
         const currentSettings = userStore.user.attribute.projectSettings?.[projectId.value] || {}
         const newSettings = { ...currentSettings, ...settings }
@@ -79,6 +85,11 @@ export const useGanttChartView = () => {
   // pxPerDay変更時に保存
   watch(pxPerDay, (newValue) => {
     saveProjectSettings({ pxPerDay: newValue })
+  })
+
+  // 行ヘッダー幅変更時に保存
+  watch(rowHeaderWidth, (newValue) => {
+    saveProjectSettings({ rowHeaderWidth: newValue })
   })
 
   // 選択ラベル変更時に保存
@@ -107,6 +118,13 @@ export const useGanttChartView = () => {
           pxPerDay.value = settings.pxPerDay
         } else {
           pxPerDay.value = 28
+        }
+
+        // rowHeaderWidthの復元
+        if (settings?.rowHeaderWidth) {
+          rowHeaderWidth.value = settings.rowHeaderWidth
+        } else {
+          rowHeaderWidth.value = 200
         }
 
         // selectedFilterLabelNamesの復元
@@ -175,6 +193,7 @@ export const useGanttChartView = () => {
     },
     rowHeader: {
       maxWidth: 400,
+      width: rowHeaderWidth.value,
     },
     enableRowReordering: true,
     readOnly: isReadOnly.value,
@@ -593,6 +612,10 @@ export const useGanttChartView = () => {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const handleRowHeaderResize = (e: CustomEvent<moguchart.RowHeaderResizeEventDetail>) => {
+    rowHeaderWidth.value = e.detail.width
   }
 
   // --- 行追加関連 ---
@@ -1244,5 +1267,6 @@ export const useGanttChartView = () => {
     handleEditRowFromContextMenu,
     saveRow,
     updateProject,
+    handleRowHeaderResize,
   }
 }

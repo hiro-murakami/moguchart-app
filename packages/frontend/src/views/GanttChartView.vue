@@ -28,6 +28,9 @@ const {
   availableLabels,
   selectedFilterLabelNames,
   filteredRows,
+  isRowEditDialogVisible,
+  editingRowData,
+  isProjectDetailDialogVisible,
 
   // methods
   handleTaskUpdate,
@@ -58,12 +61,10 @@ const {
   handleCreateNewTask,
   selectAllLabels,
   clearAllLabels,
-  isRowEditDialogVisible,
-  editingRowData,
   handleEditRowFromContextMenu,
   saveRow,
-  isProjectDetailDialogVisible,
   updateProject,
+  handleRowHeaderResize,
 } = useGanttChartView()
 
 const rowCountRules = [(v: number) => (v >= 1 && v <= 10) || '1〜10の範囲で入力してください']
@@ -164,6 +165,7 @@ const rowCountRules = [(v: number) => (v >= 1 && v <= 10) || '1〜10の範囲で
             @bar-selection-change="handleBarSelectionChange"
             @task-drop="handleTaskDrop"
             @chart-contextmenu="handleChartContextMenu"
+            @row-header-resize="handleRowHeaderResize"
           />
         </div>
 

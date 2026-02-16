@@ -68,6 +68,8 @@ export type ProjectSettings = {
   selectedLabels?: string[]
   /** 非表示行を表示するかどうか */
   showHiddenRows?: boolean
+  /** 行ヘッダーの幅 */
+  rowHeaderWidth?: number
 }
 
 /** ユーザー固有の設定属性 */
