@@ -6,9 +6,8 @@ import {
 } from '@/modules/scripts'
 import { useConfirm } from '@/modules/useConfirm'
 import { useSnackbar } from '@/modules/useSnackbar'
-import { toDateString } from '@/modules/utils'
 import type { Project } from '@functions/types/shared'
-import { ref, watch, type Ref } from 'vue'
+import { ref, watch } from 'vue'
 
 import { useProjectStore } from '@/stores/useProjectStore'
 import { storeToRefs } from 'pinia'
@@ -88,19 +87,24 @@ export const useProjectListDialog = (
   const saveProject = async (project: Partial<Project>) => {
     saving.value = true
     try {
+      let projectId = project.id
       if (originalId.value) {
-        await duplicateProjectScript({
+        projectId = await duplicateProjectScript({
           originalProjectId: originalId.value,
           newProjectData: project as Project,
         })
       } else {
-        await projectStore.updateProject(project as Project)
+        projectId = await projectStore.updateProject(project as Project)
       }
       isProjectDetailDialogVisible.value = false
-      await fetchProjects() // Refresh the list
+      await fetchProjects() // Storeを最新の状態にする
+
+      if (projectId) {
+        emit('select', projectId)
+        close()
+      }
     } catch (e) {
       console.error(e)
-      // TODO: Show error snackbar
     } finally {
       saving.value = false
     }

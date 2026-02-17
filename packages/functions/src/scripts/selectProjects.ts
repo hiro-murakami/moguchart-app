@@ -30,6 +30,9 @@ const selectProjects: SelectProjects = async (_, email) => {
         },
       ],
     },
+    orderBy: {
+      updatedAt: 'desc',
+    },
   })
   return data.map(toProject(email!))
 }

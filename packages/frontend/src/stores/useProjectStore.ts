@@ -57,7 +57,7 @@ export const useProjectStore = defineStore('project', {
     async updateProject(project: Project) {
       // サーバー更新
       // TODO: 型定義の不整合を修正するまでは一時的にanyで回避
-      await upsertProject(project as any)
+      const id = await upsertProject(project as any)
       // ストア内のプロジェクト情報も更新
       const index = this.projects.findIndex((p) => p.id === project.id)
       if (index !== -1) {
@@ -65,6 +65,7 @@ export const useProjectStore = defineStore('project', {
       }
       // 最新情報を再取得して整合性を保つ
       await this.fetchProjects()
+      return id
     },
 
     clear() {
