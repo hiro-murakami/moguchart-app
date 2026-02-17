@@ -57,10 +57,10 @@ export const useProjectListDialog = (
   )
 
   const headers = [
-    { title: 'プロジェクト', key: 'project' },
+    { title: 'プロジェクト名', key: 'project' },
     { title: '説明', key: 'attribute.description' },
-    { title: '期間', key: 'period', sortable: false },
-    { title: '操作', key: 'actions', sortable: false },
+    { title: '期間', key: 'period', sortable: false, width: '150px' },
+    { title: '操作', key: 'actions', sortable: false, width: '180px' },
   ]
 
   const close = () => {
