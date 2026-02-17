@@ -2,6 +2,7 @@
 import ProjectDetailDialog from './ProjectDetailDialog.vue'
 import { useProjectListDialog } from './useProjectListDialog'
 import type { Project } from '@functions/types/shared'
+import { toDateString } from '@/modules/utils'
 import { ref } from 'vue'
 
 const props = defineProps<{
@@ -83,19 +84,25 @@ const handleFileChange = (e: Event) => {
           class="row-pointer"
           @click:row="(_: unknown, { item }: { item: Project }) => selectProject(item)"
         >
-          <template #item.role="{ item }">
-            <RoleChip :role="item.role" />
-            <v-chip v-if="item.public" class="ml-2" color="secondary" size="small"> 一般公開 </v-chip>
+          <template #item.project="{ item }">
+            <div class="py-2">
+              <div class="font-weight-bold">{{ item.name }}</div>
+              <div class="d-flex flex-wrap align-center mt-1">
+                <RoleChip :role="item.role" class="mr-1" />
+                <v-chip v-if="item.public" color="secondary" size="small"> 一般公開 </v-chip>
+              </div>
+            </div>
           </template>
           <template #item.attribute.description="{ item }">
-            <v-tooltip location="top" open-on-hover :open-delay="500" :disabled="!item.attribute?.description">
-              <template #activator="{ props }">
-                <div v-bind="props" class="text-truncate" style="max-width: 200px">
-                  {{ item.attribute?.description }}
-                </div>
-              </template>
-              <span>{{ item.attribute?.description }}</span>
-            </v-tooltip>
+            <div style="white-space: pre-wrap; min-width: 200px; max-width: 400px" class="py-1">
+              {{ item.attribute?.description }}
+            </div>
+          </template>
+          <template #item.period="{ item }">
+            <div class="d-flex flex-column text-caption text-no-wrap py-1">
+              <span>{{ toDateString(item.start, 'YYYY/MM/DD') }} <span class="text-grey">〜</span></span>
+              <span>{{ toDateString(item.end, 'YYYY/MM/DD') }}</span>
+            </div>
           </template>
           <template #item.actions="{ item }: { item: Project }">
             <div class="d-flex justify-end align-center">

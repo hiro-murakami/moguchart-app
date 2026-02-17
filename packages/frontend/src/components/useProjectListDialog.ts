@@ -58,11 +58,9 @@ export const useProjectListDialog = (
   )
 
   const headers = [
-    { title: 'プロジェクト名', key: 'name' },
-    { title: '', key: 'role' },
+    { title: 'プロジェクト', key: 'project' },
     { title: '説明', key: 'attribute.description' },
-    { title: '開始日', key: 'start', value: (item: Project) => toDateString(item.start, 'YYYY/MM/DD') },
-    { title: '終了日', key: 'end', value: (item: Project) => toDateString(item.end, 'YYYY/MM/DD') },
+    { title: '期間', key: 'period', sortable: false },
     { title: '操作', key: 'actions', sortable: false },
   ]
 
