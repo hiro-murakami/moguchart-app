@@ -93,14 +93,62 @@ const projects = [
 // ガント行
 // ============================================================
 const ganttRows = [
-  { id: 1, projectId, name: '要件定義', order: 1 },
-  { id: 2, projectId, name: 'UI/UXデザイン', order: 2 },
-  { id: 3, projectId, name: '基本設計', order: 3 },
-  { id: 4, projectId, name: 'フロントエンド開発', order: 4 },
-  { id: 5, projectId, name: 'バックエンド開発', order: 5 },
-  { id: 6, projectId, name: 'インフラ・CI/CD', order: 6 },
-  { id: 7, projectId, name: 'テスト', order: 7 },
-  { id: 8, projectId, name: 'リリース', order: 8 },
+  {
+    id: 1,
+    projectId,
+    name: '要件定義',
+    order: 1,
+    attribute: { description: 'プロジェクトの目的や機能要件を定義するフェーズです。' },
+  },
+  {
+    id: 2,
+    projectId,
+    name: 'UI/UXデザイン',
+    order: 2,
+    attribute: { description: 'ユーザーインターフェースと体験を設計するフェーズです。' },
+  },
+  {
+    id: 3,
+    projectId,
+    name: '基本設計',
+    order: 3,
+    attribute: { description: 'システムの構成やデータ構造を決定するフェーズです。' },
+  },
+  {
+    id: 4,
+    projectId,
+    name: 'フロントエンド開発',
+    order: 4,
+    attribute: { description: 'ユーザーが直接目にする部分の実装を行うフェーズです。' },
+  },
+  {
+    id: 5,
+    projectId,
+    name: 'バックエンド開発',
+    order: 5,
+    attribute: { description: 'サーバーサイドのロジックやデータベース処理を実装するフェーズです。' },
+  },
+  {
+    id: 6,
+    projectId,
+    name: 'インフラ・CI/CD',
+    order: 6,
+    attribute: {},
+  },
+  {
+    id: 7,
+    projectId,
+    name: 'テスト',
+    order: 7,
+    attribute: {},
+  },
+  {
+    id: 8,
+    projectId,
+    name: 'リリース',
+    order: 8,
+    attribute: {},
+  },
 ]
 
 // ============================================================

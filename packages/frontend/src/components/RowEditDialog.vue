@@ -47,17 +47,42 @@ const save = () => {
 </script>
 
 <template>
-  <v-dialog v-model="isVisible" max-width="500px">
+  <v-dialog v-model="isVisible" max-width="600px">
     <v-card>
-      <v-card-title>行の編集</v-card-title>
-      <v-card-text>
-        <v-text-field v-model="form.name" label="行名" required autofocus />
-        <v-textarea v-model="form.description" label="説明" rows="3" />
+      <v-card-title class="pa-8 pb-0">行の編集</v-card-title>
+      <v-card-text class="pa-8">
+        <v-row dense>
+          <v-col cols="12">
+            <v-text-field
+              v-model="form.name"
+              label="行名"
+              required
+              autofocus
+              density="compact"
+              variant="outlined"
+              hide-details
+              autocomplete="off"
+              class="mb-3"
+            />
+          </v-col>
+          <v-col cols="12">
+            <v-textarea
+              v-model="form.description"
+              label="説明"
+              rows="3"
+              auto-grow
+              density="compact"
+              variant="outlined"
+              hide-details
+              autocomplete="off"
+            />
+          </v-col>
+        </v-row>
       </v-card-text>
-      <v-card-actions>
+      <v-card-actions class="pa-8 pt-0">
         <v-spacer />
-        <v-btn color="grey" variant="text" @click="isVisible = false">キャンセル</v-btn>
-        <v-btn color="primary" variant="text" @click="save" :disabled="!form.name">保存</v-btn>
+        <v-btn color="grey-darken-1" variant="text" @click="isVisible = false">キャンセル</v-btn>
+        <v-btn color="primary" variant="flat" @click="save" :disabled="!form.name" class="ml-2">保存</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
