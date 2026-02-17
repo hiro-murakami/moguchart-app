@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import * as moguchart from '@mogura/moguchart'
 import type { ColorPalette } from '@functions/types/shared'
 import ColorInput from './ColorInput.vue'
@@ -12,6 +12,8 @@ const emit = defineEmits<{
   (e: 'update:modelValue', value: ColorPalette): void
   (e: 'delete'): void
 }>()
+
+const expanded = ref(false)
 
 const color = computed({
   get: () => props.modelValue.color,
@@ -65,38 +67,55 @@ const patternOptions = computed(() => [
 </script>
 
 <template>
-  <v-card variant="outlined" class="pa-2" style="border-color: rgba(var(--v-border-color), 0.38)">
-    <div class="d-flex">
-      <!-- プレビューエリア -->
-      <div class="mr-4 d-flex align-center justify-center">
-        <v-tooltip location="top" open-delay="500">
-          <template #activator="{ props }">
-            <v-btn v-bind="props" icon="mdi-delete" variant="text" color="error" size="small" @click="emit('delete')" />
-          </template>
-          <span>削除</span>
-        </v-tooltip>
-        <div
-          :style="`
-            width: 80px;
-            height: 38px;
-            border: 1px solid rgba(var(--v-border-color), 0.38);
-            border-radius: 4px;
-            background-repeat: repeat;
-            background-color: ${backgroundColor || '#ffffff'};
-            ${patternType && patternColor ? moguchart.getPatternStyle({ type: patternType, color: patternColor }) : ''}
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: ${color || '#000000'};
-            font-weight: bold;
-          `"
-        >
-          Sample
-        </div>
+  <v-card variant="outlined" class="color-palette-input" style="border-color: rgba(var(--v-border-color), 0.38)">
+    <!-- ヘッダー行: 削除ボタン + プレビュー + トグル -->
+    <div class="d-flex align-center pa-2" style="cursor: pointer" @click="expanded = !expanded">
+      <v-tooltip location="top" open-delay="500">
+        <template #activator="{ props: tooltipProps }">
+          <v-btn
+            v-bind="tooltipProps"
+            icon="mdi-delete"
+            variant="text"
+            color="error"
+            size="x-small"
+            @click.stop="emit('delete')"
+          />
+        </template>
+        <span>削除</span>
+      </v-tooltip>
+
+      <div
+        class="flex-grow-1 mx-2"
+        :style="`
+          height: 32px;
+          border: 1px solid rgba(var(--v-border-color), 0.38);
+          border-radius: 4px;
+          background-repeat: repeat;
+          background-color: ${backgroundColor || '#ffffff'};
+          ${patternType && patternColor ? moguchart.getPatternStyle({ type: patternType, color: patternColor }) : ''}
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: ${color || '#000000'};
+          font-weight: bold;
+          font-size: 0.85rem;
+        `"
+      >
+        Sample
       </div>
 
-      <!-- 設定エリア -->
-      <div class="flex-grow-1">
+      <v-btn
+        :icon="expanded ? 'mdi-chevron-up' : 'mdi-chevron-down'"
+        variant="text"
+        size="x-small"
+        @click.stop="expanded = !expanded"
+      />
+    </div>
+
+    <!-- 展開時: 設定エリア -->
+    <v-expand-transition>
+      <div v-show="expanded" class="px-2 pb-2">
+        <v-divider class="mb-2" />
         <v-row dense>
           <v-col cols="auto">
             <ColorInput v-model="color" label="文字色" min-width="120px" />
@@ -143,6 +162,6 @@ const patternOptions = computed(() => [
           </v-col>
         </v-row>
       </div>
-    </div>
+    </v-expand-transition>
   </v-card>
 </template>
