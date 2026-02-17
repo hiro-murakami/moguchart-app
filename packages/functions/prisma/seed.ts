@@ -8,21 +8,21 @@ const projectId = '3f333df6-90a4-4fda-8dd3-9485d27cee36'
 // カラーパレット定義
 // ============================================================
 const colorPalettes = {
-  blue: { color: '#1e3a5f', backgroundColor: '#4a90d9' },
-  green: { color: '#1b5e20', backgroundColor: '#66bb6a' },
-  orange: { color: '#e65100', backgroundColor: '#ffa726' },
-  purple: { color: '#4a148c', backgroundColor: '#ab47bc' },
-  red: { color: '#b71c1c', backgroundColor: '#ef5350' },
-  teal: { color: '#004d40', backgroundColor: '#26a69a' },
+  blue: { color: '#ffffff', backgroundColor: '#2b6cb0' },
+  green: { color: '#ffffff', backgroundColor: '#2f855a' },
+  orange: { color: '#ffffff', backgroundColor: '#c05621' },
+  purple: { color: '#ffffff', backgroundColor: '#805ad5' },
+  red: { color: '#ffffff', backgroundColor: '#c53030' },
+  teal: { color: '#ffffff', backgroundColor: '#2c7a7b' },
   pending: {
-    color: '#546e7a',
-    backgroundColor: '#b0bec5',
-    pattern: { type: 'stripe', color: '#90a4ae' },
+    color: '#ffffff',
+    backgroundColor: '#718096',
+    pattern: { type: 'diagonal-stripe', color: '#4a5568' },
   },
   onHold: {
-    color: '#6d4c41',
-    backgroundColor: '#d7ccc8',
-    pattern: { type: 'stripe', color: '#bcaaa4' },
+    color: '#ffffff',
+    backgroundColor: '#744210',
+    pattern: { type: 'diagonal-stripe', color: '#542c0e' },
   },
 }
 
