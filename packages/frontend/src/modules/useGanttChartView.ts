@@ -38,6 +38,8 @@ export const useGanttChartView = () => {
 
   // --- 設定値 ---
   const selectedFilterLabelNames = ref<string[]>([])
+  const searchText = ref('')
+  const searchIncludeRows = ref(false)
   const chartStartStr = ref('2025-12-15')
   const chartEndStr = ref('2026-03-31')
   const pxPerDay = ref(28)
@@ -154,22 +156,82 @@ export const useGanttChartView = () => {
   })
 
   const filteredRows = computed(() => {
-    if (selectedFilterLabelNames.value.length === 0) {
-      return rows.value
-    }
-    return rows.value.map((row) => ({
-      ...row,
-      tasks: row.tasks.filter((task) => {
-        const attribute = (task as any).attribute as TaskAttribute | undefined
-        const taskLabels = attribute?.labels || []
+    // 1. ラベルフィルタ適用
+    let result = rows.value
+    if (selectedFilterLabelNames.value.length > 0) {
+      result = result.map((row) => ({
+        ...row,
+        tasks: row.tasks.filter((task) => {
+          const attribute = (task as any).attribute as TaskAttribute | undefined
+          const taskLabels = attribute?.labels || []
 
-        if (selectedFilterLabelNames.value.includes(UNLABELED_VALUE) && taskLabels.length === 0) {
-          return true
+          if (selectedFilterLabelNames.value.includes(UNLABELED_VALUE) && taskLabels.length === 0) {
+            return true
+          }
+
+          return taskLabels.some((l) => selectedFilterLabelNames.value.includes(l.name))
+        }),
+      }))
+    }
+
+    // 2. フリーワード検索フィルタ適用
+    const trimmed = (searchText.value || '').trim()
+    if (!trimmed) {
+      return result
+    }
+
+    const keywords = trimmed.split(/\s+/).filter(Boolean)
+    const lowerKeywords = keywords.map((k) => k.toLowerCase())
+
+    const matchesAny = (text: string | undefined) => {
+      if (!text) return false
+      const lower = text.toLowerCase()
+      return lowerKeywords.some((kw) => lower.includes(kw))
+    }
+
+    // 行検索OFFの場合: 全行を表示し、マッチしたタスクのみ表示＋ハイライト
+    if (!searchIncludeRows.value) {
+      return result.map((row) => {
+        return {
+          ...row,
+          tasks: row.tasks
+            .filter((task) => {
+              const attr = (task as any).attribute as TaskAttribute | undefined
+              return matchesAny(task.name) || matchesAny(attr?.description)
+            })
+            .map((task) => ({ ...task, _searchKeywords: keywords })),
+        }
+      })
+    }
+
+    // 行検索ONの場合: マッチした行/タスクのみ表示
+    return result
+      .map((row) => {
+        const rowAttr = (row as any).attribute as RowAttribute | undefined
+        const rowNameMatch = matchesAny(row.name)
+        const rowDescMatch = matchesAny(rowAttr?.description)
+        const rowLevelMatch = rowNameMatch || rowDescMatch
+
+        // タスク単位でマッチを判定
+        const matchedTasks = row.tasks.filter((task) => {
+          const attr = (task as any).attribute as TaskAttribute | undefined
+          return matchesAny(task.name) || matchesAny(attr?.description)
+        })
+
+        // 行ラベルでマッチ → 全タスク表示、タスクでマッチ → マッチしたタスクのみ
+        if (!rowLevelMatch && matchedTasks.length === 0) {
+          return null // この行は除外
         }
 
-        return taskLabels.some((l) => selectedFilterLabelNames.value.includes(l.name))
-      }),
-    }))
+        const tasksToShow = rowLevelMatch ? row.tasks : matchedTasks
+
+        return {
+          ...row,
+          _searchKeywords: keywords,
+          tasks: tasksToShow.map((t) => ({ ...t, _searchKeywords: keywords })),
+        }
+      })
+      .filter(Boolean) as typeof result
   })
 
   const isReadOnly = computed(() => currentRole.value === 'viewer')
@@ -1226,6 +1288,8 @@ export const useGanttChartView = () => {
     ganttChartRef,
     availableLabels,
     selectedFilterLabelNames,
+    searchText,
+    searchIncludeRows,
     filteredRows,
     isRowEditDialogVisible,
     editingRowData,

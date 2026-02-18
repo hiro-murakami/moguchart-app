@@ -2,6 +2,37 @@ import dayjs from 'dayjs'
 import { getContrastColor, toDateString } from '@/modules/utils'
 import * as moguchart from '@mogura/moguchart'
 
+/**
+ * テキスト中の検索キーワードにマッチした部分をハイライト表示する。
+ * マッチ部分を <mark> スタイルの span 要素でラップした DocumentFragment を返す。
+ */
+const highlightText = (text: string, keywords: string[], parent: HTMLElement) => {
+  if (!keywords || keywords.length === 0) {
+    parent.textContent = text
+    return
+  }
+
+  // 正規表現の特殊文字をエスケープ
+  const escaped = keywords.map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+  const regex = new RegExp(`(${escaped.join('|')})`, 'gi')
+  const parts = text.split(regex)
+
+  parts.forEach((part) => {
+    if (regex.test(part)) {
+      const mark = document.createElement('span')
+      mark.style.backgroundColor = 'rgba(255, 235, 59, 0.7)'
+      mark.style.borderRadius = '2px'
+      mark.style.padding = '0 1px'
+      mark.textContent = part
+      parent.appendChild(mark)
+    } else {
+      parent.appendChild(document.createTextNode(part))
+    }
+    // reset regex lastIndex since we reuse it
+    regex.lastIndex = 0
+  })
+}
+
 export const barContent = (task: moguchart.GanttTask) => {
   const taskWithAttr = task as any
   const labels = taskWithAttr.attribute?.labels as { name: string; color: string }[] | undefined
@@ -29,7 +60,13 @@ export const barContent = (task: moguchart.GanttTask) => {
 
   const nameSpan = document.createElement('span')
   nameSpan.style.cssText = `font-weight: bold; font-size: 12px; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); color: white; white-space: nowrap; ${task.labelStyle || ''}`
-  nameSpan.textContent = task.name || ''
+
+  const searchKeywords = (task as any)._searchKeywords as string[] | undefined
+  if (searchKeywords && searchKeywords.length > 0) {
+    highlightText(task.name || '', searchKeywords, nameSpan)
+  } else {
+    nameSpan.textContent = task.name || ''
+  }
   headerContainer.appendChild(nameSpan)
 
   if (labels && labels.length > 0) {
@@ -56,7 +93,11 @@ export const barContent = (task: moguchart.GanttTask) => {
   if (description) {
     const descSpan = document.createElement('span')
     descSpan.style.cssText = `font-size: 10px; opacity: 0.9; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); color: white; overflow: hidden; text-overflow: ellipsis; width: 100%; display: block; ${task.labelStyle || ''}`
-    descSpan.textContent = description
+    if (searchKeywords && searchKeywords.length > 0) {
+      highlightText(description, searchKeywords, descSpan)
+    } else {
+      descSpan.textContent = description
+    }
     container.appendChild(descSpan)
   }
 
@@ -155,7 +196,13 @@ export const rowHeaderContent = (row: moguchart.GanttRow) => {
   nameDiv.style.overflow = 'hidden'
   nameDiv.style.textOverflow = 'ellipsis'
   nameDiv.style.color = 'rgb(var(--v-theme-on-surface))'
-  nameDiv.textContent = row.name
+
+  const searchKeywords = (row as any)._searchKeywords as string[] | undefined
+  if (searchKeywords && searchKeywords.length > 0) {
+    highlightText(row.name, searchKeywords, nameDiv)
+  } else {
+    nameDiv.textContent = row.name
+  }
   container.appendChild(nameDiv)
 
   if (description) {
@@ -166,7 +213,11 @@ export const rowHeaderContent = (row: moguchart.GanttRow) => {
     descDiv.style.whiteSpace = 'nowrap'
     descDiv.style.overflow = 'hidden'
     descDiv.style.textOverflow = 'ellipsis'
-    descDiv.textContent = description
+    if (searchKeywords && searchKeywords.length > 0) {
+      highlightText(description, searchKeywords, descDiv)
+    } else {
+      descDiv.textContent = description
+    }
     container.appendChild(descDiv)
   }
 

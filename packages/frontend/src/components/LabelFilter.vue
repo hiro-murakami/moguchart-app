@@ -91,7 +91,7 @@ const emit = defineEmits<{
 
 <style scoped>
 .filter-labels-select {
-  max-width: 400px;
-  min-width: 300px;
+  max-width: 300px;
+  min-width: 200px;
 }
 </style>

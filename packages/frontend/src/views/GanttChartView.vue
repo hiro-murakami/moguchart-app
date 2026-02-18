@@ -31,6 +31,8 @@ const {
   isRowEditDialogVisible,
   editingRowData,
   isProjectDetailDialogVisible,
+  searchText,
+  searchIncludeRows,
 
   // methods
   handleTaskUpdate,
@@ -99,6 +101,25 @@ const rowCountRules = [(v: number) => (v >= 1 && v <= 10) || '1〜10の範囲で
           </div>
         </div>
         <v-spacer />
+        <v-text-field
+          v-model="searchText"
+          prepend-inner-icon="mdi-magnify"
+          label="フリーワード検索"
+          density="compact"
+          hide-details
+          variant="outlined"
+          clearable
+          class="search-text-field mr-4"
+          autocomplete="off"
+        />
+        <v-checkbox
+          v-if="searchText"
+          v-model="searchIncludeRows"
+          label="行も検索"
+          density="compact"
+          hide-details
+          class="mr-4 search-include-rows"
+        />
         <LabelFilter
           v-model="selectedFilterLabelNames"
           :available-labels="availableLabels"
@@ -334,5 +355,9 @@ const rowCountRules = [(v: number) => (v >= 1 && v <= 10) || '1〜10の範囲で
 }
 .splash-image {
   border-radius: 24px;
+}
+.search-text-field {
+  max-width: 400px;
+  min-width: 250px;
 }
 </style>
