@@ -67,6 +67,7 @@ const handleBeforeClose = (value: boolean) => {
             <ColorPaletteInput
               v-if="colorPalette"
               :model-value="colorPalette"
+              :text-sample="name"
               @update:model-value="emit('update:colorPalette', $event)"
               @delete="emit('update:colorPalette', undefined)"
             />

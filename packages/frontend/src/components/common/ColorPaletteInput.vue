@@ -6,6 +6,7 @@ import ColorInput from './ColorInput.vue'
 
 const props = defineProps<{
   modelValue: ColorPalette
+  textSample?: string
 }>()
 
 const emit = defineEmits<{
@@ -101,7 +102,7 @@ const patternOptions = computed(() => [
           font-size: 0.85rem;
         `"
       >
-        Sample
+        {{ textSample || 'テキストサンプル' }}
       </div>
 
       <v-btn
