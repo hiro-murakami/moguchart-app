@@ -38,5 +38,6 @@ declare module 'vue' {
     TemplateContextMenu: typeof import('./src/components/TemplateContextMenu.vue')['default']
     UnassignedTaskSidebar: typeof import('./src/components/UnassignedTaskSidebar.vue')['default']
     UserDetailDialog: typeof import('./src/components/UserDetailDialog.vue')['default']
+    ZoomControls: typeof import('./src/components/ZoomControls.vue')['default']
   }
 }
