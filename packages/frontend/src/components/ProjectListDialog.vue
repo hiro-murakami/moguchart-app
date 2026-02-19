@@ -3,7 +3,8 @@ import ProjectDetailDialog from './ProjectDetailDialog.vue'
 import { useProjectListDialog } from './useProjectListDialog'
 import type { Project } from '@functions/types/shared'
 import { toDateString } from '@/modules/utils'
-import { ref } from 'vue'
+import { ref, watch, nextTick } from 'vue'
+import { useTutorial } from '@/modules/useTutorial'
 
 const props = defineProps<{
   modelValue: boolean
@@ -41,6 +42,27 @@ const fileInput = ref<HTMLInputElement | null>(null)
 const handleRestoreClick = () => {
   fileInput.value?.click()
 }
+
+const tutorial = useTutorial()
+
+watch([() => props.modelValue, projects, loading], async ([isOpen, projectList, isLoading]) => {
+  if (isOpen && !isLoading && projectList.length === 1) {
+    const sampleProject = projectList[0]
+    if (sampleProject && sampleProject.name === 'サンプルプロジェクト') {
+      await nextTick()
+      // wait a bit for transition? or render
+      setTimeout(() => {
+        tutorial({
+          target: `#duplicate-btn-${sampleProject.id}`,
+          message: '複製ボタンでサンプルプロジェクトのコピーを作成して、編集してみてください',
+          placement: 'bottom',
+        }).catch(() => {
+          // Ignore if tutorial fails or element not found
+        })
+      }, 300)
+    }
+  }
+})
 
 const handleFileChange = (e: Event) => {
   const target = e.target as HTMLInputElement
@@ -130,6 +152,7 @@ const handleFileChange = (e: Event) => {
                     icon="mdi-content-copy"
                     variant="text"
                     size="small"
+                    :id="`duplicate-btn-${item.id}`"
                     :style="{ visibility: item.role ? 'visible' : 'hidden' }"
                     @click.stop="duplicateProject(item)"
                   ></v-btn>

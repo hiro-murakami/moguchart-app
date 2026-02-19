@@ -6,6 +6,8 @@ import Snackbar from './Snackbar.vue'
 import { confirmKey } from '@/modules/useConfirm'
 import { alertKey } from '@/modules/useAlert'
 import { snackbarKey } from '@/modules/useSnackbar'
+import { tutorialKey } from '@/modules/useTutorial'
+import TutorialOverlay from './TutorialOverlay.vue'
 
 // Confirm Dialog
 const confirmDialog = ref<InstanceType<typeof ConfirmDialog> | null>(null)
@@ -36,6 +38,16 @@ const showSnackbar = (options?: import('@/components/Snackbar.vue').SnackbarOpti
   snackbar.value.open(options)
 }
 provide(snackbarKey, showSnackbar)
+
+// Tutorial
+const tutorialOverlay = ref<InstanceType<typeof TutorialOverlay> | null>(null)
+const tutorial = (options: import('@/modules/useTutorial').TutorialOptions) => {
+  if (!tutorialOverlay.value) {
+    return Promise.reject(new Error('TutorialOverlay is not ready.'))
+  }
+  return tutorialOverlay.value.open(options)
+}
+provide(tutorialKey, tutorial)
 </script>
 
 <template>
@@ -43,4 +55,5 @@ provide(snackbarKey, showSnackbar)
   <ConfirmDialog ref="confirmDialog" />
   <AlertDialog ref="alertDialog" />
   <Snackbar ref="snackbar" />
+  <TutorialOverlay ref="tutorialOverlay" />
 </template>

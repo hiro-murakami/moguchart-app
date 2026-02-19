@@ -36,6 +36,7 @@ declare module 'vue' {
     TaskFormDialog: typeof import('./src/components/TaskFormDialog.vue')['default']
     TaskTemplateDialog: typeof import('./src/components/TaskTemplateDialog.vue')['default']
     TemplateContextMenu: typeof import('./src/components/TemplateContextMenu.vue')['default']
+    TutorialOverlay: typeof import('./src/components/TutorialOverlay.vue')['default']
     UnassignedTaskSidebar: typeof import('./src/components/UnassignedTaskSidebar.vue')['default']
     UserDetailDialog: typeof import('./src/components/UserDetailDialog.vue')['default']
     ZoomControls: typeof import('./src/components/ZoomControls.vue')['default']
