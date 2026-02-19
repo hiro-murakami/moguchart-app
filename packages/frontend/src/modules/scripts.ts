@@ -13,7 +13,7 @@ import type {
   SelectUser,
   UpdateGanttRowOrder,
   UpsertGanttRow,
-  UpsertGanttTask,
+  UpsertGanttTasks,
   UpsertProject,
   UpsertUser,
   DuplicateProject,
@@ -52,8 +52,8 @@ export const selectGanttChart: SelectGanttChart = (projectId) => {
   return callFunction<GanttRow[]>('selectGanttChart', projectId)
 }
 
-export const upsertGanttTask: UpsertGanttTask = (param) => {
-  return callFunction<number>('upsertGanttTask', param)
+export const upsertGanttTasks: UpsertGanttTasks = (param) => {
+  return callFunction<number[]>('upsertGanttTasks', param)
 }
 
 export const upsertGanttRow: UpsertGanttRow = (param) => {

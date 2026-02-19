@@ -6,7 +6,7 @@ import selectGanttChart from './scripts/selectGanttChart.js'
 import selectProjects from './scripts/selectProjects.js'
 import updateGanttRowOrder from './scripts/updateGanttRowOrder.js'
 import upsertGanttRow from './scripts/upsertGanttRow.js'
-import upsertGanttTask from './scripts/upsertGanttTask.js'
+import upsertGanttTasks from './scripts/upsertGanttTasks.js'
 import upsertProject from './scripts/upsertProject.js'
 import duplicateProject from './scripts/duplicateProject.js'
 import selectUser from './scripts/selectUser.js'
@@ -22,7 +22,7 @@ const functions: FirebaseFunction = {
   deleteGanttRow,
   deleteGanttTask,
   upsertGanttRow,
-  upsertGanttTask,
+  upsertGanttTasks,
   updateGanttRowOrder,
   upsertProject,
   duplicateProject,

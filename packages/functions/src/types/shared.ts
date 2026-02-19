@@ -23,7 +23,7 @@ export interface FunctionResult {
 export type FunctionName =
   | 'selectProjects'
   | 'selectGanttChart'
-  | 'upsertGanttTask'
+  | 'upsertGanttTasks'
   | 'upsertGanttRow'
   | 'deleteProject'
   | 'deleteGanttRow'
@@ -233,7 +233,7 @@ export type SelectProjects = (_?: any, email?: string) => Promise<Project[]>
 /** ガントチャートデータ（行・タスク）を取得する関数の型 */
 export type SelectGanttChart = (projectId: string) => Promise<GanttRow[]>
 /** タスクを作成または更新する関数の型（作成時はタスクIDを返す） */
-export type UpsertGanttTask = (task: GanttTask, email?: string) => Promise<number>
+export type UpsertGanttTasks = (tasks: GanttTask[], email?: string) => Promise<number[]>
 /** 行を作成または更新する関数の型（作成時は行IDを返す） */
 export type UpsertGanttRow = (row: GanttRow | GanttRow[], email?: string) => Promise<number | number[]>
 /** プロジェクトを削除する関数の型 */

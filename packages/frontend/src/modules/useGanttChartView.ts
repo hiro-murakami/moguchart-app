@@ -5,7 +5,7 @@ import {
   selectGanttChart,
   updateGanttRowOrder,
   upsertGanttRow,
-  upsertGanttTask,
+  upsertGanttTasks,
 } from '@/modules/scripts'
 import { useAlert } from '@/modules/useAlert'
 import { useConfirm } from '@/modules/useConfirm'
@@ -410,7 +410,7 @@ export const useGanttChartView = () => {
       }
     }
 
-    await upsertGanttTask(data)
+    await upsertGanttTasks([data])
     await loadData(projectId.value)
   }
 
@@ -511,18 +511,20 @@ export const useGanttChartView = () => {
         }
       }
 
-      await upsertGanttTask({
-        id: 0, // 新規作成
-        rowId: Number(targetRowId),
-        name: task.name,
-        start: toDateString(newStart),
-        end: toDateString(newEnd),
-        attribute: {
-          ...(taskAny.attribute || {}),
-          description: taskAny.attribute?.description || '',
-          colorPalette,
-        },
-      } as any)
+      await upsertGanttTasks([
+        {
+          id: 0, // 新規作成
+          rowId: Number(targetRowId),
+          name: task.name,
+          start: toDateString(newStart),
+          end: toDateString(newEnd),
+          attribute: {
+            ...(taskAny.attribute || {}),
+            description: taskAny.attribute?.description || '',
+            colorPalette,
+          },
+        } as any,
+      ])
       await loadData(projectId.value)
     } catch (err) {
       console.error('Failed to drop task:', err)
@@ -618,7 +620,7 @@ export const useGanttChartView = () => {
     // ダイアログを閉じる
     isDialogVisible.value = false
 
-    await upsertGanttTask(data)
+    await upsertGanttTasks([data])
     await loadData(projectId.value)
   }
 
