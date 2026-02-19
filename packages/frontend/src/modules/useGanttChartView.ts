@@ -1625,6 +1625,12 @@ export const useGanttChartView = () => {
     }
   }
 
+  const refresh = async () => {
+    if (projectId.value) {
+      await loadData(projectId.value)
+    }
+  }
+
   return {
     // state
     projects,
@@ -1702,5 +1708,6 @@ export const useGanttChartView = () => {
     handleRowHeaderResize,
     undo,
     redo,
+    refresh,
   }
 }

@@ -72,6 +72,7 @@ const {
   handleRowHeaderResize,
   undo,
   redo,
+  refresh,
 } = useGanttChartView()
 
 const rowCountRules = [(v: number) => (v >= 1 && v <= 10) || '1〜10の範囲で入力してください']
@@ -115,11 +116,11 @@ onUnmounted(() => {
               v-if="!isReadOnly"
               icon="mdi-pencil"
               variant="text"
-              density="compact"
-              size="small"
               class="ml-2"
               @click="isProjectDetailDialogVisible = true"
+              title="プロジェクト詳細"
             />
+            <v-btn icon="mdi-refresh" variant="text" @click="refresh" title="最新化" class="mr-2" />
             <RoleChip :role="currentProject.role" class="ml-2" />
           </div>
           <div v-if="currentProject.attribute.description" class="text-caption text-medium-emphasis">
