@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import splashImage from '@/assets/splash.png'
 import { useGanttChartView } from '@/modules/useGanttChartView'
+import { onMounted, onUnmounted } from 'vue'
 
 const {
   // state
@@ -33,6 +34,8 @@ const {
   isProjectDetailDialogVisible,
   searchText,
   searchIncludeRows,
+  canUndo,
+  canRedo,
 
   // methods
   handleTaskUpdate,
@@ -67,9 +70,32 @@ const {
   saveRow,
   updateProject,
   handleRowHeaderResize,
+  undo,
+  redo,
 } = useGanttChartView()
 
 const rowCountRules = [(v: number) => (v >= 1 && v <= 10) || '1〜10の範囲で入力してください']
+
+// キーボードショートカット
+const handleKeyDown = (e: KeyboardEvent) => {
+  if (e.metaKey || e.ctrlKey) {
+    if (e.key === 'z' && !e.shiftKey) {
+      e.preventDefault()
+      undo()
+    } else if (e.key === 'z' && e.shiftKey) {
+      e.preventDefault()
+      redo()
+    }
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeyDown)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeyDown)
+})
 </script>
 
 <template>
@@ -266,7 +292,11 @@ const rowCountRules = [(v: number) => (v >= 1 && v <= 10) || '1〜10の範囲で
       :y="chartContextMenu.y"
       :date="chartContextMenu.date"
       :row-id="chartContextMenu.rowId"
+      :can-undo="canUndo"
+      :can-redo="canRedo"
       @new-task="handleCreateNewTask"
+      @undo="undo"
+      @redo="redo"
     />
 
     <TaskDetailDialog

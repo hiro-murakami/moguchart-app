@@ -8,6 +8,7 @@ import {
   upsertGanttTasks,
 } from '@/modules/scripts'
 import { useAlert } from '@/modules/useAlert'
+import { useUndoRedo } from '@/modules/useUndoRedo'
 import { useConfirm } from '@/modules/useConfirm'
 import { useLoading } from '@/modules/useLoading'
 import { toDateString, toLocalDate, getContrastColor } from '@/modules/utils'
@@ -271,6 +272,7 @@ export const useGanttChartView = () => {
   const alert = useAlert()
   const { setIsLoading } = useLoading()
   const confirm = useConfirm()
+  const { canUndo, canRedo, isUndoRedoing, pushAction, undo, redo, clearHistory } = useUndoRedo()
 
   // --- データ永続化ロジック ---
 
@@ -342,6 +344,7 @@ export const useGanttChartView = () => {
       chartStartStr.value = project.start
       chartEndStr.value = project.end
     }
+    clearHistory()
     loadData(newProjectId)
 
     const currentRouteId = Array.isArray(route.params.id) ? route.params.id[0] : route.params.id
@@ -410,7 +413,46 @@ export const useGanttChartView = () => {
       }
     }
 
-    await upsertGanttTasks([data])
+    if (data.id === 0) {
+      // コピー（新規作成）の場合
+      const result = await upsertGanttTasks([data])
+      const newTaskId = result[0]!
+      pushAction({
+        description: 'タスクコピー',
+        undo: async () => {
+          await deleteGanttTask([newTaskId])
+          await loadData(projectId.value)
+        },
+        redo: async () => {
+          await upsertGanttTasks([{ ...data, id: 0 }])
+          await loadData(projectId.value)
+        },
+      })
+    } else if (task && row) {
+      // 移動/リサイズの場合
+      const beforeData = {
+        id: Number(task.id),
+        rowId: Number(row.id),
+        name: task.name || '',
+        start: toDateString(task.start),
+        end: toDateString(task.end),
+        attribute: { ...((task as any).attribute || {}) },
+      }
+      pushAction({
+        description: 'タスク移動/リサイズ',
+        undo: async () => {
+          await upsertGanttTasks([beforeData])
+          await loadData(projectId.value)
+        },
+        redo: async () => {
+          await upsertGanttTasks([data])
+          await loadData(projectId.value)
+        },
+      })
+      await upsertGanttTasks([data])
+    } else {
+      await upsertGanttTasks([data])
+    }
     await loadData(projectId.value)
   }
 
@@ -511,20 +553,32 @@ export const useGanttChartView = () => {
         }
       }
 
-      await upsertGanttTasks([
-        {
-          id: 0, // 新規作成
-          rowId: Number(targetRowId),
-          name: task.name,
-          start: toDateString(newStart),
-          end: toDateString(newEnd),
-          attribute: {
-            ...(taskAny.attribute || {}),
-            description: taskAny.attribute?.description || '',
-            colorPalette,
-          },
-        } as any,
-      ])
+      const taskData = {
+        id: 0, // 新規作成
+        rowId: Number(targetRowId),
+        name: task.name,
+        start: toDateString(newStart),
+        end: toDateString(newEnd),
+        attribute: {
+          ...(taskAny.attribute || {}),
+          description: taskAny.attribute?.description || '',
+          colorPalette,
+        },
+      } as any
+
+      const result = await upsertGanttTasks([taskData])
+      const newTaskId = result[0]!
+      pushAction({
+        description: 'タスクドロップ',
+        undo: async () => {
+          await deleteGanttTask([newTaskId])
+          await loadData(projectId.value)
+        },
+        redo: async () => {
+          await upsertGanttTasks([{ ...taskData, id: 0 }])
+          await loadData(projectId.value)
+        },
+      })
       await loadData(projectId.value)
     } catch (err) {
       console.error('Failed to drop task:', err)
@@ -620,11 +674,79 @@ export const useGanttChartView = () => {
     // ダイアログを閉じる
     isDialogVisible.value = false
 
-    await upsertGanttTasks([data])
+    if (!taskData.id) {
+      // 新規作成
+      const result = await upsertGanttTasks([data])
+      const newTaskId = result[0]!
+      pushAction({
+        description: 'タスク作成',
+        undo: async () => {
+          await deleteGanttTask([newTaskId])
+          await loadData(projectId.value)
+        },
+        redo: async () => {
+          await upsertGanttTasks([{ ...data, id: 0 }])
+          await loadData(projectId.value)
+        },
+      })
+    } else {
+      // 編集：変更前のデータを保持
+      const taskIdStr = String(taskData.id)
+      const beforeRow = rows.value.find((r) => r.tasks.some((t) => t.id === taskIdStr))
+      const beforeTask = beforeRow?.tasks.find((t) => t.id === taskIdStr)
+      if (beforeTask && beforeRow) {
+        const beforeAttr = (beforeTask as any).attribute as TaskAttribute | undefined
+        const beforeData = {
+          id: Number(beforeTask.id),
+          rowId: Number(beforeRow.id),
+          name: beforeTask.name || '',
+          start: toDateString(beforeTask.start),
+          end: toDateString(beforeTask.end),
+          attribute: {
+            description: beforeAttr?.description || undefined,
+            colorPalette: beforeAttr?.colorPalette ? { ...beforeAttr.colorPalette } : undefined,
+            labels: beforeAttr?.labels ? [...beforeAttr.labels] : undefined,
+          },
+        }
+        pushAction({
+          description: 'タスク編集',
+          undo: async () => {
+            await upsertGanttTasks([beforeData])
+            await loadData(projectId.value)
+          },
+          redo: async () => {
+            await upsertGanttTasks([data])
+            await loadData(projectId.value)
+          },
+        })
+      }
+      await upsertGanttTasks([data])
+    }
     await loadData(projectId.value)
   }
 
   const execDeleteTasksWithAnimation = async (taskIds: string[]) => {
+    // Undo用に削除前のタスクデータを保持
+    const deletedTasks: { taskData: any; rowId: string }[] = []
+    for (const taskId of taskIds) {
+      const row = rows.value.find((r) => r.tasks.some((t) => t.id === taskId))
+      const task = row?.tasks.find((t) => t.id === taskId)
+      if (row && task) {
+        const attr = (task as any).attribute as TaskAttribute | undefined
+        deletedTasks.push({
+          rowId: row.id,
+          taskData: {
+            id: 0, // Undo時は新規作成として復元
+            rowId: Number(row.id),
+            name: task.name || '',
+            start: toDateString(task.start),
+            end: toDateString(task.end),
+            attribute: attr ? { ...attr } : {},
+          },
+        })
+      }
+    }
+
     // 1. アニメーション適用
     rows.value = rows.value.map((row) => ({
       ...row,
@@ -645,7 +767,42 @@ export const useGanttChartView = () => {
     // 3. API削除
     await deleteGanttTask(taskIds.map(Number))
 
-    // 4. データリロード
+    // 4. Undo/Redo記録
+    if (deletedTasks.length > 0) {
+      pushAction({
+        description: `タスク削除 (${deletedTasks.length}件)`,
+        undo: async () => {
+          await upsertGanttTasks(deletedTasks.map((d) => d.taskData))
+          await loadData(projectId.value)
+        },
+        redo: async () => {
+          // NOTE: Undo復元後のIDは変わるので、最新のrowsから名前で再検索
+          // ただし完全一致は保証できないため、loadData後に再取得して削除
+          // ここではシンプルにredo用のタスクデータを再作成して削除
+          const currentTaskIds: number[] = []
+          for (const dt of deletedTasks) {
+            const row = rows.value.find((r) => String(r.id) === String(dt.rowId))
+            if (row) {
+              const matchingTask = row.tasks.find(
+                (t) =>
+                  t.name === dt.taskData.name &&
+                  toDateString(t.start) === dt.taskData.start &&
+                  toDateString(t.end) === dt.taskData.end,
+              )
+              if (matchingTask) {
+                currentTaskIds.push(Number(matchingTask.id))
+              }
+            }
+          }
+          if (currentTaskIds.length > 0) {
+            await deleteGanttTask(currentTaskIds)
+          }
+          await loadData(projectId.value)
+        },
+      })
+    }
+
+    // 5. データリロード
     selectedTaskIds.value = []
     await loadData(projectId.value)
   }
@@ -658,6 +815,12 @@ export const useGanttChartView = () => {
   const handleRowReordered = async (e: CustomEvent<moguchart.RowReorderEventDetail>) => {
     setIsLoading(true)
     try {
+      // Undo用に並び替え前の順序を保持
+      const beforeOrder = rows.value.map((row, index) => ({
+        id: Number(row.id),
+        order: index + 1,
+      }))
+
       const orderedRows = e.detail.rows.map((row, index) => ({
         id: Number(row.id),
         order: index + 1,
@@ -665,6 +828,18 @@ export const useGanttChartView = () => {
       await updateGanttRowOrder(orderedRows)
       // loadData() を呼ぶとローカルでの並べ替えと前後してちらつくため、ローカルデータを直接更新する
       rows.value = e.detail.rows
+
+      pushAction({
+        description: '行並び替え',
+        undo: async () => {
+          await updateGanttRowOrder(beforeOrder)
+          await loadData(projectId.value)
+        },
+        redo: async () => {
+          await updateGanttRowOrder(orderedRows)
+          await loadData(projectId.value)
+        },
+      })
     } catch (err) {
       console.error('Failed to reorder rows:', err)
       alert({
@@ -716,6 +891,32 @@ export const useGanttChartView = () => {
       }))
 
       await updateGanttRowOrder(orderedRows)
+
+      // Undo/Redo記録
+      pushAction({
+        description: `行追加 (${count}件)`,
+        undo: async () => {
+          await deleteGanttRow(newRowIds)
+          await loadData(projectId.value)
+        },
+        redo: async () => {
+          // 再作成
+          const reNewRowIds: number[] = []
+          for (let i = 0; i < count; i++) {
+            const id = (await upsertGanttRow({
+              id: 0,
+              name: newName,
+              order: targetIndex + 1 + i,
+              projectId: projectId.value,
+              visible: true,
+              attribute: {},
+              tasks: [],
+            })) as number
+            reNewRowIds.push(id)
+          }
+          await loadData(projectId.value)
+        },
+      })
 
       await loadData(projectId.value)
       // 最後に追加した行の名前を編集状態にする
@@ -776,6 +977,7 @@ export const useGanttChartView = () => {
     if (!row) return
 
     const attribute = (row as any).attribute as RowAttribute | undefined
+    const beforeName = row.name
 
     await upsertGanttRow({
       id: rowId,
@@ -786,6 +988,37 @@ export const useGanttChartView = () => {
       attribute: attribute || {},
       tasks: [],
     })
+
+    if (beforeName !== name) {
+      pushAction({
+        description: '行名変更',
+        undo: async () => {
+          await upsertGanttRow({
+            id: rowId,
+            name: beforeName,
+            order: (row as any).order ?? 0,
+            projectId: projectId.value,
+            visible: row.visible || true,
+            attribute: attribute || {},
+            tasks: [],
+          })
+          await loadData(projectId.value)
+        },
+        redo: async () => {
+          await upsertGanttRow({
+            id: rowId,
+            name,
+            order: (row as any).order ?? 0,
+            projectId: projectId.value,
+            visible: row.visible || true,
+            attribute: attribute || {},
+            tasks: [],
+          })
+          await loadData(projectId.value)
+        },
+      })
+    }
+
     await loadData(projectId.value)
   }
 
@@ -829,6 +1062,10 @@ export const useGanttChartView = () => {
     const row = rows.value.find((r) => Number(r.id) === data.id)
     if (!row) return
 
+    const beforeName = row.name
+    const beforeAttr = (row as any).attribute as RowAttribute | undefined
+    const beforeDescription = beforeAttr?.description || ''
+
     await upsertGanttRow({
       id: data.id,
       name: data.name,
@@ -841,6 +1078,43 @@ export const useGanttChartView = () => {
       },
       tasks: [],
     })
+
+    if (beforeName !== data.name || beforeDescription !== (data.description || '')) {
+      pushAction({
+        description: '行編集',
+        undo: async () => {
+          await upsertGanttRow({
+            id: data.id,
+            name: beforeName,
+            order: (row as any).order ?? 0,
+            projectId: projectId.value,
+            visible: row.visible || true,
+            attribute: {
+              ...((row as any).attribute || {}),
+              description: beforeDescription || undefined,
+            },
+            tasks: [],
+          })
+          await loadData(projectId.value)
+        },
+        redo: async () => {
+          await upsertGanttRow({
+            id: data.id,
+            name: data.name,
+            order: (row as any).order ?? 0,
+            projectId: projectId.value,
+            visible: row.visible || true,
+            attribute: {
+              ...((row as any).attribute || {}),
+              description: data.description || undefined,
+            },
+            tasks: [],
+          })
+          await loadData(projectId.value)
+        },
+      })
+    }
+
     isRowEditDialogVisible.value = false
     await loadData(projectId.value)
   }
@@ -1101,20 +1375,44 @@ export const useGanttChartView = () => {
 
     if (!baseRow) return
     const newVisible = !(baseRow.visible ?? true)
+    const oldVisible = baseRow.visible ?? true
 
     try {
+      const rowUpdateData = targetRows.map((row) => ({
+        id: Number(row.id),
+        name: row.name,
+        order: (row as any).order ?? 0,
+        projectId: projectId.value,
+        visible: newVisible,
+        attribute: (row as any).attribute || {},
+        tasks: [],
+      }))
+
       // 一括更新
-      await upsertGanttRow(
-        targetRows.map((row) => ({
-          id: Number(row.id),
-          name: row.name,
-          order: (row as any).order ?? 0,
-          projectId: projectId.value,
-          visible: newVisible,
-          attribute: (row as any).attribute || {},
-          tasks: [],
-        })),
-      )
+      await upsertGanttRow(rowUpdateData)
+
+      pushAction({
+        description: '行表示切り替え',
+        undo: async () => {
+          await upsertGanttRow(
+            targetRows.map((row) => ({
+              id: Number(row.id),
+              name: row.name,
+              order: (row as any).order ?? 0,
+              projectId: projectId.value,
+              visible: oldVisible,
+              attribute: (row as any).attribute || {},
+              tasks: [],
+            })),
+          )
+          await loadData(projectId.value)
+        },
+        redo: async () => {
+          await upsertGanttRow(rowUpdateData)
+          await loadData(projectId.value)
+        },
+      })
+
       await loadData(projectId.value)
       closeContextMenu()
     } catch (err) {
@@ -1129,8 +1427,74 @@ export const useGanttChartView = () => {
   // --- 行削除関連 ---
 
   const deleteRow = async (rowIds: string[]) => {
+    // Undo用に削除前の行データ（タスク含む）を保持
+    const deletedRowsData = rowIds
+      .map((rowId) => {
+        const row = rows.value.find((r) => String(r.id) === rowId)
+        if (!row) return null
+        const attr = (row as any).attribute as RowAttribute | undefined
+        return {
+          id: Number(row.id),
+          name: row.name,
+          order: (row as any).order ?? 0,
+          projectId: projectId.value,
+          visible: row.visible ?? true,
+          attribute: attr ? { ...attr } : {},
+          tasks: row.tasks.map((t) => {
+            const tAttr = (t as any).attribute as TaskAttribute | undefined
+            return {
+              id: 0, // Undo時は新規作成
+              rowId: 0, // 復元後に設定
+              name: t.name || '',
+              start: toDateString(t.start),
+              end: toDateString(t.end),
+              attribute: tAttr ? { ...tAttr } : {},
+            }
+          }),
+        }
+      })
+      .filter(Boolean) as any[]
+
     await deleteGanttRow(rowIds.map(Number))
-    // isRowDeleteDialogVisible は削除済み
+
+    if (deletedRowsData.length > 0) {
+      pushAction({
+        description: `行削除 (${deletedRowsData.length}件)`,
+        undo: async () => {
+          // 行を再作成
+          for (const rowData of deletedRowsData) {
+            const tasks = rowData.tasks
+            const newRowId = (await upsertGanttRow({
+              id: 0,
+              name: rowData.name,
+              order: rowData.order,
+              projectId: rowData.projectId,
+              visible: rowData.visible,
+              attribute: rowData.attribute,
+              tasks: [],
+            })) as number
+            // タスクも復元
+            if (tasks.length > 0) {
+              await upsertGanttTasks(tasks.map((t: any) => ({ ...t, rowId: newRowId })))
+            }
+          }
+          await loadData(projectId.value)
+        },
+        redo: async () => {
+          // 再度削除（現在のrowsから該当する行を検索して削除）
+          const currentRowIds: number[] = []
+          for (const rd of deletedRowsData) {
+            const match = rows.value.find((r) => r.name === rd.name && (r as any).order === rd.order)
+            if (match) currentRowIds.push(Number(match.id))
+          }
+          if (currentRowIds.length > 0) {
+            await deleteGanttRow(currentRowIds)
+          }
+          await loadData(projectId.value)
+        },
+      })
+    }
+
     await loadData(projectId.value)
   }
 
@@ -1296,6 +1660,8 @@ export const useGanttChartView = () => {
     isRowEditDialogVisible,
     editingRowData,
     isProjectDetailDialogVisible,
+    canUndo,
+    canRedo,
 
     // methods
     handleTaskUpdate,
@@ -1334,5 +1700,7 @@ export const useGanttChartView = () => {
     saveRow,
     updateProject,
     handleRowHeaderResize,
+    undo,
+    redo,
   }
 }
