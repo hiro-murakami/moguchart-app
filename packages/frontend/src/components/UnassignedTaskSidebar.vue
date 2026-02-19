@@ -228,7 +228,7 @@ const saveTemplate = async (template: NewTaskTemplate) => {
       <v-icon>
         {{ isOpen ? 'mdi-chevron-right' : 'mdi-chevron-left' }}
       </v-icon>
-      <span>追加候補タスク</span>
+      <span>タスクテンプレート</span>
       <v-btn
         v-if="isOpen"
         icon="mdi-plus"
