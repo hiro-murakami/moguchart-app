@@ -3,10 +3,11 @@ import { provideLoading } from '@/modules/useLoading'
 import { useUserStore } from '@/stores/useUserStore'
 import { storeToRefs } from 'pinia'
 import { onMounted, onUnmounted, ref, computed } from 'vue'
+import headerImage from '@/assets/header.png'
 
 const { isLoading } = provideLoading()
 const userStore = useUserStore()
-const { user: appUser, firebaseUser, headerImage, currentTheme } = storeToRefs(userStore)
+const { user: appUser, firebaseUser, currentTheme } = storeToRefs(userStore)
 const showUserDetail = ref(false)
 
 const systemTheme = ref<'light' | 'dark'>(window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
