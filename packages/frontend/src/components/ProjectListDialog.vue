@@ -54,7 +54,7 @@ watch([() => props.modelValue, projects, loading], async ([isOpen, projectList, 
       setTimeout(() => {
         tutorial({
           target: `#duplicate-btn-${sampleProject.id}`,
-          message: '複製ボタンでサンプルプロジェクトのコピーを作成して、編集してみてください',
+          message: '複製ボタンでサンプルプロジェクトのコピーを作成すると、編集できます',
           placement: 'bottom',
         }).catch(() => {
           // Ignore if tutorial fails or element not found

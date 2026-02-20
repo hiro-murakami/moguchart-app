@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { useTheme } from 'vuetify'
 import type { TutorialOptions } from '@/modules/useTutorial'
+
+const theme = useTheme()
+const isDark = computed(() => theme.current.value.dark)
 
 const isOpen = ref(false)
 const state = ref<TutorialOptions>({
@@ -61,56 +65,33 @@ const handleKeydown = (e: KeyboardEvent) => {
   }
 }
 
+// Spotlight parameters
+const spotlightParams = computed(() => {
+  if (!targetRect.value) return { centerX: 0, centerY: 0, radius: 0 }
+  const { top, left, width, height } = targetRect.value
+  const centerX = left + width / 2
+  const centerY = top + height / 2
+  const radius = Math.max(width, height) / 2 + 10 // Add some padding
+  return { centerX, centerY, radius }
+})
+
 // SVG Path for the overlay (dimmed background with a hole)
 const overlayPath = computed(() => {
   if (!targetRect.value) return ''
-  const { top, left, width, height } = targetRect.value
+  const { centerX, centerY, radius } = spotlightParams.value
   const windowWidth = window.innerWidth
   const windowHeight = window.innerHeight
 
   // Create a path that covers the whole screen and has a hole for the target
   // using fill-rule="evenodd" (M ... Z for outer rect, M ... Z for inner hole)
-  // For a circle, we need to calculate center and radius
-  // Let's make it a circle that encompasses the target rect
-  const centerX = left + width / 2
-  const centerY = top + height / 2
-  const radius = Math.max(width, height) / 2 + 10 // Add some padding
-
   return `M0,0 H${windowWidth} V${windowHeight} H0 Z M${centerX},${centerY} m-${radius},0 a${radius},${radius} 0 1,0 ${radius * 2},0 a${radius},${radius} 0 1,0 -${radius * 2},0 Z`
 })
 
+// Message box style... (rest of logic remains similar, but using spotlightParams for consistency if needed)
+// Actually, I'll keep the message style logic as is for now but clean up if needed.
+// Wait, I see messageContainerStyle below lines 114-152. I'll just keep that part.
+
 // Message box style
-const messageStyle = computed(() => {
-  if (!targetRect.value) return {}
-  const { top, left, width, height } = targetRect.value
-  const margin = 12
-
-  // Simple positioning logic
-  // Default to bottom-start
-  let posTop = top + height + margin
-  let posLeft = left
-
-  // Adjust if going off screen (basic)
-  if (posTop + 100 > window.innerHeight) {
-    posTop = top - 100 - margin // flip to top if space allows? Roughly.
-  }
-
-  // Adjust for 'placement' option if needed, for now stick to simple behavior or implement better positioning later.
-  // Implementing basic placement support:
-  if (state.value.placement === 'top') {
-    posTop = top - margin
-    // We need the height of the message box to offset correctly, which is dynamic.
-    // For now, let's use transform translate for cleaner positioning
-  }
-
-  return {
-    top: `${posTop}px`,
-    left: `${posLeft}px`,
-  }
-})
-
-// For styling 'top' placement effectively, we might need CSS transforms or ref logic.
-// Let's use a simpler approach: define style based on placement
 const messageContainerStyle = computed(() => {
   if (!targetRect.value) return { display: 'none' }
 
@@ -159,13 +140,28 @@ defineExpose({ open, close })
     <div v-if="isOpen" class="tutorial-overlay-container">
       <!-- SVG Overlay -->
       <svg class="tutorial-svg-overlay">
-        <path :d="overlayPath" fill="rgba(0, 0, 0, 0.6)" fill-rule="evenodd" />
+        <path :d="overlayPath" fill="rgba(0, 0, 0, 0.8)" fill-rule="evenodd" />
+        <circle
+          v-if="targetRect"
+          :cx="spotlightParams.centerX"
+          :cy="spotlightParams.centerY"
+          :r="spotlightParams.radius"
+          fill="none"
+          stroke="white"
+          stroke-width="2"
+          stroke-dasharray="4 4"
+          class="spotlight-ring"
+        />
       </svg>
 
       <!-- Message Box -->
       <div v-if="targetRect" :style="messageContainerStyle" class="tutorial-message-box">
-        <v-card class="elevation-4 rounded-lg pa-4">
-          <v-card-title v-if="state.title" class="text-subtitle-1 pb-1 px-0 pt-0">
+        <v-card
+          class="elevation-8 rounded-lg pa-4"
+          :class="{ 'tutorial-card-dark': isDark }"
+          :theme="isDark ? 'dark' : 'light'"
+        >
+          <v-card-title v-if="state.title" class="text-subtitle-1 pb-1 px-0 pt-0 font-weight-bold">
             {{ state.title }}
           </v-card-title>
           <v-card-text class="pt-2 pb-0 px-0">
@@ -173,7 +169,15 @@ defineExpose({ open, close })
           </v-card-text>
           <v-card-actions class="px-0 pb-0 pt-2">
             <v-spacer></v-spacer>
-            <v-btn color="primary" size="small" variant="text" @click="close"> OK </v-btn>
+            <v-btn
+              :color="isDark ? 'teal-accent-3' : 'primary'"
+              size="small"
+              variant="flat"
+              class="px-4"
+              @click="close"
+            >
+              OK
+            </v-btn>
           </v-card-actions>
         </v-card>
       </div>
@@ -205,5 +209,30 @@ defineExpose({ open, close })
 
 .tutorial-message-box {
   pointer-events: auto; /* Allow interaction with the message box */
+}
+
+.spotlight-ring {
+  animation: spotlight-pulse 2s infinite ease-in-out;
+}
+
+@keyframes spotlight-pulse {
+  0% {
+    stroke-width: 2;
+    stroke-opacity: 1;
+  }
+  50% {
+    stroke-width: 3;
+    stroke-opacity: 0.7;
+  }
+  100% {
+    stroke-width: 2;
+    stroke-opacity: 1;
+  }
+}
+
+.tutorial-card-dark {
+  background-color: #1e293b !important; /* 深みのあるブルー（Slate 800相当） */
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: white !important;
 }
 </style>
