@@ -17,6 +17,7 @@ export default defineConfig({
     preprocessorOptions: {
       scss: {
         additionalData: `@use "@/styles/_variables.scss" as *;`,
+        // @ts-expect-error: Vite 7 types might be missing this property
         api: 'modern-compiler',
       },
     },
