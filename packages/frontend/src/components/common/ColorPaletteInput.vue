@@ -4,17 +4,33 @@ import * as moguchart from '@mogura/moguchart'
 import type { ColorPalette } from '@functions/types/shared'
 import ColorInput from './ColorInput.vue'
 
-const props = defineProps<{
-  modelValue: ColorPalette
-  textSample?: string
-}>()
+const props = withDefaults(
+  defineProps<{
+    modelValue: ColorPalette
+    textSample?: string
+    expanded?: boolean
+  }>(),
+  {
+    expanded: undefined,
+    textSample: undefined,
+  },
+)
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: ColorPalette): void
   (e: 'delete'): void
+  (e: 'update:expanded', value: boolean): void
 }>()
 
-const expanded = ref(false)
+const internalExpanded = ref(false)
+
+const isExpanded = computed({
+  get: () => props.expanded ?? internalExpanded.value,
+  set: (val) => {
+    internalExpanded.value = val
+    emit('update:expanded', val)
+  },
+})
 
 const color = computed({
   get: () => props.modelValue.color,
@@ -70,7 +86,7 @@ const patternOptions = computed(() => [
 <template>
   <v-card variant="outlined" class="color-palette-input" style="border-color: rgba(var(--v-border-color), 0.38)">
     <!-- ヘッダー行: 削除ボタン + プレビュー + トグル -->
-    <div class="d-flex align-center pa-2" style="cursor: pointer" @click="expanded = !expanded">
+    <div class="d-flex align-center pa-2" style="cursor: pointer" @click="isExpanded = !isExpanded">
       <v-tooltip location="top" open-delay="500">
         <template #activator="{ props: tooltipProps }">
           <v-btn
@@ -106,16 +122,16 @@ const patternOptions = computed(() => [
       </div>
 
       <v-btn
-        :icon="expanded ? 'mdi-chevron-up' : 'mdi-chevron-down'"
+        :icon="isExpanded ? 'mdi-chevron-up' : 'mdi-chevron-down'"
         variant="text"
         size="x-small"
-        @click.stop="expanded = !expanded"
+        @click.stop="isExpanded = !isExpanded"
       />
     </div>
 
     <!-- 展開時: 設定エリア -->
     <v-expand-transition>
-      <div v-show="expanded" class="px-2 pb-2">
+      <div v-show="isExpanded" class="px-2 pb-2">
         <v-divider class="mb-2" />
         <v-row dense>
           <v-col cols="auto">

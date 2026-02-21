@@ -34,12 +34,14 @@ const {
 } = useProjectDetailDialog(props, emit)
 
 const tab = ref<'general' | 'permissions' | 'colorPalettes' | 'labels'>('general')
+const expandedPaletteIndex = ref<number | null>(null)
 
 watch(
   () => props.modelValue,
   (newValue) => {
     if (newValue) {
       tab.value = 'general'
+      expandedPaletteIndex.value = null
     }
   },
 )
@@ -192,14 +194,25 @@ watch(
                         パレット追加
                       </v-btn>
                     </v-col>
-                    <v-col v-for="(palette, i) in localColorPalettes" :key="i" cols="12">
-                      <ColorPaletteInput
-                        :model-value="palette"
-                        @update:model-value="(val: ColorPalette) => (localColorPalettes[i] = val)"
-                        @delete="localColorPalettes.splice(i, 1)"
-                      />
-                    </v-col>
                   </v-row>
+                  <div style="max-height: 400px; overflow-y: auto; overflow-x: hidden" class="pr-2">
+                    <v-row dense>
+                      <v-col v-for="(palette, i) in localColorPalettes" :key="i" cols="12">
+                        <ColorPaletteInput
+                          :model-value="palette"
+                          :expanded="expandedPaletteIndex === i"
+                          @update:expanded="(val: boolean) => (expandedPaletteIndex = val ? i : null)"
+                          @update:model-value="(val: ColorPalette) => (localColorPalettes[i] = val)"
+                          @delete="
+                            () => {
+                              localColorPalettes.splice(i, 1)
+                              if (expandedPaletteIndex === i) expandedPaletteIndex = null
+                            }
+                          "
+                        />
+                      </v-col>
+                    </v-row>
+                  </div>
                 </v-window-item>
                 <v-window-item value="labels">
                   <v-row dense>
@@ -213,14 +226,18 @@ watch(
                         ラベル追加
                       </v-btn>
                     </v-col>
-                    <v-col v-for="(label, i) in localLabels" :key="i" cols="12">
-                      <LabelInput
-                        :model-value="label"
-                        @update:model-value="(val: Label) => (localLabels[i] = val)"
-                        @delete="localLabels.splice(i, 1)"
-                      />
-                    </v-col>
                   </v-row>
+                  <div style="max-height: 400px; overflow-y: auto; overflow-x: hidden" class="pr-2">
+                    <v-row dense>
+                      <v-col v-for="(label, i) in localLabels" :key="i" cols="12">
+                        <LabelInput
+                          :model-value="label"
+                          @update:model-value="(val: Label) => (localLabels[i] = val)"
+                          @delete="localLabels.splice(i, 1)"
+                        />
+                      </v-col>
+                    </v-row>
+                  </div>
                 </v-window-item>
               </v-window>
             </v-col>
