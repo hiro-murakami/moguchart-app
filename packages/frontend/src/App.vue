@@ -4,6 +4,7 @@ import { useUserStore } from '@/stores/useUserStore'
 import { storeToRefs } from 'pinia'
 import { onMounted, onUnmounted, ref, computed } from 'vue'
 import headerImage from '@/assets/header.png'
+import { VERSION } from '@functions/types/shared'
 
 const { isLoading } = provideLoading()
 const userStore = useUserStore()
@@ -38,6 +39,7 @@ onUnmounted(() => {
     <v-app :theme="effectiveTheme">
       <v-app-bar color="moguChartColor">
         <img :src="headerImage" height="42" class="header-image ml-4" />
+        <span class="ml-2 text-caption font-weight-medium" style="opacity: 0.7">v{{ VERSION }}</span>
         <v-spacer />
         <v-btn v-if="!firebaseUser" @click="userStore.signIn"> Login </v-btn>
         <template v-else>
