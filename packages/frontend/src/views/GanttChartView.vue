@@ -80,10 +80,16 @@ const rowCountRules = [(v: number) => (v >= 1 && v <= 10) || '1〜10の範囲で
 // キーボードショートカット
 const handleKeyDown = (e: KeyboardEvent) => {
   if (e.metaKey || e.ctrlKey) {
-    if (e.key === 'z' && !e.shiftKey) {
-      e.preventDefault()
-      undo()
-    } else if (e.key === 'z' && e.shiftKey) {
+    const key = e.key.toLowerCase()
+    if (key === 'z') {
+      if (e.shiftKey) {
+        e.preventDefault()
+        redo()
+      } else {
+        e.preventDefault()
+        undo()
+      }
+    } else if (key === 'y') {
       e.preventDefault()
       redo()
     }

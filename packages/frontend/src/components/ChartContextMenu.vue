@@ -20,7 +20,7 @@ const emit = defineEmits<{
 
 const isMac = computed(() => /Mac|iPhone|iPad|iPod/.test(navigator.userAgent))
 const undoShortcut = computed(() => (isMac.value ? '⌘Z' : 'Ctrl+Z'))
-const redoShortcut = computed(() => (isMac.value ? '⌘⇧Z' : 'Ctrl+Shift+Z'))
+const redoShortcut = computed(() => (isMac.value ? '⌘⇧Z' : 'Ctrl+Y / Ctrl+Shift+Z'))
 
 const isOpen = computed({
   get: () => props.modelValue,
