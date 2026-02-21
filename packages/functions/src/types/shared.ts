@@ -44,6 +44,9 @@ export type FunctionName =
 /** ユーザーの権限ロール */
 export type Role = 'owner' | 'editor' | 'viewer'
 
+/** 線の種類 */
+export type BorderType = 'solid_thin' | 'solid_thick' | 'dashed_thin' | 'dashed_thick' | 'dotted_thin' | 'dotted_thick'
+
 /** タスクバーの配色パレット */
 export type ColorPalette = {
   /** テキスト色 */
@@ -57,6 +60,10 @@ export type ColorPalette = {
     /** パターンの色 */
     color: string
   }
+  /** 枠線の種類 */
+  borderType?: BorderType
+  /** 枠線の色 */
+  borderColor?: string
 }
 
 export type Label = {

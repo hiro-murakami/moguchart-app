@@ -32,6 +32,14 @@ import { storeToRefs } from 'pinia'
 import { computed, nextTick, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
+const getBorderStyle = (type?: string, color?: string) => {
+  if (!type || type === 'none') return ''
+  const isThick = type.endsWith('_thick')
+  const width = isThick ? '2px' : '1px'
+  const style = type.startsWith('dashed') ? 'dashed' : type.startsWith('dotted') ? 'dotted' : 'solid'
+  return `border: ${width} ${style} ${color || '#000000'} !important; box-sizing: border-box; `
+}
+
 export const useGanttChartView = () => {
   const route = useRoute()
   const router = useRouter()
@@ -294,7 +302,10 @@ export const useGanttChartView = () => {
 
           if (colorPalette) {
             if (colorPalette.backgroundColor) {
-              style = `background-color: ${colorPalette.backgroundColor}; border-color: ${colorPalette.backgroundColor}; ${style || ''}`
+              style = `background-color: ${colorPalette.backgroundColor}; ${style || ''}`
+              if (!colorPalette.borderType || (colorPalette.borderType as string) === 'none') {
+                style += `border-color: ${colorPalette.backgroundColor}; `
+              }
             }
             if (colorPalette.color) {
               labelStyle = `color: ${colorPalette.color}; ${labelStyle || ''}`
@@ -303,6 +314,12 @@ export const useGanttChartView = () => {
               pattern = {
                 type: colorPalette.pattern.type as moguchart.BarPattern,
                 color: colorPalette.pattern.color,
+              }
+            }
+            if (colorPalette.borderType && (colorPalette.borderType as string) !== 'none') {
+              const borderStr = getBorderStyle(colorPalette.borderType, colorPalette.borderColor)
+              if (borderStr) {
+                style += borderStr
               }
             }
           }
@@ -634,13 +651,21 @@ export const useGanttChartView = () => {
       // スタイルの構築
       let style = ''
       if (taskData.colorPalette?.backgroundColor) {
-        style = `background-color: ${taskData.colorPalette.backgroundColor}; border-color: ${taskData.colorPalette.backgroundColor};`
+        style = `background-color: ${taskData.colorPalette.backgroundColor}; `
       } else {
-        style = `background-color: ${DEFAULT_TASK_COLOR};`
+        style = `background-color: ${DEFAULT_TASK_COLOR}; `
+      }
+
+      const borderStr = getBorderStyle(taskData.colorPalette?.borderType, taskData.colorPalette?.borderColor)
+      if (borderStr) {
+        style += borderStr
+      } else if (taskData.colorPalette?.backgroundColor) {
+        // デフォルトでは背景色と同じ色を枠線にする（既存の挙動）
+        style += `border-color: ${taskData.colorPalette.backgroundColor}; `
       }
 
       // アニメーションの追加
-      style += ` transform-origin: center; animation: pop-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;`
+      style += `transform-origin: center; animation: pop-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;`
 
       const optimisticTask = {
         id: tempId,

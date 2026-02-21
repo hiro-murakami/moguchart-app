@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import * as moguchart from '@mogura/moguchart'
-import type { ColorPalette } from '@functions/types/shared'
+import type { ColorPalette, BorderType } from '@functions/types/shared'
 import ColorInput from './ColorInput.vue'
 
 const props = withDefaults(
@@ -81,6 +81,52 @@ const patternOptions = computed(() => [
   { type: 'none', label: 'なし' },
   ...moguchart.ALL_BAR_PATTERNS.map((type) => ({ type, label: type })),
 ])
+
+const borderType = computed({
+  get: () => props.modelValue.borderType ?? ('none' as any),
+  set: (val) => {
+    if (!val || val === ('none' as any)) {
+      const { borderType: _, borderColor: __, ...rest } = props.modelValue
+      emit('update:modelValue', rest)
+    } else {
+      emit('update:modelValue', {
+        ...props.modelValue,
+        borderType: val as BorderType,
+        borderColor: props.modelValue.borderColor ?? '#000000',
+      })
+    }
+  },
+})
+
+const borderColor = computed({
+  get: () => props.modelValue.borderColor ?? '',
+  set: (val) => {
+    if (props.modelValue.borderType && val) {
+      emit('update:modelValue', {
+        ...props.modelValue,
+        borderColor: val,
+      })
+    }
+  },
+})
+
+const borderOptions = computed(() => [
+  { type: 'none', label: 'なし' },
+  { type: 'solid_thin', label: '実線 (細)' },
+  { type: 'solid_thick', label: '実線 (太)' },
+  { type: 'dashed_thin', label: '破線 (細)' },
+  { type: 'dashed_thick', label: '破線 (太)' },
+  { type: 'dotted_thin', label: '点線 (細)' },
+  { type: 'dotted_thick', label: '点線 (太)' },
+])
+
+const getBorderStyle = (type?: string, color?: string) => {
+  if (!type || type === 'none') return 'border: 1px solid rgba(var(--v-border-color), 0.38);'
+  const isThick = type.endsWith('_thick')
+  const width = isThick ? '2px' : '1px'
+  const style = type.startsWith('dashed') ? 'dashed' : type.startsWith('dotted') ? 'dotted' : 'solid'
+  return `border: ${width} ${style} ${color || '#000000'};`
+}
 </script>
 
 <template>
@@ -105,7 +151,7 @@ const patternOptions = computed(() => [
         class="flex-grow-1 mx-2"
         :style="`
           height: 32px;
-          border: 1px solid rgba(var(--v-border-color), 0.38);
+          ${getBorderStyle(borderType, borderColor)}
           border-radius: 4px;
           background-repeat: repeat;
           background-color: ${backgroundColor || '#ffffff'};
@@ -176,6 +222,43 @@ const patternOptions = computed(() => [
 
           <v-col cols="auto" v-if="patternType !== 'none'">
             <ColorInput v-model="patternColor" label="パターン色" min-width="100px" />
+          </v-col>
+
+          <v-col cols="auto">
+            <v-select
+              v-model="borderType"
+              :items="borderOptions"
+              item-title="label"
+              item-value="type"
+              label="枠線タイプ"
+              hide-details
+              density="compact"
+              variant="outlined"
+              min-width="131px"
+            >
+              <template #selection="{ item }">
+                <div class="d-flex align-center" v-if="item.raw.type !== 'none'">
+                  <div
+                    :style="`width: 60px; height: 24px; ${getBorderStyle(item.raw.type, borderColor || '#000000')} background-repeat: repeat; background-color: ${backgroundColor || '#ffffff'}; ${moguchart.getPatternStyle({ type: patternType, color: patternColor || '#000000' })}`"
+                  ></div>
+                </div>
+                <div v-else>なし</div>
+              </template>
+              <template #item="{ props, item }">
+                <v-list-item v-bind="props" :title="item.raw.type === 'none' ? 'なし' : ''">
+                  <template #prepend v-if="item.raw.type !== 'none'">
+                    <div
+                      class="mr-2"
+                      :style="`width: 60px; height: 24px; ${getBorderStyle(item.raw.type, borderColor || '#000000')} background-repeat: repeat; background-color: ${backgroundColor || '#ffffff'}; ${moguchart.getPatternStyle({ type: patternType, color: patternColor || '#000000' })}`"
+                    ></div>
+                  </template>
+                </v-list-item>
+              </template>
+            </v-select>
+          </v-col>
+
+          <v-col cols="auto" v-if="borderType !== 'none'">
+            <ColorInput v-model="borderColor" label="枠線色" min-width="100px" />
           </v-col>
         </v-row>
       </div>
