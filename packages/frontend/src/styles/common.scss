@@ -1,3 +1,25 @@
+html {
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+body {
+  margin: 0;
+}
+
+/* Windows環境等でのスクロールバー表示によるガタつきを抑制 */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 .small-input {
   .v-field__input,
   .v-label,
