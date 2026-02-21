@@ -83,8 +83,11 @@ const handleKeyDown = (e: KeyboardEvent) => {
     const key = e.key.toLowerCase()
     if (key === 'z') {
       if (e.shiftKey) {
-        e.preventDefault()
-        redo()
+        // Cmd+Shift+Z (Mac) は redo、Ctrl+Shift+Z (Windows) は無視する
+        if (e.metaKey) {
+          e.preventDefault()
+          redo()
+        }
       } else {
         e.preventDefault()
         undo()
