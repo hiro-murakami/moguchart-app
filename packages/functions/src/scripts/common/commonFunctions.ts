@@ -1,7 +1,7 @@
 import * as functions from 'firebase-functions/v2'
 import { FirebaseFunction } from '../../types'
 import { PrismaClient } from '@prisma/client'
-import { FunctionParam, FunctionResult } from '../../types/shared'
+import { FunctionParam, FunctionResult, VERSION } from '../../types/shared'
 import dayjs from 'dayjs'
 
 dayjs.extend(require('dayjs/plugin/utc'))
@@ -28,6 +28,7 @@ export const setupFirebaseFunction = (targetFunctions: FirebaseFunction): Functi
     // メイン処理を実行する
     const result: FunctionResult = {
       status: 'succeeded',
+      version: VERSION,
     }
 
     const requestData = data.data as FunctionParam

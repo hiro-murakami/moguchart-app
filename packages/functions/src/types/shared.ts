@@ -1,6 +1,9 @@
 // フロントエンドと共有する型定義
 // 注意: ここにはバックエンド固有のライブラリ(firebase-admin等)をimportしないでください。
 
+/** バージョン */
+export const VERSION = '0.1.0'
+
 /** Cloud Functions の呼び出しパラメータ */
 export interface FunctionParam {
   /** 呼び出す関数名 */
@@ -17,6 +20,8 @@ export interface FunctionResult {
   message?: string
   /** レスポンスデータ */
   data?: any
+  /** サーバーのバージョン */
+  version?: string
 }
 
 /** 利用可能な Cloud Functions の関数名一覧 */

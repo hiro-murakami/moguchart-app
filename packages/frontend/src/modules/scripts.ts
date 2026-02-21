@@ -21,6 +21,7 @@ import type {
   GetGanttDataJson,
   RestoreProject,
 } from '@functions/types/shared'
+import { VERSION } from '@functions/types/shared'
 import { httpsCallable } from 'firebase/functions'
 
 const callFunction = async <T>(name: FunctionName, param = {}) => {
@@ -28,6 +29,12 @@ const callFunction = async <T>(name: FunctionName, param = {}) => {
 
   try {
     const result = await callable({ name, param })
+
+    if (result.data.version && result.data.version !== VERSION) {
+      window.alert('画面をリロードしてください')
+      // バージョン不一致の場合は後続の処理を行わずにエラーを投げる
+      throw new Error('バージョンが一致しません。画面をリロードしてください。')
+    }
 
     if (result.data.status === 'failed') {
       throw new Error(result.data.message)
