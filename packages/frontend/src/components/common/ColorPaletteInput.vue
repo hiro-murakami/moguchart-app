@@ -92,7 +92,7 @@ const borderType = computed({
       emit('update:modelValue', {
         ...props.modelValue,
         borderType: val as BorderType,
-        borderColor: props.modelValue.borderColor ?? '#000000',
+        borderColor: props.modelValue.borderColor ?? '#ffffff',
       })
     }
   },
@@ -125,7 +125,7 @@ const getBorderStyle = (type?: string, color?: string) => {
   const isThick = type.endsWith('_thick')
   const width = isThick ? '2px' : '1px'
   const style = type.startsWith('dashed') ? 'dashed' : type.startsWith('dotted') ? 'dotted' : 'solid'
-  return `border: ${width} ${style} ${color || '#000000'};`
+  return `border: ${width} ${style} ${color || '#ffffff'};`
 }
 </script>
 
@@ -239,7 +239,7 @@ const getBorderStyle = (type?: string, color?: string) => {
               <template #selection="{ item }">
                 <div class="d-flex align-center" v-if="item.raw.type !== 'none'">
                   <div
-                    :style="`width: 60px; height: 24px; ${getBorderStyle(item.raw.type, borderColor || '#000000')} background-repeat: repeat; background-color: ${backgroundColor || '#ffffff'}; ${moguchart.getPatternStyle({ type: patternType, color: patternColor || '#000000' })}`"
+                    :style="`width: 60px; height: 24px; ${getBorderStyle(item.raw.type, borderColor || '#ffffff')} background-repeat: repeat; background-color: ${backgroundColor || '#ffffff'}; ${moguchart.getPatternStyle({ type: patternType, color: patternColor || '#000000' })}`"
                   ></div>
                 </div>
                 <div v-else>なし</div>
@@ -249,7 +249,7 @@ const getBorderStyle = (type?: string, color?: string) => {
                   <template #prepend v-if="item.raw.type !== 'none'">
                     <div
                       class="mr-2"
-                      :style="`width: 60px; height: 24px; ${getBorderStyle(item.raw.type, borderColor || '#000000')} background-repeat: repeat; background-color: ${backgroundColor || '#ffffff'}; ${moguchart.getPatternStyle({ type: patternType, color: patternColor || '#000000' })}`"
+                      :style="`width: 60px; height: 24px; ${getBorderStyle(item.raw.type, borderColor || '#ffffff')} background-repeat: repeat; background-color: ${backgroundColor || '#ffffff'}; ${moguchart.getPatternStyle({ type: patternType, color: patternColor || '#000000' })}`"
                     ></div>
                   </template>
                 </v-list-item>
