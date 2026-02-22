@@ -2,7 +2,7 @@ import type { ColorPalette, Label, Project } from '@functions/types/shared'
 import { isEqual } from 'lodash'
 import { computed, nextTick, ref, watch } from 'vue'
 import type { VForm } from 'vuetify/components'
-import { useDiscardConfirm } from './useConfirm'
+import { useDiscardConfirm } from '../../composables/useConfirm'
 
 export interface ProjectDetailDialogProps {
   modelValue: boolean

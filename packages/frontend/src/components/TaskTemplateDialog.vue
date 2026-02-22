@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useDiscardConfirm } from '@/modules/useConfirm'
+import { useDiscardConfirm } from '@/composables/useConfirm'
 import type { ColorPalette, Label, NewTaskTemplate } from '@functions/types/shared'
 import { isEqual } from 'lodash'
 import { computed, ref, watch } from 'vue'

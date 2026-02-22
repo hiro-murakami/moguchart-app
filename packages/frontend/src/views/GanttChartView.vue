@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import splashImage from '@/assets/splash.png'
-import { useGanttChartView } from '@/modules/useGanttChartView'
+import { useGanttChartView } from './composables/useGanttChartView'
 import { onMounted, onUnmounted } from 'vue'
 
 const {

@@ -4,8 +4,8 @@ import {
   getGanttDataJson,
   restoreProject as restoreProjectScript,
 } from '@/modules/scripts'
-import { useConfirm } from '@/modules/useConfirm'
-import { useSnackbar } from '@/modules/useSnackbar'
+import { useConfirm } from '@/composables/useConfirm'
+import { useSnackbar } from '@/composables/useSnackbar'
 import type { Project } from '@functions/types/shared'
 import { ref, watch } from 'vue'
 

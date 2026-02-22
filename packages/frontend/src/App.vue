@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { provideLoading } from '@/modules/useLoading'
+import { provideLoading } from '@/composables/useLoading'
 import { useUserStore } from '@/stores/useUserStore'
 import { storeToRefs } from 'pinia'
 import { onMounted, onUnmounted, ref, computed } from 'vue'

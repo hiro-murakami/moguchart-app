@@ -1,5 +1,5 @@
 import { inject, type InjectionKey } from 'vue'
-import type { AlertOptions } from '@/components/AlertDialog.vue'
+import type { AlertOptions } from '@/components/common/AlertDialog.vue'
 
 type AlertFunction = (options?: AlertOptions) => Promise<void>
 

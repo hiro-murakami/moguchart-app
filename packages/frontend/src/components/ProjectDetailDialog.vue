@@ -2,7 +2,7 @@
 import { ref, watch } from 'vue'
 import type { Project, ColorPalette, Label } from '@functions/types/shared'
 import inputRules from '@/modules/inputRules'
-import { useProjectDetailDialog } from '../modules/useProjectDetailDialog'
+import { useProjectDetailDialog } from './composables/useProjectDetailDialog'
 
 const props = defineProps<{
   modelValue: boolean

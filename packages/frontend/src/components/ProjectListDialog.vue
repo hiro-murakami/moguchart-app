@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import ProjectDetailDialog from './ProjectDetailDialog.vue'
-import { useProjectListDialog } from '../modules/useProjectListDialog'
+import { useProjectListDialog } from './composables/useProjectListDialog'
 import type { Project } from '@functions/types/shared'
 import { toDateString } from '@/modules/utils'
 import { ref, watch, nextTick } from 'vue'
-import { useTutorial } from '@/modules/useTutorial'
+import { useTutorial } from '@/composables/useTutorial'
 
 const props = defineProps<{
   modelValue: boolean

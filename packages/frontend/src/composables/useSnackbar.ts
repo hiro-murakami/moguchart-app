@@ -1,5 +1,5 @@
 import { inject, type InjectionKey } from 'vue'
-import type { SnackbarOptions } from '@/components/Snackbar.vue'
+import type { SnackbarOptions } from '@/components/common/Snackbar.vue'
 
 type SnackbarFunction = (options?: SnackbarOptions) => void
 

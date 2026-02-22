@@ -2,7 +2,7 @@
 import themeDarkImg from '@/assets/theme-dark.png'
 import themeLightImg from '@/assets/theme-light.png'
 import themeSystemImg from '@/assets/theme-system.png'
-import { useDiscardConfirm } from '@/modules/useConfirm'
+import { useDiscardConfirm } from '@/composables/useConfirm'
 import { toDateString } from '@/modules/utils'
 import { useUserStore } from '@/stores/useUserStore'
 import type { User } from '@functions/types/shared'

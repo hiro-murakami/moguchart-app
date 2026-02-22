@@ -7,10 +7,10 @@ import {
   upsertGanttRow,
   upsertGanttTasks,
 } from '@/modules/scripts'
-import { useAlert } from '@/modules/useAlert'
-import { useUndoRedo } from '@/modules/useUndoRedo'
-import { useConfirm } from '@/modules/useConfirm'
-import { useLoading } from '@/modules/useLoading'
+import { useAlert } from '@/composables/useAlert'
+import { useUndoRedo } from '@/composables/useUndoRedo'
+import { useConfirm } from '@/composables/useConfirm'
+import { useLoading } from '@/composables/useLoading'
 import { toDateString, toLocalDate, getContrastColor } from '@/modules/utils'
 import { barContent, tooltip, rowHeaderContent } from '@/modules/ganttChartCustomRendering'
 import { useProjectStore } from '@/stores/useProjectStore'

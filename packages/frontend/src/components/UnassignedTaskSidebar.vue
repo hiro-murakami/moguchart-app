@@ -6,7 +6,7 @@ import { useTheme } from 'vuetify'
 
 import { useProjectStore } from '@/stores/useProjectStore'
 import type { TaskAttribute, NewTaskTemplate } from '@functions/types/shared'
-import { useConfirm } from '@/modules/useConfirm'
+import { useConfirm } from '@/composables/useConfirm'
 import { getContrastColor } from '@/modules/utils'
 
 interface DraggableTask extends moguchart.GanttTask {

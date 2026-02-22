@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useTheme } from 'vuetify'
-import type { TutorialOptions } from '@/modules/useTutorial'
+import type { TutorialOptions } from '@/composables/useTutorial'
 
 const theme = useTheme()
 const isDark = computed(() => theme.current.value.dark)
