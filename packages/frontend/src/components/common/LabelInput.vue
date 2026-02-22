@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { Label } from '@functions/types/shared'
-import ColorInput from './ColorInput.vue'
 import { getContrastColor } from '../../modules/utils'
 
 const props = defineProps<{
@@ -28,12 +27,15 @@ const color = computed({
   <v-card variant="outlined" class="pa-2" style="border-color: rgba(var(--v-border-color), 0.38)">
     <div class="d-flex align-center">
       <div class="mr-4 d-flex align-center justify-start" style="width: 30%">
-        <v-tooltip location="top" open-delay="500">
-          <template #activator="{ props }">
-            <v-btn v-bind="props" icon="mdi-delete" variant="text" color="error" size="small" @click="emit('delete')" />
-          </template>
-          <span>削除</span>
-        </v-tooltip>
+        <TooltipBtn
+          icon="mdi-delete"
+          variant="text"
+          color="error"
+          size="small"
+          tooltip="削除"
+          location="top"
+          @click="emit('delete')"
+        />
         <v-chip
           :color="color || '#cccccc'"
           variant="flat"

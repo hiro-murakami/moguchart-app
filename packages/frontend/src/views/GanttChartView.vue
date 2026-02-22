@@ -112,24 +112,24 @@ onUnmounted(() => {
   <div class="gantt-app">
     <template v-if="currentProject">
       <div class="mb-4 d-flex align-center" style="gap: 1rem">
-        <v-btn
+        <TooltipBtn
           icon="mdi-format-list-bulleted"
           variant="text"
           @click="isProjectListDialogVisible = true"
-          title="プロジェクト一覧"
+          tooltip="プロジェクト一覧"
         />
         <div>
           <div class="d-flex align-center">
             <span class="text-h6">{{ currentProject.name }}</span>
-            <v-btn
+            <TooltipBtn
               v-if="!isReadOnly"
               icon="mdi-pencil"
               variant="text"
               class="ml-2"
               @click="isProjectDetailDialogVisible = true"
-              title="プロジェクト詳細"
+              tooltip="プロジェクト詳細"
             />
-            <v-btn icon="mdi-refresh" variant="text" @click="refresh" title="最新化" class="mr-2" />
+            <TooltipBtn icon="mdi-refresh" variant="text" @click="refresh" tooltip="最新化" class="mr-2" />
             <RoleChip :role="currentProject.role" class="ml-2" />
           </div>
           <div v-if="currentProject.attribute.description" class="text-caption text-medium-emphasis">

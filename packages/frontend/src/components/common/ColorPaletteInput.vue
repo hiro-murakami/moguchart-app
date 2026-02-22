@@ -2,7 +2,6 @@
 import { ref, computed } from 'vue'
 import * as moguchart from '@mogura/moguchart'
 import type { ColorPalette, BorderType } from '@functions/types/shared'
-import ColorInput from './ColorInput.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -133,19 +132,15 @@ const getBorderStyle = (type?: string, color?: string) => {
   <v-card variant="outlined" class="color-palette-input" style="border-color: rgba(var(--v-border-color), 0.38)">
     <!-- ヘッダー行: 削除ボタン + プレビュー + トグル -->
     <div class="d-flex align-center pa-2" style="cursor: pointer" @click="isExpanded = !isExpanded">
-      <v-tooltip location="top" open-delay="500">
-        <template #activator="{ props: tooltipProps }">
-          <v-btn
-            v-bind="tooltipProps"
-            icon="mdi-delete"
-            variant="text"
-            color="error"
-            size="x-small"
-            @click.stop="emit('delete')"
-          />
-        </template>
-        <span>削除</span>
-      </v-tooltip>
+      <TooltipBtn
+        icon="mdi-delete"
+        variant="text"
+        color="error"
+        size="x-small"
+        tooltip="削除"
+        location="top"
+        @click.stop="emit('delete')"
+      />
 
       <div
         class="flex-grow-1 mx-2"

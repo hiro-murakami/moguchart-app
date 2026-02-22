@@ -27,7 +27,7 @@ const zoomIn = () => {
 
 <template>
   <div class="d-flex align-center" style="width: 180px">
-    <v-btn icon="mdi-magnify-minus" variant="text" size="medium" title="縮小" @click="zoomOut" />
+    <TooltipBtn icon="mdi-magnify-minus" variant="text" size="medium" tooltip="縮小" @click="zoomOut" />
     <v-slider
       :model-value="modelValue"
       :min="min"
@@ -38,6 +38,6 @@ const zoomIn = () => {
       class="mx-2 flex-grow-1"
       @update:model-value="emit('update:modelValue', $event)"
     />
-    <v-btn icon="mdi-magnify-plus" variant="text" size="medium" title="拡大" @click="zoomIn" />
+    <TooltipBtn icon="mdi-magnify-plus" variant="text" size="medium" tooltip="拡大" @click="zoomIn" />
   </div>
 </template>

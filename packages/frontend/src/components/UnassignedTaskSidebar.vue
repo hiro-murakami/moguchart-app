@@ -6,8 +6,6 @@ import { useTheme } from 'vuetify'
 
 import { useProjectStore } from '@/stores/useProjectStore'
 import type { TaskAttribute, NewTaskTemplate } from '@functions/types/shared'
-import TaskTemplateDialog from './TaskTemplateDialog.vue'
-import TemplateContextMenu from './TemplateContextMenu.vue'
 import { useConfirm } from '@/modules/useConfirm'
 import { getContrastColor } from '@/modules/utils'
 
@@ -229,7 +227,7 @@ const saveTemplate = async (template: NewTaskTemplate) => {
         {{ isOpen ? 'mdi-chevron-right' : 'mdi-chevron-left' }}
       </v-icon>
       <span>タスクテンプレート</span>
-      <v-btn
+      <TooltipBtn
         v-if="isOpen"
         icon="mdi-plus"
         variant="text"
@@ -237,7 +235,7 @@ const saveTemplate = async (template: NewTaskTemplate) => {
         size="small"
         class="ml-auto"
         @click.stop="handleAddTemplate"
-        title="テンプレート追加"
+        tooltip="テンプレート追加"
       />
     </h3>
     <div v-if="isOpen" class="sidebar-content">

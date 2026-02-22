@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import ProjectDetailDialog from './ProjectDetailDialog.vue'
-import { useProjectListDialog } from './useProjectListDialog'
+import { useProjectListDialog } from '../modules/useProjectListDialog'
 import type { Project } from '@functions/types/shared'
 import { toDateString } from '@/modules/utils'
 import { ref, watch, nextTick } from 'vue'
@@ -128,63 +128,47 @@ const handleFileChange = (e: Event) => {
           </template>
           <template #item.actions="{ item }: { item: Project }">
             <div class="d-flex justify-end align-center">
-              <v-tooltip
-                :disabled="!(item.role === 'owner' || item.role === 'editor')"
-                :open-delay="500"
+              <TooltipBtn
+                tooltip="編集"
                 location="top"
-              >
-                <template #activator="{ props }">
-                  <v-btn
-                    v-bind="props"
-                    icon="mdi-pencil"
-                    variant="text"
-                    size="small"
-                    :style="{ visibility: item.role === 'owner' || item.role === 'editor' ? 'visible' : 'hidden' }"
-                    @click.stop="editProject(item)"
-                  ></v-btn>
-                </template>
-                <span>編集</span>
-              </v-tooltip>
-              <v-tooltip :disabled="!item.role" :open-delay="500" location="top">
-                <template #activator="{ props }">
-                  <v-btn
-                    v-bind="props"
-                    icon="mdi-content-copy"
-                    variant="text"
-                    size="small"
-                    :id="`duplicate-btn-${item.id}`"
-                    :style="{ visibility: item.role ? 'visible' : 'hidden' }"
-                    @click.stop="duplicateProject(item)"
-                  ></v-btn>
-                </template>
-                <span>複製</span>
-              </v-tooltip>
-              <v-tooltip :disabled="item.role !== 'owner'" :open-delay="500" location="top">
-                <template #activator="{ props }">
-                  <v-btn
-                    v-bind="props"
-                    icon="mdi-delete"
-                    variant="text"
-                    size="small"
-                    :style="{ visibility: item.role === 'owner' ? 'visible' : 'hidden' }"
-                    @click.stop="deleteProject(item)"
-                  ></v-btn>
-                </template>
-                <span>削除</span>
-              </v-tooltip>
-              <v-tooltip :disabled="!item.role" :open-delay="500" location="top">
-                <template #activator="{ props }">
-                  <v-btn
-                    v-bind="props"
-                    icon="mdi-download"
-                    variant="text"
-                    size="small"
-                    :style="{ visibility: item.role ? 'visible' : 'hidden' }"
-                    @click.stop="downloadProjectJson(item)"
-                  ></v-btn>
-                </template>
-                <span>ダウンロード</span>
-              </v-tooltip>
+                :tooltip-disabled="!(item.role === 'owner' || item.role === 'editor')"
+                icon="mdi-pencil"
+                variant="text"
+                size="small"
+                :style="{ visibility: item.role === 'owner' || item.role === 'editor' ? 'visible' : 'hidden' }"
+                @click.stop="editProject(item)"
+              />
+              <TooltipBtn
+                tooltip="複製"
+                location="top"
+                :tooltip-disabled="!item.role"
+                icon="mdi-content-copy"
+                variant="text"
+                size="small"
+                :id="`duplicate-btn-${item.id}`"
+                :style="{ visibility: item.role ? 'visible' : 'hidden' }"
+                @click.stop="duplicateProject(item)"
+              />
+              <TooltipBtn
+                tooltip="削除"
+                location="top"
+                :tooltip-disabled="item.role !== 'owner'"
+                icon="mdi-delete"
+                variant="text"
+                size="small"
+                :style="{ visibility: item.role === 'owner' ? 'visible' : 'hidden' }"
+                @click.stop="deleteProject(item)"
+              />
+              <TooltipBtn
+                tooltip="ダウンロード"
+                location="top"
+                :tooltip-disabled="!item.role"
+                icon="mdi-download"
+                variant="text"
+                size="small"
+                :style="{ visibility: item.role ? 'visible' : 'hidden' }"
+                @click.stop="downloadProjectJson(item)"
+              />
             </div>
           </template>
         </v-data-table>
