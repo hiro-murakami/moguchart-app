@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import themeDarkImg from '@/assets/theme-dark.png'
+import themeLightImg from '@/assets/theme-light.png'
+import themeSystemImg from '@/assets/theme-system.png'
 import { useDiscardConfirm } from '@/modules/useConfirm'
 import { toDateString } from '@/modules/utils'
 import { useUserStore } from '@/stores/useUserStore'
@@ -20,9 +23,9 @@ const localDisplayName = ref('')
 const localTheme = ref<'light' | 'dark' | 'system'>('system')
 
 const themeOptions = [
-  { title: 'ライト', value: 'light' },
-  { title: 'ダーク', value: 'dark' },
-  { title: 'システム', value: 'system' },
+  { title: 'ライト', value: 'light', image: themeLightImg },
+  { title: 'ダーク', value: 'dark', image: themeDarkImg },
+  { title: 'システム', value: 'system', image: themeSystemImg },
 ]
 
 const { confirmAndClose } = useDiscardConfirm()
@@ -113,12 +116,19 @@ const handleBeforeClose = (value: boolean) => {
             </v-col>
             <v-col cols="12">
               <v-radio-group v-model="localTheme" inline label="テーマ" hide-details class="mb-3">
-                <v-radio
-                  v-for="option in themeOptions"
-                  :key="option.value"
-                  :label="option.title"
-                  :value="option.value"
-                ></v-radio>
+                <v-radio v-for="option in themeOptions" :key="option.value" :value="option.value">
+                  <template v-slot:label>
+                    <div class="d-flex flex-column align-center ma-2 mt-4 cursor-pointer">
+                      <img
+                        :src="option.image"
+                        width="80"
+                        :alt="option.title"
+                        style="border-radius: 4px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2)"
+                      />
+                      <span class="mt-2 text-caption">{{ option.title }}</span>
+                    </div>
+                  </template>
+                </v-radio>
               </v-radio-group>
             </v-col>
           </v-row>
