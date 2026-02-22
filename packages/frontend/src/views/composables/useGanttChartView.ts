@@ -165,82 +165,93 @@ export const useGanttChartView = () => {
   })
 
   const filteredRows = computed(() => {
-    // 1. ラベルフィルタ適用
-    let result = rows.value
-    if (selectedFilterLabelNames.value.length > 0) {
-      result = result.map((row) => ({
-        ...row,
-        tasks: row.tasks.filter((task) => {
-          const attribute = (task as any).attribute as TaskAttribute | undefined
-          const taskLabels = attribute?.labels || []
-
-          if (selectedFilterLabelNames.value.includes(UNLABELED_VALUE) && taskLabels.length === 0) {
-            return true
-          }
-
-          return taskLabels.some((l) => selectedFilterLabelNames.value.includes(l.name))
-        }),
-      }))
-    }
-
-    // 2. フリーワード検索フィルタ適用
+    const hasLabelFilter = selectedFilterLabelNames.value.length > 0
     const trimmed = (searchText.value || '').trim()
-    if (!trimmed) {
-      return result
+    const hasKeywordFilter = trimmed !== ''
+
+    if (!hasLabelFilter && !hasKeywordFilter) {
+      return rows.value
     }
 
-    const keywords = trimmed.split(/\s+/).filter(Boolean)
+    const keywords = hasKeywordFilter ? trimmed.split(/\s+/).filter(Boolean) : []
     const lowerKeywords = keywords.map((k) => k.toLowerCase())
 
-    const matchesAny = (text: string | undefined) => {
-      if (!text) return false
+    const matchesAnyKw = (text: string | undefined) => {
+      if (!text || !hasKeywordFilter) return false
       const lower = text.toLowerCase()
       return lowerKeywords.some((kw) => lower.includes(kw))
     }
 
-    // 行検索OFFの場合: 全行を表示し、マッチしたタスクのみ表示＋ハイライト
-    if (!searchIncludeRows.value) {
-      return result.map((row) => {
-        return {
-          ...row,
-          tasks: row.tasks
-            .filter((task) => {
-              const attr = (task as any).attribute as TaskAttribute | undefined
-              return matchesAny(task.name) || matchesAny(attr?.description)
-            })
-            .map((task) => ({ ...task, _searchKeywords: keywords })),
-        }
-      })
-    }
-
-    // 行検索ONの場合: マッチした行/タスクのみ表示
-    return result
+    return rows.value
       .map((row) => {
         const rowAttr = (row as any).attribute as RowAttribute | undefined
-        const rowNameMatch = matchesAny(row.name)
-        const rowDescMatch = matchesAny(rowAttr?.description)
+        const rowNameMatch = matchesAnyKw(row.name)
+        const rowDescMatch = matchesAnyKw(rowAttr?.description)
         const rowLevelMatch = rowNameMatch || rowDescMatch
 
-        // タスク単位でマッチを判定
-        const matchedTasks = row.tasks.filter((task) => {
-          const attr = (task as any).attribute as TaskAttribute | undefined
-          return matchesAny(task.name) || matchesAny(attr?.description)
+        let hasAnyMatchedTask = false
+
+        const newTasks = row.tasks.map((task) => {
+          let isLabelMatch = true
+          if (hasLabelFilter) {
+            const attribute = (task as any).attribute as TaskAttribute | undefined
+            const taskLabels = attribute?.labels || []
+
+            if (selectedFilterLabelNames.value.includes(UNLABELED_VALUE) && taskLabels.length === 0) {
+              isLabelMatch = true
+            } else {
+              isLabelMatch = taskLabels.some((l) => selectedFilterLabelNames.value.includes(l.name))
+            }
+          }
+
+          let isSearchMatch = true
+          if (hasKeywordFilter) {
+            const attr = (task as any).attribute as TaskAttribute | undefined
+            isSearchMatch = matchesAnyKw(task.name) || matchesAnyKw(attr?.description)
+          }
+
+          let isTaskMatch = isLabelMatch
+          if (hasKeywordFilter) {
+            if (searchIncludeRows.value && rowLevelMatch) {
+              // 行レベルでマッチしている場合、その行のタスクは（ラベル条件を満たしていれば）マッチとみなす
+            } else {
+              isTaskMatch = isTaskMatch && isSearchMatch
+            }
+          }
+
+          if (isTaskMatch) {
+            hasAnyMatchedTask = true
+          }
+
+          const newTask = { ...task }
+          if (hasKeywordFilter && isTaskMatch) {
+            Object.assign(newTask, { _searchKeywords: keywords })
+          }
+
+          if (!isTaskMatch) {
+            // 対象外のタスクは非表示にするのではなく透過率を上げて区別する
+            const styleStr = (newTask as any).style || ''
+            const separator = styleStr && !styleStr.trim().endsWith(';') ? ';' : ''
+            Object.assign(newTask, { style: `${styleStr}${separator} opacity: 0.2;` })
+          }
+
+          return newTask
         })
 
-        // 行ラベルでマッチ → 全タスク表示、タスクでマッチ → マッチしたタスクのみ
-        if (!rowLevelMatch && matchedTasks.length === 0) {
-          return null // この行は除外
+        // 行検索ONの場合で、行レベルがマッチせず、かつマッチするタスクが一つもない場合は、その行ごと非表示にする
+        if (hasKeywordFilter && searchIncludeRows.value) {
+          if (!rowLevelMatch && !hasAnyMatchedTask) {
+            return null
+          }
         }
-
-        const tasksToShow = rowLevelMatch ? row.tasks : matchedTasks
 
         return {
           ...row,
-          _searchKeywords: keywords,
-          tasks: tasksToShow.map((t) => ({ ...t, _searchKeywords: keywords })),
+          _searchKeywords: hasKeywordFilter ? keywords : undefined,
+          tasks: newTasks,
         }
       })
-      .filter(Boolean) as typeof result
+      .filter(Boolean) as typeof rows.value
   })
 
   const isReadOnly = computed(() => currentRole.value === 'viewer')
