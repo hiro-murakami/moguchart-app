@@ -79,7 +79,7 @@ const handleFileChange = (e: Event) => {
 <template>
   <v-dialog :model-value="modelValue" @update:model-value="emit('update:modelValue', $event)" max-width="1100px">
     <v-card>
-      <v-card-title class="d-flex justify-space-between align-center">
+      <v-card-title class="d-flex justify-space-between align-center pt-6 px-6 pb-4">
         <span>プロジェクト一覧</span>
         <div>
           <input ref="fileInput" type="file" accept=".json" style="display: none" @change="handleFileChange" />
@@ -96,7 +96,7 @@ const handleFileChange = (e: Event) => {
           <v-btn icon="mdi-close" variant="text" @click="close"></v-btn>
         </div>
       </v-card-title>
-      <v-card-text>
+      <v-card-text class="px-6 pb-6 pt-0">
         <v-data-table
           :headers="headers"
           :items="projects"
