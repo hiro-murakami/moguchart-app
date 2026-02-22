@@ -275,10 +275,20 @@ export type SelectUser = (email: string) => Promise<User | null>
 /** ユーザー情報を作成または更新する関数の型 */
 export type UpsertUser = (user: User, email?: string) => Promise<void>
 
+/** JSONとして出力・入力するガントチャートデータの型 */
+export interface GanttDataJson {
+  /** バージョン情報 */
+  version: string
+  /** プロジェクトデータ */
+  project: any
+  /** 行とタスクのデータ */
+  rows: any[]
+}
+
 /** プロジェクトとガントチャートデータを取得する関数の型 */
-export type GetGanttDataJson = (projectId: string, email?: string) => Promise<{ project: any; rows: any[] }>
+export type GetGanttDataJson = (projectId: string, email?: string) => Promise<GanttDataJson>
 
 /** プロジェクトとガントチャートデータを復元する関数の型 */
-export type RestoreProject = (data: { project: any; rows: any[]; force?: boolean }, email?: string) => Promise<string>
+export type RestoreProject = (data: GanttDataJson & { force?: boolean }, email?: string) => Promise<string>
 
 // --- フロントエンドとバックエンドで実装を共有しない型 ---

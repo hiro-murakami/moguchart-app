@@ -1,4 +1,4 @@
-import type { GetGanttDataJson } from '../types/shared'
+import { VERSION, type GetGanttDataJson } from '../types/shared'
 import { prisma } from './common/commonFunctions'
 
 const convertDatesToIsoString = (obj: any): any => {
@@ -67,6 +67,7 @@ const getGanttDataJson: GetGanttDataJson = async (projectId, email) => {
   })
 
   return {
+    version: VERSION,
     project: convertDatesToIsoString(project),
     rows: convertDatesToIsoString(rows),
   }
