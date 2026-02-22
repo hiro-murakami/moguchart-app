@@ -149,6 +149,14 @@ const ganttRows = [
     order: 8,
     attribute: {},
   },
+  {
+    id: 9,
+    projectId,
+    name: '非表示行（テスト用）',
+    order: 9,
+    visible: false,
+    attribute: { description: '画面上には表示されない行のデータです。' },
+  },
 ]
 
 // ============================================================
@@ -360,6 +368,18 @@ const ganttTasks = [
       description: 'v1.0 本番リリース（マイルストーン）',
       colorPalette: colorPalettes.red,
       labels: [labels.high],
+    },
+  },
+
+  // ── 非表示行（テスト用） ──
+  {
+    rowId: 9,
+    name: 'アーカイブ済みタスク',
+    start: new Date('2025-12-01'),
+    end: new Date('2025-12-05'),
+    attribute: {
+      description: '不要になった過去のタスクです。',
+      colorPalette: colorPalettes.pending,
     },
   },
 ]
