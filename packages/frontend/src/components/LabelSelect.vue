@@ -55,3 +55,9 @@ const modelValue = defineModel<Label[]>({ default: () => [] })
     </template>
   </v-autocomplete>
 </template>
+
+<style scoped>
+:deep(.v-field__input) {
+  min-height: 44px;
+}
+</style>
