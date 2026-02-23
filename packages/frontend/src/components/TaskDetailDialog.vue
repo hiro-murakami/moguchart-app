@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useDiscardConfirm } from '@/composables/useConfirm'
+import inputRules from '@/modules/inputRules'
 import type { ColorPalette, EditingTaskData, Label, SimpleRowData } from '@functions/types/shared'
 import { isEqual } from 'lodash'
 import { computed, ref, watch } from 'vue'
@@ -83,7 +84,8 @@ const onUpdateLabels = (val: Label[]) => {
           type="date"
           density="compact"
           variant="outlined"
-          hide-details
+          hide-details="auto"
+          :rules="[inputRules.required, inputRules.dateBefore(localTask.end)]"
           class="mb-3"
         ></v-text-field>
       </v-col>
@@ -94,7 +96,8 @@ const onUpdateLabels = (val: Label[]) => {
           type="date"
           density="compact"
           variant="outlined"
-          hide-details
+          hide-details="auto"
+          :rules="[inputRules.required, inputRules.dateAfter(localTask.start)]"
           class="mb-3"
         ></v-text-field>
       </v-col>

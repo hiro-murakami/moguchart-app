@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useDiscardConfirm } from '@/composables/useConfirm'
+import inputRules from '@/modules/inputRules'
 import type { ColorPalette, Label, NewTaskTemplate } from '@functions/types/shared'
 import { isEqual } from 'lodash'
 import { computed, ref, watch } from 'vue'
@@ -88,7 +89,8 @@ const onUpdateDescription = (val: string) => {
           min="1"
           density="compact"
           variant="outlined"
-          hide-details
+          hide-details="auto"
+          :rules="[inputRules.required, inputRules.minNumber(1)]"
           class="mb-3"
         ></v-text-field>
       </v-col>

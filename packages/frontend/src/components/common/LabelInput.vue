@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import inputRules from '@/modules/inputRules'
 import type { Label } from '@functions/types/shared'
 import { getContrastColor } from '../../modules/utils'
 
@@ -56,7 +57,8 @@ const color = computed({
               label="ラベル名"
               density="compact"
               variant="outlined"
-              hide-details
+              hide-details="auto"
+              :rules="[inputRules.required, inputRules.within(48)]"
               class="small-input"
             />
           </v-col>

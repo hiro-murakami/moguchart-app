@@ -13,6 +13,11 @@ const inputRules = {
   within: (max: number) => (value: string) => !value || value.length <= max || message.ERROR_INPUT_WITHIN(max),
   length: (length: number) => (value: string) =>
     !value || value.length === length || message.ERROR_INPUT_LENGTH(length),
+  minNumber: (min: number) => (value: any) => {
+    if (value === null || value === undefined || value === '') return true
+    const num = Number(value)
+    return (!isNaN(num) && num >= min) || message.ERROR_INPUT_MIN(min)
+  },
   isMailAddress: (value: string) =>
     !value || /^[\w\-._]+@[\w\-._]+\.[A-Za-z]+$/.test(value) || message.ERROR_INVALID_MAIL_ADDRESS,
   areMailAddresses: (values: string[]) => {

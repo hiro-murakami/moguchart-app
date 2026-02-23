@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import { nextTick, ref, watch } from 'vue'
+import type { VForm } from 'vuetify/components'
+
+import inputRules from '@/modules/inputRules'
 import { useProjectStore } from '@/stores/useProjectStore'
 import type { ColorPalette, Label } from '@functions/types/shared'
 import { storeToRefs } from 'pinia'
@@ -38,6 +42,21 @@ const handleBeforeClose = (value: boolean) => {
     emit('close')
   }
 }
+
+const formRef = ref<VForm | null>(null)
+const formValid = ref(false)
+
+watch(
+  () => props.modelValue,
+  async (isVisible) => {
+    if (isVisible) {
+      await nextTick()
+      formRef.value?.validate()
+    } else {
+      formRef.value?.resetValidation()
+    }
+  },
+)
 </script>
 
 <template>
@@ -45,59 +64,65 @@ const handleBeforeClose = (value: boolean) => {
     <v-card>
       <v-card-title class="pa-8 pb-0">{{ title }}</v-card-title>
       <v-card-text class="pa-8">
-        <v-row dense>
-          <v-col cols="12">
-            <v-text-field
-              :model-value="name"
-              @update:model-value="emit('update:name', $event)"
-              label="タスク名"
-              density="compact"
-              variant="outlined"
-              hide-details
-              autocomplete="off"
-              class="mb-3"
-            ></v-text-field>
-          </v-col>
-          <slot name="extra-fields"></slot>
-          <v-col cols="12" class="mb-3">
-            <div class="d-flex align-center mb-1">
-              <span class="text-caption font-weight-bold mr-2">色設定</span>
-              <ColorPaletteSelect :palettes="colorPalettes" :text-sample="name" @select="onSelectPalette" />
-            </div>
-            <ColorPaletteInput
-              v-if="colorPalette"
-              :model-value="colorPalette"
-              :text-sample="name"
-              @update:model-value="emit('update:colorPalette', $event)"
-              @delete="emit('update:colorPalette', undefined)"
-            />
-          </v-col>
-          <v-col cols="12" class="mb-3">
-            <LabelSelect
-              :model-value="labels || []"
-              @update:model-value="emit('update:labels', $event)"
-              :items="storeLabels"
-            />
-          </v-col>
-          <v-col cols="12">
-            <v-textarea
-              :model-value="description || ''"
-              @update:model-value="emit('update:description', $event)"
-              label="説明"
-              rows="3"
-              auto-grow
-              density="compact"
-              variant="outlined"
-              hide-details
-              autocomplete="off"
-            ></v-textarea>
-          </v-col>
-        </v-row>
+        <v-form ref="formRef" v-model="formValid" @submit.prevent>
+          <v-row dense>
+            <v-col cols="12">
+              <v-text-field
+                :model-value="name"
+                @update:model-value="emit('update:name', $event)"
+                label="タスク名"
+                density="compact"
+                variant="outlined"
+                hide-details="auto"
+                :rules="[inputRules.required, inputRules.within(191)]"
+                autocomplete="off"
+                class="mb-3"
+              ></v-text-field>
+            </v-col>
+            <slot name="extra-fields"></slot>
+            <v-col cols="12" class="mb-3">
+              <div class="d-flex align-center mb-1">
+                <span class="text-caption font-weight-bold mr-2">色設定</span>
+                <ColorPaletteSelect :palettes="colorPalettes" :text-sample="name" @select="onSelectPalette" />
+              </div>
+              <ColorPaletteInput
+                v-if="colorPalette"
+                :model-value="colorPalette"
+                :text-sample="name"
+                @update:model-value="emit('update:colorPalette', $event)"
+                @delete="emit('update:colorPalette', undefined)"
+              />
+            </v-col>
+            <v-col cols="12" class="mb-3">
+              <LabelSelect
+                :model-value="labels || []"
+                @update:model-value="emit('update:labels', $event)"
+                :items="storeLabels"
+              />
+            </v-col>
+            <v-col cols="12">
+              <v-textarea
+                :model-value="description || ''"
+                @update:model-value="emit('update:description', $event)"
+                label="説明"
+                rows="3"
+                auto-grow
+                density="compact"
+                variant="outlined"
+                hide-details="auto"
+                :rules="[inputRules.within(1024)]"
+                autocomplete="off"
+              ></v-textarea>
+            </v-col>
+          </v-row>
+        </v-form>
       </v-card-text>
       <v-card-actions class="pa-8 pt-0">
         <v-spacer></v-spacer>
         <v-btn color="grey-darken-1" variant="text" @click="emit('close')"> キャンセル </v-btn>
-        <v-btn color="primary" variant="flat" @click="emit('save')" :disabled="saveDisabled" class="ml-2"> 保存 </v-btn>
+        <v-btn color="primary" variant="flat" @click="emit('save')" :disabled="saveDisabled || !formValid" class="ml-2">
+          保存
+        </v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>

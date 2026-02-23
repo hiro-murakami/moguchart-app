@@ -86,7 +86,7 @@ watch(
                         autofocus
                         density="compact"
                         variant="outlined"
-                        hide-details
+                        hide-details="auto"
                         autocomplete="off"
                         class="mb-3"
                       />
@@ -98,7 +98,8 @@ watch(
                         auto-grow
                         density="compact"
                         variant="outlined"
-                        hide-details
+                        hide-details="auto"
+                        :rules="[inputRules.within(1024)]"
                         class="mb-3"
                       />
                     </v-col>
