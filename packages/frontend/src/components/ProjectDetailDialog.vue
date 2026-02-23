@@ -127,7 +127,12 @@ watch(
                       />
                     </v-col>
                     <v-col cols="12">
-                      <v-checkbox v-model="localPublic" label="一般公開" density="compact" hide-details />
+                      <v-checkbox v-model="localPublic" density="compact" hide-details>
+                        <template v-slot:label>
+                          一般公開
+                          <HelpText text="ONにすると全てのユーザーが参照できるようになります" />
+                        </template>
+                      </v-checkbox>
                     </v-col>
                   </v-row>
                 </v-window-item>
