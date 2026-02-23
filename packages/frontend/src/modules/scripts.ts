@@ -32,7 +32,7 @@ const callFunction = async <T>(name: FunctionName, param = {}) => {
     const result = await callable({ name, param })
 
     if (result.data.version && result.data.version !== VERSION) {
-      window.alert('画面をリロードしてください')
+      window.alert('バージョンが一致しません。画面をリロードしてください')
       // バージョン不一致の場合は後続の処理を行わずにエラーを投げる
       throw new Error('バージョンが一致しません。画面をリロードしてください。')
     }
