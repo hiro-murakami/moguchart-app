@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { nextTick, ref, watch } from 'vue'
+import type { VForm } from 'vuetify/components'
+import inputRules from '@/modules/inputRules'
 import { toDateString } from '@/modules/utils'
 import { useUserDetailDialog } from './composables/useUserDetailDialog'
 
@@ -14,6 +17,21 @@ const { user, localDisplayName, localTheme, themeOptions, save, close, handleBef
   props,
   emit,
 )
+
+const formValid = ref(false)
+const formRef = ref<VForm | null>(null)
+
+watch(
+  () => props.modelValue,
+  async (val) => {
+    if (val) {
+      await nextTick()
+      formRef.value?.validate()
+    } else {
+      formRef.value?.resetValidation()
+    }
+  },
+)
 </script>
 
 <template>
@@ -21,17 +39,16 @@ const { user, localDisplayName, localTheme, themeOptions, save, close, handleBef
     <v-card v-if="user">
       <v-card-title class="pa-8 pb-0">ユーザー設定</v-card-title>
       <v-card-text class="pa-8">
-        <v-form>
+        <v-form ref="formRef" v-model="formValid" @submit.prevent>
           <v-row>
             <v-col cols="12">
               <v-text-field
                 label="メールアドレス"
                 :model-value="user.email"
                 readonly
-                variant="filled"
+                variant="solo-filled"
                 density="default"
-                hide-details
-                class="mb-3"
+                hide-details="auto"
               />
             </v-col>
             <v-col cols="12">
@@ -39,10 +56,9 @@ const { user, localDisplayName, localTheme, themeOptions, save, close, handleBef
                 label="最終ログイン"
                 :model-value="toDateString(user.attribute.lastLoginAt, 'YYYY/MM/DD HH:mm:ss')"
                 readonly
-                variant="filled"
+                variant="solo-filled"
                 density="default"
-                hide-details
-                class="mb-3"
+                hide-details="auto"
               />
             </v-col>
             <v-col cols="12">
@@ -53,7 +69,8 @@ const { user, localDisplayName, localTheme, themeOptions, save, close, handleBef
                 autocomplete="off"
                 variant="outlined"
                 density="compact"
-                hide-details
+                hide-details="auto"
+                :rules="[inputRules.required, inputRules.within(191)]"
                 class="mb-3"
               />
             </v-col>
@@ -80,7 +97,7 @@ const { user, localDisplayName, localTheme, themeOptions, save, close, handleBef
       <v-card-actions class="pa-8 pt-0">
         <v-spacer></v-spacer>
         <v-btn color="grey-darken-1" variant="text" @click="close"> キャンセル </v-btn>
-        <v-btn color="primary" variant="flat" @click="save" class="ml-2"> 保存 </v-btn>
+        <v-btn color="primary" variant="flat" @click="save" :disabled="!formValid" class="ml-2"> 保存 </v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
