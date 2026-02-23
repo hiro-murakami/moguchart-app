@@ -20,6 +20,11 @@ import '@/firebase'
 import 'unfonts.css'
 import '@/styles/common.scss'
 
+// OS Check
+if (/Mac|iPhone|iPad|iPod/.test(navigator.userAgent)) {
+  document.documentElement.classList.add('is-mac')
+}
+
 const app = createApp(App)
 
 registerPlugins(app)

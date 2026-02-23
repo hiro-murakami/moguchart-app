@@ -7,17 +7,22 @@ body {
   margin: 0;
 }
 
-/* Windows環境等でのスクロールバー表示によるガタつきを抑制 */
-::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-::-webkit-scrollbar-thumb {
-  background: #ccc;
-  border-radius: 5px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
+/* Windows環境等でのスクロールバー表示によるガタつきを抑制（Macはネイティブの自動非表示を優先） */
+html:not(.is-mac) {
+  &::-webkit-scrollbar,
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  &::-webkit-scrollbar-thumb,
+  *::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 5px;
+  }
+  &::-webkit-scrollbar-track,
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
 }
 
 .small-input {
