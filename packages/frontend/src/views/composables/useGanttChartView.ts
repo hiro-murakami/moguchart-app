@@ -307,7 +307,7 @@ export const useGanttChartView = () => {
           const attribute = (task as any).attribute as TaskAttribute | undefined
           const colorPalette = attribute?.colorPalette
 
-          let style: string | undefined
+          let style: string | undefined = 'box-shadow: var(--task-box-shadow, 0 2px 4px rgba(0, 0, 0, 0.3)); '
           let labelStyle: string | undefined
           let pattern: moguchart.GanttTaskPattern | undefined
 
@@ -556,7 +556,7 @@ export const useGanttChartView = () => {
         name: task.name || '',
         start: newStart,
         end: newEnd,
-        style: `${(task as any).style || ''}; transform-origin: center; animation: pop-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;`,
+        style: `box-shadow: var(--task-box-shadow, 0 2px 4px rgba(0, 0, 0, 0.3)); ${(task as any).style || ''}; transform-origin: center; animation: pop-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;`,
       }
 
       rows.value = rows.value.map((r) => {
@@ -660,11 +660,11 @@ export const useGanttChartView = () => {
       const end = toLocalDate(taskData.end)
 
       // スタイルの構築
-      let style = ''
+      let style = 'box-shadow: var(--task-box-shadow, 0 2px 4px rgba(0, 0, 0, 0.3)); '
       if (taskData.colorPalette?.backgroundColor) {
-        style = `background-color: ${taskData.colorPalette.backgroundColor}; `
+        style += `background-color: ${taskData.colorPalette.backgroundColor}; `
       } else {
-        style = `background-color: ${DEFAULT_TASK_COLOR}; `
+        style += `background-color: ${DEFAULT_TASK_COLOR}; `
       }
 
       const borderStr = getBorderStyle(taskData.colorPalette?.borderType, taskData.colorPalette?.borderColor)

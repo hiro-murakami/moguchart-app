@@ -352,11 +352,16 @@ onUnmounted(() => {
 }
 
 .gantt-app {
+  --task-box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   padding: 30px;
   font-family: sans-serif;
   min-height: calc(100vh - 64px);
   display: flex;
   flex-direction: column;
+}
+
+:global(.v-theme--dark) .gantt-app {
+  --task-box-shadow: 0 3px 6px rgba(0, 0, 0, 0.8);
 }
 
 .row-edit-input {
