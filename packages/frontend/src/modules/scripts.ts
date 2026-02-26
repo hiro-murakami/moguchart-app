@@ -9,6 +9,7 @@ import type {
   GanttRow,
   Project,
   SelectGanttChart,
+  SelectGanttRows,
   SelectProjects,
   SelectUser,
   UpdateGanttRowOrder,
@@ -58,6 +59,10 @@ export const selectProjects: SelectProjects = () => {
 
 export const selectGanttChart: SelectGanttChart = (projectId) => {
   return callFunction<GanttRow[]>('selectGanttChart', projectId)
+}
+
+export const selectGanttRows: SelectGanttRows = (params) => {
+  return callFunction<GanttRow[]>('selectGanttRows', params)
 }
 
 export const upsertGanttTasks: UpsertGanttTasks = (param) => {

@@ -3,6 +3,7 @@ import deleteGanttRow from './scripts/deleteGanttRow.js'
 import deleteGanttTask from './scripts/deleteGanttTask.js'
 import deleteProject from './scripts/deleteProject.js'
 import selectGanttChart from './scripts/selectGanttChart.js'
+import selectGanttRows from './scripts/selectGanttRows.js'
 import selectProjects from './scripts/selectProjects.js'
 import updateGanttRowOrder from './scripts/updateGanttRowOrder.js'
 import upsertGanttRow from './scripts/upsertGanttRow.js'
@@ -18,6 +19,7 @@ import { FirebaseFunction } from './types/index.js'
 const functions: FirebaseFunction = {
   selectProjects,
   selectGanttChart,
+  selectGanttRows,
   deleteProject,
   deleteGanttRow,
   deleteGanttTask,

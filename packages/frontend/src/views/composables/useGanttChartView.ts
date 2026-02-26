@@ -3,6 +3,7 @@ import {
   deleteGanttRow,
   deleteGanttTask,
   selectGanttChart,
+  selectGanttRows,
   updateGanttRowOrder,
   upsertGanttRow,
   upsertGanttTasks,
@@ -358,13 +359,18 @@ export const useGanttChartView = () => {
 
   /**
    * サーバーからデータを取得し、ローカルの rows.value に対して変更があった行だけ差し替える。
-   * affectedRowIds が指定された場合はその行のみ差し替え、未指定時は全行を差し替える。
+   * affectedRowIds が指定された場合はその行のみ取得・差し替え、未指定時は全行を取得・差し替える。
    */
   const applyDelta = async (affectedRowIds?: string[]) => {
     if (!projectId.value) return
     try {
-      const data = await selectGanttChart(projectId.value)
-      const freshRows = data.map((row: GanttRow) => ({
+      // 影響行が指定されている場合は行単位の取得APIを使用し、それ以外は全行取得
+      const data =
+        affectedRowIds && affectedRowIds.length > 0
+          ? await selectGanttRows({ projectId: projectId.value, rowIds: affectedRowIds.map(Number) })
+          : await selectGanttChart(projectId.value)
+
+      const convertRow = (row: GanttRow) => ({
         ...row,
         id: row.id.toString(),
         tasks: row.tasks.map((task: GanttTask) => {
@@ -418,7 +424,9 @@ export const useGanttChartView = () => {
                 : undefined,
           }
         }),
-      }))
+      })
+
+      const freshRows = data.map(convertRow)
 
       if (affectedRowIds && affectedRowIds.length > 0) {
         // 影響を受ける行だけ差し替え（他の行はそのまま保持）
