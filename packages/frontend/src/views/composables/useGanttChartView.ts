@@ -356,15 +356,130 @@ export const useGanttChartView = () => {
     publishEditEvent('full_reload')
   }
 
-  // 他ユーザーの編集イベントを受信して最新データを反映（debounce付き）
-  const reloadOnRemoteEdit = debounce(async () => {
-    if (projectId.value) {
-      await loadData(projectId.value)
+  /**
+   * サーバーからデータを取得し、ローカルの rows.value に対して変更があった行だけ差し替える。
+   * affectedRowIds が指定された場合はその行のみ差し替え、未指定時は全行を差し替える。
+   */
+  const applyDelta = async (affectedRowIds?: string[]) => {
+    if (!projectId.value) return
+    try {
+      const data = await selectGanttChart(projectId.value)
+      const freshRows = data.map((row: GanttRow) => ({
+        ...row,
+        id: row.id.toString(),
+        tasks: row.tasks.map((task: GanttTask) => {
+          const attribute = (task as any).attribute as TaskAttribute | undefined
+          const colorPalette = attribute?.colorPalette
+
+          let style: string | undefined = 'box-shadow: var(--task-box-shadow, 0 2px 4px rgba(0, 0, 0, 0.3)); '
+          let labelStyle: string | undefined
+          let pattern: moguchart.GanttTaskPattern | undefined
+
+          if (colorPalette) {
+            if (colorPalette.backgroundColor) {
+              style = `background-color: ${colorPalette.backgroundColor}; ${style || ''}`
+              if (!colorPalette.borderType || (colorPalette.borderType as string) === 'none') {
+                style += `border-color: ${colorPalette.backgroundColor}; `
+              }
+            }
+            if (colorPalette.color) {
+              labelStyle = `color: ${colorPalette.color}; ${labelStyle || ''}`
+            }
+            if (colorPalette.pattern) {
+              pattern = {
+                type: colorPalette.pattern.type as moguchart.BarPattern,
+                color: colorPalette.pattern.color,
+              }
+            }
+            if (colorPalette.borderType && (colorPalette.borderType as string) !== 'none') {
+              const borderStr = getBorderStyle(colorPalette.borderType, colorPalette.borderColor)
+              if (borderStr) {
+                style += borderStr
+              }
+            }
+          }
+
+          return {
+            ...task,
+            id: task.id.toString(),
+            start: toLocalDate(task.start),
+            end: toLocalDate(task.end),
+            style,
+            labelStyle,
+            pattern,
+            html:
+              attribute?.labels && attribute.labels.length > 0
+                ? `<div style="display: flex; gap: 4px; padding: 2px 4px; overflow: hidden;">${attribute?.labels
+                    .map(
+                      (l) =>
+                        `<span style="background-color: ${l.color}; color: ${getContrastColor(l.color)}; padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; white-space: nowrap;">${l.name}</span>`,
+                    )
+                    .join('')}</div>`
+                : undefined,
+          }
+        }),
+      }))
+
+      if (affectedRowIds && affectedRowIds.length > 0) {
+        // 影響を受ける行だけ差し替え（他の行はそのまま保持）
+        const freshMap = new Map(freshRows.map((r: any) => [String(r.id), r]))
+        rows.value = rows.value.map((row) => {
+          if (affectedRowIds.includes(String(row.id))) {
+            const fresh = freshMap.get(String(row.id))
+            return fresh || row
+          }
+          return row
+        })
+      } else {
+        // 行の追加・削除・並べ替えなど構造的な変更 → 全行差し替え
+        rows.value = freshRows
+      }
+    } catch (err) {
+      console.error('[Collaboration] Failed to apply delta:', err)
+    }
+  }
+
+  // 他ユーザーの編集イベントを受信して差分のみ反映（debounce付き）
+  // イベント蓄積用バッファ
+  let pendingEditEvents: { type: string; payload?: Record<string, any> }[] = []
+
+  const flushRemoteEdits = debounce(async () => {
+    const events = pendingEditEvents
+    pendingEditEvents = []
+
+    if (!projectId.value || events.length === 0) return
+
+    // full_reload / row_delete / row_upsert / row_reorder が含まれる場合は全行差し替え
+    const needsFullReload = events.some((e) =>
+      ['full_reload', 'row_delete', 'row_upsert', 'row_reorder'].includes(e.type),
+    )
+
+    if (needsFullReload) {
+      await applyDelta()
+      return
+    }
+
+    // task_upsert / task_delete のみ → 影響行だけ差分更新
+    const affectedRowIds = new Set<string>()
+    for (const e of events) {
+      if (e.payload?.rowIds) {
+        for (const id of e.payload.rowIds) {
+          affectedRowIds.add(String(id))
+        }
+      }
+    }
+
+    if (affectedRowIds.size > 0) {
+      await applyDelta([...affectedRowIds])
+    } else {
+      // rowId 情報がない場合はフォールバックで全行差し替え
+      await applyDelta()
     }
   }, 1000)
 
-  onEditEvent(() => {
-    reloadOnRemoteEdit()
+  onEditEvent((event) => {
+    pendingEditEvents.push({ type: event.type, payload: event.payload })
+    flushRemoteEdits()
   })
 
   // --- データ永続化ロジック ---
@@ -570,7 +685,9 @@ export const useGanttChartView = () => {
       await upsertGanttTasks([data])
     }
     await loadData(projectId.value)
-    publishEditEvent('task_upsert')
+    // 行をまたぐ移動の場合、元の行と移動先の行の両方を差分更新対象にする
+    const affectedRowIds = [...new Set([Number(e.detail.targetRowId), ...(row ? [Number(row.id)] : [])])]
+    publishEditEvent('task_upsert', { rowIds: affectedRowIds })
   }
 
   // --- ドラッグ＆ドロップ関連 ---
@@ -697,7 +814,7 @@ export const useGanttChartView = () => {
         },
       })
       await loadData(projectId.value)
-      publishEditEvent('task_upsert')
+      publishEditEvent('task_upsert', { rowIds: [Number(targetRowId)] })
     } catch (err) {
       console.error('Failed to drop task:', err)
       await alert({
@@ -861,7 +978,7 @@ export const useGanttChartView = () => {
       await upsertGanttTasks([data])
     }
     await loadData(projectId.value)
-    publishEditEvent('task_upsert')
+    publishEditEvent('task_upsert', { rowIds: [Number(taskData.rowId)] })
   }
 
   const execDeleteTasksWithAnimation = async (taskIds: string[]) => {
@@ -943,8 +1060,10 @@ export const useGanttChartView = () => {
 
     // 5. データリロード
     selectedTaskIds.value = []
+    // 削除前に収集したrowId情報を使って通知（loadData後はタスクが消えているため）
+    const affectedRowIds = [...new Set(deletedTasks.map((d) => Number(d.rowId)))]
     await loadData(projectId.value)
-    publishEditEvent('task_delete')
+    publishEditEvent('task_delete', { rowIds: affectedRowIds })
   }
 
   const deleteTask = async (taskId: string) => {
