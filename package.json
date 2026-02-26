@@ -10,7 +10,7 @@
     "deploy:all": "pnpm run build && firebase deploy",
     "deploy:functions": "pnpm run build && firebase deploy --only functions",
     "deploy:frontend": "pnpm run build && firebase deploy --only hosting",
-    "serve:functions": "firebase emulators:start --only functions",
+    "serve:functions": "firebase emulators:start",
     "refresh:packages": "rm -rf node_modules pnpm-lock.yaml packages/frontend/node_modules packages/functions/node_modules && pnpm i && pnpm --filter ./packages/functions run prisma:generate",
     "setup:env": "pnpm -r run setup:env"
   },

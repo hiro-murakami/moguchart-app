@@ -36,6 +36,7 @@ const {
   searchIncludeRows,
   canUndo,
   canRedo,
+  activeUsers,
 
   // methods
   handleTaskUpdate,
@@ -137,6 +138,17 @@ onUnmounted(() => {
           </div>
         </div>
         <v-spacer />
+        <div v-if="activeUsers.length > 0" class="d-flex align-center mr-4" style="gap: -4px">
+          <v-tooltip v-for="user in activeUsers" :key="user.email" :text="user.displayName" location="bottom">
+            <template v-slot:activator="{ props }">
+              <v-avatar v-bind="props" :color="user.color" size="32" class="presence-avatar">
+                <span class="text-white text-caption font-weight-bold">
+                  {{ user.displayName.charAt(0).toUpperCase() }}
+                </span>
+              </v-avatar>
+            </template>
+          </v-tooltip>
+        </div>
         <v-text-field
           v-model="searchText"
           prepend-inner-icon="mdi-magnify"
@@ -381,5 +393,18 @@ onUnmounted(() => {
 .search-text-field {
   max-width: 400px;
   min-width: 250px;
+}
+.presence-avatar {
+  border: 2px solid rgb(var(--v-theme-surface));
+  margin-left: -6px;
+  cursor: default;
+  transition: transform 0.15s ease;
+}
+.presence-avatar:first-child {
+  margin-left: 0;
+}
+.presence-avatar:hover {
+  transform: translateY(-2px);
+  z-index: 1;
 }
 </style>

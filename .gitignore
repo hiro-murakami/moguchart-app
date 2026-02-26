@@ -26,3 +26,4 @@ pnpm-debug.log*
 
 /src/generated/prisma
 firebase-debug.log
+firestore-debug.log

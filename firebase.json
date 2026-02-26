@@ -12,6 +12,10 @@
       "pnpm --filter functions build"
     ]
   },
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
   "hosting": {
     "public": "packages/frontend/dist",
     "ignore": [
@@ -33,6 +37,9 @@
   "emulators": {
     "functions": {
       "port": 5001
+    },
+    "firestore": {
+      "port": 8080
     },
     "ui": {
       "enabled": true

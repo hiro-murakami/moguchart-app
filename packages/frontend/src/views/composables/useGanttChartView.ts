@@ -9,6 +9,7 @@ import {
 } from '@/modules/scripts'
 import { useAlert } from '@/composables/useAlert'
 import { useUndoRedo } from '@/composables/useUndoRedo'
+import { useCollaboration } from '@/composables/useCollaboration'
 import { useConfirm } from '@/composables/useConfirm'
 import { useLoading } from '@/composables/useLoading'
 import { toDateString, toLocalDate, getContrastColor } from '@/modules/utils'
@@ -291,7 +292,31 @@ export const useGanttChartView = () => {
   const alert = useAlert()
   const { setIsLoading } = useLoading()
   const confirm = useConfirm()
-  const { canUndo, canRedo, isUndoRedoing, pushAction, undo, redo, clearHistory } = useUndoRedo()
+  const { canUndo, canRedo, isUndoRedoing, pushAction, undo: _undo, redo: _redo, clearHistory } = useUndoRedo()
+
+  // --- リアルタイムコラボレーション ---
+  const { activeUsers, joinProject, leaveProject, publishEditEvent, onEditEvent } = useCollaboration()
+
+  // undo/redo 実行後に他ユーザーへ通知するラッパー
+  const undo = async () => {
+    await _undo()
+    publishEditEvent('full_reload')
+  }
+  const redo = async () => {
+    await _redo()
+    publishEditEvent('full_reload')
+  }
+
+  // 他ユーザーの編集イベントを受信して最新データを反映（debounce付き）
+  const reloadOnRemoteEdit = debounce(async () => {
+    if (projectId.value) {
+      await loadData(projectId.value)
+    }
+  }, 1000)
+
+  onEditEvent(() => {
+    reloadOnRemoteEdit()
+  })
 
   // --- データ永続化ロジック ---
 
@@ -366,7 +391,7 @@ export const useGanttChartView = () => {
     }
   }
 
-  watch(projectId, (newProjectId) => {
+  watch(projectId, async (newProjectId, oldProjectId) => {
     const project = projects.value.find((p) => p.id === newProjectId)
     if (project) {
       chartStartStr.value = project.start
@@ -378,6 +403,14 @@ export const useGanttChartView = () => {
     const currentRouteId = Array.isArray(route.params.id) ? route.params.id[0] : route.params.id
     if (newProjectId && currentRouteId !== newProjectId) {
       router.push(`/${newProjectId}`)
+    }
+
+    // コラボレーション: プロジェクト切替時にプレゼンスを更新
+    if (oldProjectId) {
+      await leaveProject()
+    }
+    if (newProjectId && userStore.user) {
+      await joinProject(newProjectId, userStore.user.email, userStore.user.displayName)
     }
   })
 
@@ -398,6 +431,7 @@ export const useGanttChartView = () => {
         }
       } else {
         // ユーザーがログアウトした場合、データをクリアする
+        await leaveProject()
         rows.value = []
         clearProjectStore()
       }
@@ -482,6 +516,7 @@ export const useGanttChartView = () => {
       await upsertGanttTasks([data])
     }
     await loadData(projectId.value)
+    publishEditEvent('task_upsert')
   }
 
   // --- ドラッグ＆ドロップ関連 ---
@@ -608,6 +643,7 @@ export const useGanttChartView = () => {
         },
       })
       await loadData(projectId.value)
+      publishEditEvent('task_upsert')
     } catch (err) {
       console.error('Failed to drop task:', err)
       await alert({
@@ -759,6 +795,7 @@ export const useGanttChartView = () => {
       await upsertGanttTasks([data])
     }
     await loadData(projectId.value)
+    publishEditEvent('task_upsert')
   }
 
   const execDeleteTasksWithAnimation = async (taskIds: string[]) => {
@@ -841,6 +878,7 @@ export const useGanttChartView = () => {
     // 5. データリロード
     selectedTaskIds.value = []
     await loadData(projectId.value)
+    publishEditEvent('task_delete')
   }
 
   const deleteTask = async (taskId: string) => {
@@ -864,6 +902,7 @@ export const useGanttChartView = () => {
       await updateGanttRowOrder(orderedRows)
       // loadData() を呼ぶとローカルでの並べ替えと前後してちらつくため、ローカルデータを直接更新する
       rows.value = e.detail.rows
+      publishEditEvent('row_reorder')
 
       pushAction({
         description: '行並び替え',
@@ -955,6 +994,7 @@ export const useGanttChartView = () => {
       })
 
       await loadData(projectId.value)
+      publishEditEvent('row_upsert')
       // 最後に追加した行の名前を編集状態にする
       const lastRowId = newRowIds[newRowIds.length - 1]
       if (lastRowId !== undefined) {
@@ -1056,6 +1096,7 @@ export const useGanttChartView = () => {
     }
 
     await loadData(projectId.value)
+    publishEditEvent('row_upsert')
   }
 
   // --- Inline Row Editing ---
@@ -1153,6 +1194,7 @@ export const useGanttChartView = () => {
 
     isRowEditDialogVisible.value = false
     await loadData(projectId.value)
+    publishEditEvent('row_upsert')
   }
 
   const handleRowHeaderDblClick = (e: CustomEvent<moguchart.RowHeaderDblClickEventDetail>) => {
@@ -1451,6 +1493,7 @@ export const useGanttChartView = () => {
 
       await loadData(projectId.value)
       closeContextMenu()
+      publishEditEvent('row_upsert')
     } catch (err) {
       console.error('Failed to toggle row visibility:', err)
       alert({
@@ -1532,6 +1575,7 @@ export const useGanttChartView = () => {
     }
 
     await loadData(projectId.value)
+    publishEditEvent('row_delete')
   }
 
   const handleDeleteRowFromContextMenu = async () => {
@@ -1650,6 +1694,7 @@ export const useGanttChartView = () => {
       // ストアのアクションを経由して更新する
       await projectStore.updateProject(updatedProject)
       isProjectDetailDialogVisible.value = false
+      publishEditEvent('full_reload')
     } catch (err) {
       console.error('Failed to update project:', err)
       await alert({
@@ -1704,6 +1749,7 @@ export const useGanttChartView = () => {
     isProjectDetailDialogVisible,
     canUndo,
     canRedo,
+    activeUsers,
 
     // methods
     handleTaskUpdate,

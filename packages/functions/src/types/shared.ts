@@ -292,3 +292,30 @@ export type GetGanttDataJson = (projectId: string, email?: string) => Promise<Ga
 export type RestoreProject = (data: GanttDataJson & { force?: boolean }, email?: string) => Promise<string>
 
 // --- フロントエンドとバックエンドで実装を共有しない型 ---
+
+// --- リアルタイムコラボレーション用型定義 ---
+
+/** 編集イベントの種類 */
+export type EditEventType = 'task_upsert' | 'task_delete' | 'row_upsert' | 'row_delete' | 'row_reorder' | 'full_reload'
+
+/** プレゼンス情報（現在プロジェクトを開いているユーザー） */
+export interface PresenceData {
+  /** 表示名 */
+  displayName: string
+  /** 最終アクティブ日時（ISO 8601形式） */
+  lastActiveAt: string
+  /** アバター表示色 */
+  color: string
+}
+
+/** 編集イベント（Firestore経由でリアルタイム同期） */
+export interface EditEvent {
+  /** イベント種別 */
+  type: EditEventType
+  /** 操作を行ったユーザーのメールアドレス */
+  userEmail: string
+  /** イベント発生日時（ISO 8601形式） */
+  timestamp: string
+  /** 操作の詳細データ */
+  payload?: Record<string, any>
+}
