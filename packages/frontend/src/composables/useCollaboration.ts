@@ -38,6 +38,8 @@ export const useCollaboration = () => {
 
   let currentProjectId: string | null = null
   let currentUserEmail: string | null = null
+  let currentUserDisplayName: string | null = null
+  let currentUserAvatarUrl: string | null = null
   let heartbeatTimer: ReturnType<typeof setInterval> | null = null
   let presenceUnsubscribe: Unsubscribe | null = null
   let eventsUnsubscribe: Unsubscribe | null = null
@@ -79,9 +81,10 @@ export const useCollaboration = () => {
 
     const presenceRef = doc(db, 'projects', currentProjectId, 'presence', currentUserEmail)
     const data: PresenceData = {
-      displayName: currentUserEmail.split('@')[0] || currentUserEmail,
+      displayName: currentUserDisplayName || currentUserEmail.split('@')[0] || currentUserEmail,
       lastActiveAt: new Date().toISOString(),
       color: getAvatarColor(currentUserEmail),
+      ...(currentUserAvatarUrl ? { avatarUrl: currentUserAvatarUrl } : {}),
     }
 
     try {
@@ -173,7 +176,7 @@ export const useCollaboration = () => {
   /**
    * プロジェクトに参加（プレゼンス登録 + リスナー開始）
    */
-  const joinProject = async (projectId: string, userEmail: string, displayName?: string) => {
+  const joinProject = async (projectId: string, userEmail: string, displayName?: string, avatarUrl?: string) => {
     // 既に別のプロジェクトに参加中の場合は先に離脱
     if (currentProjectId) {
       await leaveProject()
@@ -181,6 +184,8 @@ export const useCollaboration = () => {
 
     currentProjectId = projectId
     currentUserEmail = userEmail
+    currentUserDisplayName = displayName || null
+    currentUserAvatarUrl = avatarUrl || null
 
     // Firestore が利用不可の場合はスキップ
     if (!firestoreAvailable) return
@@ -191,6 +196,7 @@ export const useCollaboration = () => {
       displayName: displayName || userEmail.split('@')[0] || userEmail,
       lastActiveAt: new Date().toISOString(),
       color: getAvatarColor(userEmail),
+      ...(avatarUrl ? { avatarUrl } : {}),
     }
 
     try {
@@ -248,6 +254,8 @@ export const useCollaboration = () => {
     // 状態をリセット
     currentProjectId = null
     currentUserEmail = null
+    currentUserDisplayName = null
+    currentUserAvatarUrl = null
     lastProcessedTimestamp = null
     activeUsers.value = []
   }

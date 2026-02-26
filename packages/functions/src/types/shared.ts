@@ -306,6 +306,8 @@ export interface PresenceData {
   lastActiveAt: string
   /** アバター表示色 */
   color: string
+  /** アバター画像URL（Google認証のプロフィール画像等） */
+  avatarUrl?: string
 }
 
 /** 編集イベント（Firestore経由でリアルタイム同期） */

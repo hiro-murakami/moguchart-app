@@ -142,7 +142,8 @@ onUnmounted(() => {
           <v-tooltip v-for="user in activeUsers" :key="user.email" :text="user.displayName" location="bottom">
             <template v-slot:activator="{ props }">
               <v-avatar v-bind="props" :color="user.color" size="32" class="presence-avatar">
-                <span class="text-white text-caption font-weight-bold">
+                <v-img v-if="user.avatarUrl" :src="user.avatarUrl" :alt="user.displayName" />
+                <span v-else class="text-white text-caption font-weight-bold">
                   {{ user.displayName.charAt(0).toUpperCase() }}
                 </span>
               </v-avatar>

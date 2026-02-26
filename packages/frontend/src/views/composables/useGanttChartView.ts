@@ -410,7 +410,12 @@ export const useGanttChartView = () => {
       await leaveProject()
     }
     if (newProjectId && userStore.user) {
-      await joinProject(newProjectId, userStore.user.email, userStore.user.displayName)
+      await joinProject(
+        newProjectId,
+        userStore.user.email,
+        userStore.user.displayName,
+        userStore.firebaseUser?.photoURL || undefined,
+      )
     }
   })
 
