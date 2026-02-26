@@ -40,6 +40,7 @@ export const useCollaboration = () => {
   let currentUserEmail: string | null = null
   let currentUserDisplayName: string | null = null
   let currentUserAvatarUrl: string | null = null
+  let currentEditingTaskIds: string[] = []
   let heartbeatTimer: ReturnType<typeof setInterval> | null = null
   let presenceUnsubscribe: Unsubscribe | null = null
   let eventsUnsubscribe: Unsubscribe | null = null
@@ -85,6 +86,7 @@ export const useCollaboration = () => {
       lastActiveAt: new Date().toISOString(),
       color: getAvatarColor(currentUserEmail),
       ...(currentUserAvatarUrl ? { avatarUrl: currentUserAvatarUrl } : {}),
+      ...(currentEditingTaskIds.length > 0 ? { editingTaskIds: currentEditingTaskIds } : {}),
     }
 
     try {
@@ -197,6 +199,7 @@ export const useCollaboration = () => {
       lastActiveAt: new Date().toISOString(),
       color: getAvatarColor(userEmail),
       ...(avatarUrl ? { avatarUrl } : {}),
+      ...(currentEditingTaskIds.length > 0 ? { editingTaskIds: currentEditingTaskIds } : {}),
     }
 
     try {
@@ -256,6 +259,7 @@ export const useCollaboration = () => {
     currentUserEmail = null
     currentUserDisplayName = null
     currentUserAvatarUrl = null
+    currentEditingTaskIds = []
     lastProcessedTimestamp = null
     activeUsers.value = []
   }
@@ -284,6 +288,14 @@ export const useCollaboration = () => {
   /**
    * 他ユーザーの編集イベントを受信した際のコールバックを登録
    */
+  /**
+   * 編集中のタスクIDを更新し、プレゼンスに即座に反映
+   */
+  const updateEditingTasks = async (taskIds: string[]) => {
+    currentEditingTaskIds = taskIds
+    await updatePresence()
+  }
+
   const onEditEvent = (callback: (event: EditEvent) => void) => {
     editEventCallback = callback
   }
@@ -311,5 +323,7 @@ export const useCollaboration = () => {
     publishEditEvent,
     /** 編集イベント受信コールバックの登録 */
     onEditEvent,
+    /** 編集中のタスクIDを更新 */
+    updateEditingTasks,
   }
 }

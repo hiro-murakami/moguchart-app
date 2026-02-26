@@ -165,13 +165,41 @@ export const useGanttChartView = () => {
     return currentProject.value?.attribute?.labels || []
   })
 
+  /**
+   * 他ユーザー編集中のタスクにハイライトスタイルを付与するヘルパー
+   */
+  const applyRemoteEditingHighlight = (
+    task: moguchart.GanttTask,
+    editingMap: Map<string, { color: string; displayName: string }>,
+  ): moguchart.GanttTask => {
+    const editing = editingMap.get(String(task.id))
+    if (!editing) return task
+
+    const newTask = { ...task }
+    const styleStr = (newTask as any).style || ''
+    const separator = styleStr && !styleStr.trim().endsWith(';') ? ';' : ''
+    const highlightStyle = `${styleStr}${separator} outline: 2.5px solid ${editing.color}; outline-offset: 2px; box-shadow: 0 0 8px 2px ${editing.color}66; animation: collab-pulse 2s ease-in-out infinite;`
+    Object.assign(newTask, { style: highlightStyle })
+    return newTask
+  }
+
   const filteredRows = computed(() => {
     const hasLabelFilter = selectedFilterLabelNames.value.length > 0
     const trimmed = (searchText.value || '').trim()
     const hasKeywordFilter = trimmed !== ''
+    const editingMap = remoteEditingTaskMap.value
+    const hasRemoteEditing = editingMap.size > 0
 
-    if (!hasLabelFilter && !hasKeywordFilter) {
+    if (!hasLabelFilter && !hasKeywordFilter && !hasRemoteEditing) {
       return rows.value
+    }
+
+    // フィルタ不要だが他ユーザー編集中のタスクだけハイライトする場合
+    if (!hasLabelFilter && !hasKeywordFilter && hasRemoteEditing) {
+      return rows.value.map((row) => ({
+        ...row,
+        tasks: row.tasks.map((task) => applyRemoteEditingHighlight(task, editingMap)),
+      }))
     }
 
     const keywords = hasKeywordFilter ? trimmed.split(/\s+/).filter(Boolean) : []
@@ -224,7 +252,7 @@ export const useGanttChartView = () => {
             hasAnyMatchedTask = true
           }
 
-          const newTask = { ...task }
+          let newTask = { ...task }
           if (hasKeywordFilter && isTaskMatch) {
             Object.assign(newTask, { _searchKeywords: keywords })
           }
@@ -234,6 +262,11 @@ export const useGanttChartView = () => {
             const styleStr = (newTask as any).style || ''
             const separator = styleStr && !styleStr.trim().endsWith(';') ? ';' : ''
             Object.assign(newTask, { style: `${styleStr}${separator} opacity: 0.2;` })
+          }
+
+          // 他ユーザーが編集中のタスクにハイライトスタイルを適用
+          if (hasRemoteEditing) {
+            newTask = applyRemoteEditingHighlight(newTask, editingMap)
           }
 
           return newTask
@@ -295,7 +328,23 @@ export const useGanttChartView = () => {
   const { canUndo, canRedo, isUndoRedoing, pushAction, undo: _undo, redo: _redo, clearHistory } = useUndoRedo()
 
   // --- リアルタイムコラボレーション ---
-  const { activeUsers, joinProject, leaveProject, publishEditEvent, onEditEvent } = useCollaboration()
+  const { activeUsers, joinProject, leaveProject, publishEditEvent, onEditEvent, updateEditingTasks } =
+    useCollaboration()
+
+  /**
+   * 他ユーザーが編集中のタスクIDとユーザー色のマップ
+   * Map<taskId, { color, displayName }>
+   */
+  const remoteEditingTaskMap = computed(() => {
+    const map = new Map<string, { color: string; displayName: string }>()
+    for (const user of activeUsers.value) {
+      if (!user.editingTaskIds) continue
+      for (const taskId of user.editingTaskIds) {
+        map.set(String(taskId), { color: user.color, displayName: user.displayName })
+      }
+    }
+    return map
+  })
 
   // undo/redo 実行後に他ユーザーへ通知するラッパー
   const undo = async () => {
@@ -660,6 +709,14 @@ export const useGanttChartView = () => {
 
   // --- ダイアログ関連 ---
   const isDialogVisible = ref(false)
+
+  // ダイアログが閉じられた場合（バツボタン・ESC・背景クリック等）に編集中タスク通知を解除
+  watch(isDialogVisible, (visible) => {
+    if (!visible) {
+      updateEditingTasks([])
+    }
+  })
+
   const editingTask = ref<EditingTaskData>({
     id: '',
     rowId: '',
@@ -690,6 +747,8 @@ export const useGanttChartView = () => {
         labels: taskWithAttr.attribute?.labels ? [...taskWithAttr.attribute.labels] : [],
       }
       isDialogVisible.value = true
+      // 他ユーザーにこのタスクを編集中であることを通知
+      updateEditingTasks([task.id])
     }
   }
 
@@ -750,6 +809,8 @@ export const useGanttChartView = () => {
 
     // ダイアログを閉じる
     isDialogVisible.value = false
+    // 編集中タスクの通知を解除
+    updateEditingTasks([])
 
     if (!taskData.id) {
       // 新規作成

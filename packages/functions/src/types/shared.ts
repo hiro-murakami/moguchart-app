@@ -308,6 +308,8 @@ export interface PresenceData {
   color: string
   /** アバター画像URL（Google認証のプロフィール画像等） */
   avatarUrl?: string
+  /** 現在編集中のタスクID一覧（ダイアログ表示中やドラッグ中のタスク） */
+  editingTaskIds?: string[]
 }
 
 /** 編集イベント（Firestore経由でリアルタイム同期） */
