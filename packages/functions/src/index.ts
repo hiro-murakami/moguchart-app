@@ -14,6 +14,7 @@ import selectUser from './scripts/selectUser.js'
 import upsertUser from './scripts/upsertUser.js'
 import getGanttDataJson from './scripts/getGanttDataJson.js'
 import restoreProject from './scripts/restoreProject.js'
+import { cleanupEditEvents } from './scripts/cleanupEditEvents.js'
 import { FirebaseFunction } from './types/index.js'
 
 const functions: FirebaseFunction = {
@@ -37,3 +38,6 @@ const functions: FirebaseFunction = {
 export const gantt = {
   functions: setupFirebaseFunction(functions),
 }
+
+// スケジュール関数（editEventsの自動クリーンアップ）
+export { cleanupEditEvents }

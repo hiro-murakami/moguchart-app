@@ -1,6 +1,18 @@
 import { ref, type Ref } from 'vue'
 import { db } from '@/firebase'
-import { collection, doc, setDoc, deleteDoc, onSnapshot, addDoc, type Unsubscribe } from 'firebase/firestore'
+import {
+  collection,
+  doc,
+  setDoc,
+  deleteDoc,
+  onSnapshot,
+  addDoc,
+  query,
+  where,
+  getDocs,
+  writeBatch,
+  type Unsubscribe,
+} from 'firebase/firestore'
 import type { PresenceData, EditEvent, EditEventType } from '@functions/types/shared'
 
 /** プレゼンスのハートビート間隔（ミリ秒） */
@@ -11,6 +23,9 @@ const PRESENCE_TIMEOUT = 120_000
 
 /** 編集イベントを受信する時間範囲（ミリ秒）- これより古いイベントは無視 */
 const EVENT_TIME_WINDOW = 5 * 60_000
+
+/** editEventsクリーンアップの最小間隔（ミリ秒） */
+const CLEANUP_MIN_INTERVAL = 60_000
 
 /** アバター色のプリセット */
 const AVATAR_COLORS = [
@@ -48,6 +63,9 @@ export const useCollaboration = () => {
 
   /** Firestore が利用可能かどうか。接続エラー時に false に設定される */
   let firestoreAvailable = true
+
+  /** 最後にクリーンアップを実行した時刻 */
+  let lastCleanupTime = 0
 
   /** 最後に処理したイベントのタイムスタンプ（重複処理防止） */
   let lastProcessedTimestamp: string | null = null
@@ -209,6 +227,9 @@ export const useCollaboration = () => {
       return
     }
 
+    // 参加時に古い editEvents をクリーンアップ
+    cleanupOldEditEvents().catch(() => {})
+
     // リスナーを開始
     startPresenceListener()
     startEditEventListener()
@@ -265,6 +286,46 @@ export const useCollaboration = () => {
   }
 
   /**
+   * 古い editEvents ドキュメントを削除するクリーンアップ処理
+   * EVENT_TIME_WINDOW 以上前のイベントをバッチ削除する。
+   * 呼び出し頻度は CLEANUP_MIN_INTERVAL で制限される。
+   */
+  const cleanupOldEditEvents = async () => {
+    if (!firestoreAvailable || !currentProjectId) return
+
+    const now = Date.now()
+    // 最小間隔チェック（不要なFirestore読み取りを抑制）
+    if (now - lastCleanupTime < CLEANUP_MIN_INTERVAL) return
+    lastCleanupTime = now
+
+    const eventsCol = collection(db, 'projects', currentProjectId, 'editEvents')
+    const cutoff = new Date(now - EVENT_TIME_WINDOW).toISOString()
+
+    try {
+      const q = query(eventsCol, where('timestamp', '<', cutoff))
+      const snapshot = await getDocs(q)
+
+      if (snapshot.empty) return
+
+      // Firestore の writeBatch は最大500件まで
+      const batchSize = 500
+      const docs = snapshot.docs
+
+      for (let i = 0; i < docs.length; i += batchSize) {
+        const batch = writeBatch(db)
+        const chunk = docs.slice(i, i + batchSize)
+        chunk.forEach((d) => batch.delete(d.ref))
+        await batch.commit()
+      }
+
+      console.debug(`[Collaboration] Cleaned up ${docs.length} old editEvents`)
+    } catch (err) {
+      // クリーンアップ失敗は致命的ではないので警告のみ
+      console.warn('[Collaboration] Failed to cleanup old editEvents:', err)
+    }
+  }
+
+  /**
    * 編集イベントを発行
    */
   const publishEditEvent = async (type: EditEventType, payload?: Record<string, any>) => {
@@ -283,6 +344,9 @@ export const useCollaboration = () => {
     } catch (err) {
       console.error('[Collaboration] Failed to publish edit event:', err)
     }
+
+    // イベント発行後に古いイベントをクリーンアップ（非同期・非ブロッキング）
+    cleanupOldEditEvents().catch(() => {})
   }
 
   /**
