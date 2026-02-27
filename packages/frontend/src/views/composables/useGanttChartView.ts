@@ -329,7 +329,7 @@ export const useGanttChartView = () => {
   const { canUndo, canRedo, isUndoRedoing, pushAction, undo: _undo, redo: _redo, clearHistory } = useUndoRedo()
 
   // --- リアルタイムコラボレーション ---
-  const { activeUsers, joinProject, leaveProject, publishEditEvent, onEditEvent, updateEditingTasks } =
+  const { activeUsers, editLogs, joinProject, leaveProject, publishEditEvent, onEditEvent, updateEditingTasks } =
     useCollaboration()
 
   /**
@@ -695,7 +695,7 @@ export const useGanttChartView = () => {
     await loadData(projectId.value)
     // 行をまたぐ移動の場合、元の行と移動先の行の両方を差分更新対象にする
     const affectedRowIds = [...new Set([Number(e.detail.targetRowId), ...(row ? [Number(row.id)] : [])])]
-    publishEditEvent('task_upsert', { rowIds: affectedRowIds })
+    publishEditEvent('task_upsert', { rowIds: affectedRowIds, targetName: data.name })
   }
 
   // --- ドラッグ＆ドロップ関連 ---
@@ -822,7 +822,7 @@ export const useGanttChartView = () => {
         },
       })
       await loadData(projectId.value)
-      publishEditEvent('task_upsert', { rowIds: [Number(targetRowId)] })
+      publishEditEvent('task_upsert', { rowIds: [Number(targetRowId)], targetName: task.name })
     } catch (err) {
       console.error('Failed to drop task:', err)
       await alert({
@@ -986,7 +986,7 @@ export const useGanttChartView = () => {
       await upsertGanttTasks([data])
     }
     await loadData(projectId.value)
-    publishEditEvent('task_upsert', { rowIds: [Number(taskData.rowId)] })
+    publishEditEvent('task_upsert', { rowIds: [Number(taskData.rowId)], targetName: taskData.name })
   }
 
   const execDeleteTasksWithAnimation = async (taskIds: string[]) => {
@@ -1071,7 +1071,11 @@ export const useGanttChartView = () => {
     // 削除前に収集したrowId情報を使って通知（loadData後はタスクが消えているため）
     const affectedRowIds = [...new Set(deletedTasks.map((d) => Number(d.rowId)))]
     await loadData(projectId.value)
-    publishEditEvent('task_delete', { rowIds: affectedRowIds })
+    const deletedNames = deletedTasks.map((d) => d.taskData.name).filter(Boolean)
+    publishEditEvent('task_delete', {
+      rowIds: affectedRowIds,
+      targetName: deletedNames.length === 1 ? deletedNames[0] : `${deletedNames.length}件`,
+    })
   }
 
   const deleteTask = async (taskId: string) => {
@@ -1187,7 +1191,7 @@ export const useGanttChartView = () => {
       })
 
       await loadData(projectId.value)
-      publishEditEvent('row_upsert')
+      publishEditEvent('row_upsert', { targetName: newName })
       // 最後に追加した行の名前を編集状態にする
       const lastRowId = newRowIds[newRowIds.length - 1]
       if (lastRowId !== undefined) {
@@ -1289,7 +1293,7 @@ export const useGanttChartView = () => {
     }
 
     await loadData(projectId.value)
-    publishEditEvent('row_upsert')
+    publishEditEvent('row_upsert', { targetName: name })
   }
 
   // --- Inline Row Editing ---
@@ -1387,7 +1391,7 @@ export const useGanttChartView = () => {
 
     isRowEditDialogVisible.value = false
     await loadData(projectId.value)
-    publishEditEvent('row_upsert')
+    publishEditEvent('row_upsert', { targetName: data.name })
   }
 
   const handleRowHeaderDblClick = (e: CustomEvent<moguchart.RowHeaderDblClickEventDetail>) => {
@@ -1686,7 +1690,7 @@ export const useGanttChartView = () => {
 
       await loadData(projectId.value)
       closeContextMenu()
-      publishEditEvent('row_upsert')
+      publishEditEvent('row_upsert', { targetName: baseRow.name })
     } catch (err) {
       console.error('Failed to toggle row visibility:', err)
       alert({
@@ -1768,7 +1772,10 @@ export const useGanttChartView = () => {
     }
 
     await loadData(projectId.value)
-    publishEditEvent('row_delete')
+    const deletedRowNames = deletedRowsData.map((d: any) => d.name).filter(Boolean)
+    publishEditEvent('row_delete', {
+      targetName: deletedRowNames.length === 1 ? deletedRowNames[0] : `${deletedRowNames.length}件`,
+    })
   }
 
   const handleDeleteRowFromContextMenu = async () => {
@@ -1943,6 +1950,7 @@ export const useGanttChartView = () => {
     canUndo,
     canRedo,
     activeUsers,
+    editLogs,
 
     // methods
     handleTaskUpdate,

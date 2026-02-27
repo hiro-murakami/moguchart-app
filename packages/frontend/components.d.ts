@@ -13,6 +13,7 @@ declare module 'vue' {
   export interface GlobalComponents {
     AlertDialog: typeof import('./src/components/common/AlertDialog.vue')['default']
     ChartContextMenu: typeof import('./src/components/ChartContextMenu.vue')['default']
+    CollaborationActivityLog: typeof import('./src/components/CollaborationActivityLog.vue')['default']
     ColorInput: typeof import('./src/components/common/ColorInput.vue')['default']
     ColorPaletteInput: typeof import('./src/components/common/ColorPaletteInput.vue')['default']
     ColorPaletteSelect: typeof import('./src/components/common/ColorPaletteSelect.vue')['default']

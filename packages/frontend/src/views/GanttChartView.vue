@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import splashImage from '@/assets/splash.png'
+import CollaborationActivityLog from '@/components/CollaborationActivityLog.vue'
 import { useGanttChartView } from './composables/useGanttChartView'
 import { onMounted, onUnmounted } from 'vue'
 
@@ -37,6 +38,7 @@ const {
   canUndo,
   canRedo,
   activeUsers,
+  editLogs,
 
   // methods
   handleTaskUpdate,
@@ -338,6 +340,9 @@ onUnmounted(() => {
       @save="updateProject"
     />
     <ProjectListDialog v-model="isProjectListDialogVisible" @select="setProjectId" @update="fetchProjects" />
+
+    <!-- Collaboration Activity Log -->
+    <CollaborationActivityLog :logs="editLogs" />
   </div>
 </template>
 

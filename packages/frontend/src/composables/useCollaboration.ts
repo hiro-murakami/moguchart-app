@@ -15,6 +15,65 @@ import {
 } from 'firebase/firestore'
 import type { PresenceData, EditEvent, EditEventType } from '@functions/types/shared'
 
+/** 変更ログの最大保持数 */
+const MAX_LOG_ENTRIES = 50
+
+/** 編集イベント種別の日本語説明を生成 */
+const getEventDescription = (type: EditEventType, targetName?: string): string => {
+  if (targetName) {
+    switch (type) {
+      case 'task_upsert':
+        return `タスク「${targetName}」を更新`
+      case 'task_delete':
+        return `タスク「${targetName}」を削除`
+      case 'row_upsert':
+        return `行「${targetName}」を更新`
+      case 'row_delete':
+        return `行「${targetName}」を削除`
+      case 'row_reorder':
+        return '行の並び順を変更'
+      case 'full_reload':
+        return 'データを更新'
+      default:
+        return type
+    }
+  }
+  switch (type) {
+    case 'task_upsert':
+      return 'タスクを更新'
+    case 'task_delete':
+      return 'タスクを削除'
+    case 'row_upsert':
+      return '行を更新'
+    case 'row_delete':
+      return '行を削除'
+    case 'row_reorder':
+      return '行の並び順を変更'
+    case 'full_reload':
+      return 'データを更新'
+    default:
+      return type
+  }
+}
+
+/** アクティビティログのエントリ */
+export interface ActivityLogEntry {
+  /** 一意のID */
+  id: string
+  /** 操作したユーザーの表示名 */
+  displayName: string
+  /** 操作したユーザーのメールアドレス */
+  userEmail: string
+  /** アバター画像URL */
+  avatarUrl?: string
+  /** アバター色 */
+  color: string
+  /** 変更内容の説明 */
+  description: string
+  /** イベント発生日時（ISO 8601形式） */
+  timestamp: string
+}
+
 /** プレゼンスのハートビート間隔（ミリ秒） */
 const HEARTBEAT_INTERVAL = 60_000
 
@@ -50,6 +109,7 @@ const AVATAR_COLORS = [
  */
 export const useCollaboration = () => {
   const activeUsers: Ref<(PresenceData & { email: string })[]> = ref([])
+  const editLogs: Ref<ActivityLogEntry[]> = ref([])
 
   let currentProjectId: string | null = null
   let currentUserEmail: string | null = null
@@ -151,6 +211,24 @@ export const useCollaboration = () => {
   }
 
   /**
+   * 編集イベントからアクティビティログエントリを生成
+   */
+  const createLogEntry = (event: EditEvent): ActivityLogEntry => {
+    // activeUsers から操作ユーザーの情報を取得
+    const user = activeUsers.value.find((u) => u.email === event.userEmail)
+
+    return {
+      id: `${event.timestamp}-${event.userEmail}-${Math.random().toString(36).slice(2, 8)}`,
+      displayName: user?.displayName || event.userEmail.split('@')[0] || event.userEmail,
+      userEmail: event.userEmail,
+      avatarUrl: user?.avatarUrl,
+      color: user?.color || getAvatarColor(event.userEmail),
+      description: getEventDescription(event.type, event.payload?.targetName as string | undefined),
+      timestamp: event.timestamp,
+    }
+  }
+
+  /**
    * 編集イベントのリアルタイムリスナーを開始
    */
   const startEditEventListener = () => {
@@ -179,6 +257,10 @@ export const useCollaboration = () => {
             if (lastProcessedTimestamp && event.timestamp <= lastProcessedTimestamp) return
 
             lastProcessedTimestamp = event.timestamp
+
+            // アクティビティログに追加（先頭に新しいものを追加、最大MAX_LOG_ENTRIES件）
+            const logEntry = createLogEntry(event)
+            editLogs.value = [logEntry, ...editLogs.value].slice(0, MAX_LOG_ENTRIES)
 
             // コールバックを呼び出し
             if (editEventCallback) {
@@ -283,6 +365,7 @@ export const useCollaboration = () => {
     currentEditingTaskIds = []
     lastProcessedTimestamp = null
     activeUsers.value = []
+    editLogs.value = []
   }
 
   /**
@@ -379,6 +462,8 @@ export const useCollaboration = () => {
   return {
     /** 現在アクティブなユーザー一覧（リアクティブ） */
     activeUsers,
+    /** 他ユーザーの変更ログ（リアクティブ） */
+    editLogs,
     /** プロジェクトに参加 */
     joinProject,
     /** プロジェクトから離脱 */
