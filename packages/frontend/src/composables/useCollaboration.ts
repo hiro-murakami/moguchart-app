@@ -19,15 +19,15 @@ import type { PresenceData, EditEvent, EditEventType } from '@functions/types/sh
 const MAX_LOG_ENTRIES = 50
 
 /** 編集イベント種別の日本語説明を生成 */
-const getEventDescription = (type: EditEventType, targetName?: string): string => {
+const getEventDescription = (type: EditEventType, targetName?: string, isNew?: boolean): string => {
   if (targetName) {
     switch (type) {
       case 'task_upsert':
-        return `タスク「${targetName}」を更新`
+        return `タスク「${targetName}」を${isNew ? '追加' : '更新'}`
       case 'task_delete':
         return `タスク「${targetName}」を削除`
       case 'row_upsert':
-        return `行「${targetName}」を更新`
+        return `行「${targetName}」を${isNew ? '追加' : '更新'}`
       case 'row_delete':
         return `行「${targetName}」を削除`
       case 'row_reorder':
@@ -40,11 +40,11 @@ const getEventDescription = (type: EditEventType, targetName?: string): string =
   }
   switch (type) {
     case 'task_upsert':
-      return 'タスクを更新'
+      return `タスクを${isNew ? '追加' : '更新'}`
     case 'task_delete':
       return 'タスクを削除'
     case 'row_upsert':
-      return '行を更新'
+      return `行を${isNew ? '追加' : '更新'}`
     case 'row_delete':
       return '行を削除'
     case 'row_reorder':
@@ -223,7 +223,11 @@ export const useCollaboration = () => {
       userEmail: event.userEmail,
       avatarUrl: user?.avatarUrl,
       color: user?.color || getAvatarColor(event.userEmail),
-      description: getEventDescription(event.type, event.payload?.targetName as string | undefined),
+      description: getEventDescription(
+        event.type,
+        event.payload?.targetName as string | undefined,
+        event.payload?.isNew as boolean | undefined,
+      ),
       timestamp: event.timestamp,
     }
   }

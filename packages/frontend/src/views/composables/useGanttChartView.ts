@@ -695,7 +695,7 @@ export const useGanttChartView = () => {
     await loadData(projectId.value)
     // 行をまたぐ移動の場合、元の行と移動先の行の両方を差分更新対象にする
     const affectedRowIds = [...new Set([Number(e.detail.targetRowId), ...(row ? [Number(row.id)] : [])])]
-    publishEditEvent('task_upsert', { rowIds: affectedRowIds, targetName: data.name })
+    publishEditEvent('task_upsert', { rowIds: affectedRowIds, targetName: data.name, isNew: data.id === 0 })
   }
 
   // --- ドラッグ＆ドロップ関連 ---
@@ -822,7 +822,7 @@ export const useGanttChartView = () => {
         },
       })
       await loadData(projectId.value)
-      publishEditEvent('task_upsert', { rowIds: [Number(targetRowId)], targetName: task.name })
+      publishEditEvent('task_upsert', { rowIds: [Number(targetRowId)], targetName: task.name, isNew: true })
     } catch (err) {
       console.error('Failed to drop task:', err)
       await alert({
@@ -986,7 +986,11 @@ export const useGanttChartView = () => {
       await upsertGanttTasks([data])
     }
     await loadData(projectId.value)
-    publishEditEvent('task_upsert', { rowIds: [Number(taskData.rowId)], targetName: taskData.name })
+    publishEditEvent('task_upsert', {
+      rowIds: [Number(taskData.rowId)],
+      targetName: taskData.name,
+      isNew: !taskData.id,
+    })
   }
 
   const execDeleteTasksWithAnimation = async (taskIds: string[]) => {
@@ -1191,7 +1195,7 @@ export const useGanttChartView = () => {
       })
 
       await loadData(projectId.value)
-      publishEditEvent('row_upsert', { targetName: newName })
+      publishEditEvent('row_upsert', { targetName: newName, isNew: true })
       // 最後に追加した行の名前を編集状態にする
       const lastRowId = newRowIds[newRowIds.length - 1]
       if (lastRowId !== undefined) {
