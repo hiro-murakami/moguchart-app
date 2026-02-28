@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import ProjectDetailDialog from './ProjectDetailDialog.vue'
-import { useProjectListDialog } from './composables/useProjectListDialog'
 import type { Project } from '@functions/types/shared'
+import { useProjectListDialog } from './composables/useProjectListDialog'
 import { toDateString } from '@/modules/utils'
 import { ref, watch, nextTick } from 'vue'
 import { useTutorial } from '@/composables/useTutorial'
@@ -43,16 +43,18 @@ const handleRestoreClick = () => {
   fileInput.value?.click()
 }
 
-const tutorial = useTutorial()
+const { isCompleted, show: showTutorial } = useTutorial()
 
 watch([() => props.modelValue, projects, loading], async ([isOpen, projectList, isLoading]) => {
   if (isOpen && !isLoading && projectList.length === 1) {
     const sampleProject = projectList[0]
     if (sampleProject && sampleProject.name === 'サンプルプロジェクト') {
+      if (isCompleted('duplicateBtn')) return
+
       await nextTick()
       // wait a bit for transition? or render
       setTimeout(() => {
-        tutorial({
+        showTutorial({
           target: `#duplicate-btn-${sampleProject.id}`,
           message: '複製ボタンでサンプルプロジェクトのコピーを作成すると、編集できます',
           placement: 'bottom',

@@ -2,7 +2,7 @@
 // 注意: ここにはバックエンド固有のライブラリ(firebase-admin等)をimportしないでください。
 
 /** バージョン */
-export const VERSION = '0.2.1'
+export const VERSION = '0.2.2'
 
 /** Cloud Functions の呼び出しパラメータ */
 export interface FunctionParam {
@@ -85,6 +85,9 @@ export type ProjectSettings = {
   rowHeaderWidth?: number
 }
 
+/** チュートリアルのキー一覧 */
+export type TutorialKey = 'duplicateBtn'
+
 /** ユーザー固有の設定属性 */
 export type UserAttribute = {
   /** UIテーマ設定（light / dark / system） */
@@ -93,6 +96,8 @@ export type UserAttribute = {
   projectSettings?: Record<string, ProjectSettings>
   /** 最終ログイン日時（ISO 8601形式） */
   lastLoginAt?: string
+  /** 完了したチュートリアル */
+  tutorialCompleted?: Partial<Record<TutorialKey, boolean>>
 }
 
 export type NewTaskTemplate = {

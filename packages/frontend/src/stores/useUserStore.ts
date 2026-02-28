@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import type { User } from '@functions/types/shared'
+import type { User, TutorialKey } from '@functions/types/shared'
 import { selectUser, upsertUser } from '@/modules/scripts'
 import {
   signInWithPopup,
@@ -38,6 +38,18 @@ export const useUserStore = defineStore('user', {
     async saveUser(user: User) {
       await upsertUser(user)
       this.user = user
+    },
+
+    async completeTutorial(key: TutorialKey) {
+      if (!this.user) return
+
+      if (!this.user.attribute) this.user.attribute = {} as any
+      if (!this.user.attribute.tutorialCompleted) this.user.attribute.tutorialCompleted = {}
+
+      if (!this.user.attribute.tutorialCompleted[key]) {
+        this.user.attribute.tutorialCompleted[key] = true
+        await this.saveUser(this.user)
+      }
     },
 
     async signIn() {
