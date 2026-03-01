@@ -1,65 +1,133 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, nextTick, watch, onUnmounted, getCurrentInstance } from 'vue'
 import { useTheme } from 'vuetify'
-import type { TutorialOptions } from '@/composables/useTutorial'
+import { useTutorial } from '@/composables/useTutorial'
+import type { TutorialKey } from '@functions/types/shared'
+
+const props = withDefaults(
+  defineProps<{
+    condition?: boolean
+    tutorialKey: TutorialKey
+    title?: string
+    message: string
+    placement?: 'top' | 'bottom' | 'left' | 'right'
+  }>(),
+  {
+    condition: true,
+  },
+)
+
+const emit = defineEmits<{
+  (e: 'close'): void
+}>()
 
 const theme = useTheme()
 const isDark = computed(() => theme.current.value.dark)
 
-const isOpen = ref(false)
-const state = ref<TutorialOptions>({
-  target: '',
-  message: '',
-  title: '',
-  placement: 'bottom',
+const targetRect = ref<DOMRect | null>(null)
+const activatorNode = ref<HTMLElement | null>(null)
+const dontShowAgain = ref(false)
+const { isCompleted, complete } = useTutorial()
+
+const manualDismissed = ref(false)
+const isVisible = computed(() => {
+  return props.condition && !isCompleted(props.tutorialKey) && !manualDismissed.value
 })
 
-let resolvePromise: ((value: void) => void) | null = null
-const targetRect = ref<DOMRect | null>(null)
+watch(
+  () => props.condition,
+  (newVal) => {
+    if (!newVal) {
+      manualDismissed.value = false
+    }
+  },
+)
+
+const targetId = `tutorial-${getCurrentInstance()?.uid || Math.random().toString(36).slice(2)}`
+
+const setActivatorRef = (el: any) => {
+  activatorNode.value = el || null
+}
+
+const getDOMElement = (node: any): Element | null => {
+  // 1. 属性で検索して確実に対象を取得する（Vueコンポーネントラップで$elが変なノードになるのを防ぐ）
+  const elByAttr = document.querySelector(`[data-tutorial-id="${targetId}"]`)
+  if (elByAttr) return elByAttr
+
+  // 以下フォールバック
+  if (!node) return null
+  if (typeof node.getBoundingClientRect === 'function') return node
+  // コンポーネント内のDOM要素を探す
+  if (node.$el) {
+    if (typeof node.$el.getBoundingClientRect === 'function') return node.$el
+    // v-tooltip等で中身がフラグメント/テキストノードになっている場合への安全なフォールバック
+    if (node.$el.nextElementSibling && typeof node.$el.nextElementSibling.getBoundingClientRect === 'function') {
+      return node.$el.nextElementSibling
+    }
+  }
+  return null
+}
+
+let rAFId: number | null = null
 
 const updateTargetRect = () => {
-  if (!isOpen.value) return
-
-  let element: HTMLElement | null = null
-  if (typeof state.value.target === 'string') {
-    element = document.querySelector(state.value.target)
-  } else {
-    element = state.value.target
-  }
-
-  if (element) {
-    targetRect.value = element.getBoundingClientRect()
-  } else {
-    targetRect.value = null
+  if (!isVisible.value) return
+  const el = getDOMElement(activatorNode.value)
+  if (el) {
+    const rect = el.getBoundingClientRect()
+    // Compare values to avoid unnecessary reactivity
+    if (
+      !targetRect.value ||
+      rect.x !== targetRect.value.x ||
+      rect.y !== targetRect.value.y ||
+      rect.width !== targetRect.value.width ||
+      rect.height !== targetRect.value.height
+    ) {
+      targetRect.value = rect
+    }
   }
 }
 
-const open = async (options: TutorialOptions) => {
-  state.value = { ...options }
-  isOpen.value = true
-
-  await nextTick()
+const trackPosition = () => {
+  if (!isVisible.value) return
   updateTargetRect()
-
-  window.addEventListener('resize', updateTargetRect)
-  window.addEventListener('scroll', updateTargetRect, true)
-  window.addEventListener('keydown', handleKeydown, true)
-
-  return new Promise<void>((resolve) => {
-    resolvePromise = resolve
-  })
+  rAFId = requestAnimationFrame(trackPosition)
 }
 
-const close = () => {
-  isOpen.value = false
-  window.removeEventListener('resize', updateTargetRect)
-  window.removeEventListener('scroll', updateTargetRect, true)
+watch(
+  isVisible,
+  async (newVal) => {
+    if (newVal) {
+      dontShowAgain.value = false
+      await nextTick()
+      trackPosition()
+      window.addEventListener('keydown', handleKeydown, true)
+    } else {
+      if (rAFId !== null) {
+        cancelAnimationFrame(rAFId)
+        rAFId = null
+      }
+      window.removeEventListener('keydown', handleKeydown, true)
+    }
+  },
+  { immediate: true },
+)
+
+onUnmounted(() => {
+  if (rAFId !== null) cancelAnimationFrame(rAFId)
   window.removeEventListener('keydown', handleKeydown, true)
-  resolvePromise?.()
+})
+
+const close = async () => {
+  manualDismissed.value = true
+  if (dontShowAgain.value) {
+    await complete(props.tutorialKey)
+  }
+  emit('close')
 }
 
-const handleKeydown = (e: KeyboardEvent) => {
-  if (isOpen.value) {
+function handleKeydown(e: KeyboardEvent) {
+  if (isVisible.value) {
     e.stopPropagation()
     e.preventDefault()
   }
@@ -82,14 +150,8 @@ const overlayPath = computed(() => {
   const windowWidth = window.innerWidth
   const windowHeight = window.innerHeight
 
-  // Create a path that covers the whole screen and has a hole for the target
-  // using fill-rule="evenodd" (M ... Z for outer rect, M ... Z for inner hole)
   return `M0,0 H${windowWidth} V${windowHeight} H0 Z M${centerX},${centerY} m-${radius},0 a${radius},${radius} 0 1,0 ${radius * 2},0 a${radius},${radius} 0 1,0 -${radius * 2},0 Z`
 })
-
-// Message box style... (rest of logic remains similar, but using spotlightParams for consistency if needed)
-// Actually, I'll keep the message style logic as is for now but clean up if needed.
-// Wait, I see messageContainerStyle below lines 114-152. I'll just keep that part.
 
 // Message box style
 const messageContainerStyle = computed(() => {
@@ -98,14 +160,15 @@ const messageContainerStyle = computed(() => {
   const { top, left, width, height } = targetRect.value
   const margin = 12
 
-  const styles: any = {
+  const styles: Record<string, string | number> = {
     position: 'fixed',
     zIndex: 9999,
     maxWidth: '300px',
   }
 
-  // Basic placement logic
-  switch (state.value.placement) {
+  const placement = props.placement || 'bottom'
+
+  switch (placement) {
     case 'top':
       styles.top = `${top - margin}px`
       styles.left = `${left + width / 2}px`
@@ -131,13 +194,12 @@ const messageContainerStyle = computed(() => {
 
   return styles
 })
-
-defineExpose({ open, close })
 </script>
 
 <template>
+  <slot name="activator" :props="{ ref: setActivatorRef, 'data-tutorial-id': targetId }"></slot>
   <teleport to="body">
-    <div v-if="isOpen" class="tutorial-overlay-container">
+    <div v-if="isVisible" class="tutorial-overlay-container">
       <!-- SVG Overlay -->
       <svg class="tutorial-svg-overlay">
         <path :d="overlayPath" fill="rgba(0, 0, 0, 0.8)" fill-rule="evenodd" />
@@ -161,13 +223,21 @@ defineExpose({ open, close })
           :class="{ 'tutorial-card-dark': isDark }"
           :theme="isDark ? 'dark' : 'light'"
         >
-          <v-card-title v-if="state.title" class="text-subtitle-1 pb-1 px-0 pt-0 font-weight-bold">
-            {{ state.title }}
+          <v-card-title v-if="title" class="text-subtitle-1 pb-1 px-0 pt-0 font-weight-bold">
+            {{ title }}
           </v-card-title>
           <v-card-text class="pt-2 pb-0 px-0">
-            {{ state.message }}
+            {{ message }}
           </v-card-text>
-          <v-card-actions class="px-0 pb-0 pt-2">
+          <v-card-actions class="px-0 pb-0 pt-4 align-center">
+            <v-checkbox
+              v-model="dontShowAgain"
+              label="再表示しない"
+              density="compact"
+              hide-details
+              color="primary"
+              class="ma-0 pa-0"
+            ></v-checkbox>
             <v-spacer></v-spacer>
             <v-btn
               :color="isDark ? 'teal-accent-3' : 'primary'"

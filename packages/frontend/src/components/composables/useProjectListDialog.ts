@@ -10,7 +10,6 @@ import type { Project } from '@functions/types/shared'
 import { ref, watch } from 'vue'
 
 import { useProjectStore } from '@/stores/useProjectStore'
-import { useTutorial } from '@/composables/useTutorial'
 import { storeToRefs } from 'pinia'
 
 export const useProjectListDialog = (
@@ -23,7 +22,6 @@ export const useProjectListDialog = (
 ) => {
   const projectStore = useProjectStore()
   const { projects } = storeToRefs(projectStore)
-  const { complete: completeTutorial } = useTutorial()
   const loading = ref(false)
   const saving = ref(false)
   const deleting = ref(false)
@@ -154,8 +152,6 @@ export const useProjectListDialog = (
     }
     originalId.value = project.id
     isProjectDetailDialogVisible.value = true
-
-    completeTutorial('duplicateBtn').catch(console.error)
   }
 
   const restoreProjectFromFile = async (file: File) => {

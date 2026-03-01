@@ -3,8 +3,8 @@ import ProjectDetailDialog from './ProjectDetailDialog.vue'
 import type { Project } from '@functions/types/shared'
 import { useProjectListDialog } from './composables/useProjectListDialog'
 import { toDateString } from '@/modules/utils'
-import { ref, watch, nextTick } from 'vue'
-import { useTutorial } from '@/composables/useTutorial'
+import { ref } from 'vue'
+import TutorialOverlay from '@/components/common/TutorialOverlay.vue'
 
 const props = defineProps<{
   modelValue: boolean
@@ -42,29 +42,6 @@ const fileInput = ref<HTMLInputElement | null>(null)
 const handleRestoreClick = () => {
   fileInput.value?.click()
 }
-
-const { isCompleted, show: showTutorial } = useTutorial()
-
-watch([() => props.modelValue, projects, loading], async ([isOpen, projectList, isLoading]) => {
-  if (isOpen && !isLoading && projectList.length === 1) {
-    const sampleProject = projectList[0]
-    if (sampleProject && sampleProject.name === 'サンプルプロジェクト') {
-      if (isCompleted('duplicateBtn')) return
-
-      await nextTick()
-      // wait a bit for transition? or render
-      setTimeout(() => {
-        showTutorial({
-          target: `#duplicate-btn-${sampleProject.id}`,
-          message: '複製ボタンでサンプルプロジェクトのコピーを作成すると、編集できます',
-          placement: 'bottom',
-        }).catch(() => {
-          // Ignore if tutorial fails or element not found
-        })
-      }, 300)
-    }
-  }
-})
 
 const handleFileChange = (e: Event) => {
   const target = e.target as HTMLInputElement
@@ -140,17 +117,33 @@ const handleFileChange = (e: Event) => {
                 :style="{ visibility: item.role === 'owner' || item.role === 'editor' ? 'visible' : 'hidden' }"
                 @click.stop="editProject(item)"
               />
-              <TooltipBtn
-                tooltip="複製"
-                location="top"
-                :tooltip-disabled="!item.role"
-                icon="mdi-content-copy"
-                variant="text"
-                size="small"
-                :id="`duplicate-btn-${item.id}`"
-                :style="{ visibility: item.role ? 'visible' : 'hidden' }"
-                @click.stop="duplicateProject(item)"
-              />
+              <TutorialOverlay
+                :condition="
+                  modelValue &&
+                  !loading &&
+                  projects.length === 1 &&
+                  item.id === projects[0]?.id &&
+                  item.name === 'サンプルプロジェクト'
+                "
+                tutorial-key="duplicateBtn"
+                message="複製ボタンでサンプルプロジェクトのコピーを作成すると、編集できます"
+                placement="bottom"
+              >
+                <template #activator="{ props: overlayProps }">
+                  <TooltipBtn
+                    v-bind="overlayProps"
+                    tooltip="複製"
+                    location="top"
+                    :tooltip-disabled="!item.role"
+                    icon="mdi-content-copy"
+                    variant="text"
+                    size="small"
+                    :id="`duplicate-btn-${item.id}`"
+                    :style="{ visibility: item.role ? 'visible' : 'hidden' }"
+                    @click.stop="duplicateProject(item)"
+                  />
+                </template>
+              </TutorialOverlay>
               <TooltipBtn
                 tooltip="削除"
                 location="top"
