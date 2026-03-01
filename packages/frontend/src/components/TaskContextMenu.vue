@@ -7,6 +7,7 @@ const props = defineProps<{
   y: number
   taskId?: string | null
   selectedTaskIds?: string[]
+  isReadOnly?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -42,10 +43,16 @@ const deleteTitle = computed(() => {
   >
     <v-menu v-model="isVisible" activator="parent">
       <v-list density="compact">
-        <v-list-item prepend-icon="mdi-pencil" title="編集" @click="emit('edit')" />
+        <v-list-item v-if="!isReadOnly" prepend-icon="mdi-pencil" title="編集" @click="emit('edit')" />
         <v-list-item prepend-icon="mdi-comment-text-outline" title="コメント" @click="emit('comment')" />
-        <v-divider />
-        <v-list-item prepend-icon="mdi-delete" :title="deleteTitle" base-color="red" @click="emit('delete')" />
+        <v-divider v-if="!isReadOnly" />
+        <v-list-item
+          v-if="!isReadOnly"
+          prepend-icon="mdi-delete"
+          :title="deleteTitle"
+          base-color="red"
+          @click="emit('delete')"
+        />
       </v-list>
     </v-menu>
   </div>

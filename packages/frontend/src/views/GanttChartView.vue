@@ -310,6 +310,7 @@ onUnmounted(() => {
       :y="taskContextMenu.y"
       :task-id="taskContextMenu.taskId"
       :selected-task-ids="selectedTaskIds"
+      :is-read-only="isReadOnly"
       @edit="handleEditTaskFromContextMenu"
       @comment="handleAddCommentFromContextMenu"
       @delete="handleDeleteTaskFromContextMenu"
@@ -320,6 +321,7 @@ onUnmounted(() => {
       v-model="isCommentDialogVisible"
       :task-id="commentDialogTaskId"
       :task-name="commentDialogTaskName"
+      :is-read-only="isReadOnly"
       @updated="handleCommentUpdated"
     />
 

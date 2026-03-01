@@ -1460,7 +1460,6 @@ export const useGanttChartView = () => {
   })
 
   const handleTaskContextMenu = (e: CustomEvent<moguchart.TaskContextMenuEventDetail>) => {
-    if (isReadOnly.value) return
     const { task, event } = e.detail
     event.preventDefault()
 

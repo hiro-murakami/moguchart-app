@@ -13,6 +13,7 @@ const props = defineProps<{
   modelValue: boolean
   taskId: number | null
   taskName: string
+  isReadOnly?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -94,7 +95,7 @@ watch(
 
       <v-card-text class="pa-6 pt-2">
         <!-- 新規コメント入力 -->
-        <div class="d-flex align-end mb-4" style="gap: 8px">
+        <div v-if="!isReadOnly" class="d-flex align-end mb-4" style="gap: 8px">
           <v-textarea
             v-model="newComment"
             label="コメントを入力"
@@ -144,6 +145,7 @@ watch(
                   </span>
                   <v-spacer />
                   <v-btn
+                    v-if="!isReadOnly"
                     icon="mdi-delete-outline"
                     variant="text"
                     size="x-small"
