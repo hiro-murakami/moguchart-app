@@ -62,7 +62,13 @@ const getGanttDataJson: GetGanttDataJson = async (projectId, email) => {
   // ガントチャートデータの取得
   const rows = await prisma.ganttRow.findMany({
     where: { projectId },
-    include: { tasks: true },
+    include: {
+      tasks: {
+        include: {
+          taskComments: true,
+        },
+      },
+    },
     orderBy: { order: 'asc' },
   })
 

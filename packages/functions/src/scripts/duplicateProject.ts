@@ -33,7 +33,13 @@ const duplicateProject: DuplicateProject = async ({ originalProjectId, newProjec
   // 元のプロジェクトの情報を取得
   const originalRows = await prisma.ganttRow.findMany({
     where: { projectId: originalProjectId },
-    include: { tasks: true },
+    include: {
+      tasks: {
+        include: {
+          taskComments: true,
+        },
+      },
+    },
     orderBy: { order: 'asc' },
   })
 
@@ -58,6 +64,15 @@ const duplicateProject: DuplicateProject = async ({ originalProjectId, newProjec
               start: task.start,
               end: task.end,
               attribute: task.attribute ?? {},
+              taskComments: {
+                create: task.taskComments.map((comment) => ({
+                  content: comment.content,
+                  createdBy: comment.createdBy,
+                  updatedBy: comment.updatedBy,
+                  createdAt: comment.createdAt,
+                  updatedAt: comment.updatedAt,
+                })),
+              },
               createdBy: email,
               updatedBy: email,
             })),
