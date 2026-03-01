@@ -101,6 +101,8 @@ export type UserAttribute = {
   lastLoginAt?: string
   /** 完了したチュートリアル */
   tutorialCompleted?: Partial<Record<TutorialKey, boolean>>
+  /** プロフィール画像のURL */
+  photoURL?: string | null
 }
 
 export type NewTaskTemplate = {

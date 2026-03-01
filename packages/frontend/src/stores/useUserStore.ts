@@ -80,6 +80,7 @@ export const useUserStore = defineStore('user', {
             this.user.attribute = {
               ...this.user.attribute,
               lastLoginAt: toDateTimeString(),
+              photoURL: firebaseUser.photoURL,
             }
           } else {
             this.user = {
@@ -87,6 +88,7 @@ export const useUserStore = defineStore('user', {
               displayName: firebaseUser.displayName || '',
               attribute: {
                 lastLoginAt: toDateTimeString(),
+                photoURL: firebaseUser.photoURL,
               },
             }
           }
