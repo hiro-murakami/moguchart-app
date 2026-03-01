@@ -1,13 +1,16 @@
 <script setup lang="ts">
 import { provideLoading } from '@/composables/useLoading'
 import { useUserStore } from '@/stores/useUserStore'
+import { useProjectStore } from '@/stores/useProjectStore'
 import { storeToRefs } from 'pinia'
 import { onMounted, onUnmounted, ref, computed } from 'vue'
 import headerImage from '@/assets/header.png'
 import { VERSION } from '@functions/types/shared'
+import TutorialOverlay from '@/components/common/TutorialOverlay.vue'
 
 const { isLoading } = provideLoading()
 const userStore = useUserStore()
+const projectStore = useProjectStore()
 const { user: appUser, firebaseUser, currentTheme } = storeToRefs(userStore)
 const showUserDetail = ref(false)
 
@@ -45,9 +48,18 @@ onUnmounted(() => {
         <template v-else>
           <v-menu location="bottom end">
             <template v-slot:activator="{ props }">
-              <v-avatar class="mr-4 cursor-pointer" v-bind="props">
-                <v-img :src="firebaseUser.photoURL ?? ''" />
-              </v-avatar>
+              <TutorialOverlay
+                :condition="!!projectStore.currentProjectId"
+                tutorial-key="userSetting"
+                message="[ユーザー設定]で表示名とテーマを変更できます"
+                placement="bottom"
+              >
+                <template #activator="{ props: overlayProps }">
+                  <v-avatar class="mr-4 cursor-pointer" v-bind="{ ...props, ...overlayProps }">
+                    <v-img :src="firebaseUser.photoURL ?? ''" />
+                  </v-avatar>
+                </template>
+              </TutorialOverlay>
             </template>
             <v-list>
               <v-list-item prepend-icon="mdi-account-cog" @click="showUserDetail = true">

@@ -163,7 +163,7 @@ const messageContainerStyle = computed(() => {
   const styles: Record<string, string | number> = {
     position: 'fixed',
     zIndex: 9999,
-    maxWidth: '300px',
+    width: '350px',
   }
 
   const placement = props.placement || 'bottom'

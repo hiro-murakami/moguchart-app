@@ -86,7 +86,7 @@ export type ProjectSettings = {
 }
 
 /** チュートリアルのキー一覧 */
-export type TutorialKey = 'duplicateBtn'
+export type TutorialKey = 'duplicateBtn' | 'userSetting'
 
 /** ユーザー固有の設定属性 */
 export type UserAttribute = {
