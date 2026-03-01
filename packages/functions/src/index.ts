@@ -14,6 +14,9 @@ import selectUser from './scripts/selectUser.js'
 import upsertUser from './scripts/upsertUser.js'
 import getGanttDataJson from './scripts/getGanttDataJson.js'
 import restoreProject from './scripts/restoreProject.js'
+import selectTaskComments from './scripts/selectTaskComments.js'
+import upsertTaskComment from './scripts/upsertTaskComment.js'
+import deleteTaskComment from './scripts/deleteTaskComment.js'
 import { cleanupEditEvents } from './scripts/cleanupEditEvents.js'
 import { FirebaseFunction } from './types/index.js'
 
@@ -33,6 +36,9 @@ const functions: FirebaseFunction = {
   upsertUser,
   getGanttDataJson,
   restoreProject,
+  selectTaskComments,
+  upsertTaskComment,
+  deleteTaskComment,
 }
 
 export const gantt = {

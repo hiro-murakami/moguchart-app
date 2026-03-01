@@ -37,6 +37,7 @@ export const barContent = (task: moguchart.GanttTask) => {
   const taskWithAttr = task as any
   const labels = taskWithAttr.attribute?.labels as { name: string; color: string }[] | undefined
   const description = taskWithAttr.attribute?.description as string | undefined
+  const commentCount = taskWithAttr.commentCount as number | undefined
 
   const container = document.createElement('div')
   container.style.display = 'flex'
@@ -88,6 +89,25 @@ export const barContent = (task: moguchart.GanttTask) => {
     })
     headerContainer.appendChild(labelsContainer)
   }
+
+  // コメントバッジ
+  if (commentCount && commentCount > 0) {
+    const badge = document.createElement('span')
+    badge.style.display = 'inline-flex'
+    badge.style.alignItems = 'center'
+    badge.style.gap = '2px'
+    badge.style.backgroundColor = 'rgba(255, 255, 255, 0.25)'
+    badge.style.color = 'white'
+    badge.style.padding = '0px 5px'
+    badge.style.borderRadius = '8px'
+    badge.style.fontSize = '10px'
+    badge.style.fontWeight = 'bold'
+    badge.style.flexShrink = '0'
+    badge.style.textShadow = '1px 1px 2px rgba(0,0,0,0.5)'
+    badge.textContent = `💬 ${commentCount}`
+    headerContainer.appendChild(badge)
+  }
+
   container.appendChild(headerContainer)
 
   if (description) {

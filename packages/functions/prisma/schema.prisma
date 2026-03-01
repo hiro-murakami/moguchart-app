@@ -12,46 +12,45 @@ datasource db {
 /// ユーザー
 model User {
   /// メールアドレス
-  email     String   @id
+  email       String    @id
   /// 表示名
   displayName String?
   /// 属性
-  attribute Json     @default("{}")
+  attribute   Json      @default("{}")
   /// 作成者email
-  createdBy String?  @default("system")
+  createdBy   String?   @default("system")
   /// 作成日時
-  createdAt DateTime? @default(now()) @db.Timestamp(3)
+  createdAt   DateTime? @default(now()) @db.Timestamp(3)
   /// 更新者email
-  updatedBy String?  @default("system")
+  updatedBy   String?   @default("system")
   /// 更新日時
-  updatedAt DateTime? @default(now()) @db.Timestamp(3)
+  updatedAt   DateTime? @default(now()) @db.Timestamp(3)
 }
-
 
 /// プロジェクト
 model Project {
   /// プロジェクトID
-  id        String      @id @default(uuid()) @db.Char(36)
+  id        String     @id @default(uuid()) @db.Char(36)
   /// プロジェクト名
   name      String
   /// 開始日時
-  start     DateTime  @db.Date
+  start     DateTime   @db.Date
   /// 終了日時
-  end       DateTime  @db.Date
+  end       DateTime   @db.Date
   /// 属性
-  attribute Json     @default("{}")
+  attribute Json       @default("{}")
   /// 一般公開フラグ
-  public    Boolean  @default(false)
+  public    Boolean    @default(false)
   /// 権限
-  authority Json     @default("{}")
+  authority Json       @default("{}")
   /// 作成者email
-  createdBy String?  @default("system")
+  createdBy String?    @default("system")
   /// 作成日時
-  createdAt DateTime? @default(now()) @db.Timestamp(3)
+  createdAt DateTime?  @default(now()) @db.Timestamp(3)
   /// 更新者email
-  updatedBy String?  @default("system")
+  updatedBy String?    @default("system")
   /// 更新日時
-  updatedAt DateTime? @default(now()) @db.Timestamp(3)
+  updatedAt DateTime?  @default(now()) @db.Timestamp(3)
   /// ガント行配列
   rows      GanttRow[]
 }
@@ -59,36 +58,36 @@ model Project {
 /// ガント行
 model GanttRow {
   /// 行ID
-  id        Int      @id @default(autoincrement())
+  id        Int       @id @default(autoincrement())
   /// プロジェクトID
-  projectId String   @db.Char(36)
+  projectId String    @db.Char(36)
   /// 行ラベル
-  name     String
+  name      String
   /// 並び順
-  order     Int      @default(0)
+  order     Int       @default(0)
   /// 表示フラグ
-  visible   Boolean  @default(true)
+  visible   Boolean   @default(true)
   /// 属性
-  attribute Json     @default("{}")
+  attribute Json      @default("{}")
   /// 作成者email
-  createdBy String?  @default("system")
+  createdBy String?   @default("system")
   /// 作成日時
   createdAt DateTime? @default(now()) @db.Timestamp(3)
   /// 更新者email
-  updatedBy String?  @default("system")
+  updatedBy String?   @default("system")
   /// 更新日時
   updatedAt DateTime? @default(now()) @db.Timestamp(3)
 
   /// プロジェクト
-  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
   /// タスク配列
-  tasks     GanttTask[]
+  tasks   GanttTask[]
 }
 
 /// ガントタスク
 model GanttTask {
   /// タスクID
-  id        Int      @id @default(autoincrement())
+  id        Int       @id @default(autoincrement())
   /// 行ID
   rowId     Int
   /// タスク名
@@ -98,17 +97,39 @@ model GanttTask {
   /// 終了日時
   end       DateTime
   /// 属性
-  attribute Json     @default("{}")
+  attribute Json      @default("{}")
   /// 作成者email
-  createdBy String?  @default("system")
+  createdBy String?   @default("system")
   /// 作成日時
   createdAt DateTime? @default(now()) @db.Timestamp(3)
   /// 更新者email
-  updatedBy String?  @default("system")
+  updatedBy String?   @default("system")
   /// 更新日時
   updatedAt DateTime? @default(now()) @db.Timestamp(3)
 
   /// 行
-  row       GanttRow      @relation(fields: [rowId], references: [id], onDelete: Cascade)
+  row          GanttRow      @relation(fields: [rowId], references: [id], onDelete: Cascade)
+  /// タスクコメント配列
+  taskComments TaskComment[]
 }
 
+/// タスクコメント
+model TaskComment {
+  /// コメントID
+  id        Int       @id @default(autoincrement())
+  /// タスクID
+  taskId    Int
+  /// コメント内容
+  content   String    @db.Text
+  /// 作成者email
+  createdBy String?   @default("system")
+  /// 作成日時
+  createdAt DateTime? @default(now()) @db.Timestamp(3)
+  /// 更新者email
+  updatedBy String?   @default("system")
+  /// 更新日時
+  updatedAt DateTime? @default(now()) @db.Timestamp(3)
+
+  /// タスク
+  task GanttTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+}

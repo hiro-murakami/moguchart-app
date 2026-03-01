@@ -12,6 +12,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
   (e: 'edit'): void
+  (e: 'comment'): void
   (e: 'delete'): void
 }>()
 
@@ -42,6 +43,7 @@ const deleteTitle = computed(() => {
     <v-menu v-model="isVisible" activator="parent">
       <v-list density="compact">
         <v-list-item prepend-icon="mdi-pencil" title="編集" @click="emit('edit')" />
+        <v-list-item prepend-icon="mdi-comment-text-outline" title="コメント" @click="emit('comment')" />
         <v-divider />
         <v-list-item prepend-icon="mdi-delete" :title="deleteTitle" base-color="red" @click="emit('delete')" />
       </v-list>

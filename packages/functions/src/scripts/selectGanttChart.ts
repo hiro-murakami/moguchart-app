@@ -5,7 +5,13 @@ import { toGanttRow } from './common/converters'
 const selectGanttChart: SelectGanttChart = async (projectId) => {
   const data = await prisma.ganttRow.findMany({
     where: { projectId },
-    include: { tasks: true },
+    include: {
+      tasks: {
+        include: {
+          _count: { select: { taskComments: true } },
+        },
+      },
+    },
     orderBy: { order: 'asc' },
   })
   return data.map(toGanttRow)

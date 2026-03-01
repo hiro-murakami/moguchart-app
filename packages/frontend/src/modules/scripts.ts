@@ -22,6 +22,10 @@ import type {
   GetGanttDataJson,
   RestoreProject,
   GanttDataJson,
+  TaskComment,
+  SelectTaskComments,
+  UpsertTaskComment,
+  DeleteTaskComment,
 } from '@functions/types/shared'
 import { VERSION } from '@functions/types/shared'
 import { httpsCallable } from 'firebase/functions'
@@ -111,4 +115,16 @@ export const getGanttDataJson: GetGanttDataJson = (projectId) => {
 
 export const restoreProject: RestoreProject = (data) => {
   return callFunction<string>('restoreProject', data)
+}
+
+export const selectTaskComments: SelectTaskComments = (taskId) => {
+  return callFunction<TaskComment[]>('selectTaskComments', taskId)
+}
+
+export const upsertTaskComment: UpsertTaskComment = (comment) => {
+  return callFunction<number>('upsertTaskComment', comment)
+}
+
+export const deleteTaskComment: DeleteTaskComment = (id) => {
+  return callFunction<void>('deleteTaskComment', id)
 }

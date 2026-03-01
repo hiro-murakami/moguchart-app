@@ -14,12 +14,13 @@ import { toDateString } from './commonFunctions'
 
 type CommonColumns = 'createdBy' | 'createdAt' | 'updatedBy' | 'updatedAt'
 
-export const toGanttTask = (task: PrismaGanttTask): GanttTask => {
+export const toGanttTask = (task: PrismaGanttTask, commentCount?: number): GanttTask => {
   return {
     ...omit(task, ['createdBy', 'createdAt', 'updatedBy', 'updatedAt']),
     start: toDateString(task.start),
     end: toDateString(task.end),
     attribute: (task.attribute ?? {}) as TaskAttribute,
+    commentCount: commentCount ?? 0,
   }
 }
 
@@ -31,10 +32,12 @@ export const fromGanttTask = (task: GanttTask): Omit<PrismaGanttTask, CommonColu
   }
 }
 
-export const toGanttRow = (row: PrismaGanttRow & { tasks: PrismaGanttTask[] }): GanttRow => {
+export const toGanttRow = (
+  row: PrismaGanttRow & { tasks: (PrismaGanttTask & { _count?: { taskComments: number } })[] },
+): GanttRow => {
   return {
     ...omit(row, ['createdBy', 'createdAt', 'updatedBy', 'updatedAt']),
-    tasks: row.tasks.map(toGanttTask),
+    tasks: row.tasks.map((t) => toGanttTask(t, t._count?.taskComments)),
     attribute: (row.attribute ?? {}) as RowAttribute,
   }
 }

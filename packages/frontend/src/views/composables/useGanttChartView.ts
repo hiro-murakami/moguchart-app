@@ -1544,6 +1544,31 @@ export const useGanttChartView = () => {
     }
   }
 
+  // --- タスクコメントダイアログ関連 ---
+  const isCommentDialogVisible = ref(false)
+  const commentDialogTaskId = ref<number | null>(null)
+  const commentDialogTaskName = ref('')
+
+  const handleAddCommentFromContextMenu = () => {
+    const taskId = taskContextMenu.value.taskId
+    if (!taskId) return
+
+    const row = rows.value.find((r) => r.tasks.some((t) => t.id === taskId))
+    const task = row?.tasks.find((t) => t.id === taskId)
+
+    commentDialogTaskId.value = Number(taskId)
+    commentDialogTaskName.value = task?.name || ''
+    isCommentDialogVisible.value = true
+    taskContextMenu.value.visible = false
+  }
+
+  const handleCommentUpdated = async () => {
+    // コメント件数を反映するためにデータをリロード
+    if (projectId.value) {
+      await loadData(projectId.value)
+    }
+  }
+
   const handleRowHeaderContextMenu = (e: CustomEvent<moguchart.RowHeaderContextMenuEventDetail>) => {
     e.preventDefault()
     if (isReadOnly.value) return
@@ -1955,6 +1980,9 @@ export const useGanttChartView = () => {
     canRedo,
     activeUsers,
     editLogs,
+    isCommentDialogVisible,
+    commentDialogTaskId,
+    commentDialogTaskName,
 
     // methods
     handleTaskUpdate,
@@ -1996,5 +2024,7 @@ export const useGanttChartView = () => {
     undo,
     redo,
     refresh,
+    handleAddCommentFromContextMenu,
+    handleCommentUpdated,
   }
 }

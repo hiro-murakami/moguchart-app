@@ -2,7 +2,7 @@
 // 注意: ここにはバックエンド固有のライブラリ(firebase-admin等)をimportしないでください。
 
 /** バージョン */
-export const VERSION = '0.2.2'
+export const VERSION = '0.3.0'
 
 /** Cloud Functions の呼び出しパラメータ */
 export interface FunctionParam {
@@ -41,6 +41,9 @@ export type FunctionName =
   | 'upsertUser'
   | 'getGanttDataJson'
   | 'restoreProject'
+  | 'selectTaskComments'
+  | 'upsertTaskComment'
+  | 'deleteTaskComment'
 
 /** ユーザーの権限ロール */
 export type Role = 'owner' | 'editor' | 'viewer'
@@ -236,6 +239,8 @@ export interface GanttTask {
   end: string
   /** タスクの追加属性 */
   attribute: TaskAttribute
+  /** コメント件数 */
+  commentCount?: number
 }
 
 /** ガントチャートの行並び順 */
@@ -298,6 +303,27 @@ export type GetGanttDataJson = (projectId: string, email?: string) => Promise<Ga
 
 /** プロジェクトとガントチャートデータを復元する関数の型 */
 export type RestoreProject = (data: GanttDataJson & { force?: boolean }, email?: string) => Promise<string>
+
+/** タスクコメント */
+export interface TaskComment {
+  /** コメントID */
+  id: number
+  /** タスクID */
+  taskId: number
+  /** コメント内容 */
+  content: string
+  /** 作成者email */
+  createdBy?: string
+  /** 作成日時（ISO 8601形式） */
+  createdAt?: string
+}
+
+/** タスクコメント一覧を取得する関数の型 */
+export type SelectTaskComments = (taskId: number, email?: string) => Promise<TaskComment[]>
+/** タスクコメントを作成または更新する関数の型 */
+export type UpsertTaskComment = (comment: TaskComment, email?: string) => Promise<number>
+/** タスクコメントを削除する関数の型 */
+export type DeleteTaskComment = (id: number, email?: string) => Promise<void>
 
 // --- フロントエンドとバックエンドで実装を共有しない型 ---
 

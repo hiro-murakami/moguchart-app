@@ -12,7 +12,13 @@ const selectGanttRows: SelectGanttRows = async ({ projectId, rowIds }) => {
       projectId,
       id: { in: rowIds },
     },
-    include: { tasks: true },
+    include: {
+      tasks: {
+        include: {
+          _count: { select: { taskComments: true } },
+        },
+      },
+    },
     orderBy: { order: 'asc' },
   })
   return data.map(toGanttRow)

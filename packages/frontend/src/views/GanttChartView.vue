@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import splashImage from '@/assets/splash.png'
-import CollaborationActivityLog from '@/components/CollaborationActivityLog.vue'
 import { useGanttChartView } from './composables/useGanttChartView'
 import { onMounted, onUnmounted } from 'vue'
 
@@ -39,6 +38,9 @@ const {
   canRedo,
   activeUsers,
   editLogs,
+  isCommentDialogVisible,
+  commentDialogTaskId,
+  commentDialogTaskName,
 
   // methods
   handleTaskUpdate,
@@ -76,6 +78,8 @@ const {
   undo,
   redo,
   refresh,
+  handleAddCommentFromContextMenu,
+  handleCommentUpdated,
 } = useGanttChartView()
 
 const rowCountRules = [(v: number) => (v >= 1 && v <= 10) || '1〜10の範囲で入力してください']
@@ -307,7 +311,16 @@ onUnmounted(() => {
       :task-id="taskContextMenu.taskId"
       :selected-task-ids="selectedTaskIds"
       @edit="handleEditTaskFromContextMenu"
+      @comment="handleAddCommentFromContextMenu"
       @delete="handleDeleteTaskFromContextMenu"
+    />
+
+    <!-- Task Comment Dialog -->
+    <TaskCommentDialog
+      v-model="isCommentDialogVisible"
+      :task-id="commentDialogTaskId"
+      :task-name="commentDialogTaskName"
+      @updated="handleCommentUpdated"
     />
 
     <!-- Chart Context Menu -->
