@@ -316,6 +316,10 @@ export interface TaskComment {
   content: string
   /** 作成者email */
   createdBy?: string
+  /** 作成者の表示名 */
+  createdByDisplayName?: string
+  /** 作成者のアバター画像URL */
+  createdByPhotoURL?: string | null
   /** 作成日時（ISO 8601形式） */
   createdAt?: string
 }

@@ -129,14 +129,15 @@ watch(
           <v-list-item v-for="comment in comments" :key="comment.id" class="px-0 comment-item">
             <div class="d-flex align-start" style="gap: 8px; width: 100%">
               <v-avatar size="28" color="grey-darken-1" class="mt-1 flex-shrink-0">
-                <span class="text-white text-caption font-weight-bold">
-                  {{ (comment.createdBy || '?').charAt(0).toUpperCase() }}
+                <v-img v-if="comment.createdByPhotoURL" :src="comment.createdByPhotoURL" alt="avatar" />
+                <span v-else class="text-white text-caption font-weight-bold">
+                  {{ (comment.createdByDisplayName || comment.createdBy || '?').charAt(0).toUpperCase() }}
                 </span>
               </v-avatar>
               <div style="flex: 1; min-width: 0">
                 <div class="d-flex align-center" style="gap: 8px">
                   <span class="text-caption font-weight-bold text-truncate" style="max-width: 200px">
-                    {{ comment.createdBy || '不明' }}
+                    {{ comment.createdByDisplayName || comment.createdBy || '不明' }}
                   </span>
                   <span class="text-caption text-medium-emphasis">
                     {{ formatTime(comment.createdAt) }}
