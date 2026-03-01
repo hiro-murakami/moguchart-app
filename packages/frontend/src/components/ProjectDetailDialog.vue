@@ -139,7 +139,7 @@ watch(
                 </v-window-item>
                 <v-window-item value="permissions">
                   <v-row dense class="pt-2">
-                    <v-col cols="12">
+                    <v-col cols="12" class="d-flex align-center">
                       <v-combobox
                         v-model="localOwners"
                         label="オーナー"
@@ -154,8 +154,9 @@ watch(
                         :rules="[inputRules.areMailAddresses]"
                         autocomplete="off"
                       />
+                      <HelpText text="プロジェクトに対する全権限を持つユーザーのリスト" />
                     </v-col>
-                    <v-col cols="12">
+                    <v-col cols="12" class="d-flex align-center">
                       <v-combobox
                         v-model="localEditors"
                         label="編集者"
@@ -170,8 +171,9 @@ watch(
                         :rules="[inputRules.areMailAddresses]"
                         autocomplete="off"
                       />
+                      <HelpText text="閲覧・編集権限を持つユーザーのリスト" />
                     </v-col>
-                    <v-col cols="12">
+                    <v-col cols="12" class="d-flex align-center">
                       <v-combobox
                         v-model="localViewers"
                         label="閲覧者"
@@ -185,6 +187,7 @@ watch(
                         :rules="[inputRules.areMailAddresses]"
                         autocomplete="off"
                       />
+                      <HelpText text="閲覧権限のみを持つユーザーのリスト" />
                     </v-col>
                   </v-row>
                 </v-window-item>
