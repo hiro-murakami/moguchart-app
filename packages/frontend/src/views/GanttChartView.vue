@@ -322,6 +322,7 @@ onUnmounted(() => {
       :task-id="commentDialogTaskId"
       :task-name="commentDialogTaskName"
       :is-read-only="isReadOnly"
+      :user-role="currentProject?.role"
       @updated="handleCommentUpdated"
     />
 

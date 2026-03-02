@@ -1,19 +1,23 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import type { TaskComment } from '@functions/types/shared'
+import type { TaskComment, Role } from '@functions/types/shared'
 import { selectTaskComments, upsertTaskComment, deleteTaskComment as deleteTaskCommentApi } from '@/modules/scripts'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import 'dayjs/locale/ja'
+import { useUserStore } from '@/stores/useUserStore'
 
 dayjs.extend(relativeTime)
 dayjs.locale('ja')
+
+const userStore = useUserStore()
 
 const props = defineProps<{
   modelValue: boolean
   taskId: number | null
   taskName: string
   isReadOnly?: boolean
+  userRole?: Role
 }>()
 
 const emit = defineEmits<{
@@ -70,6 +74,12 @@ const removeComment = async (commentId: number) => {
 const formatTime = (dateStr?: string) => {
   if (!dateStr) return ''
   return dayjs(dateStr).fromNow()
+}
+
+const canDeleteComment = (comment: TaskComment) => {
+  if (props.isReadOnly) return false
+  if (props.userRole === 'owner') return true
+  return comment.createdBy === userStore.currentUser?.email
 }
 
 watch(
@@ -145,7 +155,7 @@ watch(
                   </span>
                   <v-spacer />
                   <v-btn
-                    v-if="!isReadOnly"
+                    v-if="canDeleteComment(comment)"
                     icon="mdi-delete-outline"
                     variant="text"
                     size="x-small"
