@@ -32,6 +32,8 @@ const getEventDescription = (type: EditEventType, targetName?: string, isNew?: b
         return `行「${targetName}」を削除`
       case 'row_reorder':
         return '行の並び順を変更'
+      case 'comment_update':
+        return `タスク「${targetName}」のコメントを更新`
       case 'full_reload':
         return 'データを更新'
       default:
@@ -49,6 +51,8 @@ const getEventDescription = (type: EditEventType, targetName?: string, isNew?: b
       return '行を削除'
     case 'row_reorder':
       return '行の並び順を変更'
+    case 'comment_update':
+      return 'タスクのコメントを更新'
     case 'full_reload':
       return 'データを更新'
     default:

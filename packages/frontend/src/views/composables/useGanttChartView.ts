@@ -1564,7 +1564,16 @@ export const useGanttChartView = () => {
   const handleCommentUpdated = async () => {
     // コメント件数を反映するためにデータをリロード
     if (projectId.value) {
+      const rowIds: number[] = []
+      if (commentDialogTaskId.value) {
+        const row = rows.value.find((r) => r.tasks.some((t) => Number(t.id) === commentDialogTaskId.value))
+        if (row) rowIds.push(Number(row.id))
+      }
       await loadData(projectId.value)
+      publishEditEvent('comment_update', {
+        targetName: commentDialogTaskName.value,
+        rowIds: rowIds.length > 0 ? rowIds : undefined,
+      })
     }
   }
 

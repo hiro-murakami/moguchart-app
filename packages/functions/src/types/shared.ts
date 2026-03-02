@@ -338,7 +338,14 @@ export type DeleteTaskComment = (id: number, email?: string) => Promise<void>
 // --- リアルタイムコラボレーション用型定義 ---
 
 /** 編集イベントの種類 */
-export type EditEventType = 'task_upsert' | 'task_delete' | 'row_upsert' | 'row_delete' | 'row_reorder' | 'full_reload'
+export type EditEventType =
+  | 'task_upsert'
+  | 'task_delete'
+  | 'row_upsert'
+  | 'row_delete'
+  | 'row_reorder'
+  | 'full_reload'
+  | 'comment_update'
 
 /** プレゼンス情報（現在プロジェクトを開いているユーザー） */
 export interface PresenceData {
