@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import type { User, TutorialKey } from '@functions/types/shared'
+import { VERSION, type User, type TutorialKey } from '@functions/types/shared'
 import { selectUser, upsertUser } from '@/modules/scripts'
 import {
   signInWithPopup,
@@ -81,6 +81,7 @@ export const useUserStore = defineStore('user', {
               ...this.user.attribute,
               lastLoginAt: toDateTimeString(),
               photoURL: firebaseUser.photoURL,
+              appVersion: VERSION,
             }
           } else {
             this.user = {
@@ -89,6 +90,7 @@ export const useUserStore = defineStore('user', {
               attribute: {
                 lastLoginAt: toDateTimeString(),
                 photoURL: firebaseUser.photoURL,
+                appVersion: VERSION,
               },
             }
           }

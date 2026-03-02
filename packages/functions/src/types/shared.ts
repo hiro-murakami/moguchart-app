@@ -2,7 +2,7 @@
 // 注意: ここにはバックエンド固有のライブラリ(firebase-admin等)をimportしないでください。
 
 /** バージョン */
-export const VERSION = '0.3.1'
+export const VERSION = '0.3.2'
 
 /** Cloud Functions の呼び出しパラメータ */
 export interface FunctionParam {
@@ -103,6 +103,8 @@ export type UserAttribute = {
   tutorialCompleted?: Partial<Record<TutorialKey, boolean>>
   /** プロフィール画像のURL */
   photoURL?: string | null
+  /** アプリのバージョン */
+  appVersion?: string
 }
 
 export type NewTaskTemplate = {
