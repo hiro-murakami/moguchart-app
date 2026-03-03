@@ -852,10 +852,7 @@ export const useGanttChartView = () => {
     labels: [],
   })
 
-  const handleTaskDblClick = (e: CustomEvent<moguchart.TaskClickEventDetail>) => {
-    if (isReadOnly.value) return
-    const detail = e.detail
-    const taskId = String(detail.task.id)
+  const startEditingTask = (taskId: string) => {
     const row = rows.value.find((r) => r.tasks.some((t) => t.id === taskId))
     const task = row?.tasks.find((t) => t.id === taskId)
 
@@ -875,6 +872,12 @@ export const useGanttChartView = () => {
       // 他ユーザーにこのタスクを編集中であることを通知
       updateEditingTasks([task.id])
     }
+  }
+
+  const handleTaskDblClick = (e: CustomEvent<moguchart.TaskClickEventDetail>) => {
+    if (isReadOnly.value) return
+    const taskId = String(e.detail.task.id)
+    startEditingTask(taskId)
   }
 
   const saveTask = async (taskData: typeof editingTask.value) => {
@@ -1475,25 +1478,7 @@ export const useGanttChartView = () => {
     const taskId = taskContextMenu.value.taskId
     if (!taskId) return
 
-    const row = rows.value.find((r) => r.tasks.some((t) => t.id === taskId))
-    const task = row?.tasks.find((t) => t.id === taskId)
-
-    if (row && task) {
-      const taskWithAttr = task as unknown as { attribute?: TaskAttribute }
-      editingTask.value = {
-        id: task.id,
-        rowId: row.id,
-        name: task.name || '',
-        start: toDateString(task.start),
-        end: toDateString(task.end),
-        description: taskWithAttr.attribute?.description || '',
-        colorPalette: taskWithAttr.attribute?.colorPalette ? { ...taskWithAttr.attribute.colorPalette } : undefined,
-        labels: taskWithAttr.attribute?.labels ? [...taskWithAttr.attribute.labels] : [],
-      }
-      isDialogVisible.value = true
-      // 他ユーザーにこのタスクを編集中であることを通知
-      updateEditingTasks([task.id])
-    }
+    startEditingTask(taskId)
     taskContextMenu.value.visible = false
   }
 
