@@ -136,7 +136,7 @@ const getBorderStyle = (type?: string, color?: string) => {
         icon="mdi-delete"
         variant="text"
         color="error"
-        size="x-small"
+        size="small"
         tooltip="削除"
         location="top"
         @click.stop="emit('delete')"

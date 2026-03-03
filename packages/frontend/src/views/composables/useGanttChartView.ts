@@ -1488,8 +1488,11 @@ export const useGanttChartView = () => {
         end: toDateString(task.end),
         description: taskWithAttr.attribute?.description || '',
         colorPalette: taskWithAttr.attribute?.colorPalette ? { ...taskWithAttr.attribute.colorPalette } : undefined,
+        labels: taskWithAttr.attribute?.labels ? [...taskWithAttr.attribute.labels] : [],
       }
       isDialogVisible.value = true
+      // 他ユーザーにこのタスクを編集中であることを通知
+      updateEditingTasks([task.id])
     }
     taskContextMenu.value.visible = false
   }
