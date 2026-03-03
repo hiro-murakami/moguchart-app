@@ -55,8 +55,8 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
           localLabels.value = props.project.attribute.labels
             ? props.project.attribute.labels.map((l) => ({ ...l }))
             : []
-          await nextTick() // DOMの更新を待つ
-          form.value?.validate()
+          // await nextTick() // DOMの更新を待つ
+          // form.value?.validate()
         } else {
           // 新規追加モード
           localName.value = ''
@@ -69,10 +69,10 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
           localViewers.value = []
           localColorPalettes.value = []
           localLabels.value = []
-          form.value?.resetValidation()
+          // form.value?.resetValidation()
         }
       } else {
-        form.value?.resetValidation()
+        // form.value?.resetValidation()
       }
     },
   )

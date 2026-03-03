@@ -78,8 +78,13 @@ const unreadCount = computed(() => {
           <TransitionGroup name="log-item" tag="div" class="log-items">
             <div v-for="log in visibleLogs" :key="log.id" class="log-entry">
               <v-avatar :color="log.color" size="28" class="log-avatar">
-                <v-img v-if="log.avatarUrl" :src="log.avatarUrl" :alt="log.displayName" />
-                <span v-else class="text-white text-caption font-weight-bold">
+                <img
+                  v-if="log.avatarUrl"
+                  :src="log.avatarUrl"
+                  style="width: 100%; height: 100%; object-fit: cover"
+                  :alt="log.displayName"
+                />
+                <span v-if="!log.avatarUrl" class="text-white text-caption font-weight-bold">
                   {{ log.displayName.charAt(0).toUpperCase() }}
                 </span>
               </v-avatar>

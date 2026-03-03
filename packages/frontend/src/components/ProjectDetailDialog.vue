@@ -77,7 +77,7 @@ watch(
             <v-col cols="9">
               <v-window v-model="tab" style="min-height: 450px">
                 <v-window-item value="general">
-                  <v-row dense class="pt-2">
+                  <v-row density="compact" class="pt-2">
                     <v-col cols="12">
                       <v-text-field
                         v-model="localName"
@@ -138,7 +138,7 @@ watch(
                   </v-row>
                 </v-window-item>
                 <v-window-item value="permissions">
-                  <v-row dense class="pt-2">
+                  <v-row density="compact" class="pt-2">
                     <v-col cols="12" class="d-flex align-center">
                       <v-combobox
                         v-model="localOwners"
@@ -192,7 +192,7 @@ watch(
                   </v-row>
                 </v-window-item>
                 <v-window-item value="colorPalettes">
-                  <v-row dense>
+                  <v-row density="compact">
                     <v-col cols="12">
                       <v-btn
                         variant="text"
@@ -205,7 +205,7 @@ watch(
                     </v-col>
                   </v-row>
                   <div style="max-height: 400px; overflow-y: auto; overflow-x: hidden" class="pr-2">
-                    <v-row dense>
+                    <v-row density="compact">
                       <v-col v-for="(palette, i) in localColorPalettes" :key="i" cols="12">
                         <ColorPaletteInput
                           :model-value="palette"
@@ -224,7 +224,7 @@ watch(
                   </div>
                 </v-window-item>
                 <v-window-item value="labels">
-                  <v-row dense>
+                  <v-row density="compact">
                     <v-col cols="12">
                       <v-btn
                         variant="text"
@@ -237,7 +237,7 @@ watch(
                     </v-col>
                   </v-row>
                   <div style="max-height: 400px; overflow-y: auto; overflow-x: hidden" class="pr-2">
-                    <v-row dense>
+                    <v-row density="compact">
                       <v-col v-for="(label, i) in localLabels" :key="i" cols="12">
                         <LabelInput
                           :model-value="label"

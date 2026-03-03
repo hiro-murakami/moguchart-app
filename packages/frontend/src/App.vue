@@ -56,7 +56,12 @@ onUnmounted(() => {
               >
                 <template #activator="{ props: overlayProps }">
                   <v-avatar class="mr-4 cursor-pointer" v-bind="{ ...props, ...overlayProps }">
-                    <v-img :src="firebaseUser.photoURL ?? ''" />
+                    <img
+                      v-if="firebaseUser?.photoURL"
+                      :src="firebaseUser.photoURL"
+                      style="width: 100%; height: 100%; object-fit: cover"
+                      alt="Avatar"
+                    />
                   </v-avatar>
                 </template>
               </TutorialOverlay>

@@ -57,16 +57,16 @@ const emit = defineEmits<{
       <v-chip
         v-bind="props"
         :style="{
-          backgroundColor: item.raw.color,
-          color: getContrastColor(item.raw.color),
+          backgroundColor: item.color,
+          color: getContrastColor(item.color),
           borderColor: 'rgba(0,0,0,0.1)',
         }"
         variant="flat"
         size="small"
         label
-        :class="{ 'font-weight-bold': item.raw.isUnlabeled }"
+        :class="{ 'font-weight-bold': item.isUnlabeled }"
       >
-        {{ item.raw.name }}
+        {{ item.name }}
       </v-chip>
     </template>
 
@@ -74,14 +74,14 @@ const emit = defineEmits<{
       <v-list-item v-bind="props" title="">
         <template #prepend>
           <v-chip
-            :style="{ color: getContrastColor(item.raw.color) }"
-            :color="item.raw.color"
+            :style="{ color: getContrastColor(item.color) }"
+            :color="item.color"
             variant="flat"
             size="small"
             label
             class="mr-2 font-weight-bold"
           >
-            {{ item.raw.name }}
+            {{ item.name }}
           </v-chip>
         </template>
       </v-list-item>

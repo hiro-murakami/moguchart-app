@@ -27,28 +27,28 @@ const modelValue = defineModel<Label[]>({ default: () => [] })
     <template #chip="{ props, item }">
       <v-chip
         v-bind="props"
-        :color="item.raw.color"
+        :color="item.color"
         variant="flat"
         label
         size="small"
         class="font-weight-bold"
-        :style="{ color: getContrastColor(item.raw.color) }"
+        :style="{ color: getContrastColor(item.color) }"
       >
-        {{ item.raw.name }}
+        {{ item.name }}
       </v-chip>
     </template>
     <template #item="{ props, item }">
       <v-list-item v-bind="props" title="">
         <template #prepend>
           <v-chip
-            :color="item.raw.color"
+            :color="item.color"
             variant="flat"
             label
             size="small"
             class="mr-2 font-weight-bold"
-            :style="{ color: getContrastColor(item.raw.color) }"
+            :style="{ color: getContrastColor(item.color) }"
           >
-            {{ item.raw.name }}
+            {{ item.name }}
           </v-chip>
         </template>
       </v-list-item>

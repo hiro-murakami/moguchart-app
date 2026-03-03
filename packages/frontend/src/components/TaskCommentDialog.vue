@@ -140,8 +140,13 @@ watch(
           <v-list-item v-for="comment in comments" :key="comment.id" class="px-0 comment-item">
             <div class="d-flex align-start" style="gap: 8px; width: 100%">
               <v-avatar size="28" color="grey-darken-1" class="mt-1 flex-shrink-0">
-                <v-img v-if="comment.createdByPhotoURL" :src="comment.createdByPhotoURL" alt="avatar" />
-                <span v-else class="text-white text-caption font-weight-bold">
+                <img
+                  v-if="comment.createdByPhotoURL"
+                  :src="comment.createdByPhotoURL"
+                  style="width: 100%; height: 100%; object-fit: cover"
+                  alt="avatar"
+                />
+                <span v-if="!comment.createdByPhotoURL" class="text-white text-caption font-weight-bold">
                   {{ (comment.createdByDisplayName || comment.createdBy || '?').charAt(0).toUpperCase() }}
                 </span>
               </v-avatar>

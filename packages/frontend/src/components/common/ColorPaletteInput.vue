@@ -174,7 +174,7 @@ const getBorderStyle = (type?: string, color?: string) => {
     <v-expand-transition>
       <div v-show="isExpanded" class="px-2 pb-2">
         <v-divider class="mb-2" />
-        <v-row dense>
+        <v-row density="compact">
           <v-col cols="auto">
             <ColorInput v-model="color" label="文字色" min-width="120px" />
           </v-col>
@@ -195,19 +195,19 @@ const getBorderStyle = (type?: string, color?: string) => {
               min-width="131px"
             >
               <template #selection="{ item }">
-                <div class="d-flex align-center" v-if="item.raw.type !== 'none'">
+                <div class="d-flex align-center" v-if="item.type !== 'none'">
                   <div
-                    :style="`width: 60px; height: 24px; border: 1px solid rgba(var(--v-border-color), 0.38); background-repeat: repeat; background-color: ${backgroundColor || '#ffffff'}; ${moguchart.getPatternStyle({ type: item.raw.type, color: patternColor || '#000000' })}`"
+                    :style="`width: 60px; height: 24px; border: 1px solid rgba(var(--v-border-color), 0.38); background-repeat: repeat; background-color: ${backgroundColor || '#ffffff'}; ${moguchart.getPatternStyle({ type: item.type, color: patternColor || '#000000' })}`"
                   ></div>
                 </div>
                 <div v-else>なし</div>
               </template>
               <template #item="{ props, item }">
-                <v-list-item v-bind="props" :title="item.raw.type === 'none' ? 'なし' : ''">
-                  <template #prepend v-if="item.raw.type !== 'none'">
+                <v-list-item v-bind="props" :title="item.type === 'none' ? 'なし' : ''">
+                  <template #prepend v-if="item.type !== 'none'">
                     <div
                       class="mr-2"
-                      :style="`width: 60px; height: 24px; border: 1px solid rgba(var(--v-border-color), 0.38); background-repeat: repeat; background-color: ${backgroundColor || '#ffffff'}; ${moguchart.getPatternStyle({ type: item.raw.type, color: patternColor || '#000000' })}`"
+                      :style="`width: 60px; height: 24px; border: 1px solid rgba(var(--v-border-color), 0.38); background-repeat: repeat; background-color: ${backgroundColor || '#ffffff'}; ${moguchart.getPatternStyle({ type: item.type, color: patternColor || '#000000' })}`"
                     ></div>
                   </template>
                 </v-list-item>
@@ -232,19 +232,19 @@ const getBorderStyle = (type?: string, color?: string) => {
               min-width="131px"
             >
               <template #selection="{ item }">
-                <div class="d-flex align-center" v-if="item.raw.type !== 'none'">
+                <div class="d-flex align-center" v-if="item.type !== 'none'">
                   <div
-                    :style="`width: 60px; height: 24px; ${getBorderStyle(item.raw.type, borderColor || '#ffffff')} background-repeat: repeat; background-color: ${backgroundColor || '#ffffff'}; ${moguchart.getPatternStyle({ type: patternType, color: patternColor || '#000000' })}`"
+                    :style="`width: 60px; height: 24px; ${getBorderStyle(item.type, borderColor || '#ffffff')} background-repeat: repeat; background-color: ${backgroundColor || '#ffffff'}; ${moguchart.getPatternStyle({ type: patternType, color: patternColor || '#000000' })}`"
                   ></div>
                 </div>
                 <div v-else>なし</div>
               </template>
               <template #item="{ props, item }">
-                <v-list-item v-bind="props" :title="item.raw.type === 'none' ? 'なし' : ''">
-                  <template #prepend v-if="item.raw.type !== 'none'">
+                <v-list-item v-bind="props" :title="item.type === 'none' ? 'なし' : ''">
+                  <template #prepend v-if="item.type !== 'none'">
                     <div
                       class="mr-2"
-                      :style="`width: 60px; height: 24px; ${getBorderStyle(item.raw.type, borderColor || '#ffffff')} background-repeat: repeat; background-color: ${backgroundColor || '#ffffff'}; ${moguchart.getPatternStyle({ type: patternType, color: patternColor || '#000000' })}`"
+                      :style="`width: 60px; height: 24px; ${getBorderStyle(item.type, borderColor || '#ffffff')} background-repeat: repeat; background-color: ${backgroundColor || '#ffffff'}; ${moguchart.getPatternStyle({ type: patternType, color: patternColor || '#000000' })}`"
                     ></div>
                   </template>
                 </v-list-item>

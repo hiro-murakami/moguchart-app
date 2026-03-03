@@ -2,7 +2,7 @@
 import { useDiscardConfirm } from '@/composables/useConfirm'
 import inputRules from '@/modules/inputRules'
 import type { ColorPalette, EditingTaskData, Label, SimpleRowData } from '@functions/types/shared'
-import { isEqual } from 'lodash'
+import { isEqual, cloneDeep } from 'lodash'
 import { computed, ref, watch } from 'vue'
 
 const props = defineProps<{
@@ -16,13 +16,13 @@ const emit = defineEmits<{
   (e: 'save', task: EditingTaskData): void
 }>()
 
-const localTask = ref<EditingTaskData>({ ...props.task })
+const localTask = ref<EditingTaskData>(cloneDeep(props.task))
 const { confirmAndClose } = useDiscardConfirm()
 
 watch(
   () => props.task,
   (newVal) => {
-    localTask.value = { ...newVal }
+    localTask.value = cloneDeep(newVal)
   },
   { deep: true },
 )

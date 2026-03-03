@@ -61,7 +61,7 @@ const save = () => {
       <v-card-title class="pa-8 pb-0">行の編集</v-card-title>
       <v-card-text class="pa-8">
         <v-form ref="formRef" v-model="formValid" @submit.prevent>
-          <v-row dense>
+          <v-row density="compact">
             <v-col cols="12">
               <v-text-field
                 v-model="form.name"

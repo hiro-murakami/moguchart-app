@@ -50,7 +50,7 @@ const color = computed({
       </div>
 
       <div class="flex-grow-1">
-        <v-row dense>
+        <v-row density="compact">
           <v-col cols="8">
             <v-text-field
               v-model="name"
