@@ -13,6 +13,7 @@ const {
   editingTask,
   isProjectListDialogVisible,
   isReadOnly,
+  isOwner,
   editingRowId,
   editingRowName,
   editingInputStyle,
@@ -129,7 +130,7 @@ onUnmounted(() => {
           <div class="d-flex align-center">
             <span class="text-h6">{{ currentProject.name }}</span>
             <TooltipBtn
-              v-if="!isReadOnly"
+              v-if="isOwner"
               icon="mdi-pencil"
               variant="text"
               class="ml-2"

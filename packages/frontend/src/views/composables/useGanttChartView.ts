@@ -290,6 +290,7 @@ export const useGanttChartView = () => {
   })
 
   const isReadOnly = computed(() => currentRole.value === 'viewer')
+  const isOwner = computed(() => currentRole.value === 'owner')
 
   const chartOption = computed<moguchart.GanttChartOption>(() => ({
     bar: {
@@ -1950,6 +1951,7 @@ export const useGanttChartView = () => {
     isProjectListDialogVisible,
     currentRole,
     isReadOnly,
+    isOwner,
     editingRowId,
     editingRowName,
     editingInputStyle,
@@ -1961,7 +1963,6 @@ export const useGanttChartView = () => {
     pxPerDay,
     addRowCount,
     manualAddRowCount,
-
     isUnassignedTasksOpen,
     ganttChartRef,
     availableLabels,

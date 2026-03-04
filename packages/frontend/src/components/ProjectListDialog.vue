@@ -110,11 +110,11 @@ const handleFileChange = (e: Event) => {
               <TooltipBtn
                 tooltip="編集"
                 location="top"
-                :tooltip-disabled="!(item.role === 'owner' || item.role === 'editor')"
+                :tooltip-disabled="!(item.role === 'owner')"
                 icon="mdi-pencil"
                 variant="text"
                 size="small"
-                :style="{ visibility: item.role === 'owner' || item.role === 'editor' ? 'visible' : 'hidden' }"
+                :style="{ visibility: item.role === 'owner' ? 'visible' : 'hidden' }"
                 @click.stop="editProject(item)"
               />
               <TutorialOverlay
