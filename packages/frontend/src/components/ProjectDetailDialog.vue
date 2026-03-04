@@ -27,6 +27,7 @@ const {
   localViewers,
   localColorPalettes,
   localLabels,
+  allUsers,
   title,
   close,
   handleBeforeClose,
@@ -139,56 +140,24 @@ watch(
                 </v-window-item>
                 <v-window-item value="permissions">
                   <v-row density="compact" class="pt-2">
-                    <v-col cols="12" class="d-flex align-center">
-                      <v-combobox
-                        v-model="localOwners"
-                        label="オーナー"
-                        multiple
-                        chips
-                        deletable-chips
-                        closable-chips
-                        density="compact"
-                        variant="outlined"
-                        hide-details
-                        class="mb-3"
-                        :rules="[inputRules.areMailAddresses]"
-                        autocomplete="off"
-                      />
-                      <HelpText text="プロジェクトに対する全権限を持つユーザーのリスト" />
-                    </v-col>
-                    <v-col cols="12" class="d-flex align-center">
-                      <v-combobox
-                        v-model="localEditors"
-                        label="編集者"
-                        multiple
-                        chips
-                        deletable-chips
-                        closable-chips
-                        density="compact"
-                        variant="outlined"
-                        hide-details
-                        class="mb-3"
-                        :rules="[inputRules.areMailAddresses]"
-                        autocomplete="off"
-                      />
-                      <HelpText text="閲覧・編集権限を持つユーザーのリスト" />
-                    </v-col>
-                    <v-col cols="12" class="d-flex align-center">
-                      <v-combobox
-                        v-model="localViewers"
-                        label="閲覧者"
-                        multiple
-                        chips
-                        deletable-chips
-                        closable-chips
-                        density="compact"
-                        variant="outlined"
-                        hide-details
-                        :rules="[inputRules.areMailAddresses]"
-                        autocomplete="off"
-                      />
-                      <HelpText text="閲覧権限のみを持つユーザーのリスト" />
-                    </v-col>
+                    <UsersInput
+                      v-model="localOwners"
+                      label="オーナー"
+                      help-text="プロジェクトに対する全権限を持つユーザーのリスト"
+                      :users="allUsers"
+                    />
+                    <UsersInput
+                      v-model="localEditors"
+                      label="編集者"
+                      help-text="閲覧・編集権限を持つユーザーのリスト"
+                      :users="allUsers"
+                    />
+                    <UsersInput
+                      v-model="localViewers"
+                      label="閲覧者"
+                      help-text="閲覧権限のみを持つユーザーのリスト"
+                      :users="allUsers"
+                    />
                   </v-row>
                 </v-window-item>
                 <v-window-item value="colorPalettes">

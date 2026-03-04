@@ -2,7 +2,7 @@
 // 注意: ここにはバックエンド固有のライブラリ(firebase-admin等)をimportしないでください。
 
 /** バージョン */
-export const VERSION = '0.3.3'
+export const VERSION = '0.3.4'
 
 /** Cloud Functions の呼び出しパラメータ */
 export interface FunctionParam {
@@ -38,6 +38,7 @@ export type FunctionName =
   | 'upsertProject'
   | 'duplicateProject'
   | 'selectUser'
+  | 'selectUsers'
   | 'upsertUser'
   | 'getGanttDataJson'
   | 'restoreProject'
@@ -289,6 +290,8 @@ export type DuplicateProject = (
 
 /** ユーザー情報を取得する関数の型 */
 export type SelectUser = (email: string) => Promise<User | null>
+/** ユーザー一覧を取得する関数の型 */
+export type SelectUsers = (_?: any, email?: string) => Promise<User[]>
 /** ユーザー情報を作成または更新する関数の型 */
 export type UpsertUser = (user: User, email?: string) => Promise<void>
 

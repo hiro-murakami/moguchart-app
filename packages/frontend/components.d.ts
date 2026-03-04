@@ -43,6 +43,7 @@ declare module 'vue' {
     TutorialOverlay: typeof import('./src/components/common/TutorialOverlay.vue')['default']
     UnassignedTaskSidebar: typeof import('./src/components/UnassignedTaskSidebar.vue')['default']
     UserDetailDialog: typeof import('./src/components/UserDetailDialog.vue')['default']
+    UsersInput: typeof import('./src/components/common/UsersInput.vue')['default']
     ZoomControls: typeof import('./src/components/ZoomControls.vue')['default']
   }
 }
