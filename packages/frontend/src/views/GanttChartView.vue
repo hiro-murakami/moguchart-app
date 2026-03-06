@@ -81,6 +81,8 @@ const {
   refresh,
   handleAddCommentFromContextMenu,
   handleCommentUpdated,
+  handleSelectTaskFromLog,
+  handleDblClickTaskFromLog,
 } = useGanttChartView()
 
 const rowCountRules = [(v: number) => (v >= 1 && v <= 10) || '1〜10の範囲で入力してください']
@@ -364,7 +366,11 @@ onUnmounted(() => {
     <ProjectListDialog v-model="isProjectListDialogVisible" @select="setProjectId" @update="fetchProjects" />
 
     <!-- Collaboration Activity Log -->
-    <CollaborationActivityLog :logs="editLogs" />
+    <CollaborationActivityLog
+      :logs="editLogs"
+      @click-task="handleSelectTaskFromLog"
+      @dblclick-task="handleDblClickTaskFromLog"
+    />
   </div>
 </template>
 

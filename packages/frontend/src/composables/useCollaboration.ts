@@ -74,8 +74,12 @@ export interface ActivityLogEntry {
   color: string
   /** 変更内容の説明 */
   description: string
+  /** イベント種別 */
+  type: EditEventType
   /** イベント発生日時（ISO 8601形式） */
   timestamp: string
+  /** 対象のタスクID */
+  taskId?: string
 }
 
 /** プレゼンスのハートビート間隔（ミリ秒） */
@@ -232,7 +236,9 @@ export const useCollaboration = () => {
         event.payload?.targetName as string | undefined,
         event.payload?.isNew as boolean | undefined,
       ),
+      type: event.type,
       timestamp: event.timestamp,
+      taskId: event.payload?.taskId as string | undefined,
     }
   }
 

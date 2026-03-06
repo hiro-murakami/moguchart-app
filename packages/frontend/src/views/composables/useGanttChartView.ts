@@ -11,6 +11,7 @@ import {
 import { useAlert } from '@/composables/useAlert'
 import { useUndoRedo } from '@/composables/useUndoRedo'
 import { useCollaboration } from '@/composables/useCollaboration'
+import type { ActivityLogEntry } from '@/composables/useCollaboration'
 import { useConfirm } from '@/composables/useConfirm'
 import { useLoading } from '@/composables/useLoading'
 import { toDateString, toLocalDate, getContrastColor } from '@/modules/utils'
@@ -653,10 +654,12 @@ export const useGanttChartView = () => {
       }
     }
 
+    let affectedTaskId = String(data.id)
     if (data.id === 0) {
       // コピー（新規作成）の場合
       const result = await upsertGanttTasks([data])
       const newTaskId = result[0]!
+      affectedTaskId = String(newTaskId)
       pushAction({
         description: 'タスクコピー',
         undo: async () => {
@@ -696,7 +699,12 @@ export const useGanttChartView = () => {
     await loadData(projectId.value)
     // 行をまたぐ移動の場合、元の行と移動先の行の両方を差分更新対象にする
     const affectedRowIds = [...new Set([Number(e.detail.targetRowId), ...(row ? [Number(row.id)] : [])])]
-    publishEditEvent('task_upsert', { rowIds: affectedRowIds, targetName: data.name, isNew: data.id === 0 })
+    publishEditEvent('task_upsert', {
+      rowIds: affectedRowIds,
+      targetName: data.name,
+      isNew: data.id === 0,
+      taskId: affectedTaskId,
+    })
   }
 
   // --- ドラッグ＆ドロップ関連 ---
@@ -823,13 +831,46 @@ export const useGanttChartView = () => {
         },
       })
       await loadData(projectId.value)
-      publishEditEvent('task_upsert', { rowIds: [Number(targetRowId)], targetName: task.name, isNew: true })
+      publishEditEvent('task_upsert', {
+        rowIds: [Number(targetRowId)],
+        targetName: task.name,
+        isNew: true,
+        taskId: String(newTaskId),
+      })
     } catch (err) {
       console.error('Failed to drop task:', err)
       await alert({
         title: 'エラー',
         message: 'タスクの作成に失敗しました。',
       })
+    }
+  }
+
+  const handleSelectTaskFromLog = (taskId: string) => {
+    if (ganttChartRef.value && typeof ganttChartRef.value.selectTask === 'function') {
+      ganttChartRef.value.selectTask(taskId)
+    } else {
+      // Fallback in case selectTask is not directly available, though the user requested to call it.
+      selectedTaskIds.value = [taskId]
+    }
+  }
+
+  const handleDblClickTaskFromLog = (log: ActivityLogEntry) => {
+    if (!log.taskId) return
+
+    // タスクを選択状態にする
+    handleSelectTaskFromLog(log.taskId)
+
+    if (log.type === 'comment_update') {
+      const taskIdNum = Number(log.taskId)
+      const row = rows.value.find((r) => r.tasks.some((t) => Number(t.id) === taskIdNum))
+      const task = row?.tasks.find((t) => Number(t.id) === taskIdNum)
+
+      commentDialogTaskId.value = taskIdNum
+      commentDialogTaskName.value = task?.name || ''
+      isCommentDialogVisible.value = true
+    } else {
+      startEditingTask(log.taskId)
     }
   }
 
@@ -941,10 +982,12 @@ export const useGanttChartView = () => {
     // 編集中タスクの通知を解除
     updateEditingTasks([])
 
+    let affectedTaskId = String(taskData.id)
     if (!taskData.id) {
       // 新規作成
       const result = await upsertGanttTasks([data])
       const newTaskId = result[0]!
+      affectedTaskId = String(newTaskId)
       pushAction({
         description: 'タスク作成',
         undo: async () => {
@@ -994,6 +1037,7 @@ export const useGanttChartView = () => {
       rowIds: [Number(taskData.rowId)],
       targetName: taskData.name,
       isNew: !taskData.id,
+      taskId: affectedTaskId,
     })
   }
 
@@ -1562,6 +1606,7 @@ export const useGanttChartView = () => {
       publishEditEvent('comment_update', {
         targetName: commentDialogTaskName.value,
         rowIds: rowIds.length > 0 ? rowIds : undefined,
+        taskId: commentDialogTaskId.value ? String(commentDialogTaskId.value) : undefined,
       })
     }
   }
@@ -2009,6 +2054,8 @@ export const useGanttChartView = () => {
     handleTaskDragStart,
     handleTaskDragEnd,
     handleTaskDrop,
+    handleSelectTaskFromLog,
+    handleDblClickTaskFromLog,
     handleChartContextMenu,
     handleCreateNewTask,
     selectAllLabels,

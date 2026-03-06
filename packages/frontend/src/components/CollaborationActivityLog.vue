@@ -6,6 +6,11 @@ const props = defineProps<{
   logs: ActivityLogEntry[]
 }>()
 
+const emit = defineEmits<{
+  (e: 'click-task', taskId: string): void
+  (e: 'dblclick-task', log: ActivityLogEntry): void
+}>()
+
 const { isDark, isExpanded, relativeTime, visibleLogs, unreadCount } = useCollaborationActivityLog(props)
 </script>
 
@@ -43,7 +48,18 @@ const { isDark, isExpanded, relativeTime, visibleLogs, unreadCount } = useCollab
                   <span class="log-user-name">{{ log.displayName }}</span>
                   <span class="log-time">{{ relativeTime(log.timestamp) }}</span>
                 </div>
-                <div class="log-description">{{ log.description }}</div>
+                <div class="log-description">
+                  {{ log.description }}
+                  <span
+                    v-if="log.taskId"
+                    class="log-task-link text-primary ml-1"
+                    title="タスクを表示 (ダブルクリックで開く)"
+                    @click.stop="emit('click-task', log.taskId)"
+                    @dblclick.prevent.stop="emit('dblclick-task', log)"
+                  >
+                    <v-icon icon="mdi-link-variant" size="14" />
+                  </span>
+                </div>
               </div>
             </div>
           </TransitionGroup>
@@ -209,6 +225,24 @@ const { isDark, isExpanded, relativeTime, visibleLogs, unreadCount } = useCollab
   font-size: 12px;
   color: inherit;
   opacity: 0.65;
+}
+
+.log-task-link {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  padding: 2px 4px;
+  transition:
+    background-color 0.2s,
+    opacity 0.2s;
+  opacity: 0.8;
+}
+
+.log-task-link:hover {
+  background-color: rgba(var(--v-theme-primary), 0.1);
+  opacity: 1;
 }
 
 .log-more {
