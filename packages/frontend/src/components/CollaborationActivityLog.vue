@@ -49,16 +49,34 @@ const { isDark, isExpanded, relativeTime, visibleLogs, unreadCount } = useCollab
                   <span class="log-time">{{ relativeTime(log.timestamp) }}</span>
                 </div>
                 <div class="log-description">
-                  {{ log.description }}
-                  <span
-                    v-if="log.taskId"
-                    class="log-task-link text-primary ml-1"
-                    title="タスクを表示 (ダブルクリックで開く)"
-                    @click.stop="emit('click-task', log.taskId)"
-                    @dblclick.prevent.stop="emit('dblclick-task', log)"
+                  <template
+                    v-if="log.taskId && log.targetName && log.description.includes('「' + log.targetName + '」')"
                   >
-                    <v-icon icon="mdi-link-variant" size="14" />
-                  </span>
+                    {{ log.description.substring(0, log.description.indexOf('「' + log.targetName + '」') + 1)
+                    }}<span
+                      class="log-task-text-link text-primary"
+                      title="タスクを表示 (ダブルクリックで開く)"
+                      @click.stop="emit('click-task', log.taskId)"
+                      @dblclick.prevent.stop="emit('dblclick-task', log)"
+                      >{{ log.targetName }}</span
+                    >{{
+                      log.description.substring(
+                        log.description.indexOf('「' + log.targetName + '」') + 1 + log.targetName.length,
+                      )
+                    }}
+                  </template>
+                  <template v-else>
+                    {{ log.description }}
+                    <span
+                      v-if="log.taskId"
+                      class="log-task-link text-primary ml-1"
+                      title="タスクを表示 (ダブルクリックで開く)"
+                      @click.stop="emit('click-task', log.taskId)"
+                      @dblclick.prevent.stop="emit('dblclick-task', log)"
+                    >
+                      <v-icon icon="mdi-link-variant" size="14" />
+                    </span>
+                  </template>
                 </div>
               </div>
             </div>
@@ -243,6 +261,25 @@ const { isDark, isExpanded, relativeTime, visibleLogs, unreadCount } = useCollab
 .log-task-link:hover {
   background-color: rgba(var(--v-theme-primary), 0.1);
   opacity: 1;
+}
+
+.log-task-text-link {
+  cursor: pointer;
+  font-weight: 500;
+  border-radius: 4px;
+  padding: 2px 4px;
+  margin: 0 -2px;
+  transition:
+    background-color 0.2s,
+    text-decoration-color 0.2s;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-decoration-thickness: 1px;
+}
+
+.log-task-text-link:hover {
+  background-color: rgba(var(--v-theme-primary), 0.1);
+  text-decoration-color: currentColor;
 }
 
 .log-more {

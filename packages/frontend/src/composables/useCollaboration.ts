@@ -80,6 +80,8 @@ export interface ActivityLogEntry {
   timestamp: string
   /** 対象のタスクID */
   taskId?: string
+  /** 対象名（タスク名や行名など） */
+  targetName?: string
 }
 
 /** プレゼンスのハートビート間隔（ミリ秒） */
@@ -239,6 +241,7 @@ export const useCollaboration = () => {
       type: event.type,
       timestamp: event.timestamp,
       taskId: event.payload?.taskId as string | undefined,
+      targetName: event.payload?.targetName as string | undefined,
     }
   }
 
