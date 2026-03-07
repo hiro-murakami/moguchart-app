@@ -25,7 +25,8 @@
     "node": "22"
   },
   "dependencies": {
-    "@prisma/client": "^6.19.1",
+    "@prisma/adapter-mariadb": "^7.4.2",
+    "@prisma/client": "^7.4.2",
     "dayjs": "^1.11.19",
     "firebase-admin": "^13.0.2",
     "firebase-functions": "^6.3.0",
@@ -39,7 +40,7 @@
     "@types/node": "^22.9.0",
     "dotenv-cli": "^11.0.0",
     "eslint-config-prettier": "^10.1.8",
-    "prisma": "^6.19.1",
+    "prisma": "^7.4.2",
     "ts-node": "^10.9.2",
     "typescript": "~5.9.2"
   }

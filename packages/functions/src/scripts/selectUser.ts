@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client'
 import { SelectUser, UserAttribute } from '../types/shared.js'
-
-const prisma = new PrismaClient()
+import { prisma } from './common/commonFunctions'
 
 const selectUser: SelectUser = async (email: string) => {
   const user = await prisma.user.findUnique({

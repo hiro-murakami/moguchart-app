@@ -9,6 +9,7 @@
       "firebase-debug.*.log"
     ],
     "predeploy": [
+      "pnpm --filter functions prisma:generate",
       "pnpm --filter functions build"
     ]
   },

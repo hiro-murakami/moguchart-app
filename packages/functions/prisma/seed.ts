@@ -1,6 +1,8 @@
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient } from '../src/generated/prisma/client'
+import { PrismaMariaDb } from '@prisma/adapter-mariadb'
 
-const prisma = new PrismaClient()
+const adapter = new PrismaMariaDb(process.env.DATABASE_URL!)
+const prisma = new PrismaClient({ adapter })
 
 const projectId = '3f333df6-90a4-4fda-8dd3-9485d27cee36'
 

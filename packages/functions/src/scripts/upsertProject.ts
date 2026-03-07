@@ -1,11 +1,8 @@
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient } from '../generated/prisma/client'
 import type { UpsertProject } from '../types/shared'
 import { getCreateCommonColumns, getUpdateCommonColumns, prisma } from './common/commonFunctions'
 
-type PrismaTransactionClient = Omit<
-  PrismaClient,
-  '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'
->
+type PrismaTransactionClient = Omit<PrismaClient, '$connect' | '$disconnect' | '$on' | '$transaction' | '$extends'>
 
 export const _upsertProject = async (
   prismaClient: PrismaTransactionClient,

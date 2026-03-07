@@ -1,8 +1,5 @@
-import { PrismaClient } from '@prisma/client'
 import { UpsertUser } from '../types/shared'
-import { getCreateCommonColumns, getUpdateCommonColumns } from './common/commonFunctions'
-
-const prisma = new PrismaClient()
+import { getCreateCommonColumns, getUpdateCommonColumns, prisma } from './common/commonFunctions'
 
 const upsertUser: UpsertUser = async (user, email) => {
   await prisma.user.upsert({

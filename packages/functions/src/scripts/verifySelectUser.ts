@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client'
+import { prisma } from './common/commonFunctions'
 import selectUser from './selectUser'
-
-const prisma = new PrismaClient()
 
 async function main() {
   const email = `test-${Date.now()}@example.com`

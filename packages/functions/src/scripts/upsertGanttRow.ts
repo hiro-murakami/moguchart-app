@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client'
+import { Prisma } from '../generated/prisma/client'
 import type { UpsertGanttRow, GanttRow } from '../types/shared'
 import { getCreateCommonColumns, getUpdateCommonColumns, prisma } from './common/commonFunctions'
 import { fromGanttRow } from './common/converters'

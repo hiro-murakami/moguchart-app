@@ -1,13 +1,23 @@
 import * as functions from 'firebase-functions/v2'
 import { FirebaseFunction } from '../../types'
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient } from '../../generated/prisma/client'
+import { PrismaMariaDb } from '@prisma/adapter-mariadb'
 import { FunctionParam, FunctionResult, VERSION } from '../../types/shared'
 import dayjs from 'dayjs'
 
 dayjs.extend(require('dayjs/plugin/utc'))
 dayjs.extend(require('dayjs/plugin/timezone'))
 
-export const prisma = new PrismaClient()
+const adapter = new PrismaMariaDb({
+  socketPath: process.env.DATABASE_SOCKET_PATH,
+  host: process.env.DATABASE_HOST,
+  user: process.env.DATABASE_USER,
+  password: process.env.DATABASE_PASSWORD,
+  database: process.env.DATABASE_NAME,
+  connectionLimit: 5,
+  allowPublicKeyRetrieval: true,
+})
+export const prisma = new PrismaClient({ adapter })
 
 /**
  * Firebase公開用の関数を返す
@@ -42,7 +52,7 @@ export const setupFirebaseFunction = (targetFunctions: FirebaseFunction): Functi
         result.message = e.message
       })
 
-    functions.logger.log('response:', result)
+    functions.logger.log('response: ' + JSON.stringify(result))
     return result
   })
 }

@@ -1,8 +1,6 @@
-import { PrismaClient } from '@prisma/client'
+import { prisma } from './common/commonFunctions'
 import upsertUser from './upsertUser'
 import selectUser from './selectUser'
-
-const prisma = new PrismaClient()
 
 async function main() {
   const email = `test-upsert-${Date.now()}@example.com`

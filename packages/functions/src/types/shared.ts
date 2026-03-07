@@ -2,7 +2,7 @@
 // 注意: ここにはバックエンド固有のライブラリ(firebase-admin等)をimportしないでください。
 
 /** バージョン */
-export const VERSION = '0.3.6'
+export const VERSION = '0.3.7'
 
 /** Cloud Functions の呼び出しパラメータ */
 export interface FunctionParam {

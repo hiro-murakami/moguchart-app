@@ -1,4 +1,8 @@
-import { GanttRow as PrismaGanttRow, GanttTask as PrismaGanttTask, Project as PrismaProject } from '@prisma/client'
+import {
+  GanttRow as PrismaGanttRow,
+  GanttTask as PrismaGanttTask,
+  Project as PrismaProject,
+} from '../../generated/prisma/client'
 import { omit } from 'lodash'
 import type {
   GanttRow,
