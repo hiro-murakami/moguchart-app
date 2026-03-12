@@ -32,17 +32,13 @@ const { isDark, isExpanded, relativeTime, visibleLogs, unreadCount } = useCollab
         <div v-if="isExpanded" class="log-list">
           <TransitionGroup name="log-item" tag="div" class="log-items">
             <div v-for="log in visibleLogs" :key="log.id" class="log-entry">
-              <v-avatar :color="log.color" size="28" class="log-avatar">
-                <img
-                  v-if="log.avatarUrl"
-                  :src="log.avatarUrl"
-                  style="width: 100%; height: 100%; object-fit: cover"
-                  :alt="log.displayName"
-                />
-                <span v-if="!log.avatarUrl" class="text-white text-caption font-weight-bold">
-                  {{ log.displayName.charAt(0).toUpperCase() }}
-                </span>
-              </v-avatar>
+              <UserAvatar
+                :color="log.color"
+                size="28"
+                class="log-avatar"
+                :url="log.avatarUrl"
+                :name="log.displayName"
+              />
               <div class="log-content">
                 <div class="log-user-line">
                   <span class="log-user-name">{{ log.displayName }}</span>
