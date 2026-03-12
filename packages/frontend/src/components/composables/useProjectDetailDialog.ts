@@ -1,7 +1,7 @@
 import type { ColorPalette, Label, Project, User } from '@functions/types/shared'
-import { selectUsers } from '@/modules/scripts'
+// import { selectUsers } from '@/modules/scripts'
 import { isEqual } from 'lodash'
-import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import type { VForm } from 'vuetify/components'
 import { useDiscardConfirm } from '../../composables/useConfirm'
 
@@ -31,9 +31,9 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
   const localLabels = ref<Label[]>([])
   const allUsers = ref<User[]>([])
 
-  onMounted(async () => {
-    allUsers.value = await selectUsers()
-  })
+  // onMounted(async () => {
+  //   allUsers.value = await selectUsers()
+  // })
 
   const isEdit = computed(() => !!props.project)
   const title = computed(() => (isEdit.value ? 'プロジェクト編集' : 'プロジェクト追加'))
