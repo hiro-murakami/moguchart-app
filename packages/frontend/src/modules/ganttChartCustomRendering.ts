@@ -1,6 +1,64 @@
 import dayjs from 'dayjs'
 import { getContrastColor, toDateString } from '@/modules/utils'
 import * as moguchart from '@mogura/moguchart'
+import { selectTaskComments } from '@/modules/scripts'
+import type { TaskComment } from '@functions/types/shared'
+
+const commentsCache = new Map<number, { data: TaskComment[]; fetchedAt: number }>()
+
+const renderComments = (container: HTMLElement, comments: TaskComment[], count: number) => {
+  container.innerHTML = ''
+  container.style.display = 'flex'
+  container.style.flexDirection = 'column'
+  container.style.gap = '4px'
+  
+  const titleSpan = document.createElement('div')
+  titleSpan.style.fontWeight = 'bold'
+  titleSpan.style.opacity = '0.8'
+  titleSpan.textContent = `💬 コメント (${count}件)`
+  container.appendChild(titleSpan)
+  
+  // 最大5件表示
+  const displayComments = [...comments]
+    .sort((a, b) => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime())
+    .slice(-5)
+
+  displayComments.forEach((c) => {
+    const cDiv = document.createElement('div')
+    cDiv.style.opacity = '0.9'
+    cDiv.style.display = 'flex'
+    cDiv.style.flexDirection = 'column'
+    
+    const headerDiv = document.createElement('div')
+    headerDiv.style.fontSize = '10px'
+    headerDiv.style.opacity = '0.7'
+    headerDiv.style.marginBottom = '2px'
+    const name = c.createdByDisplayName || '名無し'
+    const time = c.createdAt ? dayjs(c.createdAt).format('YYYY/MM/DD HH:mm') : ''
+    headerDiv.textContent = `${name} ${time}`
+    
+    const contentDiv = document.createElement('div')
+    contentDiv.style.wordBreak = 'break-word'
+    contentDiv.style.whiteSpace = 'pre-wrap'
+    // 100文字で制限
+    const content = c.content.length > 100 ? c.content.slice(0, 100) + '...' : c.content
+    contentDiv.textContent = content
+    
+    cDiv.appendChild(headerDiv)
+    cDiv.appendChild(contentDiv)
+    container.appendChild(cDiv)
+  })
+  
+  if (comments.length > 5) {
+    const moreDiv = document.createElement('div')
+    moreDiv.style.fontSize = '10px'
+    moreDiv.style.opacity = '0.7'
+    moreDiv.style.textAlign = 'center'
+    moreDiv.style.marginTop = '2px'
+    moreDiv.textContent = `他 ${comments.length - 5} 件のコメント...`
+    container.appendChild(moreDiv)
+  }
+}
 
 /**
  * テキスト中の検索キーワードにマッチした部分をハイライト表示する。
@@ -184,9 +242,37 @@ export const tooltip = (task: moguchart.GanttTask) => {
     descDiv.style.opacity = '0.7'
     descDiv.style.marginTop = '4px'
     descDiv.style.paddingTop = '4px'
-    descDiv.style.borderTop = '1px solid #eee'
+    descDiv.style.borderTop = '1px solid rgba(128, 128, 128, 0.3)'
     descDiv.textContent = description
     container.appendChild(descDiv)
+  }
+
+  // コメント
+  const commentCount = taskWithAttr.commentCount as number | undefined
+  const taskId = Number(task.id)
+
+  if (commentCount && commentCount > 0 && !isNaN(taskId)) {
+    const commentsContainer = document.createElement('div')
+    commentsContainer.style.fontSize = '12px'
+    commentsContainer.style.marginTop = '4px'
+    commentsContainer.style.paddingTop = '4px'
+    commentsContainer.style.borderTop = '1px solid rgba(128, 128, 128, 0.3)'
+    
+    const cached = commentsCache.get(taskId)
+    if (cached && Date.now() - cached.fetchedAt < 60000) {
+      // キャッシュ（1分）を使う
+      renderComments(commentsContainer, cached.data, commentCount)
+    } else {
+      commentsContainer.textContent = `コメント読み込み中... (${commentCount}件)`
+      selectTaskComments(taskId).then((comments) => {
+        commentsCache.set(taskId, { data: comments, fetchedAt: Date.now() })
+        renderComments(commentsContainer, comments, commentCount)
+      }).catch((err) => {
+        console.error('Failed to load comments in tooltip', err)
+        commentsContainer.textContent = 'コメントの読み込みに失敗しました'
+      })
+    }
+    container.appendChild(commentsContainer)
   }
 
   return container
