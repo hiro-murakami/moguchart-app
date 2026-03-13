@@ -1,0 +1,15 @@
+rules_version = '2';
+
+// Craft rules based on data in your Firestore database
+// allow write: if firestore.get(
+//    /databases/(default)/documents/users/$(request.auth.uid)).data.isAdmin;
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /snapshots/{allPaths=**} {
+      allow read: if true; // スナップショットは推測不可能なファイル名（ハッシュ/日時等）のため読み取り操作を許可
+    }
+    match /{allPaths=**} {
+      allow read, write: if false; // デフォルトは拒否
+    }
+  }
+}

@@ -7,6 +7,7 @@ import {
   updateGanttRowOrder,
   upsertGanttRow,
   upsertGanttTasks,
+  createSnapshot,
 } from '@/modules/scripts'
 import { useAlert } from '@/composables/useAlert'
 import { useUndoRedo } from '@/composables/useUndoRedo'
@@ -1983,6 +1984,28 @@ export const useGanttChartView = () => {
     }
   }
 
+  const handleCreateSnapshot = async () => {
+    if (!projectId.value) return
+    setIsLoading(true)
+    try {
+      const downloadUrl = await createSnapshot(projectId.value)
+      window.open(downloadUrl, '_blank', 'noopener,noreferrer')
+      
+      alert({
+        title: '成功',
+        message: 'スナップショットを作成しました。ダウンロードを開始します。',
+      })
+    } catch (err) {
+      console.error('Failed to create snapshot:', err)
+      await alert({
+        title: 'エラー',
+        message: 'スナップショットの作成に失敗しました。',
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   return {
     // state
     projects,
@@ -2027,6 +2050,7 @@ export const useGanttChartView = () => {
     commentDialogTaskName,
 
     // methods
+    handleCreateSnapshot,
     handleTaskUpdate,
     handleTaskDblClick,
     saveTask,

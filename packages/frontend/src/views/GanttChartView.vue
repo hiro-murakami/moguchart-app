@@ -83,6 +83,7 @@ const {
   handleCommentUpdated,
   handleSelectTaskFromLog,
   handleDblClickTaskFromLog,
+  handleCreateSnapshot,
 } = useGanttChartView()
 
 const rowCountRules = [(v: number) => (v >= 1 && v <= 10) || '1〜10の範囲で入力してください']
@@ -140,6 +141,7 @@ onUnmounted(() => {
               tooltip="プロジェクト詳細"
             />
             <TooltipBtn icon="mdi-refresh" variant="text" @click="refresh" tooltip="最新化" class="mr-2" />
+            <TooltipBtn icon="mdi-camera" variant="text" @click="handleCreateSnapshot" tooltip="スナップショット作成" class="mr-2" />
             <RoleChip :role="currentProject.role" class="ml-2" />
           </div>
           <div v-if="currentProject.attribute.description" class="text-caption text-medium-emphasis">

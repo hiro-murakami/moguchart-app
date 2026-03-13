@@ -2,7 +2,7 @@
 // 注意: ここにはバックエンド固有のライブラリ(firebase-admin等)をimportしないでください。
 
 /** バージョン */
-export const VERSION = '0.3.8'
+export const VERSION = '0.3.9'
 
 /** Cloud Functions の呼び出しパラメータ */
 export interface FunctionParam {
@@ -45,6 +45,7 @@ export type FunctionName =
   | 'selectTaskComments'
   | 'upsertTaskComment'
   | 'deleteTaskComment'
+  | 'createSnapshot'
 
 /** ユーザーの権限ロール */
 export type Role = 'owner' | 'editor' | 'viewer'
@@ -310,6 +311,9 @@ export type GetGanttDataJson = (projectId: string, email?: string) => Promise<Ga
 
 /** プロジェクトとガントチャートデータを復元する関数の型 */
 export type RestoreProject = (data: GanttDataJson & { force?: boolean }, email?: string) => Promise<string>
+
+/** ガントチャートのスナップショットを作成しStorageURLを返す関数の型 */
+export type CreateSnapshot = (projectId: string, email?: string) => Promise<string>
 
 /** タスクコメント */
 export interface TaskComment {
