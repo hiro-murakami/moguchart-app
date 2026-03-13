@@ -142,8 +142,14 @@ onUnmounted(() => {
               @click="isProjectDetailDialogVisible = true"
               tooltip="プロジェクト詳細"
             />
-            <TooltipBtn v-if="!isSnapshotMode" icon="mdi-refresh" variant="text" @click="refresh" tooltip="最新化" class="mr-2" />
-            <TooltipBtn v-if="!isSnapshotMode" icon="mdi-camera" variant="text" @click="handleCreateSnapshot" tooltip="スナップショット作成" class="mr-2" />
+            <TooltipBtn v-if="!isSnapshotMode" icon="mdi-refresh" variant="text" @click="refresh" tooltip="最新化" />
+            <TooltipBtn
+              v-if="!isSnapshotMode"
+              icon="mdi-camera"
+              variant="text"
+              @click="handleCreateSnapshot"
+              tooltip="スナップショット作成"
+            />
             <RoleChip :role="currentProject.role" class="ml-2" />
           </div>
           <div v-if="currentProject.attribute.description" class="text-caption text-medium-emphasis">
@@ -285,7 +291,9 @@ onUnmounted(() => {
 
     <div v-else class="d-flex flex-column align-center justify-center flex-grow-1">
       <img :src="splashImage" height="500" class="splash-image mb-6" alt="MoguChart" />
-      <p v-if="!isSnapshotMode" class="text-subtitle-1 text-medium-emphasis mb-8">プロジェクトを選択してガントチャートを表示します</p>
+      <p v-if="!isSnapshotMode" class="text-subtitle-1 text-medium-emphasis mb-8">
+        プロジェクトを選択してガントチャートを表示します
+      </p>
       <v-btn
         v-if="!isSnapshotMode"
         color="primary"

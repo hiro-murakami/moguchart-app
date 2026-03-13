@@ -6,6 +6,16 @@ import type { TaskComment } from '@functions/types/shared'
 
 const commentsCache = new Map<number, { data: TaskComment[]; fetchedAt: number }>()
 
+/**
+ * スナップショットモードなどAPI不要の場面で、コメントデータをキャッシュに事前ロードする。
+ * fetchedAt を Infinity にすることでキャッシュ有効期限が切れないようにする。
+ */
+export const preloadCommentsCache = (entries: { taskId: number; comments: TaskComment[] }[]) => {
+  for (const entry of entries) {
+    commentsCache.set(entry.taskId, { data: entry.comments, fetchedAt: Infinity })
+  }
+}
+
 const renderComments = (container: HTMLElement, comments: TaskComment[], count: number) => {
   container.innerHTML = ''
   container.style.display = 'flex'

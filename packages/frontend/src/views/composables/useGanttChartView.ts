@@ -17,7 +17,7 @@ import type { ActivityLogEntry } from '@/composables/useCollaboration'
 import { useConfirm } from '@/composables/useConfirm'
 import { useLoading } from '@/composables/useLoading'
 import { toDateString, toLocalDate, getContrastColor } from '@/modules/utils'
-import { barContent, tooltip, rowHeaderContent } from '@/modules/ganttChartCustomRendering'
+import { barContent, tooltip, rowHeaderContent, preloadCommentsCache } from '@/modules/ganttChartCustomRendering'
 import { useProjectStore } from '@/stores/useProjectStore'
 import { useUserStore } from '@/stores/useUserStore'
 import type {
@@ -587,12 +587,27 @@ export const useGanttChartView = () => {
     try {
       const data = await loadSnapshot({ projectId: pId, snapshotName: sName })
       snapshotProject.value = { ...data.project, role: 'viewer' }
+
+      // スナップショットのコメントデータをキャッシュにプリロード
+      const commentEntries: { taskId: number; comments: any[] }[] = []
       
-      rows.value = data.rows.map((row) => ({
+      rows.value = data.rows.map((row: any) => ({
         ...row,
         id: row.id.toString(),
-        tasks: row.tasks.map(formatGanttTask),
+        tasks: row.tasks.map((task: any) => {
+          // taskComments が含まれている場合、commentCount を計算してキャッシュにも入れる
+          const taskComments = task.taskComments as any[] | undefined
+          if (taskComments && taskComments.length > 0) {
+            task.commentCount = taskComments.length
+            commentEntries.push({ taskId: Number(task.id), comments: taskComments })
+          }
+          return formatGanttTask(task)
+        }),
       })) as any
+
+      if (commentEntries.length > 0) {
+        preloadCommentsCache(commentEntries)
+      }
 
       chartStartStr.value = data.project.start || chartStartStr.value
       chartEndStr.value = data.project.end || chartEndStr.value

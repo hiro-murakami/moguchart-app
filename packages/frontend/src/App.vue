@@ -42,7 +42,7 @@ onUnmounted(() => {
     <v-app :theme="effectiveTheme">
       <v-app-bar color="moguChartColor">
         <img :src="headerImage" height="42" class="header-image ml-4" />
-        <span class="ml-2 text-caption font-weight-medium" style="opacity: 0.7">v{{ VERSION }}</span>
+        <span class="ml-2 text-label-large" style="opacity: 0.7">v{{ VERSION }}</span>
         <v-spacer />
         <v-btn v-if="!firebaseUser" @click="userStore.signIn"> Login </v-btn>
         <template v-else>
@@ -74,8 +74,8 @@ onUnmounted(() => {
             </v-list>
           </v-menu>
           <div class="d-flex flex-column mr-4">
-            <span class="text-subtitle-2">{{ appUser?.displayName || firebaseUser.displayName }}</span>
-            <span class="text-caption text-medium-emphasis">{{ appUser?.email || firebaseUser.email }}</span>
+            <span class="text-label-large">{{ appUser?.displayName || firebaseUser.displayName }}</span>
+            <span class="text-label-medium">{{ appUser?.email || firebaseUser.email }}</span>
           </div>
         </template>
       </v-app-bar>
