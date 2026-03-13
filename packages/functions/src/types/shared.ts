@@ -46,6 +46,7 @@ export type FunctionName =
   | 'upsertTaskComment'
   | 'deleteTaskComment'
   | 'createSnapshot'
+  | 'loadSnapshot'
 
 /** ユーザーの権限ロール */
 export type Role = 'owner' | 'editor' | 'viewer'
@@ -314,6 +315,9 @@ export type RestoreProject = (data: GanttDataJson & { force?: boolean }, email?:
 
 /** ガントチャートのスナップショットを作成しStorageURLを返す関数の型 */
 export type CreateSnapshot = (projectId: string, email?: string) => Promise<string>
+
+/** スナップショットデータを取得して返す関数の型 */
+export type LoadSnapshot = (params: { projectId: string; snapshotName: string }, email?: string) => Promise<GanttDataJson>
 
 /** タスクコメント */
 export interface TaskComment {

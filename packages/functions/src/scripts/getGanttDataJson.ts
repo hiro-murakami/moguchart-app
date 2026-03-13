@@ -1,5 +1,5 @@
 import { VERSION, type GetGanttDataJson } from '../types/shared'
-import { prisma } from './common/commonFunctions'
+import { prisma, toDateTimeString } from './common/commonFunctions'
 
 const convertDatesToIsoString = (obj: any): any => {
   if (obj === null || obj === undefined) {
@@ -18,7 +18,11 @@ const convertDatesToIsoString = (obj: any): any => {
     const newObj: any = {}
     for (const key in obj) {
       if (Object.prototype.hasOwnProperty.call(obj, key)) {
-        newObj[key] = convertDatesToIsoString(obj[key])
+        if ((key === 'start' || key === 'end') && obj[key] instanceof Date) {
+          newObj[key] = toDateTimeString(obj[key])
+        } else {
+          newObj[key] = convertDatesToIsoString(obj[key])
+        }
       }
     }
     return newObj

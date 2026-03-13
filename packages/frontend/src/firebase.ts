@@ -2,6 +2,7 @@ import { initializeApp, type FirebaseApp } from 'firebase/app'
 import { getAuth, type Auth } from 'firebase/auth'
 import { getFunctions, connectFunctionsEmulator, type Functions } from 'firebase/functions'
 import { getFirestore, connectFirestoreEmulator, type Firestore } from 'firebase/firestore'
+import { getStorage, connectStorageEmulator, type FirebaseStorage } from 'firebase/storage'
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -19,12 +20,14 @@ const app: FirebaseApp = initializeApp(firebaseConfig)
 const auth: Auth = getAuth(app)
 const functions: Functions = getFunctions(app, 'asia-northeast1')
 const db: Firestore = getFirestore(app)
+const storage: FirebaseStorage = getStorage(app)
 
 // Connect to emulators if in mock mode
 if (import.meta.env.VITE_APP_MODE === 'mock') {
   // connectAuthEmulator(auth, 'http://localhost:9099'); // 必要ならコメントアウトを外す
   connectFunctionsEmulator(functions, 'localhost', 5001)
   connectFirestoreEmulator(db, 'localhost', 8080)
+  connectStorageEmulator(storage, 'localhost', 9199)
 }
 
-export { app, auth, functions, db }
+export { app, auth, functions, db, storage }

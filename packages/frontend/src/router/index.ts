@@ -7,6 +7,10 @@ const routes = [
     component: () => import('@/views/GanttChartView.vue'),
   },
   {
+    path: '/:projectId/snapshot/:snapshotName',
+    component: () => import('@/views/GanttChartView.vue'),
+  },
+  {
     path: '/:id',
     component: () => import('@/views/GanttChartView.vue'),
   },

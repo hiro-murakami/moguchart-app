@@ -19,6 +19,7 @@ import selectTaskComments from './scripts/selectTaskComments.js'
 import upsertTaskComment from './scripts/upsertTaskComment.js'
 import deleteTaskComment from './scripts/deleteTaskComment.js'
 import createSnapshot from './scripts/createSnapshot.js'
+import loadSnapshot from './scripts/loadSnapshot.js'
 import { cleanupEditEvents } from './scripts/cleanupEditEvents.js'
 import { FirebaseFunction } from './types/index.js'
 
@@ -43,6 +44,7 @@ const functions: FirebaseFunction = {
   upsertTaskComment,
   deleteTaskComment,
   createSnapshot,
+  loadSnapshot,
 }
 
 export const gantt = {

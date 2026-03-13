@@ -8,6 +8,7 @@ import {
   upsertGanttRow,
   upsertGanttTasks,
   createSnapshot,
+  loadSnapshot,
 } from '@/modules/scripts'
 import { useAlert } from '@/composables/useAlert'
 import { useUndoRedo } from '@/composables/useUndoRedo'
@@ -28,6 +29,7 @@ import type {
   Project,
   EditingRowData,
   EditingTaskData,
+  GanttDataJson,
 } from '@functions/types/shared'
 import * as holiday_jp from '@holiday-jp/holiday_jp'
 import * as moguchart from '@mogura/moguchart'
@@ -68,9 +70,20 @@ export const useGanttChartView = () => {
 
   // --- 状態 ---
   const projectStore = useProjectStore()
-  const { projects, currentProjectId: projectId, currentRole, currentProject } = storeToRefs(projectStore)
-  const { currentTheme } = storeToRefs(userStore)
+  const { projects, currentProjectId: storeProjectId, currentRole: storeRole, currentProject: storeProject } = storeToRefs(projectStore)
   const { fetchProjects, setProjectId, clear: clearProjectStore } = projectStore
+
+  const isSnapshotMode = computed(() => !!route.params.snapshotName)
+  const snapshotProject = ref<Project | null>(null)
+
+  const projectId = computed(() =>
+    isSnapshotMode.value
+      ? ((Array.isArray(route.params.projectId) ? route.params.projectId[0] : route.params.projectId) as string)
+      : storeProjectId.value
+  )
+  const currentProject = computed(() => isSnapshotMode.value ? snapshotProject.value : storeProject.value)
+  const currentRole = computed(() => isSnapshotMode.value ? 'viewer' : storeRole.value)
+  const { currentTheme } = storeToRefs(userStore)
 
   // プロジェクト設定を保存する共通関数（debounce付き）
   const saveProjectSettings = debounce(
@@ -488,6 +501,59 @@ export const useGanttChartView = () => {
     }
   }, 1000)
 
+  // タスクの表示用フォーマット関数
+  const formatGanttTask = (task: any) => {
+    const attribute = task.attribute as TaskAttribute | undefined
+    const colorPalette = attribute?.colorPalette
+
+    let style: string | undefined = 'box-shadow: var(--task-box-shadow, 0 2px 4px rgba(0, 0, 0, 0.3)); '
+    let labelStyle: string | undefined
+    let pattern: moguchart.GanttTaskPattern | undefined
+
+    if (colorPalette) {
+      if (colorPalette.backgroundColor) {
+        style = `background-color: ${colorPalette.backgroundColor}; ${style || ''}`
+        if (!colorPalette.borderType || (colorPalette.borderType as string) === 'none') {
+          style += `border-color: ${colorPalette.backgroundColor}; `
+        }
+      }
+      if (colorPalette.color) {
+        labelStyle = `color: ${colorPalette.color}; ${labelStyle || ''}`
+      }
+      if (colorPalette.pattern) {
+        pattern = {
+          type: colorPalette.pattern.type as moguchart.BarPattern,
+          color: colorPalette.pattern.color,
+        }
+      }
+      if (colorPalette.borderType && (colorPalette.borderType as string) !== 'none') {
+        const borderStr = getBorderStyle(colorPalette.borderType, colorPalette.borderColor)
+        if (borderStr) {
+          style += borderStr
+        }
+      }
+    }
+
+    return {
+      ...task,
+      id: task.id.toString(),
+      start: toLocalDate(task.start),
+      end: toLocalDate(task.end),
+      style,
+      labelStyle,
+      pattern,
+      html:
+        attribute?.labels && attribute.labels.length > 0
+          ? `<div style="display: flex; gap: 4px; padding: 2px 4px; overflow: hidden;">${attribute?.labels
+              .map(
+                (l) =>
+                  `<span style="background-color: ${l.color}; color: ${getContrastColor(l.color)}; padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; white-space: nowrap;">${l.name}</span>`,
+              )
+              .join('')}</div>`
+          : undefined,
+    }
+  }
+
   onEditEvent((event) => {
     pendingEditEvents.push({ type: event.type, payload: event.payload })
     flushRemoteEdits()
@@ -503,57 +569,7 @@ export const useGanttChartView = () => {
       rows.value = data.map((row: GanttRow) => ({
         ...row,
         id: row.id.toString(),
-        tasks: row.tasks.map((task: GanttTask) => {
-          const attribute = (task as any).attribute as TaskAttribute | undefined
-          const colorPalette = attribute?.colorPalette
-
-          let style: string | undefined = 'box-shadow: var(--task-box-shadow, 0 2px 4px rgba(0, 0, 0, 0.3)); '
-          let labelStyle: string | undefined
-          let pattern: moguchart.GanttTaskPattern | undefined
-
-          if (colorPalette) {
-            if (colorPalette.backgroundColor) {
-              style = `background-color: ${colorPalette.backgroundColor}; ${style || ''}`
-              if (!colorPalette.borderType || (colorPalette.borderType as string) === 'none') {
-                style += `border-color: ${colorPalette.backgroundColor}; `
-              }
-            }
-            if (colorPalette.color) {
-              labelStyle = `color: ${colorPalette.color}; ${labelStyle || ''}`
-            }
-            if (colorPalette.pattern) {
-              pattern = {
-                type: colorPalette.pattern.type as moguchart.BarPattern,
-                color: colorPalette.pattern.color,
-              }
-            }
-            if (colorPalette.borderType && (colorPalette.borderType as string) !== 'none') {
-              const borderStr = getBorderStyle(colorPalette.borderType, colorPalette.borderColor)
-              if (borderStr) {
-                style += borderStr
-              }
-            }
-          }
-
-          return {
-            ...task,
-            id: task.id.toString(),
-            start: toLocalDate(task.start),
-            end: toLocalDate(task.end),
-            style,
-            labelStyle,
-            pattern,
-            html:
-              attribute?.labels && attribute.labels.length > 0
-                ? `<div style="display: flex; gap: 4px; padding: 2px 4px; overflow: hidden;">${attribute?.labels
-                    .map(
-                      (l) =>
-                        `<span style="background-color: ${l.color}; color: ${getContrastColor(l.color)}; padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; white-space: nowrap;">${l.name}</span>`,
-                    )
-                    .join('')}</div>`
-                : undefined,
-          }
-        }),
+        tasks: row.tasks.map(formatGanttTask),
       }))
     } catch (err) {
       console.error('Failed to load data:', err)
@@ -566,7 +582,34 @@ export const useGanttChartView = () => {
     }
   }
 
-  watch(projectId, async (newProjectId, oldProjectId) => {
+  const loadSnapshotData = async (pId: string, sName: string) => {
+    setIsLoading(true)
+    try {
+      const data = await loadSnapshot({ projectId: pId, snapshotName: sName })
+      snapshotProject.value = { ...data.project, role: 'viewer' }
+      
+      rows.value = data.rows.map((row) => ({
+        ...row,
+        id: row.id.toString(),
+        tasks: row.tasks.map(formatGanttTask),
+      })) as any
+
+      chartStartStr.value = data.project.start || chartStartStr.value
+      chartEndStr.value = data.project.end || chartEndStr.value
+    } catch (err) {
+      console.error('Failed to load snapshot data:', err)
+      alert({
+        title: 'エラー',
+        message: 'スナップショットの読み取りに失敗しました。',
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  watch(storeProjectId, async (newProjectId, oldProjectId) => {
+    if (isSnapshotMode.value) return // スナップショットモード時はストアの監視を無視
+    
     const project = projects.value.find((p) => p.id === newProjectId)
     if (project) {
       chartStartStr.value = project.start
@@ -595,8 +638,21 @@ export const useGanttChartView = () => {
   })
 
   watch(
+    () => route.params.snapshotName,
+    async (newSnapshotName) => {
+      if (newSnapshotName && projectId.value) {
+        clearHistory()
+        loadSnapshotData(projectId.value, newSnapshotName as string)
+      }
+    },
+    { immediate: true }
+  )
+
+  watch(
     () => userStore.user,
     async (newUser) => {
+      if (isSnapshotMode.value) return // スナップショットモードではプロジェクト読み込みや未ログイン解除を無視
+      
       if (newUser) {
         // ユーザーがログインした場合、プロジェクトリストを読み込む
         await fetchProjects()
@@ -1988,13 +2044,12 @@ export const useGanttChartView = () => {
     if (!projectId.value) return
     setIsLoading(true)
     try {
-      const downloadUrl = await createSnapshot(projectId.value)
-      window.open(downloadUrl, '_blank', 'noopener,noreferrer')
+      const snapshotName = await createSnapshot(projectId.value)
       
-      alert({
-        title: '成功',
-        message: 'スナップショットを作成しました。ダウンロードを開始します。',
+      const routeUrl = router.resolve({
+        path: `/${projectId.value}/snapshot/${snapshotName}`,
       })
+      window.open(routeUrl.href, '_blank', 'noopener,noreferrer')
     } catch (err) {
       console.error('Failed to create snapshot:', err)
       await alert({
@@ -2008,6 +2063,7 @@ export const useGanttChartView = () => {
 
   return {
     // state
+    isSnapshotMode,
     projects,
     projectId,
     rows,

@@ -23,6 +23,7 @@ import type {
   GetGanttDataJson,
   RestoreProject,
   CreateSnapshot,
+  LoadSnapshot,
   GanttDataJson,
   TaskComment,
   SelectTaskComments,
@@ -125,6 +126,10 @@ export const restoreProject: RestoreProject = (data) => {
 
 export const createSnapshot: CreateSnapshot = (projectId) => {
   return callFunction<string>('createSnapshot', projectId)
+}
+
+export const loadSnapshot: LoadSnapshot = (params) => {
+  return callFunction<GanttDataJson>('loadSnapshot', params)
 }
 
 export const selectTaskComments: SelectTaskComments = (taskId) => {

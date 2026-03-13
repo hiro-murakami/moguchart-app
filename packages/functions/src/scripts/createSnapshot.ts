@@ -48,22 +48,8 @@ const createSnapshot: CreateSnapshot = async (projectId, email) => {
     },
   })
 
-  // ダウンロード用のURLを生成
-  // エミュレータ環境では `client_email` が無いため署名付きURLの生成が失敗するのでフォールバックする
-  let downloadUrl: string
-  if (process.env.FUNCTIONS_EMULATOR === 'true' || process.env.FIREBASE_STORAGE_EMULATOR_HOST) {
-    const host = process.env.FIREBASE_STORAGE_EMULATOR_HOST || '127.0.0.1:9199'
-    downloadUrl = `http://${host}/v0/b/${bucket.name}/o/${encodeURIComponent(storagePath)}?alt=media&token=${downloadToken}`
-  } else {
-    // 本番環境：ダウンロード用のSigned URLを生成 (有効期限1時間)
-    const [url] = await file.getSignedUrl({
-      action: 'read',
-      expires: Date.now() + 60 * 60 * 1000,
-    })
-    downloadUrl = url
-  }
-
-  return downloadUrl
+  // return downloadUrl
+  return timestamp
 }
 
 export default createSnapshot
