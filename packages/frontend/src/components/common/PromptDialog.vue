@@ -89,7 +89,7 @@ defineExpose({ open })
 <template>
   <v-dialog v-model="isOpen" max-width="500" @keydown.esc="close">
     <v-card>
-      <v-card-title>{{ state.title }}</v-card-title>
+      <v-card-title class="pt-6">{{ state.title }}</v-card-title>
       <v-card-text>
         <p v-if="state.message" class="mb-4">{{ state.message }}</p>
         <v-text-field
@@ -100,6 +100,7 @@ defineExpose({ open })
           hide-details
           autofocus
           class="prompt-dialog-input"
+          autocomplete="off"
           @keydown="handleKeydown"
         />
       </v-card-text>

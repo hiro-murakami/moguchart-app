@@ -7,7 +7,7 @@ import crypto from 'node:crypto'
 
 dayjs.extend(utc)
 dayjs.extend(timezone)
-import type { CreateSnapshot } from '../types/shared.js'
+import type { CreateSnapshot, ProjectAttribute } from '../types/shared.js'
 import getGanttDataJson from './getGanttDataJson.js'
 
 const createSnapshot: CreateSnapshot = async (params, email) => {
@@ -48,9 +48,20 @@ const createSnapshot: CreateSnapshot = async (params, email) => {
     customMetadata.displayName = displayName
   }
 
+  // 自動履歴の場合、保持期間に基づいてcustomTimeを設定（GCSライフサイクルで自動削除）
+  let customTime: string | undefined
+  if (displayName?.startsWith('自動履歴')) {
+    const attribute = (ganttData.project?.attribute ?? {}) as ProjectAttribute
+    const retentionDays = attribute.historyRetentionDays
+    if (retentionDays && retentionDays > 0) {
+      customTime = dayjs().add(retentionDays, 'day').toISOString()
+    }
+  }
+
   await file.save(zipBuffer, {
     metadata: {
       contentType: 'application/zip',
+      ...(customTime ? { customTime } : {}),
       metadata: customMetadata,
     },
   })

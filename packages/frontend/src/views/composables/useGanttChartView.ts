@@ -1,3 +1,4 @@
+import dayjs from 'dayjs'
 import { DEFAULT_TASK_COLOR, UNLABELED_VALUE } from '@/modules/constants'
 import {
   deleteGanttRow,
@@ -1655,6 +1656,8 @@ export const useGanttChartView = () => {
     const { task, event } = e.detail
     event.preventDefault()
 
+    if (isReadOnly.value) return
+
     taskContextMenu.value = {
       visible: true,
       x: event.clientX,
@@ -2132,10 +2135,13 @@ export const useGanttChartView = () => {
   const handleCreateSnapshot = async () => {
     if (!projectId.value) return
 
+    const defaultName = dayjs().format('YYYYMMDD_HHmmss')
+
     const displayName = await prompt({
       title: 'スナップショットの作成',
       message: 'スナップショットに名前を付けることができます（省略可）',
       label: 'スナップショット名',
+      defaultValue: defaultName,
       confirmText: '作成',
     })
 

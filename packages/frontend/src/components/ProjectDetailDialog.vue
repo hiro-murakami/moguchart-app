@@ -28,6 +28,7 @@ const {
   localColorPalettes,
   localLabels,
   localHistoryIntervalMinutes,
+  localHistoryRetentionDays,
   allUsers,
   title,
   close,
@@ -45,6 +46,15 @@ const historyIntervalOptions = [
   { title: '6時間', value: 360 },
   { title: '12時間', value: 720 },
   { title: '24時間', value: 1440 },
+]
+
+const historyRetentionOptions = [
+  { title: 'なし（無期限）', value: 0 },
+  { title: '7日', value: 7 },
+  { title: '14日', value: 14 },
+  { title: '30日', value: 30 },
+  { title: '60日', value: 60 },
+  { title: '90日', value: 90 },
 ]
 
 const tab = ref<'general' | 'permissions' | 'colorPalettes' | 'labels'>('general')
@@ -162,6 +172,24 @@ watch(
                         <template v-slot:append>
                           <HelpText
                             text="設定した間隔が経過した後にガントチャートを変更すると、変更前の状態を自動的にスナップショットとして保存します"
+                          />
+                        </template>
+                      </v-select>
+                    </v-col>
+                    <v-col cols="12">
+                      <v-select
+                        v-model="localHistoryRetentionDays"
+                        :items="historyRetentionOptions"
+                        label="自動履歴の保持期間"
+                        density="compact"
+                        variant="outlined"
+                        hide-details="auto"
+                        :disabled="!localHistoryIntervalMinutes"
+                        class="mb-3"
+                      >
+                        <template v-slot:append>
+                          <HelpText
+                            text="自動保存されたスナップショットを指定した日数後に自動削除します。なし（無期限）の場合は削除されません"
                           />
                         </template>
                       </v-select>

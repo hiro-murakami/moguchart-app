@@ -132,6 +132,8 @@ export type ProjectAttribute = {
   newTaskTemplates?: NewTaskTemplate[]
   /** 変更履歴の自動保存インターバル（分）。0またはundefinedの場合は無効。 */
   historyIntervalMinutes?: number
+  /** 自動履歴の保持期間（日）。0またはundefinedの場合は無期限。 */
+  historyRetentionDays?: number
 }
 
 /** 行（グループ）の追加属性 */

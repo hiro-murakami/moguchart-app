@@ -30,6 +30,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
   const localColorPalettes = ref<ColorPalette[]>([])
   const localLabels = ref<Label[]>([])
   const localHistoryIntervalMinutes = ref<number>(0)
+  const localHistoryRetentionDays = ref<number>(0)
   const allUsers = ref<User[]>([])
 
   // onMounted(async () => {
@@ -63,6 +64,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
             ? props.project.attribute.labels.map((l) => ({ ...l }))
             : []
           localHistoryIntervalMinutes.value = props.project.attribute.historyIntervalMinutes || 0
+          localHistoryRetentionDays.value = props.project.attribute.historyRetentionDays || 0
           // await nextTick() // DOMの更新を待つ
           // form.value?.validate()
         } else {
@@ -78,6 +80,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
           localColorPalettes.value = []
           localLabels.value = []
           localHistoryIntervalMinutes.value = 0
+          localHistoryRetentionDays.value = 0
           // form.value?.resetValidation()
         }
       } else {
@@ -116,7 +119,8 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
       !isEqual(localViewers.value, props.project.authority?.viewers || []) ||
       !isEqual(localColorPalettes.value, originalColorPalettes) ||
       !isEqual(localLabels.value, originalLabels) ||
-      localHistoryIntervalMinutes.value !== (props.project.attribute.historyIntervalMinutes || 0)
+      localHistoryIntervalMinutes.value !== (props.project.attribute.historyIntervalMinutes || 0) ||
+      localHistoryRetentionDays.value !== (props.project.attribute.historyRetentionDays || 0)
     )
   })
 
@@ -144,6 +148,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
         colorPalettes: localColorPalettes.value,
         labels: localLabels.value,
         historyIntervalMinutes: localHistoryIntervalMinutes.value || undefined,
+        historyRetentionDays: localHistoryRetentionDays.value || undefined,
       },
       authority: {
         owners: localOwners.value,
@@ -171,6 +176,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
     localColorPalettes,
     localLabels,
     localHistoryIntervalMinutes,
+    localHistoryRetentionDays,
     allUsers,
     title,
     close,
