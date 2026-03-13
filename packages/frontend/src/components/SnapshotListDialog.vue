@@ -121,7 +121,11 @@ const close = () => {
         >
           <template #item.displayName="{ item }">
             <div class="d-flex align-center py-2">
-              <v-icon icon="mdi-camera" size="small" class="mr-2 text-medium-emphasis" />
+              <v-icon
+                :icon="item.displayName.startsWith('自動履歴') ? 'mdi-history' : 'mdi-camera'"
+                size="small"
+                class="mr-2 text-medium-emphasis"
+              />
               <span class="font-weight-medium">{{ item.displayName }}</span>
             </div>
           </template>

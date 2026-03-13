@@ -29,6 +29,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
   const localViewers = ref<string[]>([])
   const localColorPalettes = ref<ColorPalette[]>([])
   const localLabels = ref<Label[]>([])
+  const localHistoryIntervalMinutes = ref<number>(0)
   const allUsers = ref<User[]>([])
 
   // onMounted(async () => {
@@ -61,6 +62,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
           localLabels.value = props.project.attribute.labels
             ? props.project.attribute.labels.map((l) => ({ ...l }))
             : []
+          localHistoryIntervalMinutes.value = props.project.attribute.historyIntervalMinutes || 0
           // await nextTick() // DOMの更新を待つ
           // form.value?.validate()
         } else {
@@ -75,6 +77,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
           localViewers.value = []
           localColorPalettes.value = []
           localLabels.value = []
+          localHistoryIntervalMinutes.value = 0
           // form.value?.resetValidation()
         }
       } else {
@@ -112,7 +115,8 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
       !isEqual(localEditors.value, props.project.authority?.editors || []) ||
       !isEqual(localViewers.value, props.project.authority?.viewers || []) ||
       !isEqual(localColorPalettes.value, originalColorPalettes) ||
-      !isEqual(localLabels.value, originalLabels)
+      !isEqual(localLabels.value, originalLabels) ||
+      localHistoryIntervalMinutes.value !== (props.project.attribute.historyIntervalMinutes || 0)
     )
   })
 
@@ -139,6 +143,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
         description: localDescription.value,
         colorPalettes: localColorPalettes.value,
         labels: localLabels.value,
+        historyIntervalMinutes: localHistoryIntervalMinutes.value || undefined,
       },
       authority: {
         owners: localOwners.value,
@@ -165,6 +170,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
     localViewers,
     localColorPalettes,
     localLabels,
+    localHistoryIntervalMinutes,
     allUsers,
     title,
     close,

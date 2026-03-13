@@ -27,12 +27,25 @@ const {
   localViewers,
   localColorPalettes,
   localLabels,
+  localHistoryIntervalMinutes,
   allUsers,
   title,
   close,
   handleBeforeClose,
   save,
 } = useProjectDetailDialog(props, emit)
+
+const historyIntervalOptions = [
+  { title: 'なし', value: 0 },
+  { title: '5分', value: 5 },
+  { title: '15分', value: 15 },
+  { title: '30分', value: 30 },
+  { title: '1時間', value: 60 },
+  { title: '3時間', value: 180 },
+  { title: '6時間', value: 360 },
+  { title: '12時間', value: 720 },
+  { title: '24時間', value: 1440 },
+]
 
 const tab = ref<'general' | 'permissions' | 'colorPalettes' | 'labels'>('general')
 const expandedPaletteIndex = ref<number | null>(null)
@@ -135,6 +148,23 @@ watch(
                           <HelpText text="ONにすると全てのユーザーが参照できるようになります" />
                         </template>
                       </v-checkbox>
+                    </v-col>
+                    <v-col cols="12">
+                      <v-select
+                        v-model="localHistoryIntervalMinutes"
+                        :items="historyIntervalOptions"
+                        label="変更履歴の自動保存"
+                        density="compact"
+                        variant="outlined"
+                        hide-details="auto"
+                        class="mb-3"
+                      >
+                        <template v-slot:append>
+                          <HelpText
+                            text="設定した間隔が経過した後にガントチャートを変更すると、変更前の状態を自動的にスナップショットとして保存します"
+                          />
+                        </template>
+                      </v-select>
                     </v-col>
                   </v-row>
                 </v-window-item>

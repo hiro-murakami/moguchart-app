@@ -10,6 +10,8 @@ import {
   createSnapshot,
   loadSnapshot,
 } from '@/modules/scripts'
+import { db } from '@/firebase'
+import { doc, getDoc, setDoc } from 'firebase/firestore'
 import { useAlert } from '@/composables/useAlert'
 import { useUndoRedo } from '@/composables/useUndoRedo'
 import { useCollaboration } from '@/composables/useCollaboration'
@@ -69,6 +71,61 @@ export const useGanttChartView = () => {
 
   const isUnassignedTasksOpen = ref(false)
   const isSnapshotListDialogVisible = ref(false)
+
+  // --- 自動スナップショット（変更履歴）---
+  /** 最後に自動スナップショットを保存した時刻のメモリキャッシュ */
+  let autoSnapshotLastAtCache: string | null = null
+  /** キャッシュが初期化済みかどうか */
+  let autoSnapshotCacheInitialized = false
+
+  /**
+   * インターバル経過後の変更であれば、変更前のスナップショットを自動保存する。
+   * fire-and-forget で呼び出し、UIをブロックしない。
+   */
+  const maybeAutoSnapshot = async () => {
+    try {
+      const intervalMinutes = currentProject.value?.attribute?.historyIntervalMinutes
+      if (!intervalMinutes || intervalMinutes <= 0) return
+      if (!projectId.value || isSnapshotMode.value) return
+
+      const projectDocRef = doc(db, 'projects', projectId.value)
+
+      // 初回のみ Firestore からキャッシュを読み込む
+      if (!autoSnapshotCacheInitialized) {
+        try {
+          const snap = await getDoc(projectDocRef)
+          autoSnapshotLastAtCache = snap.data()?.autoSnapshotLastAt || null
+        } catch {
+          // Firestore 読み込み失敗時はキャッシュなしで続行
+        }
+        autoSnapshotCacheInitialized = true
+      }
+
+      const now = Date.now()
+      const intervalMs = intervalMinutes * 60 * 1000
+
+      if (autoSnapshotLastAtCache) {
+        const lastAt = new Date(autoSnapshotLastAtCache).getTime()
+        if (now - lastAt < intervalMs) return
+      }
+
+      // 先に Firestore のタイムスタンプを更新（他ユーザーとの重複防止）
+      const nowIso = new Date().toISOString()
+      autoSnapshotLastAtCache = nowIso
+      try {
+        await setDoc(projectDocRef, { autoSnapshotLastAt: nowIso }, { merge: true })
+      } catch {
+        // Firestore 書き込み失敗でもスナップショット作成は試みる
+      }
+
+      // バックグラウンドでスナップショットを作成
+      createSnapshot({ projectId: projectId.value, displayName: '自動履歴' }).catch((err) => {
+        console.warn('[AutoSnapshot] Failed to create auto snapshot:', err)
+      })
+    } catch (err) {
+      console.warn('[AutoSnapshot] Error in maybeAutoSnapshot:', err)
+    }
+  }
 
   // --- 状態 ---
   const projectStore = useProjectStore()
@@ -698,6 +755,8 @@ export const useGanttChartView = () => {
       return
     }
 
+    maybeAutoSnapshot()
+
     const data = {
       id: e.detail.mode === 'copy' ? 0 : Number(e.detail.id),
       rowId: Number(e.detail.targetRowId),
@@ -998,6 +1057,8 @@ export const useGanttChartView = () => {
   }
 
   const saveTask = async (taskData: typeof editingTask.value) => {
+    maybeAutoSnapshot()
+
     // 新規作成の場合、アニメーション用の楽観的UI更新を行う
     if (!taskData.id) {
       const tempId = -Date.now()
@@ -1117,6 +1178,8 @@ export const useGanttChartView = () => {
   }
 
   const execDeleteTasksWithAnimation = async (taskIds: string[]) => {
+    maybeAutoSnapshot()
+
     // Undo用に削除前のタスクデータを保持
     const deletedTasks: { taskData: any; rowId: string }[] = []
     for (const taskId of taskIds) {
@@ -1211,6 +1274,8 @@ export const useGanttChartView = () => {
   }
 
   const handleRowReordered = async (e: CustomEvent<moguchart.RowReorderEventDetail>) => {
+    maybeAutoSnapshot()
+
     setIsLoading(true)
     try {
       // Undo用に並び替え前の順序を保持
@@ -1258,6 +1323,8 @@ export const useGanttChartView = () => {
 
   // --- 行追加関連 ---
   const handleAddRow = async (index?: number, count: number = 1) => {
+    maybeAutoSnapshot()
+
     setIsLoading(true)
     try {
       const targetIndex = index ?? rows.value.length
@@ -1460,6 +1527,8 @@ export const useGanttChartView = () => {
   }
 
   const saveRow = async (data: { id: number; name: string; description?: string }) => {
+    maybeAutoSnapshot()
+
     const row = rows.value.find((r) => Number(r.id) === data.id)
     if (!row) return
 
@@ -1849,6 +1918,8 @@ export const useGanttChartView = () => {
   // --- 行削除関連 ---
 
   const deleteRow = async (rowIds: string[]) => {
+    maybeAutoSnapshot()
+
     // Undo用に削除前の行データ（タスク含む）を保持
     const deletedRowsData = rowIds
       .map((rowId) => {

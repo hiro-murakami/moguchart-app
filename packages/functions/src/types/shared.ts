@@ -130,6 +130,8 @@ export type ProjectAttribute = {
   labels?: Label[]
   /** 新規タスクテンプレート一覧 */
   newTaskTemplates?: NewTaskTemplate[]
+  /** 変更履歴の自動保存インターバル（分）。0またはundefinedの場合は無効。 */
+  historyIntervalMinutes?: number
 }
 
 /** 行（グループ）の追加属性 */
