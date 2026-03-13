@@ -27,7 +27,10 @@ const createSnapshot: CreateSnapshot = async (params, email) => {
   
   // Zip圧縮 (メモリ上で作成)
   const zip = new AdmZip()
-  const safeProjectName = projectName.replace(/[^a-zA-Z0-9]/g, '_')
+  const safeProjectName = projectName
+    .replace(/[\/\\:*?"<>|]/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_|_$/g, '')
   const fileName = `${safeProjectName}_snapshot.json`
   zip.addFile(fileName, Buffer.from(jsonString, 'utf8'))
   const zipBuffer = zip.toBuffer()

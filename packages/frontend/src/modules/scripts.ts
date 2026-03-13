@@ -31,6 +31,8 @@ import type {
   DeleteTaskComment,
   ListSnapshots,
   SnapshotInfo,
+  GetSnapshotDownloadUrl,
+  DeleteSnapshot,
 } from '@functions/types/shared'
 import { VERSION } from '@functions/types/shared'
 import { httpsCallable } from 'firebase/functions'
@@ -148,4 +150,12 @@ export const deleteTaskComment: DeleteTaskComment = (id) => {
 
 export const listSnapshots: ListSnapshots = (projectId) => {
   return callFunction<SnapshotInfo[]>('listSnapshots', projectId)
+}
+
+export const getSnapshotDownloadUrl: GetSnapshotDownloadUrl = (params) => {
+  return callFunction<string>('getSnapshotDownloadUrl', params)
+}
+
+export const deleteSnapshot: DeleteSnapshot = (params) => {
+  return callFunction<void>('deleteSnapshot', params)
 }

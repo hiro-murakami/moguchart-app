@@ -48,6 +48,8 @@ export type FunctionName =
   | 'createSnapshot'
   | 'loadSnapshot'
   | 'listSnapshots'
+  | 'getSnapshotDownloadUrl'
+  | 'deleteSnapshot'
 
 /** ユーザーの権限ロール */
 export type Role = 'owner' | 'editor' | 'viewer'
@@ -347,6 +349,18 @@ export interface SnapshotInfo {
 
 /** スナップショット一覧を取得する関数の型 */
 export type ListSnapshots = (projectId: string, email?: string) => Promise<SnapshotInfo[]>
+
+/** スナップショットのダウンロードURLを取得する関数の型 */
+export type GetSnapshotDownloadUrl = (
+  params: { projectId: string; snapshotName: string },
+  email?: string,
+) => Promise<string>
+
+/** スナップショットを削除する関数の型 */
+export type DeleteSnapshot = (
+  params: { projectId: string; snapshotName: string },
+  email?: string,
+) => Promise<void>
 
 /** タスクコメント */
 export interface TaskComment {

@@ -119,10 +119,12 @@ export const useGanttChartView = () => {
         // Firestore 書き込み失敗でもスナップショット作成は試みる
       }
 
-      // バックグラウンドでスナップショットを作成
-      createSnapshot({ projectId: projectId.value, displayName: '自動履歴' }).catch((err) => {
+      // スナップショットを作成（変更前のDB状態を確保するためawaitする）
+      try {
+        await createSnapshot({ projectId: projectId.value, displayName: '自動履歴' })
+      } catch (err) {
         console.warn('[AutoSnapshot] Failed to create auto snapshot:', err)
-      })
+      }
     } catch (err) {
       console.warn('[AutoSnapshot] Error in maybeAutoSnapshot:', err)
     }
@@ -756,7 +758,7 @@ export const useGanttChartView = () => {
       return
     }
 
-    maybeAutoSnapshot()
+    await maybeAutoSnapshot()
 
     const data = {
       id: e.detail.mode === 'copy' ? 0 : Number(e.detail.id),
@@ -1058,7 +1060,7 @@ export const useGanttChartView = () => {
   }
 
   const saveTask = async (taskData: typeof editingTask.value) => {
-    maybeAutoSnapshot()
+    await maybeAutoSnapshot()
 
     // 新規作成の場合、アニメーション用の楽観的UI更新を行う
     if (!taskData.id) {
@@ -1179,7 +1181,7 @@ export const useGanttChartView = () => {
   }
 
   const execDeleteTasksWithAnimation = async (taskIds: string[]) => {
-    maybeAutoSnapshot()
+    await maybeAutoSnapshot()
 
     // Undo用に削除前のタスクデータを保持
     const deletedTasks: { taskData: any; rowId: string }[] = []
@@ -1275,7 +1277,7 @@ export const useGanttChartView = () => {
   }
 
   const handleRowReordered = async (e: CustomEvent<moguchart.RowReorderEventDetail>) => {
-    maybeAutoSnapshot()
+    await maybeAutoSnapshot()
 
     setIsLoading(true)
     try {
@@ -1324,7 +1326,7 @@ export const useGanttChartView = () => {
 
   // --- 行追加関連 ---
   const handleAddRow = async (index?: number, count: number = 1) => {
-    maybeAutoSnapshot()
+    await maybeAutoSnapshot()
 
     setIsLoading(true)
     try {
@@ -1528,7 +1530,7 @@ export const useGanttChartView = () => {
   }
 
   const saveRow = async (data: { id: number; name: string; description?: string }) => {
-    maybeAutoSnapshot()
+    await maybeAutoSnapshot()
 
     const row = rows.value.find((r) => Number(r.id) === data.id)
     if (!row) return
@@ -1921,7 +1923,7 @@ export const useGanttChartView = () => {
   // --- 行削除関連 ---
 
   const deleteRow = async (rowIds: string[]) => {
-    maybeAutoSnapshot()
+    await maybeAutoSnapshot()
 
     // Undo用に削除前の行データ（タスク含む）を保持
     const deletedRowsData = rowIds
