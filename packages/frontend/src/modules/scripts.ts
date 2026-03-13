@@ -29,6 +29,8 @@ import type {
   SelectTaskComments,
   UpsertTaskComment,
   DeleteTaskComment,
+  ListSnapshots,
+  SnapshotInfo,
 } from '@functions/types/shared'
 import { VERSION } from '@functions/types/shared'
 import { httpsCallable } from 'firebase/functions'
@@ -124,8 +126,8 @@ export const restoreProject: RestoreProject = (data) => {
   return callFunction<string>('restoreProject', data)
 }
 
-export const createSnapshot: CreateSnapshot = (projectId) => {
-  return callFunction<string>('createSnapshot', projectId)
+export const createSnapshot: CreateSnapshot = (params) => {
+  return callFunction<string>('createSnapshot', params)
 }
 
 export const loadSnapshot: LoadSnapshot = (params) => {
@@ -142,4 +144,8 @@ export const upsertTaskComment: UpsertTaskComment = (comment) => {
 
 export const deleteTaskComment: DeleteTaskComment = (id) => {
   return callFunction<void>('deleteTaskComment', id)
+}
+
+export const listSnapshots: ListSnapshots = (projectId) => {
+  return callFunction<SnapshotInfo[]>('listSnapshots', projectId)
 }

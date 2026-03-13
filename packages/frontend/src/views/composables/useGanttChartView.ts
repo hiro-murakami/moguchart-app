@@ -15,6 +15,7 @@ import { useUndoRedo } from '@/composables/useUndoRedo'
 import { useCollaboration } from '@/composables/useCollaboration'
 import type { ActivityLogEntry } from '@/composables/useCollaboration'
 import { useConfirm } from '@/composables/useConfirm'
+import { usePrompt } from '@/composables/usePrompt'
 import { useLoading } from '@/composables/useLoading'
 import { toDateString, toLocalDate, getContrastColor } from '@/modules/utils'
 import { barContent, tooltip, rowHeaderContent, preloadCommentsCache } from '@/modules/ganttChartCustomRendering'
@@ -67,6 +68,7 @@ export const useGanttChartView = () => {
   const manualAddRowCount = ref(1)
 
   const isUnassignedTasksOpen = ref(false)
+  const isSnapshotListDialogVisible = ref(false)
 
   // --- 状態 ---
   const projectStore = useProjectStore()
@@ -342,6 +344,7 @@ export const useGanttChartView = () => {
   const alert = useAlert()
   const { setIsLoading } = useLoading()
   const confirm = useConfirm()
+  const prompt = usePrompt()
   const { canUndo, canRedo, isUndoRedoing, pushAction, undo: _undo, redo: _redo, clearHistory } = useUndoRedo()
 
   // --- リアルタイムコラボレーション ---
@@ -2057,9 +2060,23 @@ export const useGanttChartView = () => {
 
   const handleCreateSnapshot = async () => {
     if (!projectId.value) return
+
+    const displayName = await prompt({
+      title: 'スナップショットの作成',
+      message: 'スナップショットに名前を付けることができます（省略可）',
+      label: 'スナップショット名',
+      confirmText: '作成',
+    })
+
+    // キャンセルされた場合
+    if (displayName === null) return
+
     setIsLoading(true)
     try {
-      const snapshotName = await createSnapshot(projectId.value)
+      const snapshotName = await createSnapshot({
+        projectId: projectId.value,
+        displayName: displayName || undefined,
+      })
       
       const routeUrl = router.resolve({
         path: `/${projectId.value}/snapshot/${snapshotName}`,
@@ -2119,6 +2136,7 @@ export const useGanttChartView = () => {
     isCommentDialogVisible,
     commentDialogTaskId,
     commentDialogTaskName,
+    isSnapshotListDialogVisible,
 
     // methods
     handleCreateSnapshot,

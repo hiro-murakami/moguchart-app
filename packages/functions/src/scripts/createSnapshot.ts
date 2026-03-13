@@ -10,7 +10,9 @@ dayjs.extend(timezone)
 import type { CreateSnapshot } from '../types/shared.js'
 import getGanttDataJson from './getGanttDataJson.js'
 
-const createSnapshot: CreateSnapshot = async (projectId, email) => {
+const createSnapshot: CreateSnapshot = async (params, email) => {
+  const { projectId, displayName } = params
+
   if (!projectId) {
     throw new Error('Project ID is required')
   }
@@ -39,12 +41,17 @@ const createSnapshot: CreateSnapshot = async (projectId, email) => {
 
   const downloadToken = crypto.randomUUID()
 
+  const customMetadata: Record<string, string> = {
+    firebaseStorageDownloadTokens: downloadToken,
+  }
+  if (displayName) {
+    customMetadata.displayName = displayName
+  }
+
   await file.save(zipBuffer, {
     metadata: {
       contentType: 'application/zip',
-      metadata: {
-        firebaseStorageDownloadTokens: downloadToken,
-      },
+      metadata: customMetadata,
     },
   })
 

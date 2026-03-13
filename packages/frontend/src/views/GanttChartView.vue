@@ -43,6 +43,8 @@ const {
   isCommentDialogVisible,
   commentDialogTaskId,
   commentDialogTaskName,
+  isSnapshotListDialogVisible,
+  projectId,
 
   // methods
   handleTaskUpdate,
@@ -149,6 +151,13 @@ onUnmounted(() => {
               variant="text"
               @click="handleCreateSnapshot"
               tooltip="スナップショット作成"
+            />
+            <TooltipBtn
+              v-if="!isSnapshotMode"
+              icon="mdi-image-multiple"
+              variant="text"
+              @click="isSnapshotListDialogVisible = true"
+              tooltip="スナップショット一覧"
             />
             <RoleChip :role="currentProject.role" class="ml-2" />
           </div>
@@ -380,6 +389,13 @@ onUnmounted(() => {
       :logs="editLogs"
       @click-task="handleSelectTaskFromLog"
       @dblclick-task="handleDblClickTaskFromLog"
+    />
+
+    <!-- Snapshot List Dialog -->
+    <SnapshotListDialog
+      v-if="projectId"
+      v-model="isSnapshotListDialogVisible"
+      :project-id="projectId"
     />
   </div>
 </template>

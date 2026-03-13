@@ -2,7 +2,7 @@
 // 注意: ここにはバックエンド固有のライブラリ(firebase-admin等)をimportしないでください。
 
 /** バージョン */
-export const VERSION = '0.3.9'
+export const VERSION = '0.4.0'
 
 /** Cloud Functions の呼び出しパラメータ */
 export interface FunctionParam {
@@ -47,6 +47,7 @@ export type FunctionName =
   | 'deleteTaskComment'
   | 'createSnapshot'
   | 'loadSnapshot'
+  | 'listSnapshots'
 
 /** ユーザーの権限ロール */
 export type Role = 'owner' | 'editor' | 'viewer'
@@ -313,11 +314,35 @@ export type GetGanttDataJson = (projectId: string, email?: string) => Promise<Ga
 /** プロジェクトとガントチャートデータを復元する関数の型 */
 export type RestoreProject = (data: GanttDataJson & { force?: boolean }, email?: string) => Promise<string>
 
+/** スナップショット作成パラメータ */
+export interface CreateSnapshotParams {
+  /** プロジェクトID */
+  projectId: string
+  /** スナップショットの表示名（省略時はタイムスタンプ） */
+  displayName?: string
+}
+
 /** ガントチャートのスナップショットを作成しStorageURLを返す関数の型 */
-export type CreateSnapshot = (projectId: string, email?: string) => Promise<string>
+export type CreateSnapshot = (params: CreateSnapshotParams, email?: string) => Promise<string>
 
 /** スナップショットデータを取得して返す関数の型 */
-export type LoadSnapshot = (params: { projectId: string; snapshotName: string }, email?: string) => Promise<GanttDataJson>
+export type LoadSnapshot = (
+  params: { projectId: string; snapshotName: string },
+  email?: string,
+) => Promise<GanttDataJson>
+
+/** スナップショット情報 */
+export interface SnapshotInfo {
+  /** スナップショット名（タイムスタンプ） */
+  name: string
+  /** 作成日時（ISO 8601形式） */
+  createdAt: string
+  /** ユーザーが指定した表示名 */
+  displayName?: string
+}
+
+/** スナップショット一覧を取得する関数の型 */
+export type ListSnapshots = (projectId: string, email?: string) => Promise<SnapshotInfo[]>
 
 /** タスクコメント */
 export interface TaskComment {
