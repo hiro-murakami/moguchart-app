@@ -1,5 +1,6 @@
 import type { RestoreProject } from '../types/shared'
 import { getCreateCommonColumns, getUpdateCommonColumns, prisma } from './common/commonFunctions'
+import AdmZip from 'adm-zip'
 
 // 依存関係のIDを書き換えるためのヘルパー
 const updateDependencies = (attribute: any, taskIdMap: Map<number, number>): any => {
@@ -18,7 +19,24 @@ const updateDependencies = (attribute: any, taskIdMap: Map<number, number>): any
 }
 
 const restoreProject: RestoreProject = async (data, email) => {
-  const { project, rows, force } = data
+  let projectData: any
+
+  if ('zipBase64' in data && data.zipBase64) {
+    // zipBase64が含まれている場合はzip展開してJSONを取り出す
+    const zipBuffer = Buffer.from(data.zipBase64, 'base64')
+    const zip = new AdmZip(zipBuffer)
+    const entries = zip.getEntries()
+    const jsonEntry = entries.find((e) => e.entryName.endsWith('.json'))
+    if (!jsonEntry) {
+      throw new Error('zipファイル内にJSONファイルが見つかりませんでした')
+    }
+    const jsonString = jsonEntry.getData().toString('utf8')
+    projectData = JSON.parse(jsonString)
+  } else {
+    projectData = data
+  }
+
+  const { project, rows, force } = { ...projectData, force: data.force }
 
   return await prisma.$transaction(async (tx) => {
     // 1. プロジェクトの作成または更新

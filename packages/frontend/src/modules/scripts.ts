@@ -21,6 +21,7 @@ import type {
   DuplicateProject,
   User,
   GetGanttDataJson,
+  DownloadProjectZip,
   RestoreProject,
   CreateSnapshot,
   LoadSnapshot,
@@ -122,6 +123,10 @@ export const upsertUser: UpsertUser = (user) => {
 
 export const getGanttDataJson: GetGanttDataJson = (projectId) => {
   return callFunction<GanttDataJson>('getGanttDataJson', projectId)
+}
+
+export const downloadProjectZip: DownloadProjectZip = (projectId) => {
+  return callFunction<string>('downloadProjectZip', projectId)
 }
 
 export const restoreProject: RestoreProject = (data) => {

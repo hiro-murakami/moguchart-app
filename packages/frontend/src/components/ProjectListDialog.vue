@@ -61,7 +61,7 @@ const handleFileChange = (e: Event) => {
       <v-card-title class="d-flex justify-space-between align-center pt-6 px-6 pb-4">
         <span>プロジェクト一覧</span>
         <div>
-          <input ref="fileInput" type="file" accept=".json" style="display: none" @change="handleFileChange" />
+          <input ref="fileInput" type="file" accept=".json,.zip" style="display: none" @change="handleFileChange" />
           <v-btn
             color="secondary"
             prepend-icon="mdi-upload"
@@ -151,6 +151,7 @@ const handleFileChange = (e: Event) => {
                 icon="mdi-delete"
                 variant="text"
                 size="small"
+                color="error"
                 :style="{ visibility: item.role === 'owner' ? 'visible' : 'hidden' }"
                 @click.stop="deleteProject(item)"
               />

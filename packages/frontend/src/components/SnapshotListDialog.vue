@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import TooltipBtn from './common/TooltipBtn.vue'
 import { useSnapshotListDialog } from './composables/useSnapshotListDialog'
 
 const props = defineProps<{
@@ -58,27 +59,30 @@ const {
           </template>
           <template #item.actions="{ item }">
             <div class="d-flex">
-              <v-btn
+              <TooltipBtn
                 :icon="copiedName === item.name ? 'mdi-check' : 'mdi-content-copy'"
                 :color="copiedName === item.name ? 'success' : undefined"
+                :tooltip="copiedName === item.name ? 'コピーしました' : 'URLをコピー'"
                 variant="text"
                 size="small"
                 density="comfortable"
                 @click="(e: Event) => copyUrl(item, e)"
               />
-              <v-btn
+              <TooltipBtn
                 :icon="downloadingName === item.name ? 'mdi-loading' : 'mdi-download'"
                 :class="{ 'spin-animation': downloadingName === item.name }"
                 :disabled="downloadingName !== null"
+                tooltip="ダウンロード"
                 variant="text"
                 size="small"
                 density="comfortable"
                 @click="(e: Event) => downloadSnapshot(item, e)"
               />
-              <v-btn
+              <TooltipBtn
                 :icon="deletingName === item.name ? 'mdi-loading' : 'mdi-delete'"
                 :class="{ 'spin-animation': deletingName === item.name }"
                 :disabled="deletingName !== null"
+                tooltip="削除"
                 color="error"
                 variant="text"
                 size="small"

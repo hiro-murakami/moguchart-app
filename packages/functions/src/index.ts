@@ -14,6 +14,7 @@ import selectUser from './scripts/selectUser.js'
 import selectUsers from './scripts/selectUsers.js'
 import upsertUser from './scripts/upsertUser.js'
 import getGanttDataJson from './scripts/getGanttDataJson.js'
+import downloadProjectZip from './scripts/downloadProjectZip.js'
 import restoreProject from './scripts/restoreProject.js'
 import selectTaskComments from './scripts/selectTaskComments.js'
 import upsertTaskComment from './scripts/upsertTaskComment.js'
@@ -42,6 +43,7 @@ const functions: FirebaseFunction = {
   selectUsers,
   upsertUser,
   getGanttDataJson,
+  downloadProjectZip,
   restoreProject,
   selectTaskComments,
   upsertTaskComment,

@@ -1,7 +1,7 @@
 import {
   deleteProject as deleteProjectScript,
   duplicateProject as duplicateProjectScript,
-  getGanttDataJson,
+  downloadProjectZip,
   restoreProject as restoreProjectScript,
 } from '@/modules/scripts'
 import { useConfirm } from '@/composables/useConfirm'
@@ -154,15 +154,32 @@ export const useProjectListDialog = (
     isProjectDetailDialogVisible.value = true
   }
 
-  const restoreProjectFromFile = async (file: File) => {
-    restoring.value = true
-    try {
+  const readRestoreData = async (file: File) => {
+    const isZip = file.name.endsWith('.zip')
+    if (isZip) {
+      // zipファイルの場合はBase64に変換してバックエンドで展開
+      const arrayBuffer = await file.arrayBuffer()
+      const bytes = new Uint8Array(arrayBuffer)
+      let binary = ''
+      for (let i = 0; i < bytes.length; i++) {
+        binary += String.fromCharCode(bytes[i]!)
+      }
+      return { zipBase64: btoa(binary) }
+    } else {
+      // JSONファイルの場合は従来通りパース
       const text = await file.text()
       const data = JSON.parse(text)
-
       if (!data.project || !data.rows) {
         throw new Error('Invalid backup file format')
       }
+      return data
+    }
+  }
+
+  const restoreProjectFromFile = async (file: File) => {
+    restoring.value = true
+    try {
+      const data = await readRestoreData(file)
 
       await restoreProjectScript(data)
 
@@ -180,8 +197,7 @@ export const useProjectListDialog = (
         })
         if (confirmed) {
           try {
-            const text = await file.text()
-            const data = JSON.parse(text)
+            const data = await readRestoreData(file)
             await restoreProjectScript({ ...data, force: true })
             snackbar({
               message: 'プロジェクトを復元しました。',
@@ -212,15 +228,21 @@ export const useProjectListDialog = (
     downloading.value = true
 
     try {
-      const data = await getGanttDataJson(project.id)
-      const blob = new Blob([JSON.stringify(data, null, 2)], {
-        type: 'application/json',
-      })
+      const base64Data = await downloadProjectZip(project.id)
+      // Base64をBlobに変換してダウンロード
+      const binaryString = atob(base64Data)
+      const bytes = new Uint8Array(binaryString.length)
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i)
+      }
+      const blob = new Blob([bytes], { type: 'application/zip' })
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `${project.name}.json`
+      a.download = `${project.name}.json.zip`
+      document.body.appendChild(a)
       a.click()
+      document.body.removeChild(a)
       URL.revokeObjectURL(url)
     } catch (e) {
       console.error(e)

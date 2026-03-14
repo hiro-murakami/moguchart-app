@@ -41,6 +41,7 @@ export type FunctionName =
   | 'selectUsers'
   | 'upsertUser'
   | 'getGanttDataJson'
+  | 'downloadProjectZip'
   | 'restoreProject'
   | 'selectTaskComments'
   | 'upsertTaskComment'
@@ -317,8 +318,11 @@ export interface GanttDataJson {
 /** プロジェクトとガントチャートデータを取得する関数の型 */
 export type GetGanttDataJson = (projectId: string, email?: string) => Promise<GanttDataJson>
 
+/** プロジェクトデータをzip圧縮してBase64で返す関数の型 */
+export type DownloadProjectZip = (projectId: string, email?: string) => Promise<string>
+
 /** プロジェクトとガントチャートデータを復元する関数の型 */
-export type RestoreProject = (data: GanttDataJson & { force?: boolean }, email?: string) => Promise<string>
+export type RestoreProject = (data: (GanttDataJson | { zipBase64: string }) & { force?: boolean }, email?: string) => Promise<string>
 
 /** スナップショット作成パラメータ */
 export interface CreateSnapshotParams {
