@@ -170,7 +170,7 @@ onUnmounted(() => {
               @click="isSnapshotListDialogVisible = true"
               tooltip="スナップショット一覧"
             />
-            <RoleChip :role="currentProject.role" class="ml-2" />
+            <RoleChip :role="isSnapshotMode ? 'snapshot' : currentProject.role" class="ml-2" />
           </div>
           <div v-if="currentProject.attribute.description" class="text-caption text-medium-emphasis">
             {{ currentProject.attribute.description }}

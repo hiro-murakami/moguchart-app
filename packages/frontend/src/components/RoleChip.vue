@@ -16,6 +16,8 @@ const getRoleColor = (role: string) => {
       return 'secondary'
     case 'viewer':
       return 'default'
+    case 'snapshot':
+      return 'info'
     default:
       return 'default'
   }
@@ -29,6 +31,8 @@ const getRoleLabel = (role: string) => {
       return '編集者'
     case 'viewer':
       return '閲覧者'
+    case 'snapshot':
+      return 'スナップショット'
     default:
       return role
   }
