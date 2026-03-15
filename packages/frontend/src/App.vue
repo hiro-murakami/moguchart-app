@@ -13,6 +13,7 @@ const userStore = useUserStore()
 const projectStore = useProjectStore()
 const { user: appUser, firebaseUser, currentTheme } = storeToRefs(userStore)
 const showUserDetail = ref(false)
+const showManual = ref(false)
 
 const systemTheme = ref<'light' | 'dark'>(window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
 
@@ -44,6 +45,12 @@ onUnmounted(() => {
         <img :src="headerImage" height="42" class="header-image ml-4" />
         <span class="ml-2 text-label-large" style="opacity: 0.7">v{{ VERSION }}</span>
         <v-spacer />
+        <TooltipBtn
+          icon="mdi-book-open-variant"
+          variant="text"
+          tooltip="操作マニュアル"
+          @click="showManual = !showManual"
+        />
         <v-btn v-if="!firebaseUser" @click="userStore.signIn"> Login </v-btn>
         <template v-else>
           <v-menu location="bottom end">
@@ -83,6 +90,7 @@ onUnmounted(() => {
         <router-view v-if="firebaseUser" />
         <LoginPrompt v-else />
         <UserDetailDialog v-model="showUserDetail" />
+        <OperationManualDrawer v-model="showManual" />
       </v-main>
       <v-overlay v-model="isLoading" class="align-center justify-center" persistent>
         <v-progress-circular indeterminate size="64" />

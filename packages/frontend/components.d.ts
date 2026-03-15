@@ -25,6 +25,7 @@ declare module 'vue' {
     LabelInput: typeof import('./src/components/common/LabelInput.vue')['default']
     LabelSelect: typeof import('./src/components/LabelSelect.vue')['default']
     LoginPrompt: typeof import('./src/components/LoginPrompt.vue')['default']
+    OperationManualDrawer: typeof import('./src/components/OperationManualDrawer.vue')['default']
     ProjectDetailDialog: typeof import('./src/components/ProjectDetailDialog.vue')['default']
     ProjectListDialog: typeof import('./src/components/ProjectListDialog.vue')['default']
     PromptDialog: typeof import('./src/components/common/PromptDialog.vue')['default']
