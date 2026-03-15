@@ -1,7 +1,7 @@
 import { inject, type InjectionKey, type Ref } from 'vue'
 import type { ConfirmOptions } from '@/components/common/ConfirmDialog.vue'
 
-type ConfirmFunction = (options?: ConfirmOptions) => Promise<boolean>
+type ConfirmFunction = (options?: ConfirmOptions) => Promise<boolean | string>
 
 export const confirmKey: InjectionKey<ConfirmFunction> = Symbol('confirm')
 

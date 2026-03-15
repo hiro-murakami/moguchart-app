@@ -191,14 +191,20 @@ export const useProjectListDialog = (
     } catch (e: any) {
       console.error(e)
       if (e.message.includes('PROJECT_EXISTS')) {
-        const confirmed = await confirm({
+        const result = await confirm({
           title: 'プロジェクトの復元',
-          message: '同じIDを持つプロジェクトが既に存在します。上書きして復元しますか？現在のデータは削除されます。',
+          message: '同じIDを持つプロジェクトが既に存在します。<br>どのように復元しますか？',
+          buttons: [
+            { text: '別のプロジェクトとして復元', color: 'primary', value: 'newId' },
+            { text: '上書きして復元', color: 'warning', value: 'overwrite' },
+          ],
         })
-        if (confirmed) {
+
+        if (result === 'overwrite' || result === 'newId') {
           try {
             const data = await readRestoreData(file)
-            await restoreProjectScript({ ...data, force: true })
+            const options = result === 'overwrite' ? { force: true } : { newId: true }
+            await restoreProjectScript({ ...data, ...options })
             snackbar({
               message: 'プロジェクトを復元しました。',
               color: 'success',
@@ -214,6 +220,7 @@ export const useProjectListDialog = (
             return
           }
         }
+        return // キャンセル時
       }
       snackbar({
         message: `復元に失敗しました: ${e.message}`,

@@ -36,7 +36,7 @@ const restoreProject: RestoreProject = async (data, email) => {
     projectData = data
   }
 
-  const { project, rows, force } = { ...projectData, force: data.force }
+  const { project, rows, force, newId } = { ...projectData, force: data.force, newId: (data as any).newId }
 
   return await prisma.$transaction(async (tx) => {
     // 1. プロジェクトの作成または更新
@@ -59,30 +59,43 @@ const restoreProject: RestoreProject = async (data, email) => {
     })
 
     if (existingProject) {
-      if (!force) {
+      if (newId) {
+        // 別のIDで新規作成（IDを自動生成）
+        const newProject = await tx.project.create({
+          data: {
+            name: `${projectData.name}のコピー`,
+            start: new Date(projectData.start),
+            end: new Date(projectData.end),
+            attribute: projectData.attribute ?? {},
+            public: false,
+            authority: newAuthority,
+            ...commonColumns,
+          },
+        })
+        newProjectId = newProject.id
+      } else if (force) {
+        // 既存プロジェクトを上書き
+        await tx.project.update({
+          where: { id: oldProjectId },
+          data: {
+            name: projectData.name,
+            start: new Date(projectData.start),
+            end: new Date(projectData.end),
+            attribute: projectData.attribute ?? {},
+            public: false,
+            authority: newAuthority,
+            ...getUpdateCommonColumns(email),
+          },
+        })
+        newProjectId = oldProjectId
+
+        // 既存の行を削除（Cascade でタスクも消えるはずだが、念のため）
+        await tx.ganttRow.deleteMany({
+          where: { projectId: newProjectId },
+        })
+      } else {
         throw new Error('PROJECT_EXISTS')
       }
-
-      // 既存プロジェクトを更新（ガント行・タスクは一度すべて削除して作り直すのが安全）
-      // プロジェクト自体の更新
-      await tx.project.update({
-        where: { id: oldProjectId },
-        data: {
-          name: projectData.name,
-          start: new Date(projectData.start),
-          end: new Date(projectData.end),
-          attribute: projectData.attribute ?? {},
-          public: false, // 復元時は非公開をデフォルトにする
-          authority: newAuthority, // 権限もリセットするか？ここではリセットする
-          ...getUpdateCommonColumns(email),
-        },
-      })
-      newProjectId = oldProjectId
-
-      // 既存の行を削除（Cascade でタスクも消えるはずだが、念のため）
-      await tx.ganttRow.deleteMany({
-        where: { projectId: newProjectId },
-      })
     } else {
       // 新規作成（IDを指定して作成）
       const newProject = await tx.project.create({

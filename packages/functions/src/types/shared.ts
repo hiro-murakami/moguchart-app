@@ -322,7 +322,7 @@ export type GetGanttDataJson = (projectId: string, email?: string) => Promise<Ga
 export type DownloadProjectZip = (projectId: string, email?: string) => Promise<string>
 
 /** プロジェクトとガントチャートデータを復元する関数の型 */
-export type RestoreProject = (data: (GanttDataJson | { zipBase64: string }) & { force?: boolean }, email?: string) => Promise<string>
+export type RestoreProject = (data: (GanttDataJson | { zipBase64: string }) & { force?: boolean; newId?: boolean }, email?: string) => Promise<string>
 
 /** スナップショット作成パラメータ */
 export interface CreateSnapshotParams {
