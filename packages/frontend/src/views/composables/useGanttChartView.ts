@@ -34,6 +34,7 @@ import type {
   EditingRowData,
   EditingTaskData,
   GanttDataJson,
+  Label,
 } from '@functions/types/shared'
 import * as holiday_jp from '@holiday-jp/holiday_jp'
 import * as moguchart from '@mogura/moguchart'
@@ -2084,6 +2085,190 @@ export const useGanttChartView = () => {
     }
   }
 
+  // --- コピー＆ペースト ---
+  const CLIPBOARD_PREFIX = 'moguchart:tasks:'
+
+  interface ClipboardTaskData {
+    name: string
+    durationDays: number
+    description?: string
+    colorPalette?: ColorPalette
+    labels?: Label[]
+  }
+
+  const copySelectedTasks = async () => {
+    const targetTaskIds =
+      selectedTaskIds.value.length > 0
+        ? selectedTaskIds.value
+        : taskContextMenu.value.taskId
+          ? [taskContextMenu.value.taskId]
+          : []
+    if (targetTaskIds.length === 0) return
+
+    const clipboardData: ClipboardTaskData[] = []
+
+    for (const taskId of targetTaskIds) {
+      const row = rows.value.find((r) => r.tasks.some((t) => t.id === taskId))
+      const task = row?.tasks.find((t) => t.id === taskId)
+      if (task) {
+        const startDate = task.start instanceof Date ? task.start : new Date(task.start)
+        const endDate = task.end instanceof Date ? task.end : new Date(task.end)
+        const durationDays = Math.round((endDate.getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000))
+        const attr = (task as any).attribute as TaskAttribute | undefined
+        clipboardData.push({
+          name: task.name || '',
+          durationDays,
+          description: attr?.description,
+          colorPalette: attr?.colorPalette ? { ...attr.colorPalette } : undefined,
+          labels: attr?.labels ? [...attr.labels] : undefined,
+        })
+      }
+    }
+
+    if (clipboardData.length === 0) return
+
+    try {
+      await navigator.clipboard.writeText(CLIPBOARD_PREFIX + JSON.stringify(clipboardData))
+      hasClipboardData.value = true
+    } catch (err) {
+      console.error('Failed to copy to clipboard:', err)
+    }
+  }
+
+  const pasteTasks = async (date: Date, rowId: string) => {
+    if (isReadOnly.value) return
+
+    let clipboardText: string
+    try {
+      clipboardText = await navigator.clipboard.readText()
+    } catch (err) {
+      console.error('Failed to read clipboard:', err)
+      return
+    }
+
+    if (!clipboardText.startsWith(CLIPBOARD_PREFIX)) return
+
+    let tasksData: ClipboardTaskData[]
+    try {
+      tasksData = JSON.parse(clipboardText.slice(CLIPBOARD_PREFIX.length))
+    } catch {
+      return
+    }
+
+    if (!Array.isArray(tasksData) || tasksData.length === 0) return
+
+    await maybeAutoSnapshot()
+
+    const upsertDataList = tasksData.map((t) => {
+      const startDate = new Date(date)
+      const endDate = new Date(startDate.getTime() + t.durationDays * 24 * 60 * 60 * 1000)
+      return {
+        id: 0,
+        rowId: Number(rowId),
+        name: t.name,
+        start: toDateString(startDate),
+        end: toDateString(endDate),
+        attribute: {
+          description: t.description,
+          colorPalette: t.colorPalette,
+          labels: t.labels,
+        },
+      }
+    })
+
+    const result = await upsertGanttTasks(upsertDataList)
+    const newTaskIds = result as number[]
+
+    pushAction({
+      description: 'タスク貼り付け',
+      undo: async () => {
+        await deleteGanttTask(newTaskIds)
+        await loadData(projectId.value)
+      },
+      redo: async () => {
+        await upsertGanttTasks(upsertDataList.map((d) => ({ ...d, id: 0 })))
+        await loadData(projectId.value)
+      },
+    })
+
+    await loadData(projectId.value)
+    publishEditEvent('task_upsert', {
+      rowIds: [Number(rowId)],
+      targetName: tasksData.length === 1 ? tasksData[0]?.name ?? 'タスク' : `${tasksData.length}件のタスク`,
+      isNew: true,
+      taskId: String(newTaskIds?.[0] ?? ''),
+    })
+  }
+
+  const handleCopyTasksFromContextMenu = async () => {
+    await copySelectedTasks()
+    taskContextMenu.value.visible = false
+  }
+
+  const handlePasteTasksFromContextMenu = async () => {
+    const { date, rowId } = chartContextMenu.value
+    if (!date || !rowId) return
+    chartContextMenu.value.visible = false
+    await pasteTasks(date, rowId)
+  }
+
+  // クリップボードにデータがあるかどうかを追跡するフラグ
+  const hasClipboardData = ref(false)
+
+  // クリップボードの状態を確認
+  const checkClipboardData = async () => {
+    try {
+      const text = await navigator.clipboard.readText()
+      hasClipboardData.value = text.startsWith(CLIPBOARD_PREFIX)
+    } catch {
+      hasClipboardData.value = false
+    }
+  }
+
+  // キーボードショートカット: コピー
+  const handleCopyTasksShortcut = async () => {
+    await copySelectedTasks()
+  }
+
+  // キーボードショートカット: ペースト（マウス位置からhitTestで日時・行を取得）
+  const handlePasteTasksShortcut = async (e: KeyboardEvent) => {
+    if (isReadOnly.value) return
+
+    // クリップボードを確認
+    let text: string
+    try {
+      text = await navigator.clipboard.readText()
+    } catch {
+      return
+    }
+
+    if (!text.startsWith(CLIPBOARD_PREFIX)) return
+
+    // ganttChartRef が存在し hitTest が使える場合、最後のマウス位置で判定
+    const chart = ganttChartRef.value
+    if (!chart) return
+
+    // hitTest を使ってマウスカーソル下の行と日付を取得
+    const hitResult = chart.hitTest(lastMouseX.value, lastMouseY.value)
+    if (!hitResult) return
+
+    await pasteTasks(hitResult.date, hitResult.rowId)
+  }
+
+  // マウス位置の追跡
+  const lastMouseX = ref(0)
+  const lastMouseY = ref(0)
+  const handleMouseMove = (e: MouseEvent) => {
+    lastMouseX.value = e.clientX
+    lastMouseY.value = e.clientY
+  }
+
+  // mousemoveとfocusのイベントリスナー
+  if (typeof window !== 'undefined') {
+    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('focus', checkClipboardData)
+  }
+
   const handleCreateNewTask = (date: Date, rowId: string) => {
     editingTask.value = {
       id: '', // 新規作成
@@ -2262,5 +2447,10 @@ export const useGanttChartView = () => {
     refresh,
     handleAddCommentFromContextMenu,
     handleCommentUpdated,
+    handleCopyTasksFromContextMenu,
+    handlePasteTasksFromContextMenu,
+    handleCopyTasksShortcut,
+    handlePasteTasksShortcut,
+    hasClipboardData,
   }
 }

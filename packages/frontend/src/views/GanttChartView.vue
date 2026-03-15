@@ -87,6 +87,11 @@ const {
   handleSelectTaskFromLog,
   handleDblClickTaskFromLog,
   handleCreateSnapshot,
+  handleCopyTasksFromContextMenu,
+  handlePasteTasksFromContextMenu,
+  handleCopyTasksShortcut,
+  handlePasteTasksShortcut,
+  hasClipboardData,
 } = useGanttChartView()
 
 const rowCountRules = [(v: number) => (v >= 1 && v <= 10) || '1〜10の範囲で入力してください']
@@ -109,6 +114,12 @@ const handleKeyDown = (e: KeyboardEvent) => {
     } else if (key === 'y') {
       e.preventDefault()
       redo()
+    } else if (key === 'c') {
+      e.preventDefault()
+      handleCopyTasksShortcut()
+    } else if (key === 'v') {
+      e.preventDefault()
+      handlePasteTasksShortcut(e)
     }
   }
 }
@@ -340,6 +351,7 @@ onUnmounted(() => {
       :is-read-only="isReadOnly"
       @edit="handleEditTaskFromContextMenu"
       @comment="handleAddCommentFromContextMenu"
+      @copy="handleCopyTasksFromContextMenu"
       @delete="handleDeleteTaskFromContextMenu"
     />
 
@@ -362,7 +374,9 @@ onUnmounted(() => {
       :row-id="chartContextMenu.rowId"
       :can-undo="canUndo"
       :can-redo="canRedo"
+      :has-clipboard="hasClipboardData"
       @new-task="handleCreateNewTask"
+      @paste="handlePasteTasksFromContextMenu"
       @undo="undo"
       @redo="redo"
     />

@@ -9,6 +9,7 @@ const props = defineProps<{
   rowId?: string
   canUndo?: boolean
   canRedo?: boolean
+  hasClipboard?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -16,11 +17,13 @@ const emit = defineEmits<{
   (e: 'new-task', date: Date, rowId: string): void
   (e: 'undo'): void
   (e: 'redo'): void
+  (e: 'paste'): void
 }>()
 
 const isMac = computed(() => /Mac|iPhone|iPad|iPod/.test(navigator.userAgent))
 const undoShortcut = computed(() => (isMac.value ? '⌘Z' : 'Ctrl+Z'))
 const redoShortcut = computed(() => (isMac.value ? '⌘⇧Z' : 'Ctrl+Y'))
+const pasteShortcut = computed(() => (isMac.value ? '⌘V' : 'Ctrl+V'))
 
 const isOpen = computed({
   get: () => props.modelValue,
@@ -43,6 +46,10 @@ const handleRedo = () => {
   emit('redo')
   isOpen.value = false
 }
+
+const handlePaste = () => {
+  emit('paste')
+}
 </script>
 
 <template>
@@ -50,6 +57,12 @@ const handleRedo = () => {
     <v-list density="compact" class="py-0">
       <v-list-item @click="handleNewTask" prepend-icon="mdi-plus">
         <v-list-item-title>新規タスク</v-list-item-title>
+      </v-list-item>
+      <v-list-item @click="handlePaste" prepend-icon="mdi-content-paste" :disabled="!hasClipboard">
+        <v-list-item-title>
+          貼り付け
+          <span class="text-caption text-medium-emphasis ml-2">{{ pasteShortcut }}</span>
+        </v-list-item-title>
       </v-list-item>
       <v-divider />
       <v-list-item @click="handleUndo" prepend-icon="mdi-undo" :disabled="!canUndo">
@@ -67,3 +80,4 @@ const handleRedo = () => {
     </v-list>
   </v-menu>
 </template>
+
