@@ -9,6 +9,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
+  (e: 'restored'): void
 }>()
 
 const {
@@ -17,9 +18,11 @@ const {
   headers,
   copiedName,
   downloadingName,
+  restoringName,
   deletingName,
   copyUrl,
   downloadSnapshot,
+  restoreFromSnapshot,
   deleteSnapshotItem,
   openSnapshot,
   close,
@@ -77,6 +80,17 @@ const {
                 size="small"
                 density="comfortable"
                 @click="(e: Event) => downloadSnapshot(item, e)"
+              />
+              <TooltipBtn
+                :icon="restoringName === item.name ? 'mdi-loading' : 'mdi-restore'"
+                :class="{ 'spin-animation': restoringName === item.name }"
+                :disabled="restoringName !== null"
+                tooltip="このスナップショットで復元"
+                color="warning"
+                variant="text"
+                size="small"
+                density="comfortable"
+                @click="(e: Event) => restoreFromSnapshot(item, e)"
               />
               <TooltipBtn
                 :icon="deletingName === item.name ? 'mdi-loading' : 'mdi-delete'"

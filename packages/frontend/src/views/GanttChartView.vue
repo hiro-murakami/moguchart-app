@@ -396,6 +396,7 @@ onUnmounted(() => {
       v-if="projectId"
       v-model="isSnapshotListDialogVisible"
       :project-id="projectId"
+      @restored="refresh"
     />
   </div>
 </template>

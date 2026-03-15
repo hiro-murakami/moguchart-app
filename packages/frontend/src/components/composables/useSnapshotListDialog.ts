@@ -1,19 +1,22 @@
 import type { SnapshotInfo } from '@functions/types/shared'
-import { listSnapshots, getSnapshotDownloadUrl, deleteSnapshot } from '@/modules/scripts'
+import { listSnapshots, getSnapshotDownloadUrl, deleteSnapshot, loadSnapshot, restoreProject } from '@/modules/scripts'
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAlert } from '@/composables/useAlert'
 import { useConfirm } from '@/composables/useConfirm'
+import { useSnackbar } from '@/composables/useSnackbar'
 
 export const useSnapshotListDialog = (
   props: { modelValue: boolean; projectId: string },
   emit: {
     (e: 'update:modelValue', value: boolean): void
+    (e: 'restored'): void
   },
 ) => {
   const router = useRouter()
   const alert = useAlert()
   const confirm = useConfirm()
+  const snackbar = useSnackbar()
 
   const snapshots = ref<(SnapshotInfo & { displayName: string; displayCreatedAt: string })[]>([])
   const loading = ref(false)
@@ -21,7 +24,7 @@ export const useSnapshotListDialog = (
   const headers = [
     { title: 'スナップショット', key: 'displayName', sortable: false },
     { title: '作成日時', key: 'displayCreatedAt', sortable: false },
-    { title: '操作', key: 'actions', sortable: false, width: '130px' },
+    { title: '操作', key: 'actions', sortable: false, width: '170px' },
   ]
 
   const copiedName = ref<string | null>(null)
@@ -78,6 +81,7 @@ export const useSnapshotListDialog = (
     }
   }
 
+  const restoringName = ref<string | null>(null)
   const deletingName = ref<string | null>(null)
 
   const deleteSnapshotItem = async (item: SnapshotInfo & { displayName: string }, event: Event) => {
@@ -147,6 +151,45 @@ export const useSnapshotListDialog = (
     window.open(routeUrl.href, '_blank', 'noopener,noreferrer')
   }
 
+  const restoreFromSnapshot = async (item: SnapshotInfo & { displayName: string }, event: Event) => {
+    event.stopPropagation()
+    if (restoringName.value) return
+
+    const confirmed = await confirm({
+      title: 'スナップショットからの復元',
+      message: `「${item.displayName}」の内容で現在のプロジェクトを上書き復元しますか？<br><span class="text-error font-weight-bold">※現在のプロジェクトデータは上書きされます。</span>`,
+      confirmText: '復元',
+      confirmColor: 'warning',
+    })
+    if (!confirmed) return
+
+    restoringName.value = item.name
+    try {
+      // スナップショットデータを取得
+      const snapshotData = await loadSnapshot({
+        projectId: props.projectId,
+        snapshotName: item.name,
+      })
+
+      // 現在のプロジェクトに上書き復元
+      await restoreProject({ ...snapshotData, force: true })
+
+      snackbar({
+        message: 'スナップショットからプロジェクトを復元しました。',
+        color: 'success',
+      })
+      emit('restored')
+    } catch (err) {
+      console.error('Failed to restore from snapshot:', err)
+      await alert({
+        title: 'エラー',
+        message: 'スナップショットからの復元に失敗しました。',
+      })
+    } finally {
+      restoringName.value = null
+    }
+  }
+
   const close = () => {
     emit('update:modelValue', false)
   }
@@ -157,9 +200,11 @@ export const useSnapshotListDialog = (
     headers,
     copiedName,
     downloadingName,
+    restoringName,
     deletingName,
     copyUrl,
     downloadSnapshot,
+    restoreFromSnapshot,
     deleteSnapshotItem,
     fetchSnapshots,
     openSnapshot,
