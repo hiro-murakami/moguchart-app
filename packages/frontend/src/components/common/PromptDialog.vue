@@ -104,7 +104,7 @@ defineExpose({ open })
           @keydown="handleKeydown"
         />
       </v-card-text>
-      <v-card-actions>
+      <v-card-actions class="pb-6">
         <v-spacer />
         <v-btn color="grey" variant="text" @click="close">
           {{ state.cancelText }}

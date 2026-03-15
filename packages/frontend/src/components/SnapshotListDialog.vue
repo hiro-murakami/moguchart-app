@@ -58,7 +58,7 @@ const {
             <span class="text-caption text-medium-emphasis">{{ item.displayCreatedAt }}</span>
           </template>
           <template #item.actions="{ item }">
-            <div class="d-flex">
+            <div class="d-flex justify-space-between">
               <TooltipBtn
                 :icon="copiedName === item.name ? 'mdi-check' : 'mdi-content-copy'"
                 :color="copiedName === item.name ? 'success' : undefined"

@@ -21,7 +21,7 @@ export const useSnapshotListDialog = (
   const headers = [
     { title: 'スナップショット', key: 'displayName', sortable: false },
     { title: '作成日時', key: 'displayCreatedAt', sortable: false },
-    { title: '', key: 'actions', sortable: false, width: '140px' },
+    { title: '操作', key: 'actions', sortable: false, width: '130px' },
   ]
 
   const copiedName = ref<string | null>(null)
