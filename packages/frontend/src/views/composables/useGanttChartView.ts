@@ -761,6 +761,72 @@ export const useGanttChartView = () => {
 
     await maybeAutoSnapshot()
 
+    // 複数タスク一括移動の処理
+    const selectedIds = e.detail.selectedTaskIds
+    if (selectedIds && selectedIds.length >= 2 && e.detail.dx !== undefined) {
+      const msPerPx = (24 * 60 * 60 * 1000) / pxPerDay.value
+      const timeDiff = e.detail.dx * msPerPx
+
+      // 変更がない場合は何もしない
+      if (timeDiff === 0) return
+
+      // 変更前データ（undo用）と変更後データを構築
+      const beforeDataList: { id: number; rowId: number; name: string; start: string; end: string; attribute: any }[] = []
+      const afterDataList: { id: number; rowId: number; name: string; start: string; end: string; attribute: any }[] = []
+      const affectedRowIdSet = new Set<number>()
+
+      for (const taskId of selectedIds) {
+        const taskIdStr = String(taskId)
+        const taskRow = rows.value.find((r) => r.tasks.some((t) => t.id === taskIdStr))
+        const taskItem = taskRow?.tasks.find((t) => t.id === taskIdStr)
+        if (!taskRow || !taskItem) continue
+
+        const attr = (taskItem as any).attribute as TaskAttribute | undefined
+        affectedRowIdSet.add(Number(taskRow.id))
+
+        beforeDataList.push({
+          id: Number(taskItem.id),
+          rowId: Number(taskRow.id),
+          name: taskItem.name || '',
+          start: toDateString(taskItem.start),
+          end: toDateString(taskItem.end),
+          attribute: attr ? { ...attr } : {},
+        })
+
+        afterDataList.push({
+          id: Number(taskItem.id),
+          rowId: Number(taskRow.id),
+          name: taskItem.name || '',
+          start: toDateString(new Date(taskItem.start.getTime() + timeDiff)),
+          end: toDateString(new Date(taskItem.end.getTime() + timeDiff)),
+          attribute: attr ? { ...attr } : {},
+        })
+      }
+
+      if (afterDataList.length === 0) return
+
+      pushAction({
+        description: `タスク一括移動 (${afterDataList.length}件)`,
+        undo: async () => {
+          await upsertGanttTasks(beforeDataList)
+          await loadData(projectId.value)
+        },
+        redo: async () => {
+          await upsertGanttTasks(afterDataList)
+          await loadData(projectId.value)
+        },
+      })
+      await upsertGanttTasks(afterDataList)
+      await loadData(projectId.value)
+      publishEditEvent('task_upsert', {
+        rowIds: [...affectedRowIdSet],
+        targetName: `${afterDataList.length}件のタスク`,
+        isNew: false,
+        taskId: String(afterDataList[0]!.id),
+      })
+      return
+    }
+
     const data = {
       id: e.detail.mode === 'copy' ? 0 : Number(e.detail.id),
       rowId: Number(e.detail.targetRowId),
