@@ -1,6 +1,8 @@
 import type { RestoreProject } from '../types/shared'
 import { getCreateCommonColumns, getUpdateCommonColumns, prisma } from './common/commonFunctions'
 import AdmZip from 'adm-zip'
+import { getStorage } from 'firebase-admin/storage'
+import crypto from 'node:crypto'
 
 // 依存関係のIDを書き換えるためのヘルパー
 const updateDependencies = (attribute: any, taskIdMap: Map<number, number>): any => {
@@ -18,15 +20,71 @@ const updateDependencies = (attribute: any, taskIdMap: Map<number, number>): any
   }
 }
 
+// スナップショットをCloud Storageに復元するヘルパー
+const restoreSnapshots = async (zip: AdmZip, projectId: string) => {
+  const snapshotEntries = zip.getEntries().filter(
+    (e) => e.entryName.startsWith('snapshots/') && e.entryName.endsWith('.json.zip')
+  )
+
+  if (snapshotEntries.length === 0) return
+
+  // メタデータを読み込み
+  const metadataEntry = zip.getEntries().find(
+    (e) => e.entryName === 'snapshots/metadata.json'
+  )
+  let metadataList: Array<{
+    fileName: string
+    displayName?: string
+    createdAt?: string
+  }> = []
+  if (metadataEntry) {
+    try {
+      metadataList = JSON.parse(metadataEntry.getData().toString('utf8'))
+    } catch {
+      // メタデータのパースに失敗した場合は空のまま
+    }
+  }
+
+  const bucket = getStorage().bucket()
+
+  for (const entry of snapshotEntries) {
+    const snapshotFileName = entry.entryName.replace('snapshots/', '')
+    const storagePath = `snapshots/${projectId}/${snapshotFileName}`
+    const file = bucket.file(storagePath)
+
+    const downloadToken = crypto.randomUUID()
+    const metadata = metadataList.find((m) => m.fileName === snapshotFileName)
+
+    const customMetadata: Record<string, string> = {
+      firebaseStorageDownloadTokens: downloadToken,
+    }
+    if (metadata?.displayName) {
+      customMetadata.displayName = metadata.displayName
+    }
+
+    const fileBuffer = entry.getData()
+    await file.save(fileBuffer, {
+      metadata: {
+        contentType: 'application/zip',
+        metadata: customMetadata,
+      },
+    })
+  }
+}
+
 const restoreProject: RestoreProject = async (data, email) => {
   let projectData: any
+  let zipInstance: AdmZip | undefined
 
   if ('zipBase64' in data && data.zipBase64) {
     // zipBase64が含まれている場合はzip展開してJSONを取り出す
     const zipBuffer = Buffer.from(data.zipBase64, 'base64')
     const zip = new AdmZip(zipBuffer)
+    zipInstance = zip
     const entries = zip.getEntries()
-    const jsonEntry = entries.find((e) => e.entryName.endsWith('.json'))
+    const jsonEntry = entries.find(
+      (e) => e.entryName.endsWith('.json') && !e.entryName.startsWith('snapshots/')
+    )
     if (!jsonEntry) {
       throw new Error('zipファイル内にJSONファイルが見つかりませんでした')
     }
@@ -38,7 +96,7 @@ const restoreProject: RestoreProject = async (data, email) => {
 
   const { project, rows, force, newId } = { ...projectData, force: data.force, newId: (data as any).newId }
 
-  return await prisma.$transaction(async (tx) => {
+  const newProjectId = await prisma.$transaction(async (tx) => {
     // 1. プロジェクトの作成または更新
     const { id: oldProjectId, ...projectData } = project
 
@@ -188,6 +246,22 @@ const restoreProject: RestoreProject = async (data, email) => {
 
     return newProjectId
   })
+
+  // トランザクション完了後にスナップショットを復元
+  if (zipInstance) {
+    const hasSnapshots = zipInstance.getEntries().some(
+      (e) => e.entryName.startsWith('snapshots/') && e.entryName.endsWith('.json.zip')
+    )
+    if (hasSnapshots) {
+      try {
+        await restoreSnapshots(zipInstance, newProjectId)
+      } catch (e) {
+        console.warn('Failed to restore snapshots:', e)
+      }
+    }
+  }
+
+  return newProjectId
 }
 
 export default restoreProject
