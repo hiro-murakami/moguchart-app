@@ -203,6 +203,7 @@ watch(
                       label="オーナー"
                       help-text="プロジェクトに対する全権限を持つユーザーのリスト"
                       :users="allUsers"
+                      :rules="[inputRules.required]"
                     />
                     <UsersInput
                       v-model="localEditors"

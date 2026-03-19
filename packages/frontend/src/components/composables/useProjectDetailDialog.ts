@@ -135,7 +135,8 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
   }
 
   const save = async () => {
-    if (!formValid.value) return
+    const { valid } = (await form.value?.validate()) ?? { valid: false }
+    if (!valid) return
 
     const projectData: Partial<Project> = {
       name: localName.value,

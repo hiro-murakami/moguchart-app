@@ -9,6 +9,8 @@ const props = defineProps<{
   helpText: string
   /** 入力補完の候補となるユーザー一覧（省略可） */
   users?: User[]
+  /** 追加のバリデーションルール（省略可） */
+  rules?: ((value: any) => string | boolean)[]
 }>()
 
 defineEmits<{
@@ -22,6 +24,12 @@ const suggestionItems = computed(() =>
     value: u.email,
   })),
 )
+
+/** 内部ルール + 外部から渡されたルールをマージ */
+const mergedRules = computed(() => [
+  inputRules.areMailAddresses,
+  ...(props.rules ?? []),
+])
 </script>
 
 <template>
@@ -39,9 +47,9 @@ const suggestionItems = computed(() =>
       closable-chips
       density="compact"
       variant="outlined"
-      hide-details
+      hide-details="auto"
       class="mb-3"
-      :rules="[inputRules.areMailAddresses]"
+      :rules="mergedRules"
       autocomplete="off"
     />
     <HelpText :text="helpText" />
