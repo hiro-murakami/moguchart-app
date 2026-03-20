@@ -4,7 +4,7 @@
   "main": "lib/index.js",
   "scripts": {
     "lint": "eslint --ext .js,.ts .",
-    "build": "tsc",
+    "build": "dotenv -e .env -- tsc",
     "build:watch": "tsc --watch",
     "dev": "pnpm run build && (pnpm run build:watch & firebase emulators:start)",
     "serve": "pnpm run build && firebase emulators:start",
@@ -13,7 +13,7 @@
     "setup:env": "node scripts/fetch-env.cjs",
     "deploy": "firebase deploy --only functions",
     "logs": "firebase functions:log",
-    "prisma:generate": "npx prisma generate",
+    "prisma:generate": "dotenv -e .env -- npx prisma generate",
     "migrate:create-only": "dotenv -e .env.local -- npx prisma migrate dev --create-only",
     "migrate:local": "dotenv -e .env.local -- npx prisma migrate dev",
     "seed:local": "dotenv -e .env.local -- npx prisma db seed"
