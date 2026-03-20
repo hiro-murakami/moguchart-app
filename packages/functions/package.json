@@ -13,10 +13,10 @@
     "setup:env": "node scripts/fetch-env.cjs",
     "deploy": "firebase deploy --only functions",
     "logs": "firebase functions:log",
-    "prisma:generate": "dotenv -e .env -- npx prisma generate",
-    "migrate:create-only": "dotenv -e .env.local -- npx prisma migrate dev --create-only",
-    "migrate:local": "dotenv -e .env.local -- npx prisma migrate dev",
-    "seed:local": "dotenv -e .env.local -- npx prisma db seed"
+    "prisma:generate": "dotenv -e .env -- pnpm exec prisma generate",
+    "migrate:create-only": "dotenv -e .env.local -- pnpm exec prisma migrate dev --create-only",
+    "migrate:local": "dotenv -e .env.local -- pnpm exec prisma migrate dev",
+    "seed:local": "dotenv -e .env.local -- pnpm exec prisma db seed"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
