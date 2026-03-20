@@ -36,9 +36,12 @@ const getGanttDataJson: GetGanttDataJson = async (projectId, email) => {
     throw new Error('Project ID is required')
   }
 
-  // プロジェクト情報の取得
+  // プロジェクト情報の取得（プロジェクトコメントも含む）
   const project = await prisma.project.findUnique({
     where: { id: projectId },
+    include: {
+      comments: true,
+    },
   })
 
   if (!project) {
@@ -63,10 +66,11 @@ const getGanttDataJson: GetGanttDataJson = async (projectId, email) => {
     }
   }
 
-  // ガントチャートデータの取得
+  // ガントチャートデータの取得（行コメント・タスクコメントも含む）
   const rows = await prisma.ganttRow.findMany({
     where: { projectId },
     include: {
+      comments: true,
       tasks: {
         include: {
           comments: true,
@@ -76,10 +80,71 @@ const getGanttDataJson: GetGanttDataJson = async (projectId, email) => {
     orderBy: { order: 'asc' },
   })
 
+  // 全コメントからメールアドレスを収集してUser情報を取得
+  const allEmails = new Set<string>()
+  if (project.comments) {
+    for (const c of project.comments) {
+      if (c.createdBy) allEmails.add(c.createdBy)
+    }
+  }
+  for (const row of rows) {
+    if (row.comments) {
+      for (const c of row.comments) {
+        if (c.createdBy) allEmails.add(c.createdBy)
+      }
+    }
+    if (row.tasks) {
+      for (const task of row.tasks) {
+        if (task.comments) {
+          for (const c of task.comments) {
+            if (c.createdBy) allEmails.add(c.createdBy)
+          }
+        }
+      }
+    }
+  }
+
+  const users = allEmails.size > 0
+    ? await prisma.user.findMany({ where: { email: { in: Array.from(allEmails) } } })
+    : []
+  const userMap = new Map(users.map((u) => [u.email, u]))
+
+  // コメントにdisplayName/photoURLを付与するヘルパー
+  const enrichComment = (c: any) => {
+    const user = c.createdBy ? userMap.get(c.createdBy) : undefined
+    return {
+      ...c,
+      createdByDisplayName: user?.displayName ?? undefined,
+      createdByPhotoURL: (() => {
+        try {
+          const attr = user?.attribute as Record<string, any> | undefined
+          return attr?.photoURL
+        } catch {
+          return undefined
+        }
+      })(),
+    }
+  }
+
+  // コメントを拡張したデータを生成
+  const enrichedProject = {
+    ...project,
+    comments: project.comments?.map(enrichComment) ?? [],
+  }
+
+  const enrichedRows = rows.map((row) => ({
+    ...row,
+    comments: row.comments?.map(enrichComment) ?? [],
+    tasks: row.tasks.map((task) => ({
+      ...task,
+      comments: task.comments?.map(enrichComment) ?? [],
+    })),
+  }))
+
   return {
     version: VERSION,
-    project: convertDatesToIsoString(project),
-    rows: convertDatesToIsoString(rows),
+    project: convertDatesToIsoString(enrichedProject),
+    rows: convertDatesToIsoString(enrichedRows),
   }
 }
 

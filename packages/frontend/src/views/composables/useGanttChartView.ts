@@ -22,7 +22,7 @@ import { useConfirm } from '@/composables/useConfirm'
 import { usePrompt } from '@/composables/usePrompt'
 import { useLoading } from '@/composables/useLoading'
 import { toDateString, toLocalDate, getContrastColor } from '@/modules/utils'
-import { barContent, tooltip, rowHeaderContent, preloadCommentsCache } from '@/modules/ganttChartCustomRendering'
+import { barContent, tooltip, rowHeaderContent, preloadCommentsCache, preloadRowCommentsCache } from '@/modules/ganttChartCustomRendering'
 import { useProjectStore } from '@/stores/useProjectStore'
 import { useUserStore } from '@/stores/useUserStore'
 import type {
@@ -664,24 +664,45 @@ export const useGanttChartView = () => {
       snapshotProject.value = { ...data.project, role: 'viewer' }
 
       // スナップショットのコメントデータをキャッシュにプリロード
-      const commentEntries: { taskId: number; comments: any[] }[] = []
+      const taskCommentEntries: { taskId: number; comments: any[] }[] = []
+      const rowCommentEntries: { rowId: number; comments: any[] }[] = []
       
-      rows.value = data.rows.map((row: any) => ({
-        ...row,
-        id: row.id.toString(),
-        tasks: row.tasks.map((task: any) => {
-          // taskComments が含まれている場合、commentCount を計算してキャッシュにも入れる
-          const taskComments = task.taskComments as any[] | undefined
-          if (taskComments && taskComments.length > 0) {
-            task.commentCount = taskComments.length
-            commentEntries.push({ taskId: Number(task.id), comments: taskComments })
-          }
-          return formatGanttTask(task)
-        }),
-      })) as any
+      rows.value = data.rows.map((row: any) => {
+        // 行コメントの処理
+        const rowComments = row.comments as any[] | undefined
+        if (rowComments && rowComments.length > 0) {
+          row.commentCount = rowComments.length
+          rowCommentEntries.push({ rowId: Number(row.id), comments: rowComments })
+        }
 
-      if (commentEntries.length > 0) {
-        preloadCommentsCache(commentEntries)
+        return {
+          ...row,
+          id: row.id.toString(),
+          tasks: row.tasks.map((task: any) => {
+            // タスクコメントの処理
+            const taskComments = task.comments as any[] | undefined
+            if (taskComments && taskComments.length > 0) {
+              task.commentCount = taskComments.length
+              taskCommentEntries.push({ taskId: Number(task.id), comments: taskComments })
+            }
+            return formatGanttTask(task)
+          }),
+        }
+      }) as any
+
+      if (taskCommentEntries.length > 0) {
+        preloadCommentsCache(taskCommentEntries)
+      }
+      if (rowCommentEntries.length > 0) {
+        preloadRowCommentsCache(rowCommentEntries)
+      }
+
+      // プロジェクトコメントの処理
+      const snapshotProjectComments = data.project.comments as any[] | undefined
+      if (snapshotProjectComments && snapshotProjectComments.length > 0) {
+        snapshotProject.value = { ...snapshotProject.value!, commentCount: snapshotProjectComments.length }
+        projectComments.value = snapshotProjectComments as Comment[]
+        projectCommentsFetchedAt = Infinity
       }
 
       chartStartStr.value = data.project.start || chartStartStr.value

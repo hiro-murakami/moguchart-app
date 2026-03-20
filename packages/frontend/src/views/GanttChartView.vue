@@ -219,7 +219,7 @@ onUnmounted(() => {
                     >
                       <v-divider v-if="i > 0" class="my-2" />
                       <div class="text-caption" style="opacity: 0.7;">
-                        {{ comment.createdByDisplayName }} - {{ comment.createdAt ? new Date(comment.createdAt).toLocaleString('ja-JP') : '' }}
+                        {{ comment.createdByDisplayName || comment.createdBy || '不明' }} - {{ comment.createdAt ? new Date(comment.createdAt).toLocaleString('ja-JP') : '' }}
                       </div>
                       <div class="text-body-2 mt-1" style="white-space: pre-wrap; word-break: break-word;">
                         {{ comment.content }}
@@ -233,6 +233,58 @@ onUnmounted(() => {
                       他 {{ projectComments.length - 5 }}件のコメント...
                     </div>
                   </template>
+                </v-card-text>
+              </v-card>
+            </v-menu>
+            <!-- スナップショットモード用プロジェクトコメント表示 -->
+            <v-menu
+              v-if="isSnapshotMode && (currentProject.commentCount ?? 0) > 0"
+              open-on-hover
+              :close-on-content-click="false"
+              :open-delay="200"
+              :close-delay="200"
+              location="bottom"
+            >
+              <template #activator="{ props: menuProps }">
+                <v-btn
+                  v-bind="menuProps"
+                  variant="text"
+                  size="small"
+                  class="px-1"
+                  min-width="0"
+                >
+                  <v-icon size="18" class="mr-1">mdi-comment-text-outline</v-icon>
+                  <span style="font-size: 12px; font-weight: bold;">
+                    {{ currentProject.commentCount }}
+                  </span>
+                </v-btn>
+              </template>
+              <v-card
+                max-width="360"
+                max-height="300"
+                class="overflow-y-auto"
+                :theme="$vuetify.theme.current.dark ? 'light' : 'dark'"
+              >
+                <v-card-text class="pa-3">
+                  <div
+                    v-for="(comment, i) in projectComments.slice(0, 5)"
+                    :key="comment.id"
+                  >
+                    <v-divider v-if="i > 0" class="my-2" />
+                    <div class="text-caption" style="opacity: 0.7;">
+                      {{ comment.createdByDisplayName || comment.createdBy || '不明' }} - {{ comment.createdAt ? new Date(comment.createdAt).toLocaleString('ja-JP') : '' }}
+                    </div>
+                    <div class="text-body-2 mt-1" style="white-space: pre-wrap; word-break: break-word;">
+                      {{ comment.content }}
+                    </div>
+                  </div>
+                  <div
+                    v-if="projectComments.length > 5"
+                    class="text-caption mt-2"
+                    style="opacity: 0.6;"
+                  >
+                    他 {{ projectComments.length - 5 }}件のコメント...
+                  </div>
                 </v-card-text>
               </v-card>
             </v-menu>

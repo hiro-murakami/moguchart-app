@@ -30,6 +30,16 @@ export const preloadCommentsCache = (entries: { taskId: number; comments: TaskCo
   }
 }
 
+/**
+ * スナップショットモードなどAPI不要の場面で、行コメントデータをキャッシュに事前ロードする。
+ * fetchedAt を Infinity にすることでキャッシュ有効期限が切れないようにする。
+ */
+export const preloadRowCommentsCache = (entries: { rowId: number; comments: Comment[] }[]) => {
+  for (const entry of entries) {
+    rowCommentsCache.set(entry.rowId, { data: entry.comments, fetchedAt: Infinity })
+  }
+}
+
 const renderComments = (container: HTMLElement, comments: TaskComment[], count: number) => {
   const colors = getTooltipColors()
   container.innerHTML = ''
