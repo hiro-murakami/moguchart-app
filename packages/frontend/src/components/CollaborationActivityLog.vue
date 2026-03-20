@@ -46,13 +46,13 @@ const { isDark, isExpanded, relativeTime, visibleLogs, unreadCount } = useCollab
                 </div>
                 <div class="log-description">
                   <template
-                    v-if="log.taskId && log.targetName && log.description.includes('「' + log.targetName + '」')"
+                    v-if="(log.taskId || log.rowId || log.commentTarget === 'project') && log.targetName && log.description.includes('「' + log.targetName + '」')"
                   >
                     {{ log.description.substring(0, log.description.indexOf('「' + log.targetName + '」') + 1)
                     }}<span
                       class="log-task-text-link text-primary"
-                      title="タスクを表示 (ダブルクリックで開く)"
-                      @click.stop="emit('click-task', log.taskId)"
+                      :title="log.commentTarget === 'project' ? 'コメントを表示' : log.commentTarget === 'row' ? '行コメントを表示' : 'タスクを表示 (ダブルクリックで開く)'"
+                      @click.stop="log.taskId ? emit('click-task', log.taskId) : undefined"
                       @dblclick.prevent.stop="emit('dblclick-task', log)"
                       >{{ log.targetName }}</span
                     >{{
@@ -64,13 +64,13 @@ const { isDark, isExpanded, relativeTime, visibleLogs, unreadCount } = useCollab
                   <template v-else>
                     {{ log.description }}
                     <span
-                      v-if="log.taskId"
+                      v-if="log.taskId || log.rowId || log.commentTarget === 'project'"
                       class="log-task-link text-primary ml-1"
-                      title="タスクを表示 (ダブルクリックで開く)"
-                      @click.stop="emit('click-task', log.taskId)"
+                      :title="log.commentTarget === 'project' ? 'コメントを表示' : log.commentTarget === 'row' ? '行コメントを表示' : 'タスクを表示 (ダブルクリックで開く)'"
+                      @click.stop="log.taskId ? emit('click-task', log.taskId) : undefined"
                       @dblclick.prevent.stop="emit('dblclick-task', log)"
                     >
-                      <v-icon icon="mdi-link-variant" size="14" />
+                      <v-icon :icon="log.commentTarget === 'project' ? 'mdi-comment-text-outline' : log.commentTarget === 'row' ? 'mdi-table-row' : 'mdi-link-variant'" size="14" />
                     </span>
                   </template>
                 </div>

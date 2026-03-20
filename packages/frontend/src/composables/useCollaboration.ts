@@ -84,6 +84,8 @@ export interface ActivityLogEntry {
   rowId?: string
   /** 対象名（タスク名や行名など） */
   targetName?: string
+  /** コメント更新の対象種別（task / row / project） */
+  commentTarget?: 'task' | 'row' | 'project'
 }
 
 /** プレゼンスのハートビート間隔（ミリ秒） */
@@ -245,6 +247,7 @@ export const useCollaboration = () => {
       taskId: event.payload?.taskId as string | undefined,
       rowId: event.payload?.rowId as string | undefined,
       targetName: event.payload?.targetName as string | undefined,
+      commentTarget: event.payload?.commentTarget as 'task' | 'row' | 'project' | undefined,
     }
   }
 

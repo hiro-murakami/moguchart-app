@@ -164,7 +164,7 @@ onUnmounted(() => {
             />
             <TooltipBtn v-if="!isSnapshotMode" icon="mdi-refresh" variant="text" @click="refresh" tooltip="最新化" />
             <TooltipBtn
-              v-if="!isSnapshotMode"
+              v-if="!isSnapshotMode && !isReadOnly"
               icon="mdi-camera"
               variant="text"
               @click="handleCreateSnapshot"

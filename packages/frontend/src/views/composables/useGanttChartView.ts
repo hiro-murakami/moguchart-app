@@ -1073,7 +1073,7 @@ export const useGanttChartView = () => {
   const handleDblClickTaskFromLog = (log: ActivityLogEntry) => {
     if (log.type === 'comment_update') {
       // コメント更新ログ: commentTarget に応じて適切なダイアログを開く
-      const commentTarget = (log as any).commentTarget || (log.taskId ? 'task' : log.rowId ? 'row' : 'project')
+      const commentTarget = log.commentTarget || (log.taskId ? 'task' : log.rowId ? 'row' : 'project')
 
       if (commentTarget === 'task' && log.taskId) {
         handleSelectTaskFromLog(log.taskId)
