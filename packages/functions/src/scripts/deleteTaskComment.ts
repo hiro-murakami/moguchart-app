@@ -1,10 +1,9 @@
 import type { DeleteTaskComment } from '../types/shared'
-import { prisma } from './common/commonFunctions'
+import deleteComment from './deleteComment'
 
 const deleteTaskComment: DeleteTaskComment = async (id) => {
-  await prisma.taskComment.delete({
-    where: { id },
-  })
+  return deleteComment(id)
 }
 
 export default deleteTaskComment
+

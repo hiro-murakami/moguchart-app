@@ -37,12 +37,16 @@ export const fromGanttTask = (task: GanttTask): Omit<PrismaGanttTask, CommonColu
 }
 
 export const toGanttRow = (
-  row: PrismaGanttRow & { tasks: (PrismaGanttTask & { _count?: { taskComments: number } })[] },
+  row: PrismaGanttRow & {
+    tasks: (PrismaGanttTask & { _count?: { comments: number } })[]
+    _count?: { comments: number }
+  },
 ): GanttRow => {
   return {
     ...omit(row, ['createdBy', 'createdAt', 'updatedBy', 'updatedAt']),
-    tasks: row.tasks.map((t) => toGanttTask(t, t._count?.taskComments)),
+    tasks: row.tasks.map((t) => toGanttTask(t, t._count?.comments)),
     attribute: (row.attribute ?? {}) as RowAttribute,
+    commentCount: row._count?.comments ?? 0,
   }
 }
 
@@ -55,7 +59,7 @@ export const fromGanttRow = (row: GanttRow): Omit<PrismaGanttRow, CommonColumns>
 
 export const toProject =
   (email: string) =>
-  (project: PrismaProject): Project => {
+  (project: PrismaProject & { _count?: { comments: number } }): Project => {
     const getRole = (authority: Authority, email: string): Role => {
       if (authority.owners?.includes(email)) {
         return 'owner'
@@ -73,5 +77,6 @@ export const toProject =
       attribute: (project.attribute ?? {}) as ProjectAttribute,
       authority: (project.authority ?? {}) as Authority,
       role: getRole(project.authority as Authority, email),
+      commentCount: project._count?.comments ?? 0,
     }
   }

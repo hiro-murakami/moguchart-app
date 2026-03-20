@@ -54,6 +54,8 @@ model Project {
   updatedAt DateTime?  @default(now()) @db.Timestamp(3)
   /// ガント行配列
   rows      GanttRow[]
+  /// コメント配列
+  comments  Comment[]
 }
 
 /// ガント行
@@ -80,9 +82,11 @@ model GanttRow {
   updatedAt DateTime? @default(now()) @db.Timestamp(3)
 
   /// プロジェクト
-  project Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project  Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
   /// タスク配列
-  tasks   GanttTask[]
+  tasks    GanttTask[]
+  /// コメント配列
+  comments Comment[]
 }
 
 /// ガントタスク
@@ -109,17 +113,21 @@ model GanttTask {
   updatedAt DateTime? @default(now()) @db.Timestamp(3)
 
   /// 行
-  row          GanttRow      @relation(fields: [rowId], references: [id], onDelete: Cascade)
-  /// タスクコメント配列
-  taskComments TaskComment[]
+  row      GanttRow   @relation(fields: [rowId], references: [id], onDelete: Cascade)
+  /// コメント配列
+  comments Comment[]
 }
 
-/// タスクコメント
-model TaskComment {
+/// コメント（タスク・行・プロジェクト共通）
+model Comment {
   /// コメントID
   id        Int       @id @default(autoincrement())
-  /// タスクID
-  taskId    Int
+  /// タスクID（タスクコメント時に設定）
+  taskId    Int?
+  /// 行ID（行コメント時に設定）
+  rowId     Int?
+  /// プロジェクトID（プロジェクトコメント時に設定）
+  projectId String?   @db.Char(36)
   /// コメント内容
   content   String    @db.Text
   /// 作成者email
@@ -132,5 +140,11 @@ model TaskComment {
   updatedAt DateTime? @default(now()) @db.Timestamp(3)
 
   /// タスク
-  task GanttTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  task    GanttTask? @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  /// 行
+  row     GanttRow?  @relation(fields: [rowId], references: [id], onDelete: Cascade)
+  /// プロジェクト
+  project Project?   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("TaskComment")
 }

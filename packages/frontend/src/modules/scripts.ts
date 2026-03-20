@@ -27,9 +27,13 @@ import type {
   LoadSnapshot,
   GanttDataJson,
   TaskComment,
+  Comment,
   SelectTaskComments,
   UpsertTaskComment,
   DeleteTaskComment,
+  SelectComments,
+  UpsertComment,
+  DeleteComment,
   ListSnapshots,
   SnapshotInfo,
   GetSnapshotDownloadUrl,
@@ -151,6 +155,18 @@ export const upsertTaskComment: UpsertTaskComment = (comment) => {
 
 export const deleteTaskComment: DeleteTaskComment = (id) => {
   return callFunction<void>('deleteTaskComment', id)
+}
+
+export const selectComments: SelectComments = (params) => {
+  return callFunction<Comment[]>('selectComments', params)
+}
+
+export const upsertComment: UpsertComment = (comment) => {
+  return callFunction<number>('upsertComment', comment)
+}
+
+export const deleteComment: DeleteComment = (id) => {
+  return callFunction<void>('deleteComment', id)
 }
 
 export const listSnapshots: ListSnapshots = (projectId) => {

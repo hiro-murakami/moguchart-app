@@ -42,7 +42,9 @@ const {
   editLogs,
   isCommentDialogVisible,
   commentDialogTaskId,
-  commentDialogTaskName,
+  commentDialogRowId,
+  commentDialogProjectId,
+  commentDialogTargetName,
   isSnapshotListDialogVisible,
   projectId,
 
@@ -83,6 +85,8 @@ const {
   redo,
   refresh,
   handleAddCommentFromContextMenu,
+  handleAddCommentToRow,
+  handleAddCommentToProject,
   handleCommentUpdated,
   handleSelectTaskFromLog,
   handleDblClickTaskFromLog,
@@ -170,6 +174,21 @@ onUnmounted(() => {
               @click="isSnapshotListDialogVisible = true"
               tooltip="スナップショット一覧"
             />
+            <v-badge
+              v-if="!isSnapshotMode"
+              :content="currentProject.commentCount"
+              :model-value="(currentProject.commentCount ?? 0) > 0"
+              color="primary"
+              offset-x="-2"
+              offset-y="-2"
+            >
+              <TooltipBtn
+                icon="mdi-comment-text-outline"
+                variant="text"
+                @click="handleAddCommentToProject"
+                tooltip="プロジェクトにコメント"
+              />
+            </v-badge>
             <RoleChip :role="isSnapshotMode ? 'snapshot' : currentProject.role" class="ml-2" />
           </div>
           <div v-if="currentProject.attribute.description" class="text-caption text-medium-emphasis">
@@ -339,6 +358,7 @@ onUnmounted(() => {
       @edit-row="handleEditRowFromContextMenu"
       @delete-row="handleDeleteRowFromContextMenu"
       @toggle-visibility="toggleRowVisibility"
+      @add-comment="handleAddCommentToRow"
     />
 
     <!-- Task Context Menu -->
@@ -355,11 +375,13 @@ onUnmounted(() => {
       @delete="handleDeleteTaskFromContextMenu"
     />
 
-    <!-- Task Comment Dialog -->
-    <TaskCommentDialog
+    <!-- Comment Dialog -->
+    <CommentDialog
       v-model="isCommentDialogVisible"
       :task-id="commentDialogTaskId"
-      :task-name="commentDialogTaskName"
+      :row-id="commentDialogRowId"
+      :project-id="commentDialogProjectId"
+      :target-name="commentDialogTargetName"
       :is-read-only="isReadOnly"
       :user-role="currentProject?.role"
       @updated="handleCommentUpdated"

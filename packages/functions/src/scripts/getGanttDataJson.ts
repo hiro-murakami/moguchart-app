@@ -69,7 +69,7 @@ const getGanttDataJson: GetGanttDataJson = async (projectId, email) => {
     include: {
       tasks: {
         include: {
-          taskComments: true,
+          comments: true,
         },
       },
     },

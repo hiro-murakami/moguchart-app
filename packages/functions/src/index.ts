@@ -19,6 +19,9 @@ import restoreProject from './scripts/restoreProject.js'
 import selectTaskComments from './scripts/selectTaskComments.js'
 import upsertTaskComment from './scripts/upsertTaskComment.js'
 import deleteTaskComment from './scripts/deleteTaskComment.js'
+import selectComments from './scripts/selectComments.js'
+import upsertComment from './scripts/upsertComment.js'
+import deleteComment from './scripts/deleteComment.js'
 import createSnapshot from './scripts/createSnapshot.js'
 import loadSnapshot from './scripts/loadSnapshot.js'
 import listSnapshots from './scripts/listSnapshots.js'
@@ -48,6 +51,9 @@ const functions: FirebaseFunction = {
   selectTaskComments,
   upsertTaskComment,
   deleteTaskComment,
+  selectComments,
+  upsertComment,
+  deleteComment,
   createSnapshot,
   loadSnapshot,
   listSnapshots,

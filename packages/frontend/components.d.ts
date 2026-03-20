@@ -17,6 +17,7 @@ declare module 'vue' {
     ColorInput: typeof import('./src/components/common/ColorInput.vue')['default']
     ColorPaletteInput: typeof import('./src/components/common/ColorPaletteInput.vue')['default']
     ColorPaletteSelect: typeof import('./src/components/common/ColorPaletteSelect.vue')['default']
+    CommentDialog: typeof import('./src/components/CommentDialog.vue')['default']
     ConfirmDialog: typeof import('./src/components/common/ConfirmDialog.vue')['default']
     DialogProvider: typeof import('./src/components/common/DialogProvider.vue')['default']
     GoogleIcon: typeof import('./src/components/icons/GoogleIcon.vue')['default']

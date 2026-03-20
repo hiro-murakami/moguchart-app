@@ -8,9 +8,10 @@ const selectGanttChart: SelectGanttChart = async (projectId) => {
     include: {
       tasks: {
         include: {
-          _count: { select: { taskComments: true } },
+          _count: { select: { comments: true } },
         },
       },
+      _count: { select: { comments: true } },
     },
     orderBy: { order: 'asc' },
   })

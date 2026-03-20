@@ -46,6 +46,9 @@ export type FunctionName =
   | 'selectTaskComments'
   | 'upsertTaskComment'
   | 'deleteTaskComment'
+  | 'selectComments'
+  | 'upsertComment'
+  | 'deleteComment'
   | 'createSnapshot'
   | 'loadSnapshot'
   | 'listSnapshots'
@@ -220,6 +223,8 @@ export interface Project {
   role: Role
   /** 複製元プロジェクトのID */
   originalId?: string
+  /** コメント件数 */
+  commentCount?: number
 }
 
 /** ガントチャートの行（タスクグループ） */
@@ -238,6 +243,8 @@ export interface GanttRow {
   attribute: RowAttribute
   /** 行に含まれるタスク一覧 */
   tasks: GanttTask[]
+  /** コメント件数 */
+  commentCount?: number
 }
 
 /** ガントチャートのタスク */
@@ -366,12 +373,16 @@ export type GetSnapshotDownloadUrl = (
 /** スナップショットを削除する関数の型 */
 export type DeleteSnapshot = (params: { projectId: string; snapshotName: string }, email?: string) => Promise<void>
 
-/** タスクコメント */
-export interface TaskComment {
+/** コメント（タスク・行・プロジェクト共通） */
+export interface Comment {
   /** コメントID */
   id: number
-  /** タスクID */
-  taskId: number
+  /** タスクID（タスクコメント時に設定） */
+  taskId?: number
+  /** 行ID（行コメント時に設定） */
+  rowId?: number
+  /** プロジェクトID（プロジェクトコメント時に設定） */
+  projectId?: string
   /** コメント内容 */
   content: string
   /** 作成者email */
@@ -384,12 +395,25 @@ export interface TaskComment {
   createdAt?: string
 }
 
+/** @deprecated Comment を使用してください */
+export type TaskComment = Comment
+
 /** タスクコメント一覧を取得する関数の型 */
-export type SelectTaskComments = (taskId: number, email?: string) => Promise<TaskComment[]>
+export type SelectTaskComments = (taskId: number, email?: string) => Promise<Comment[]>
 /** タスクコメントを作成または更新する関数の型 */
-export type UpsertTaskComment = (comment: TaskComment, email?: string) => Promise<number>
+export type UpsertTaskComment = (comment: Comment, email?: string) => Promise<number>
 /** タスクコメントを削除する関数の型 */
 export type DeleteTaskComment = (id: number, email?: string) => Promise<void>
+
+/** コメント一覧を取得する関数の型 */
+export type SelectComments = (
+  params: { taskId?: number; rowId?: number; projectId?: string },
+  email?: string,
+) => Promise<Comment[]>
+/** コメントを作成または更新する関数の型 */
+export type UpsertComment = (comment: Comment, email?: string) => Promise<number>
+/** コメントを削除する関数の型 */
+export type DeleteComment = (id: number, email?: string) => Promise<void>
 
 // --- フロントエンドとバックエンドで実装を共有しない型 ---
 

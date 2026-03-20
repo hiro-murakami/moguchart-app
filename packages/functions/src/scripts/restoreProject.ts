@@ -192,7 +192,7 @@ const restoreProject: RestoreProject = async (data, email) => {
 
       if (tasks && Array.isArray(tasks)) {
         for (const task of tasks) {
-          const { id: oldTaskId, taskComments, ...taskData } = task
+          const { id: oldTaskId, comments: taskComments, ...taskData } = task
 
           const newTask = await tx.ganttTask.create({
             data: {
@@ -201,7 +201,7 @@ const restoreProject: RestoreProject = async (data, email) => {
               start: new Date(taskData.start),
               end: new Date(taskData.end),
               attribute: taskData.attribute ?? {}, // 依存関係は後で更新するが、とりあえずそのまま入れる
-              taskComments:
+              comments:
                 taskComments && Array.isArray(taskComments)
                   ? {
                       create: taskComments.map((comment: any) => ({

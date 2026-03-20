@@ -1,10 +1,24 @@
 import dayjs from 'dayjs'
 import { getContrastColor, toDateString } from '@/modules/utils'
 import * as moguchart from '@mogura/moguchart'
-import { selectTaskComments } from '@/modules/scripts'
-import type { TaskComment } from '@functions/types/shared'
+import { selectTaskComments, selectComments } from '@/modules/scripts'
+import type { Comment, TaskComment } from '@functions/types/shared'
 
 const commentsCache = new Map<number, { data: TaskComment[]; fetchedAt: number }>()
+const rowCommentsCache = new Map<number, { data: Comment[]; fetchedAt: number }>()
+
+/** ダークモード判定に基づくツールチップの配色を返す */
+const getTooltipColors = () => {
+  const isDark = !!document.querySelector('.v-theme--dark')
+  // ライトモード→黒ベース、ダークモード→白ベース
+  const bg = isDark ? '#fff' : '#212121'
+  const text = isDark ? 'rgba(0,0,0,0.87)' : 'rgba(255,255,255,0.87)'
+  const textMuted = isDark ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.5)'
+  const textStrong = isDark ? 'rgba(0,0,0,0.9)' : 'rgba(255,255,255,0.9)'
+  const border = isDark ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.15)'
+  const divider = isDark ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.12)'
+  return { bg, text, textMuted, textStrong, border, divider }
+}
 
 /**
  * スナップショットモードなどAPI不要の場面で、コメントデータをキャッシュに事前ロードする。
@@ -17,14 +31,16 @@ export const preloadCommentsCache = (entries: { taskId: number; comments: TaskCo
 }
 
 const renderComments = (container: HTMLElement, comments: TaskComment[], count: number) => {
+  const colors = getTooltipColors()
   container.innerHTML = ''
   container.style.display = 'flex'
   container.style.flexDirection = 'column'
-  container.style.gap = '4px'
+  container.style.gap = '6px'
   
   const titleSpan = document.createElement('div')
   titleSpan.style.fontWeight = 'bold'
-  titleSpan.style.opacity = '0.8'
+  titleSpan.style.color = colors.textStrong
+  titleSpan.style.fontSize = '12px'
   titleSpan.textContent = `💬 コメント (${count}件)`
   container.appendChild(titleSpan)
   
@@ -33,16 +49,20 @@ const renderComments = (container: HTMLElement, comments: TaskComment[], count: 
     .sort((a, b) => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime())
     .slice(-5)
 
-  displayComments.forEach((c) => {
+  displayComments.forEach((c, i) => {
     const cDiv = document.createElement('div')
-    cDiv.style.opacity = '0.9'
     cDiv.style.display = 'flex'
     cDiv.style.flexDirection = 'column'
+    cDiv.style.gap = '1px'
+    if (i > 0) {
+      cDiv.style.borderTop = `1px solid ${colors.divider}`
+      cDiv.style.paddingTop = '5px'
+    }
     
     const headerDiv = document.createElement('div')
     headerDiv.style.fontSize = '10px'
-    headerDiv.style.opacity = '0.7'
-    headerDiv.style.marginBottom = '2px'
+    headerDiv.style.color = colors.textMuted
+    headerDiv.style.marginBottom = '1px'
     const name = c.createdByDisplayName || '名無し'
     const time = c.createdAt ? dayjs(c.createdAt).format('YYYY/MM/DD HH:mm') : ''
     headerDiv.textContent = `${name} ${time}`
@@ -50,6 +70,7 @@ const renderComments = (container: HTMLElement, comments: TaskComment[], count: 
     const contentDiv = document.createElement('div')
     contentDiv.style.wordBreak = 'break-word'
     contentDiv.style.whiteSpace = 'pre-wrap'
+    contentDiv.style.color = colors.textStrong
     // 100文字で制限
     const content = c.content.length > 100 ? c.content.slice(0, 100) + '...' : c.content
     contentDiv.textContent = content
@@ -62,9 +83,11 @@ const renderComments = (container: HTMLElement, comments: TaskComment[], count: 
   if (comments.length > 5) {
     const moreDiv = document.createElement('div')
     moreDiv.style.fontSize = '10px'
-    moreDiv.style.opacity = '0.7'
+    moreDiv.style.color = colors.textMuted
     moreDiv.style.textAlign = 'center'
     moreDiv.style.marginTop = '2px'
+    moreDiv.style.borderTop = `1px solid ${colors.divider}`
+    moreDiv.style.paddingTop = '4px'
     moreDiv.textContent = `他 ${comments.length - 5} 件のコメント...`
     container.appendChild(moreDiv)
   }
@@ -118,6 +141,7 @@ export const barContent = (task: moguchart.GanttTask) => {
   container.style.padding = '2px 8px'
   container.style.gap = '1px'
   container.style.pointerEvents = 'none'
+  container.style.position = 'relative'
   container.style.userSelect = 'none'
 
   const headerContainer = document.createElement('div')
@@ -160,6 +184,7 @@ export const barContent = (task: moguchart.GanttTask) => {
 
   // コメントバッジ
   if (commentCount && commentCount > 0) {
+    const taskId = Number(task.id)
     const badge = document.createElement('span')
     badge.style.display = 'inline-flex'
     badge.style.alignItems = 'center'
@@ -172,7 +197,69 @@ export const barContent = (task: moguchart.GanttTask) => {
     badge.style.fontWeight = 'bold'
     badge.style.flexShrink = '0'
     badge.style.textShadow = '1px 1px 2px rgba(0,0,0,0.5)'
+    badge.style.pointerEvents = 'auto'
+    badge.style.cursor = 'default'
     badge.textContent = `💬 ${commentCount}`
+
+    let tooltipEl: HTMLElement | null = null
+    let hideTimeout: ReturnType<typeof setTimeout> | null = null
+
+    const showTooltip = () => {
+      if (hideTimeout) { clearTimeout(hideTimeout); hideTimeout = null }
+      if (tooltipEl) return
+
+      const colors = getTooltipColors()
+      tooltipEl = document.createElement('div')
+      tooltipEl.style.position = 'fixed'
+      tooltipEl.style.zIndex = '9999'
+      tooltipEl.style.backgroundColor = colors.bg
+      tooltipEl.style.color = colors.text
+      tooltipEl.style.border = `1px solid ${colors.border}`
+      tooltipEl.style.borderRadius = '8px'
+      tooltipEl.style.padding = '8px 12px'
+      tooltipEl.style.maxWidth = '320px'
+      tooltipEl.style.fontSize = '12px'
+      tooltipEl.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)'
+      tooltipEl.style.pointerEvents = 'none'
+
+      const rect = badge.getBoundingClientRect()
+      tooltipEl.style.left = `${rect.left}px`
+      tooltipEl.style.top = `${rect.bottom + 4}px`
+
+      const cached = commentsCache.get(taskId)
+      if (cached && Date.now() - cached.fetchedAt < 60000) {
+        renderComments(tooltipEl, cached.data, commentCount)
+      } else {
+        tooltipEl.textContent = `コメント読み込み中... (${commentCount}件)`
+        selectTaskComments(taskId).then((comments) => {
+          commentsCache.set(taskId, { data: comments, fetchedAt: Date.now() })
+          if (tooltipEl) renderComments(tooltipEl, comments, commentCount)
+        }).catch(() => {
+          if (tooltipEl) tooltipEl.textContent = 'コメントの読み込みに失敗しました'
+        })
+      }
+      document.body.appendChild(tooltipEl)
+    }
+
+    const removeTooltip = () => {
+      if (hideTimeout) { clearTimeout(hideTimeout); hideTimeout = null }
+      if (tooltipEl) {
+        tooltipEl.remove()
+        tooltipEl = null
+      }
+    }
+
+    const hideTooltip = () => {
+      hideTimeout = setTimeout(removeTooltip, 100)
+    }
+
+    badge.addEventListener('mouseenter', showTooltip)
+    badge.addEventListener('mouseleave', hideTooltip)
+    badge.addEventListener('mousedown', removeTooltip)
+    document.addEventListener('mousedown', (e) => {
+      if (tooltipEl && e.target !== badge) removeTooltip()
+    })
+
     headerContainer.appendChild(badge)
   }
 
@@ -257,33 +344,7 @@ export const tooltip = (task: moguchart.GanttTask) => {
     container.appendChild(descDiv)
   }
 
-  // コメント
-  const commentCount = taskWithAttr.commentCount as number | undefined
-  const taskId = Number(task.id)
 
-  if (commentCount && commentCount > 0 && !isNaN(taskId)) {
-    const commentsContainer = document.createElement('div')
-    commentsContainer.style.fontSize = '12px'
-    commentsContainer.style.marginTop = '4px'
-    commentsContainer.style.paddingTop = '4px'
-    commentsContainer.style.borderTop = '1px solid rgba(128, 128, 128, 0.3)'
-    
-    const cached = commentsCache.get(taskId)
-    if (cached && Date.now() - cached.fetchedAt < 60000) {
-      // キャッシュ（1分）を使う
-      renderComments(commentsContainer, cached.data, commentCount)
-    } else {
-      commentsContainer.textContent = `コメント読み込み中... (${commentCount}件)`
-      selectTaskComments(taskId).then((comments) => {
-        commentsCache.set(taskId, { data: comments, fetchedAt: Date.now() })
-        renderComments(commentsContainer, comments, commentCount)
-      }).catch((err) => {
-        console.error('Failed to load comments in tooltip', err)
-        commentsContainer.textContent = 'コメントの読み込みに失敗しました'
-      })
-    }
-    container.appendChild(commentsContainer)
-  }
 
   return container
 }
@@ -291,6 +352,7 @@ export const tooltip = (task: moguchart.GanttTask) => {
 export const rowHeaderContent = (row: moguchart.GanttRow) => {
   const rowWithAttr = row as any
   const description = rowWithAttr.attribute?.description as string | undefined
+  const commentCount = rowWithAttr.commentCount as number | undefined
 
   const container = document.createElement('div')
   container.style.display = 'flex'
@@ -304,6 +366,12 @@ export const rowHeaderContent = (row: moguchart.GanttRow) => {
   container.style.zIndex = '1'
   container.style.pointerEvents = 'none'
   container.style.userSelect = 'none'
+
+  const nameRow = document.createElement('div')
+  nameRow.style.display = 'flex'
+  nameRow.style.alignItems = 'center'
+  nameRow.style.gap = '6px'
+  nameRow.style.overflow = 'hidden'
 
   const nameDiv = document.createElement('div')
   nameDiv.style.fontWeight = 'bold'
@@ -319,7 +387,90 @@ export const rowHeaderContent = (row: moguchart.GanttRow) => {
   } else {
     nameDiv.textContent = row.name
   }
-  container.appendChild(nameDiv)
+  nameRow.appendChild(nameDiv)
+
+  if (commentCount && commentCount > 0) {
+    const rowId = Number(row.id)
+    const badge = document.createElement('span')
+    badge.style.display = 'inline-flex'
+    badge.style.alignItems = 'center'
+    badge.style.gap = '2px'
+    badge.style.backgroundColor = 'rgba(var(--v-theme-on-surface), 0.1)'
+    badge.style.color = 'rgb(var(--v-theme-on-surface))'
+    badge.style.padding = '0px 5px'
+    badge.style.borderRadius = '8px'
+    badge.style.fontSize = '10px'
+    badge.style.fontWeight = 'bold'
+    badge.style.flexShrink = '0'
+    badge.style.opacity = '0.7'
+    badge.style.pointerEvents = 'auto'
+    badge.style.cursor = 'default'
+    badge.textContent = `💬 ${commentCount}`
+
+    let tooltipEl: HTMLElement | null = null
+    let hideTimeout: ReturnType<typeof setTimeout> | null = null
+
+    const showTooltip = (e: MouseEvent) => {
+      if (hideTimeout) { clearTimeout(hideTimeout); hideTimeout = null }
+      if (tooltipEl) return
+
+      const colors = getTooltipColors()
+      tooltipEl = document.createElement('div')
+      tooltipEl.style.position = 'fixed'
+      tooltipEl.style.zIndex = '9999'
+      tooltipEl.style.backgroundColor = colors.bg
+      tooltipEl.style.color = colors.text
+      tooltipEl.style.border = `1px solid ${colors.border}`
+      tooltipEl.style.borderRadius = '8px'
+      tooltipEl.style.padding = '8px 12px'
+      tooltipEl.style.maxWidth = '320px'
+      tooltipEl.style.fontSize = '12px'
+      tooltipEl.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)'
+      tooltipEl.style.pointerEvents = 'none'
+
+      const rect = badge.getBoundingClientRect()
+      tooltipEl.style.left = `${rect.left}px`
+      tooltipEl.style.top = `${rect.bottom + 4}px`
+
+      // キャッシュ or APIから取得
+      const cached = rowCommentsCache.get(rowId)
+      if (cached && Date.now() - cached.fetchedAt < 60000) {
+        renderComments(tooltipEl, cached.data, commentCount)
+      } else {
+        tooltipEl.textContent = `コメント読み込み中... (${commentCount}件)`
+        selectComments({ rowId }).then((comments) => {
+          rowCommentsCache.set(rowId, { data: comments, fetchedAt: Date.now() })
+          if (tooltipEl) renderComments(tooltipEl, comments, commentCount)
+        }).catch(() => {
+          if (tooltipEl) tooltipEl.textContent = 'コメントの読み込みに失敗しました'
+        })
+      }
+      document.body.appendChild(tooltipEl)
+    }
+
+    const removeTooltip = () => {
+      if (hideTimeout) { clearTimeout(hideTimeout); hideTimeout = null }
+      if (tooltipEl) {
+        tooltipEl.remove()
+        tooltipEl = null
+      }
+    }
+
+    const hideTooltip = () => {
+      hideTimeout = setTimeout(removeTooltip, 100)
+    }
+
+    badge.addEventListener('mouseenter', showTooltip)
+    badge.addEventListener('mouseleave', hideTooltip)
+    badge.addEventListener('mousedown', removeTooltip)
+    document.addEventListener('mousedown', (e) => {
+      if (tooltipEl && e.target !== badge) removeTooltip()
+    })
+
+    nameRow.appendChild(badge)
+  }
+
+  container.appendChild(nameRow)
 
   if (description) {
     const descDiv = document.createElement('div')

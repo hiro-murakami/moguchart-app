@@ -1071,7 +1071,9 @@ export const useGanttChartView = () => {
       const task = row?.tasks.find((t) => Number(t.id) === taskIdNum)
 
       commentDialogTaskId.value = taskIdNum
-      commentDialogTaskName.value = task?.name || ''
+      commentDialogRowId.value = null
+      commentDialogProjectId.value = null
+      commentDialogTargetName.value = task?.name || ''
       isCommentDialogVisible.value = true
     } else {
       startEditingTask(log.taskId)
@@ -1792,10 +1794,12 @@ export const useGanttChartView = () => {
     }
   }
 
-  // --- タスクコメントダイアログ関連 ---
+  // --- コメントダイアログ関連 ---
   const isCommentDialogVisible = ref(false)
   const commentDialogTaskId = ref<number | null>(null)
-  const commentDialogTaskName = ref('')
+  const commentDialogRowId = ref<number | null>(null)
+  const commentDialogProjectId = ref<string | null>(null)
+  const commentDialogTargetName = ref('')
 
   const handleAddCommentFromContextMenu = () => {
     const taskId = taskContextMenu.value.taskId
@@ -1805,9 +1809,35 @@ export const useGanttChartView = () => {
     const task = row?.tasks.find((t) => t.id === taskId)
 
     commentDialogTaskId.value = Number(taskId)
-    commentDialogTaskName.value = task?.name || ''
+    commentDialogRowId.value = null
+    commentDialogProjectId.value = null
+    commentDialogTargetName.value = task?.name || ''
     isCommentDialogVisible.value = true
     taskContextMenu.value.visible = false
+  }
+
+  const handleAddCommentToRow = () => {
+    const rowId = contextMenu.value.rowId
+    if (rowId === null) return
+
+    const row = rows.value.find((r) => Number(r.id) === rowId)
+
+    commentDialogTaskId.value = null
+    commentDialogRowId.value = rowId
+    commentDialogProjectId.value = null
+    commentDialogTargetName.value = row?.name || `行 #${rowId}`
+    isCommentDialogVisible.value = true
+    contextMenu.value.visible = false
+  }
+
+  const handleAddCommentToProject = () => {
+    if (!projectId.value || !currentProject.value) return
+
+    commentDialogTaskId.value = null
+    commentDialogRowId.value = null
+    commentDialogProjectId.value = projectId.value
+    commentDialogTargetName.value = currentProject.value.name
+    isCommentDialogVisible.value = true
   }
 
   const handleCommentUpdated = async () => {
@@ -1817,10 +1847,12 @@ export const useGanttChartView = () => {
       if (commentDialogTaskId.value) {
         const row = rows.value.find((r) => r.tasks.some((t) => Number(t.id) === commentDialogTaskId.value))
         if (row) rowIds.push(Number(row.id))
+      } else if (commentDialogRowId.value) {
+        rowIds.push(commentDialogRowId.value)
       }
       await loadData(projectId.value)
       publishEditEvent('comment_update', {
-        targetName: commentDialogTaskName.value,
+        targetName: commentDialogTargetName.value,
         rowIds: rowIds.length > 0 ? rowIds : undefined,
         taskId: commentDialogTaskId.value ? String(commentDialogTaskId.value) : undefined,
       })
@@ -2465,7 +2497,9 @@ export const useGanttChartView = () => {
     editLogs,
     isCommentDialogVisible,
     commentDialogTaskId,
-    commentDialogTaskName,
+    commentDialogRowId,
+    commentDialogProjectId,
+    commentDialogTargetName,
     isSnapshotListDialogVisible,
 
     // methods
@@ -2512,6 +2546,8 @@ export const useGanttChartView = () => {
     redo,
     refresh,
     handleAddCommentFromContextMenu,
+    handleAddCommentToRow,
+    handleAddCommentToProject,
     handleCommentUpdated,
     handleCopyTasksFromContextMenu,
     handlePasteTasksFromContextMenu,

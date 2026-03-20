@@ -36,7 +36,7 @@ const duplicateProject: DuplicateProject = async ({ originalProjectId, newProjec
     include: {
       tasks: {
         include: {
-          taskComments: true,
+          comments: true,
         },
       },
     },
@@ -64,8 +64,8 @@ const duplicateProject: DuplicateProject = async ({ originalProjectId, newProjec
               start: task.start,
               end: task.end,
               attribute: task.attribute ?? {},
-              taskComments: {
-                create: task.taskComments.map((comment) => ({
+              comments: {
+                create: task.comments.map((comment) => ({
                   content: comment.content,
                   createdBy: comment.createdBy,
                   updatedBy: comment.updatedBy,

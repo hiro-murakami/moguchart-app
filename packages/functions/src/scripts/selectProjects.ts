@@ -33,6 +33,9 @@ const selectProjects: SelectProjects = async (_, email) => {
     orderBy: {
       updatedAt: 'desc',
     },
+    include: {
+      _count: { select: { comments: true } },
+    },
   })
   return data.map(toProject(email!))
 }
