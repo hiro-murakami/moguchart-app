@@ -96,6 +96,9 @@ const {
   handleCopyTasksShortcut,
   handlePasteTasksShortcut,
   hasClipboardData,
+  projectComments,
+  isProjectCommentsLoading,
+  fetchProjectComments,
 } = useGanttChartView()
 
 const rowCountRules = [(v: number) => (v >= 1 && v <= 10) || '1〜10の範囲で入力してください']
@@ -174,21 +177,65 @@ onUnmounted(() => {
               @click="isSnapshotListDialogVisible = true"
               tooltip="スナップショット一覧"
             />
-            <v-badge
+            <v-menu
               v-if="!isSnapshotMode"
-              :content="currentProject.commentCount"
-              :model-value="(currentProject.commentCount ?? 0) > 0"
-              color="primary"
-              offset-x="-2"
-              offset-y="-2"
+              open-on-hover
+              :close-on-content-click="false"
+              :open-delay="200"
+              :close-delay="200"
+              location="bottom"
+              @update:model-value="(val: boolean) => { if (val) fetchProjectComments() }"
             >
-              <TooltipBtn
-                icon="mdi-comment-text-outline"
-                variant="text"
-                @click="handleAddCommentToProject"
-                tooltip="プロジェクトにコメント"
-              />
-            </v-badge>
+              <template #activator="{ props: menuProps }">
+                <v-btn
+                  v-bind="menuProps"
+                  variant="text"
+                  size="small"
+                  class="px-1"
+                  min-width="0"
+                  @click="handleAddCommentToProject"
+                >
+                  <v-icon size="18" class="mr-1">mdi-comment-text-outline</v-icon>
+                  <span v-if="(currentProject.commentCount ?? 0) > 0" style="font-size: 12px; font-weight: bold;">
+                    {{ currentProject.commentCount }}
+                  </span>
+                </v-btn>
+              </template>
+              <v-card
+                v-if="(currentProject.commentCount ?? 0) > 0"
+                max-width="360"
+                max-height="300"
+                class="overflow-y-auto"
+                :theme="$vuetify.theme.current.dark ? 'light' : 'dark'"
+              >
+                <v-card-text class="pa-3">
+                  <div v-if="isProjectCommentsLoading" class="text-center py-2">
+                    <v-progress-circular indeterminate size="20" width="2" />
+                  </div>
+                  <template v-else>
+                    <div
+                      v-for="(comment, i) in projectComments.slice(0, 5)"
+                      :key="comment.id"
+                    >
+                      <v-divider v-if="i > 0" class="my-2" />
+                      <div class="text-caption" style="opacity: 0.7;">
+                        {{ comment.createdByDisplayName }} - {{ comment.createdAt ? new Date(comment.createdAt).toLocaleString('ja-JP') : '' }}
+                      </div>
+                      <div class="text-body-2 mt-1" style="white-space: pre-wrap; word-break: break-word;">
+                        {{ comment.content }}
+                      </div>
+                    </div>
+                    <div
+                      v-if="projectComments.length > 5"
+                      class="text-caption mt-2"
+                      style="opacity: 0.6;"
+                    >
+                      他 {{ projectComments.length - 5 }}件のコメント...
+                    </div>
+                  </template>
+                </v-card-text>
+              </v-card>
+            </v-menu>
             <RoleChip :role="isSnapshotMode ? 'snapshot' : currentProject.role" class="ml-2" />
           </div>
           <div v-if="currentProject.attribute.description" class="text-caption text-medium-emphasis">

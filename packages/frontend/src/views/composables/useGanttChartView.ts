@@ -10,6 +10,7 @@ import {
   upsertGanttTasks,
   createSnapshot,
   loadSnapshot,
+  selectComments,
 } from '@/modules/scripts'
 import { db } from '@/firebase'
 import { doc, getDoc, setDoc } from 'firebase/firestore'
@@ -35,6 +36,7 @@ import type {
   EditingTaskData,
   GanttDataJson,
   Label,
+  Comment,
 } from '@functions/types/shared'
 import * as holiday_jp from '@holiday-jp/holiday_jp'
 import * as moguchart from '@mogura/moguchart'
@@ -537,6 +539,15 @@ export const useGanttChartView = () => {
 
     if (!projectId.value || events.length === 0) return
 
+    // プロジェクトコメント更新がある場合、ストアのcommentCountを更新
+    const hasProjectCommentUpdate = events.some(
+      (e) => e.type === 'comment_update' && e.payload?.commentTarget === 'project',
+    )
+    if (hasProjectCommentUpdate) {
+      invalidateProjectCommentsCache()
+      await fetchProjects()
+    }
+
     // full_reload / row_delete / row_upsert / row_reorder が含まれる場合は全行差し替え
     const needsFullReload = events.some((e) =>
       ['full_reload', 'row_delete', 'row_upsert', 'row_reorder'].includes(e.type),
@@ -547,7 +558,7 @@ export const useGanttChartView = () => {
       return
     }
 
-    // task_upsert / task_delete のみ → 影響行だけ差分更新
+    // task_upsert / task_delete / comment_update → 影響行だけ差分更新
     const affectedRowIds = new Set<string>()
     for (const e of events) {
       if (e.payload?.rowIds) {
@@ -1060,24 +1071,41 @@ export const useGanttChartView = () => {
   }
 
   const handleDblClickTaskFromLog = (log: ActivityLogEntry) => {
+    if (log.type === 'comment_update') {
+      // コメント更新ログ: commentTarget に応じて適切なダイアログを開く
+      const commentTarget = (log as any).commentTarget || (log.taskId ? 'task' : log.rowId ? 'row' : 'project')
+
+      if (commentTarget === 'task' && log.taskId) {
+        handleSelectTaskFromLog(log.taskId)
+        const taskIdNum = Number(log.taskId)
+        const row = rows.value.find((r) => r.tasks.some((t) => Number(t.id) === taskIdNum))
+        const task = row?.tasks.find((t) => Number(t.id) === taskIdNum)
+
+        commentDialogTaskId.value = taskIdNum
+        commentDialogRowId.value = null
+        commentDialogProjectId.value = null
+        commentDialogTargetName.value = task?.name || ''
+        isCommentDialogVisible.value = true
+      } else if (commentTarget === 'row' && log.rowId) {
+        const rowIdNum = Number(log.rowId)
+        const row = rows.value.find((r) => Number(r.id) === rowIdNum)
+
+        commentDialogTaskId.value = null
+        commentDialogRowId.value = rowIdNum
+        commentDialogProjectId.value = null
+        commentDialogTargetName.value = row?.name || log.targetName || ''
+        isCommentDialogVisible.value = true
+      } else if (commentTarget === 'project') {
+        handleAddCommentToProject()
+      }
+      return
+    }
+
     if (!log.taskId) return
 
     // タスクを選択状態にする
     handleSelectTaskFromLog(log.taskId)
-
-    if (log.type === 'comment_update') {
-      const taskIdNum = Number(log.taskId)
-      const row = rows.value.find((r) => r.tasks.some((t) => Number(t.id) === taskIdNum))
-      const task = row?.tasks.find((t) => Number(t.id) === taskIdNum)
-
-      commentDialogTaskId.value = taskIdNum
-      commentDialogRowId.value = null
-      commentDialogProjectId.value = null
-      commentDialogTargetName.value = task?.name || ''
-      isCommentDialogVisible.value = true
-    } else {
-      startEditingTask(log.taskId)
-    }
+    startEditingTask(log.taskId)
   }
 
   // --- ダイアログ関連 ---
@@ -1840,8 +1868,35 @@ export const useGanttChartView = () => {
     isCommentDialogVisible.value = true
   }
 
+  // プロジェクトコメントツールチップ用
+  const projectComments = ref<Comment[]>([])
+  const isProjectCommentsLoading = ref(false)
+  let projectCommentsFetchedAt = 0
+
+  const fetchProjectComments = async () => {
+    if (!projectId.value) return
+    // 1分以内の再取得を防止
+    if (Date.now() - projectCommentsFetchedAt < 60000 && projectComments.value.length > 0) return
+    isProjectCommentsLoading.value = true
+    try {
+      const comments = await selectComments({ projectId: projectId.value })
+      projectComments.value = comments
+      projectCommentsFetchedAt = Date.now()
+    } catch (e) {
+      console.error('Failed to load project comments', e)
+    } finally {
+      isProjectCommentsLoading.value = false
+    }
+  }
+
+  const invalidateProjectCommentsCache = () => {
+    projectCommentsFetchedAt = 0
+    projectComments.value = []
+  }
+
   const handleCommentUpdated = async () => {
     // コメント件数を反映するためにデータをリロード
+    invalidateProjectCommentsCache()
     if (projectId.value) {
       const rowIds: number[] = []
       if (commentDialogTaskId.value) {
@@ -1851,11 +1906,32 @@ export const useGanttChartView = () => {
         rowIds.push(commentDialogRowId.value)
       }
       await loadData(projectId.value)
-      publishEditEvent('comment_update', {
+
+      // プロジェクトのcommentCountを最新に更新
+      if (commentDialogProjectId.value) {
+        try {
+          const comments = await selectComments({ projectId: projectId.value })
+          const project = projects.value.find((p) => p.id === projectId.value)
+          if (project) {
+            project.commentCount = comments.length
+          }
+          projectComments.value = comments
+          projectCommentsFetchedAt = Date.now()
+        } catch (e) {
+          console.error('Failed to update project comment count', e)
+        }
+      }
+
+      // Firestoreはundefined値を受け付けないため、値がある場合のみpayloadに含める
+      const payload: Record<string, any> = {
         targetName: commentDialogTargetName.value,
-        rowIds: rowIds.length > 0 ? rowIds : undefined,
-        taskId: commentDialogTaskId.value ? String(commentDialogTaskId.value) : undefined,
-      })
+        commentTarget: commentDialogTaskId.value ? 'task' : commentDialogRowId.value ? 'row' : 'project',
+      }
+      if (rowIds.length > 0) payload.rowIds = rowIds
+      if (commentDialogTaskId.value) payload.taskId = String(commentDialogTaskId.value)
+      if (commentDialogRowId.value) payload.rowId = String(commentDialogRowId.value)
+
+      publishEditEvent('comment_update', payload)
     }
   }
 
@@ -2554,5 +2630,9 @@ export const useGanttChartView = () => {
     handleCopyTasksShortcut,
     handlePasteTasksShortcut,
     hasClipboardData,
+    projectComments,
+    isProjectCommentsLoading,
+    fetchProjectComments,
+    invalidateProjectCommentsCache,
   }
 }

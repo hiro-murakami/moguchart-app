@@ -33,7 +33,7 @@ const getEventDescription = (type: EditEventType, targetName?: string, isNew?: b
       case 'row_reorder':
         return '行の並び順を変更'
       case 'comment_update':
-        return `タスク「${targetName}」のコメントを更新`
+        return `「${targetName}」のコメントを更新`
       case 'full_reload':
         return 'データを更新'
       default:
@@ -52,7 +52,7 @@ const getEventDescription = (type: EditEventType, targetName?: string, isNew?: b
     case 'row_reorder':
       return '行の並び順を変更'
     case 'comment_update':
-      return 'タスクのコメントを更新'
+      return 'コメントを更新'
     case 'full_reload':
       return 'データを更新'
     default:
@@ -80,6 +80,8 @@ export interface ActivityLogEntry {
   timestamp: string
   /** 対象のタスクID */
   taskId?: string
+  /** 対象の行ID */
+  rowId?: string
   /** 対象名（タスク名や行名など） */
   targetName?: string
 }
@@ -241,6 +243,7 @@ export const useCollaboration = () => {
       type: event.type,
       timestamp: event.timestamp,
       taskId: event.payload?.taskId as string | undefined,
+      rowId: event.payload?.rowId as string | undefined,
       targetName: event.payload?.targetName as string | undefined,
     }
   }
