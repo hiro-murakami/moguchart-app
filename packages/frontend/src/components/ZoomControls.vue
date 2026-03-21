@@ -26,7 +26,7 @@ const zoomIn = () => {
 </script>
 
 <template>
-  <div class="d-flex align-center" style="width: 180px">
+  <div class="d-flex align-center" style="width: 220px">
     <TooltipBtn icon="mdi-magnify-minus" variant="text" size="medium" tooltip="縮小" @click="zoomOut" />
     <v-slider
       :model-value="modelValue"

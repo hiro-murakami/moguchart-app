@@ -335,15 +335,29 @@ onUnmounted(() => {
           @clear-all="clearAllLabels"
           class="mr-4"
         />
-        <v-switch
-          v-model="showHiddenRows"
-          label="非表示行を表示"
-          color="primary"
-          hide-details
-          density="compact"
-          class="mr-4"
-        />
-        <ZoomControls v-model="pxPerDay" />
+        <v-menu :close-on-content-click="false" location="bottom end">
+          <template #activator="{ props: menuProps }">
+            <TooltipBtn
+              v-bind="menuProps"
+              icon="mdi-cog"
+              variant="text"
+              tooltip="表示設定"
+            />
+          </template>
+          <v-card min-width="280" class="pa-4">
+            <div class="text-subtitle-2 mb-3">表示設定</div>
+            <v-switch
+              v-model="showHiddenRows"
+              label="非表示行を表示"
+              color="primary"
+              hide-details
+              density="compact"
+              class="mb-4"
+            />
+            <div class="text-caption text-medium-emphasis mb-1">表示倍率</div>
+            <ZoomControls v-model="pxPerDay" />
+          </v-card>
+        </v-menu>
       </div>
 
       <div
