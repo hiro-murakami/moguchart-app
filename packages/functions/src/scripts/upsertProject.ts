@@ -9,7 +9,9 @@ export const _upsertProject = async (
   project: Parameters<UpsertProject>[0],
   email?: string,
 ) => {
-  const { id, role, ...data } = project
+  // Prisma の update に渡せないフィールドを除外
+  // _count: Prisma の集計フィールド、commentCount: フロントエンド用の仮想フィールド
+  const { id, role, _count, commentCount, ...data } = project as any
   const isNew = !id
 
   if (isNew) {
