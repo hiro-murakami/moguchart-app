@@ -157,6 +157,7 @@ export const useGanttChartView = () => {
       selectedLabels?: string[]
       showHiddenRows?: boolean
       rowHeaderWidth?: number
+      barHeight?: number
     }) => {
       if (userStore.user && projectId.value) {
         const currentSettings = userStore.user.attribute.projectSettings?.[projectId.value] || {}
@@ -199,6 +200,11 @@ export const useGanttChartView = () => {
     saveProjectSettings({ showHiddenRows: newValue })
   })
 
+  // バー高さ変更時に保存
+  watch(barHeight, (newValue) => {
+    saveProjectSettings({ barHeight: newValue })
+  })
+
   // プロジェクトまたはユーザーが変わったら設定を復元
   watch(
     [() => userStore.user, projectId],
@@ -232,6 +238,13 @@ export const useGanttChartView = () => {
           showHiddenRows.value = settings.showHiddenRows
         } else {
           showHiddenRows.value = false
+        }
+
+        // barHeightの復元
+        if (settings?.barHeight) {
+          barHeight.value = settings.barHeight
+        } else {
+          barHeight.value = 38
         }
       }
     },
@@ -2576,6 +2589,7 @@ export const useGanttChartView = () => {
     currentProject,
     showHiddenRows,
     pxPerDay,
+    barHeight,
     addRowCount,
     manualAddRowCount,
     isUnassignedTasksOpen,

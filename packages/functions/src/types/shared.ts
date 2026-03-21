@@ -2,7 +2,7 @@
 // 注意: ここにはバックエンド固有のライブラリ(firebase-admin等)をimportしないでください。
 
 /** バージョン */
-export const VERSION = '0.4.2'
+export const VERSION = '0.4.3'
 
 /** Cloud Functions の呼び出しパラメータ */
 export interface FunctionParam {
@@ -96,6 +96,8 @@ export type ProjectSettings = {
   showHiddenRows?: boolean
   /** 行ヘッダーの幅 */
   rowHeaderWidth?: number
+  /** ガントバーの高さ (px) */
+  barHeight?: number
 }
 
 /** チュートリアルのキー一覧 */
