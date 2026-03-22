@@ -511,7 +511,7 @@ onUnmounted(() => {
   border-radius: 24px;
 }
 .search-text-field {
-  max-width: 400px;
+  max-width: 500px;
   min-width: 250px;
 }
 .presence-avatar {

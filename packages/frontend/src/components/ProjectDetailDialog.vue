@@ -99,7 +99,7 @@ watch(
               </v-tabs>
             </v-col>
             <v-col cols="9">
-              <v-window v-model="tab" style="min-height: 450px">
+              <v-window v-model="tab" style="min-height: 500px">
                 <v-window-item value="general">
                   <v-row density="compact" class="pt-2">
                     <v-col cols="12">
@@ -152,7 +152,7 @@ watch(
                       />
                     </v-col>
                     <v-col cols="12">
-                      <v-checkbox v-model="localPublic" density="compact" hide-details>
+                      <v-checkbox v-model="localPublic" density="compact">
                         <template v-slot:label>
                           一般公開
                           <HelpText text="ONにすると全てのユーザーが参照できるようになります" />
@@ -232,7 +232,7 @@ watch(
                       </v-btn>
                     </v-col>
                   </v-row>
-                  <div style="max-height: 400px; overflow-y: auto; overflow-x: hidden" class="pr-2">
+                  <div style="max-height: 460px; overflow-y: auto; overflow-x: hidden" class="pr-2">
                     <v-row density="compact">
                       <v-col v-for="(palette, i) in localColorPalettes" :key="i" cols="12">
                         <ColorPaletteInput
@@ -264,7 +264,7 @@ watch(
                       </v-btn>
                     </v-col>
                   </v-row>
-                  <div style="max-height: 400px; overflow-y: auto; overflow-x: hidden" class="pr-2">
+                  <div style="max-height: 460px; overflow-y: auto; overflow-x: hidden" class="pr-2">
                     <v-row density="compact">
                       <v-col v-for="(label, i) in localLabels" :key="i" cols="12">
                         <LabelInput
