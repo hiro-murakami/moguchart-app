@@ -215,7 +215,7 @@ onUnmounted(() => {
           hide-details
           variant="outlined"
           clearable
-          class="search-text-field mr-4"
+          class="search-text-field"
           autocomplete="off"
         />
         <v-checkbox
@@ -224,14 +224,13 @@ onUnmounted(() => {
           label="行も検索"
           density="compact"
           hide-details
-          class="mr-4 search-include-rows"
+          class="search-include-rows"
         />
         <LabelFilter
           v-model="selectedFilterLabelNames"
           :available-labels="availableLabels"
           @select-all="selectAllLabels"
           @clear-all="clearAllLabels"
-          class="mr-4"
         />
         <v-menu :close-on-content-click="false" location="bottom end">
           <template #activator="{ props: menuProps }">
