@@ -21,6 +21,7 @@ import type { ActivityLogEntry } from '@/composables/useCollaboration'
 import { useConfirm } from '@/composables/useConfirm'
 import { usePrompt } from '@/composables/usePrompt'
 import { useLoading } from '@/composables/useLoading'
+import { useExportData } from '@/composables/useExportData'
 import { toDateString, toLocalDate, getContrastColor } from '@/modules/utils'
 import { barContent, tooltip, rowHeaderContent, preloadCommentsCache, preloadRowCommentsCache } from '@/modules/ganttChartCustomRendering'
 import { useProjectStore } from '@/stores/useProjectStore'
@@ -418,6 +419,7 @@ export const useGanttChartView = () => {
   }))
 
   const alert = useAlert()
+  const { exportAsCsv, exportAsExcel } = useExportData()
   const { setIsLoading } = useLoading()
   const confirm = useConfirm()
   const prompt = usePrompt()
@@ -2669,5 +2671,7 @@ export const useGanttChartView = () => {
     isProjectCommentsLoading,
     fetchProjectComments,
     invalidateProjectCommentsCache,
+    exportAsCsv,
+    exportAsExcel,
   }
 }

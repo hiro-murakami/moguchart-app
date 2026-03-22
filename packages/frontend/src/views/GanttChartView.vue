@@ -100,6 +100,8 @@ const {
   projectComments,
   isProjectCommentsLoading,
   fetchProjectComments,
+  exportAsCsv,
+  exportAsExcel,
 } = useGanttChartView()
 
 const rowCountRules = [(v: number) => (v >= 1 && v <= 10) || '1〜10の範囲で入力してください']
@@ -139,6 +141,18 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown)
 })
+
+const handleExportCsv = () => {
+  if (currentProject.value) {
+    exportAsCsv(filteredRows.value, currentProject.value.name)
+  }
+}
+
+const handleExportExcel = () => {
+  if (currentProject.value) {
+    exportAsExcel(filteredRows.value, currentProject.value.name)
+  }
+}
 </script>
 
 <template>
@@ -267,6 +281,24 @@ onUnmounted(() => {
               <v-btn :value="56" size="medium" class="flex-grow-1">特大</v-btn>
             </v-btn-toggle>
           </v-card>
+        </v-menu>
+        <v-menu location="bottom end">
+          <template #activator="{ props: exportMenuProps }">
+            <TooltipBtn
+              v-bind="exportMenuProps"
+              icon="mdi-file-export-outline"
+              variant="text"
+              tooltip="エクスポート"
+            />
+          </template>
+          <v-list density="compact">
+            <v-list-item prepend-icon="mdi-file-delimited-outline" @click="handleExportCsv">
+              <v-list-item-title>CSV でエクスポート</v-list-item-title>
+            </v-list-item>
+            <v-list-item prepend-icon="mdi-file-excel-outline" @click="handleExportExcel">
+              <v-list-item-title>Excel でエクスポート</v-list-item-title>
+            </v-list-item>
+          </v-list>
         </v-menu>
       </div>
 
