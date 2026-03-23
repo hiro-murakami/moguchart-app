@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import { PrismaClient } from '../src/generated/prisma/client'
 import { PrismaMariaDb } from '@prisma/adapter-mariadb'
 
