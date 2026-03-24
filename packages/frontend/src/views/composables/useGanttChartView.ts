@@ -386,37 +386,49 @@ export const useGanttChartView = () => {
   const isReadOnly = computed(() => currentRole.value === 'viewer')
   const isOwner = computed(() => currentRole.value === 'owner')
 
-  const chartOption = computed<moguchart.GanttChartOption>(() => ({
-    bar: {
-      height: barHeight.value,
-      margin: barMargin.value,
-      cornerRadius: barCornerRadius.value,
-    },
-    label: {
-      width: labelWidth.value,
-    },
-    calendar: {
-      start: toLocalDate(chartStartStr.value),
-      end: toLocalDate(chartEndStr.value),
-      pxPerDay: pxPerDay.value,
-      isHoliday: holiday_jp.isHoliday,
-      showCurrentTime: true,
-      currentTimeUpdateInterval: 1000 * 60,
-    },
-    rowHeader: {
-      maxWidth: 400,
-      width: rowHeaderWidth.value,
-    },
-    enableRowReordering: true,
-    readOnly: isReadOnly.value,
-    showHiddenRows: showHiddenRows.value,
-    theme: currentTheme.value,
-    customRendering: {
-      barContent,
-      tooltip,
-      rowHeaderContent,
-    },
-  }))
+  const chartOption = computed<moguchart.GanttChartOption>(() => {
+    // プロジェクトのマイルストーンを GanttChartMilestone に変換
+    const projectMilestones = currentProject.value?.attribute?.milestones ?? []
+    const milestones: moguchart.GanttChartMilestone[] = projectMilestones.map((ms, i) => ({
+      id: `milestone-${i}`,
+      name: ms.name,
+      start: toLocalDate(ms.date),
+      color: ms.color,
+    }))
+
+    return {
+      bar: {
+        height: barHeight.value,
+        margin: barMargin.value,
+        cornerRadius: barCornerRadius.value,
+      },
+      label: {
+        width: labelWidth.value,
+      },
+      calendar: {
+        start: toLocalDate(chartStartStr.value),
+        end: toLocalDate(chartEndStr.value),
+        pxPerDay: pxPerDay.value,
+        isHoliday: holiday_jp.isHoliday,
+        showCurrentTime: true,
+        currentTimeUpdateInterval: 1000 * 60,
+        milestones: milestones.length > 0 ? milestones : undefined,
+      },
+      rowHeader: {
+        maxWidth: 400,
+        width: rowHeaderWidth.value,
+      },
+      enableRowReordering: true,
+      readOnly: isReadOnly.value,
+      showHiddenRows: showHiddenRows.value,
+      theme: currentTheme.value,
+      customRendering: {
+        barContent,
+        tooltip,
+        rowHeaderContent,
+      },
+    }
+  })
 
   const alert = useAlert()
   const { exportAsCsv, exportAsExcel } = useExportData()
@@ -2507,6 +2519,7 @@ export const useGanttChartView = () => {
     if (!currentProject.value) return
     setIsLoading(true)
     try {
+      await maybeAutoSnapshot()
       const updatedProject = { ...currentProject.value, ...project }
       // ストアのアクションを経由して更新する
       await projectStore.updateProject(updatedProject)

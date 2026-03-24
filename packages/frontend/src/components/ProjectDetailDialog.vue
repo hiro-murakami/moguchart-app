@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import type { Project, ColorPalette, Label } from '@functions/types/shared'
+import type { Project, ColorPalette, Label, Milestone } from '@functions/types/shared'
 import inputRules from '@/modules/inputRules'
 import { useProjectDetailDialog } from './composables/useProjectDetailDialog'
 
@@ -27,6 +27,7 @@ const {
   localViewers,
   localColorPalettes,
   localLabels,
+  localMilestones,
   localHistoryIntervalMinutes,
   localHistoryRetentionDays,
   allUsers,
@@ -57,7 +58,7 @@ const historyRetentionOptions = [
   { title: '90日', value: 90 },
 ]
 
-const tab = ref<'general' | 'permissions' | 'colorPalettes' | 'labels'>('general')
+const tab = ref<'general' | 'permissions' | 'colorPalettes' | 'labels' | 'milestones'>('general')
 const expandedPaletteIndex = ref<number | null>(null)
 
 watch(
@@ -95,6 +96,10 @@ watch(
                 <v-tab value="labels">
                   <v-icon start> mdi-label </v-icon>
                   ラベル
+                </v-tab>
+                <v-tab value="milestones">
+                  <v-icon start> mdi-flag </v-icon>
+                  マイルストーン
                 </v-tab>
               </v-tabs>
             </v-col>
@@ -271,6 +276,31 @@ watch(
                           :model-value="label"
                           @update:model-value="(val: Label) => (localLabels[i] = val)"
                           @delete="localLabels.splice(i, 1)"
+                        />
+                      </v-col>
+                    </v-row>
+                  </div>
+                </v-window-item>
+                <v-window-item value="milestones">
+                  <v-row density="compact">
+                    <v-col cols="12">
+                      <v-btn
+                        variant="text"
+                        prepend-icon="mdi-plus"
+                        color="primary"
+                        @click="localMilestones.push({ name: '', date: '', color: '#FF0000' })"
+                      >
+                        マイルストーン追加
+                      </v-btn>
+                    </v-col>
+                  </v-row>
+                  <div style="max-height: 460px; overflow-y: auto; overflow-x: hidden" class="pr-2">
+                    <v-row density="compact">
+                      <v-col v-for="(milestone, i) in localMilestones" :key="i" cols="12">
+                        <MilestoneInput
+                          :model-value="milestone"
+                          @update:model-value="(val: Milestone) => (localMilestones[i] = val)"
+                          @delete="localMilestones.splice(i, 1)"
                         />
                       </v-col>
                     </v-row>

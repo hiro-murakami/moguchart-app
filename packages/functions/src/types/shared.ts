@@ -128,6 +128,15 @@ export type NewTaskTemplate = {
   attribute: TaskAttribute
 }
 
+export type Milestone = {
+  /** マイルストーン名 */
+  name: string
+  /** マイルストーン日 */
+  date: string
+  /** マイルストーンの色 */
+  color: string
+}
+
 /** プロジェクトの追加属性 */
 export type ProjectAttribute = {
   /** プロジェクトの説明 */
@@ -142,6 +151,8 @@ export type ProjectAttribute = {
   historyIntervalMinutes?: number
   /** 自動履歴の保持期間（日）。0またはundefinedの場合は無期限。 */
   historyRetentionDays?: number
+  /** マイルストーン一覧 */
+  milestones?: Milestone[]
 }
 
 /** 行（グループ）の追加属性 */

@@ -1,4 +1,4 @@
-import type { ColorPalette, Label, Project, User } from '@functions/types/shared'
+import type { ColorPalette, Label, Milestone, Project, User } from '@functions/types/shared'
 // import { selectUsers } from '@/modules/scripts'
 import { isEqual } from 'lodash'
 import { computed, ref, watch } from 'vue'
@@ -29,6 +29,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
   const localViewers = ref<string[]>([])
   const localColorPalettes = ref<ColorPalette[]>([])
   const localLabels = ref<Label[]>([])
+  const localMilestones = ref<Milestone[]>([])
   const localHistoryIntervalMinutes = ref<number>(0)
   const localHistoryRetentionDays = ref<number>(0)
   const allUsers = ref<User[]>([])
@@ -63,6 +64,9 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
           localLabels.value = props.project.attribute.labels
             ? props.project.attribute.labels.map((l) => ({ ...l }))
             : []
+          localMilestones.value = props.project.attribute.milestones
+            ? props.project.attribute.milestones.map((m) => ({ ...m }))
+            : []
           localHistoryIntervalMinutes.value = props.project.attribute.historyIntervalMinutes || 0
           localHistoryRetentionDays.value = props.project.attribute.historyRetentionDays || 0
           // await nextTick() // DOMの更新を待つ
@@ -79,6 +83,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
           localViewers.value = []
           localColorPalettes.value = []
           localLabels.value = []
+          localMilestones.value = []
           localHistoryIntervalMinutes.value = 0
           localHistoryRetentionDays.value = 0
           // form.value?.resetValidation()
@@ -102,12 +107,14 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
         localEditors.value.length > 0 ||
         localViewers.value.length > 0 ||
         localColorPalettes.value.length > 0 ||
-        localLabels.value.length > 0
+        localLabels.value.length > 0 ||
+        localMilestones.value.length > 0
       )
     }
     // 編集モード: 元の値と比較
     const originalColorPalettes = props.project.attribute.colorPalettes || []
     const originalLabels = props.project.attribute.labels || []
+    const originalMilestones = props.project.attribute.milestones || []
     return (
       localName.value !== props.project.name ||
       localDescription.value !== (props.project.attribute.description || '') ||
@@ -119,6 +126,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
       !isEqual(localViewers.value, props.project.authority?.viewers || []) ||
       !isEqual(localColorPalettes.value, originalColorPalettes) ||
       !isEqual(localLabels.value, originalLabels) ||
+      !isEqual(localMilestones.value, originalMilestones) ||
       localHistoryIntervalMinutes.value !== (props.project.attribute.historyIntervalMinutes || 0) ||
       localHistoryRetentionDays.value !== (props.project.attribute.historyRetentionDays || 0)
     )
@@ -148,6 +156,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
         description: localDescription.value,
         colorPalettes: localColorPalettes.value,
         labels: localLabels.value,
+        milestones: localMilestones.value.length > 0 ? localMilestones.value : undefined,
         historyIntervalMinutes: localHistoryIntervalMinutes.value || undefined,
         historyRetentionDays: localHistoryRetentionDays.value || undefined,
       },
@@ -177,6 +186,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
     localColorPalettes,
     localLabels,
     localHistoryIntervalMinutes,
+    localMilestones,
     localHistoryRetentionDays,
     allUsers,
     title,
