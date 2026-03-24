@@ -55,6 +55,12 @@ const projects = [
       description: 'カラーパレット・ラベル・タスクテンプレートの各パターンを網羅したデモプロジェクトです。',
       colorPalettes: Object.values(colorPalettes),
       labels: Object.values(labels),
+      milestones: [
+        { name: '要件定義完了', date: '2025-12-19', color: '#1e88e5' },
+        { name: 'デザインFix', date: '2026-01-09', color: '#8e24aa' },
+        { name: '開発完了', date: '2026-03-06', color: '#43a047' },
+        { name: 'リリース', date: '2026-04-20', color: '#e53935' },
+      ],
       newTaskTemplates: [
         {
           name: '通常タスク',
