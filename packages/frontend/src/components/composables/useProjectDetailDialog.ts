@@ -68,7 +68,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
             ? props.project.attribute.milestones.map((m) => ({ ...m }))
             : []
           localHistoryIntervalMinutes.value = props.project.attribute.historyIntervalMinutes || 0
-          localHistoryRetentionDays.value = props.project.attribute.historyRetentionDays || 0
+          localHistoryRetentionDays.value = props.project.attribute.historyRetentionDays || 7
           // await nextTick() // DOMの更新を待つ
           // form.value?.validate()
         } else {
@@ -85,7 +85,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
           localLabels.value = []
           localMilestones.value = []
           localHistoryIntervalMinutes.value = 0
-          localHistoryRetentionDays.value = 0
+          localHistoryRetentionDays.value = 7
           // form.value?.resetValidation()
         }
       } else {
