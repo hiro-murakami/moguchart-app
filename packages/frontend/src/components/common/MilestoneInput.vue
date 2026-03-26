@@ -45,7 +45,7 @@ const color = computed({
 
       <div class="flex-grow-1">
         <v-row density="compact">
-          <v-col cols="5">
+          <v-col cols="4">
             <v-text-field
               v-model="name"
               label="マイルストーン名"
@@ -57,11 +57,11 @@ const color = computed({
               autocomplete="off"
             />
           </v-col>
-          <v-col cols="4">
+          <v-col cols="5">
             <v-text-field
               v-model="date"
-              label="日付"
-              type="date"
+              label="日時"
+              type="datetime-local"
               density="compact"
               variant="outlined"
               hide-details="auto"

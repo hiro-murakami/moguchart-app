@@ -73,7 +73,7 @@ watch(
 </script>
 
 <template>
-  <v-dialog :model-value="modelValue" @update:model-value="handleBeforeClose" max-width="800px">
+  <v-dialog :model-value="modelValue" @update:model-value="handleBeforeClose" max-width="850px">
     <v-card>
       <v-card-title class="pa-8 pb-0">{{ title }}</v-card-title>
       <v-card-text class="pa-8">
@@ -164,7 +164,7 @@ watch(
                         </template>
                       </v-checkbox>
                     </v-col>
-                    <v-col cols="12">
+                    <v-col cols="6">
                       <v-select
                         v-model="localHistoryIntervalMinutes"
                         :items="historyIntervalOptions"
@@ -181,7 +181,8 @@ watch(
                         </template>
                       </v-select>
                     </v-col>
-                    <v-col cols="12">
+                    <v-spacer />
+                    <v-col cols="6">
                       <v-select
                         v-model="localHistoryRetentionDays"
                         :items="historyRetentionOptions"
