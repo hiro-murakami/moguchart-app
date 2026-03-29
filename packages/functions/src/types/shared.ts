@@ -169,6 +169,15 @@ export type TaskAttribute = {
   colorPalette?: ColorPalette
   /** タスクに適用するラベル */
   labels?: Label[]
+  /** タスクの制限事項 */
+  restrictions?: {
+    /** タスクの開始日と終了日をドラッグで変更可能か */
+    resizable?: boolean
+    /** タスクを別の行にドラッグで移動可能か */
+    moveRow?: boolean
+    /** タスクを横方向（日付変更）にドラッグで移動可能か */
+    moveDate?: boolean
+  }
 }
 
 /** フロントエンドの編集用：行データ */
@@ -188,6 +197,15 @@ export interface EditingTaskData {
   description?: string
   colorPalette?: ColorPalette
   labels?: Label[]
+  /** タスクの制限事項 */
+  restrictions?: {
+    /** タスクの開始日と終了日をドラッグで変更可能か */
+    resizable?: boolean
+    /** タスクを別の行にドラッグで移動可能か */
+    moveRow?: boolean
+    /** タスクを横方向（日付変更）にドラッグで移動可能か */
+    moveDate?: boolean
+  }
 }
 
 /** 簡易的な行情報（ドロップダウン選択用など） */

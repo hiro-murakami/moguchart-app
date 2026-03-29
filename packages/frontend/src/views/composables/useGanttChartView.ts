@@ -514,6 +514,16 @@ export const useGanttChartView = () => {
             }
           }
 
+          // restrictions → moguchart の resizable / movable に変換
+          const restrictions = attribute?.restrictions
+          const resizable = restrictions?.resizable !== undefined ? restrictions.resizable : undefined
+          const canMoveRow = restrictions?.moveRow !== false
+          const canMoveDate = restrictions?.moveDate !== false
+          const movable = canMoveRow && canMoveDate ? undefined
+            : canMoveDate ? 'x' as const
+            : canMoveRow ? 'y' as const
+            : 'none' as const
+
           return {
             ...task,
             id: task.id.toString(),
@@ -522,6 +532,8 @@ export const useGanttChartView = () => {
             style,
             labelStyle,
             pattern,
+            resizable,
+            movable,
             html:
               attribute?.labels && attribute.labels.length > 0
                 ? `<div style="display: flex; gap: 4px; padding: 2px 4px; overflow: hidden;">${attribute?.labels
@@ -636,6 +648,18 @@ export const useGanttChartView = () => {
       }
     }
 
+    // restrictions → moguchart の resizable / movable に変換
+    const restrictions = attribute?.restrictions
+    const resizable = restrictions?.resizable !== undefined ? restrictions.resizable : undefined
+    const movable = (() => {
+      const canMoveRow = restrictions?.moveRow !== false
+      const canMoveDate = restrictions?.moveDate !== false
+      return canMoveRow && canMoveDate ? undefined
+        : canMoveDate ? 'x' as const
+        : canMoveRow ? 'y' as const
+        : 'none' as const
+    })()
+
     return {
       ...task,
       id: task.id.toString(),
@@ -644,6 +668,8 @@ export const useGanttChartView = () => {
       style,
       labelStyle,
       pattern,
+      resizable,
+      movable,
       html:
         attribute?.labels && attribute.labels.length > 0
           ? `<div style="display: flex; gap: 4px; padding: 2px 4px; overflow: hidden;">${attribute?.labels
@@ -1191,6 +1217,7 @@ export const useGanttChartView = () => {
         description: taskWithAttr.attribute?.description || '',
         colorPalette: taskWithAttr.attribute?.colorPalette ? { ...taskWithAttr.attribute.colorPalette } : undefined,
         labels: taskWithAttr.attribute?.labels ? [...taskWithAttr.attribute.labels] : [],
+        restrictions: taskWithAttr.attribute?.restrictions ? { ...taskWithAttr.attribute.restrictions } : undefined,
       }
       isDialogVisible.value = true
       // 他ユーザーにこのタスクを編集中であることを通知
@@ -1258,6 +1285,7 @@ export const useGanttChartView = () => {
         description: taskData.description || undefined,
         colorPalette: taskData.colorPalette,
         labels: taskData.labels,
+        restrictions: taskData.restrictions,
       },
     }
 
@@ -1300,6 +1328,7 @@ export const useGanttChartView = () => {
             description: beforeAttr?.description || undefined,
             colorPalette: beforeAttr?.colorPalette ? { ...beforeAttr.colorPalette } : undefined,
             labels: beforeAttr?.labels ? [...beforeAttr.labels] : undefined,
+            restrictions: beforeAttr?.restrictions ? { ...beforeAttr.restrictions } : undefined,
           },
         }
         pushAction({

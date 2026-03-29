@@ -46,6 +46,37 @@ const onUpdateColorPalette = (val: ColorPalette | undefined) => {
 const onUpdateLabels = (val: Label[]) => {
   localTask.value.labels = val
 }
+
+// 制限事項のcomputed
+const isResizable = computed({
+  get: () => localTask.value.restrictions?.resizable !== false,
+  set: (val: boolean) => {
+    if (!localTask.value.restrictions) {
+      localTask.value.restrictions = {}
+    }
+    localTask.value.restrictions.resizable = val
+  },
+})
+
+const isMoveRow = computed({
+  get: () => localTask.value.restrictions?.moveRow !== false,
+  set: (val: boolean) => {
+    if (!localTask.value.restrictions) {
+      localTask.value.restrictions = {}
+    }
+    localTask.value.restrictions.moveRow = val
+  },
+})
+
+const isMoveDate = computed({
+  get: () => localTask.value.restrictions?.moveDate !== false,
+  set: (val: boolean) => {
+    if (!localTask.value.restrictions) {
+      localTask.value.restrictions = {}
+    }
+    localTask.value.restrictions.moveDate = val
+  },
+})
 </script>
 
 <template>
@@ -101,6 +132,36 @@ const onUpdateLabels = (val: Label[]) => {
           class="mb-3"
         ></v-text-field>
       </v-col>
+      <v-col cols="12">
+        <div class="text-caption font-weight-bold mb-1">操作制限</div>
+        <v-row density="compact" no-gutters>
+          <v-col cols="4">
+            <v-checkbox
+              v-model="isResizable"
+              label="リサイズ可"
+              density="compact"
+              hide-details
+            ></v-checkbox>
+          </v-col>
+          <v-col cols="4">
+            <v-checkbox
+              v-model="isMoveDate"
+              label="横移動可"
+              density="compact"
+              hide-details
+            ></v-checkbox>
+          </v-col>
+          <v-col cols="4">
+            <v-checkbox
+              v-model="isMoveRow"
+              label="行移動可"
+              density="compact"
+              hide-details
+            ></v-checkbox>
+          </v-col>
+        </v-row>
+      </v-col>
     </template>
   </TaskFormDialog>
 </template>
+
