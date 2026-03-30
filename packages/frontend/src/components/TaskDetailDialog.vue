@@ -47,34 +47,29 @@ const onUpdateLabels = (val: Label[]) => {
   localTask.value.labels = val
 }
 
-// 制限事項のcomputed
-const isResizable = computed({
-  get: () => localTask.value.restrictions?.resizable !== false,
-  set: (val: boolean) => {
-    if (!localTask.value.restrictions) {
-      localTask.value.restrictions = {}
-    }
-    localTask.value.restrictions.resizable = val
-  },
-})
+// 操作制限の選択肢
+const restrictionOptions = [
+  { title: 'リサイズ不可', value: 'notResizable' },
+  { title: '横移動不可', value: 'notMoveDate' },
+  { title: '行移動不可', value: 'notMoveRow' },
+]
 
-const isMoveRow = computed({
-  get: () => localTask.value.restrictions?.moveRow !== false,
-  set: (val: boolean) => {
-    if (!localTask.value.restrictions) {
-      localTask.value.restrictions = {}
-    }
-    localTask.value.restrictions.moveRow = val
+// 選択中の制限をstring[]で管理するcomputed
+const selectedRestrictions = computed({
+  get: () => {
+    const result: string[] = []
+    if (localTask.value.restrictions?.resizable === false) result.push('notResizable')
+    if (localTask.value.restrictions?.moveDate === false) result.push('notMoveDate')
+    if (localTask.value.restrictions?.moveRow === false) result.push('notMoveRow')
+    return result
   },
-})
-
-const isMoveDate = computed({
-  get: () => localTask.value.restrictions?.moveDate !== false,
-  set: (val: boolean) => {
+  set: (val: string[]) => {
     if (!localTask.value.restrictions) {
       localTask.value.restrictions = {}
     }
-    localTask.value.restrictions.moveDate = val
+    localTask.value.restrictions.resizable = !val.includes('notResizable')
+    localTask.value.restrictions.moveDate = !val.includes('notMoveDate')
+    localTask.value.restrictions.moveRow = !val.includes('notMoveRow')
   },
 })
 </script>
@@ -133,33 +128,18 @@ const isMoveDate = computed({
         ></v-text-field>
       </v-col>
       <v-col cols="12">
-        <div class="text-caption font-weight-bold mb-1">操作制限</div>
-        <v-row density="compact" no-gutters>
-          <v-col cols="4">
-            <v-checkbox
-              v-model="isResizable"
-              label="リサイズ可"
-              density="compact"
-              hide-details
-            ></v-checkbox>
-          </v-col>
-          <v-col cols="4">
-            <v-checkbox
-              v-model="isMoveDate"
-              label="横移動可"
-              density="compact"
-              hide-details
-            ></v-checkbox>
-          </v-col>
-          <v-col cols="4">
-            <v-checkbox
-              v-model="isMoveRow"
-              label="行移動可"
-              density="compact"
-              hide-details
-            ></v-checkbox>
-          </v-col>
-        </v-row>
+        <v-select
+          v-model="selectedRestrictions"
+          :items="restrictionOptions"
+          label="操作制限"
+          multiple
+          chips
+          closable-chips
+          density="compact"
+          variant="outlined"
+          hide-details
+          placeholder="制限なし"
+        ></v-select>
       </v-col>
     </template>
   </TaskFormDialog>
