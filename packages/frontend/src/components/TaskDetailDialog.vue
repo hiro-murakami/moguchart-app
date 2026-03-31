@@ -47,29 +47,11 @@ const onUpdateLabels = (val: Label[]) => {
   localTask.value.labels = val
 }
 
-// 操作制限の選択肢
-const restrictionOptions = [
-  { title: 'リサイズ不可', value: 'notResizable' },
-  { title: '横移動不可', value: 'notMoveDate' },
-  { title: '行移動不可', value: 'notMoveRow' },
-]
-
-// 選択中の制限をstring[]で管理するcomputed
-const selectedRestrictions = computed({
-  get: () => {
-    const result: string[] = []
-    if (localTask.value.restrictions?.resizable === false) result.push('notResizable')
-    if (localTask.value.restrictions?.moveDate === false) result.push('notMoveDate')
-    if (localTask.value.restrictions?.moveRow === false) result.push('notMoveRow')
-    return result
-  },
-  set: (val: string[]) => {
-    if (!localTask.value.restrictions) {
-      localTask.value.restrictions = {}
-    }
-    localTask.value.restrictions.resizable = !val.includes('notResizable')
-    localTask.value.restrictions.moveDate = !val.includes('notMoveDate')
-    localTask.value.restrictions.moveRow = !val.includes('notMoveRow')
+// ロック状態の管理
+const isLocked = computed({
+  get: () => !!localTask.value.lock,
+  set: (val: boolean) => {
+    localTask.value.lock = val || undefined
   },
 })
 </script>
@@ -128,18 +110,13 @@ const selectedRestrictions = computed({
         ></v-text-field>
       </v-col>
       <v-col cols="12">
-        <v-select
-          v-model="selectedRestrictions"
-          :items="restrictionOptions"
-          label="操作制限"
-          multiple
-          chips
-          closable-chips
+        <v-switch
+          v-model="isLocked"
+          label="ロック（移動・リサイズ・削除を禁止）"
           density="compact"
-          variant="outlined"
           hide-details
-          placeholder="制限なし"
-        ></v-select>
+          color="primary"
+        ></v-switch>
       </v-col>
     </template>
   </TaskFormDialog>

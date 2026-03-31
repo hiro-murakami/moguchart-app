@@ -8,6 +8,7 @@ const props = defineProps<{
   taskId?: string | null
   selectedTaskIds?: string[]
   isReadOnly?: boolean
+  disabledDelete?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -68,6 +69,7 @@ const copyTitle = computed(() => {
           prepend-icon="mdi-delete"
           :title="deleteTitle"
           base-color="red"
+          :disabled="disabledDelete"
           @click="emit('delete')"
         />
       </v-list>

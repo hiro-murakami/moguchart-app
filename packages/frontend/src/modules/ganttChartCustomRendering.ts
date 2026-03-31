@@ -139,6 +139,7 @@ export const barContent = (task: moguchart.GanttTask) => {
   const labels = taskWithAttr.attribute?.labels as { name: string; color: string }[] | undefined
   const description = taskWithAttr.attribute?.description as string | undefined
   const commentCount = taskWithAttr.commentCount as number | undefined
+  const isLocked = taskWithAttr.attribute?.lock === true
 
   const container = document.createElement('div')
   container.style.display = 'flex'
@@ -160,6 +161,17 @@ export const barContent = (task: moguchart.GanttTask) => {
   headerContainer.style.gap = '6px'
   headerContainer.style.width = '100%'
   headerContainer.style.overflow = 'hidden'
+
+  // ロックアイコン
+  if (isLocked) {
+    const lockIcon = document.createElement('span')
+    lockIcon.style.fontSize = '11px'
+    lockIcon.style.flexShrink = '0'
+    lockIcon.style.opacity = '0.85'
+    lockIcon.style.filter = 'drop-shadow(1px 1px 1px rgba(0,0,0,0.4))'
+    lockIcon.textContent = '🔒'
+    headerContainer.appendChild(lockIcon)
+  }
 
   const nameSpan = document.createElement('span')
   nameSpan.style.cssText = `font-weight: bold; font-size: 12px; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); color: white; white-space: nowrap; ${task.labelStyle || ''}`

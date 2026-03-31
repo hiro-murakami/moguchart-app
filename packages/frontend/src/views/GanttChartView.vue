@@ -20,6 +20,7 @@ const {
   editingInputStyle,
   contextMenu,
   taskContextMenu,
+  hasLockedTaskInContextMenu,
   currentProject,
   showHiddenRows,
   pxPerDay,
@@ -424,6 +425,7 @@ const handleExportExcel = () => {
       :task-id="taskContextMenu.taskId"
       :selected-task-ids="selectedTaskIds"
       :is-read-only="isReadOnly"
+      :disabled-delete="hasLockedTaskInContextMenu"
       @edit="handleEditTaskFromContextMenu"
       @comment="handleAddCommentFromContextMenu"
       @copy="handleCopyTasksFromContextMenu"

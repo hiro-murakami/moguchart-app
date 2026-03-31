@@ -514,15 +514,10 @@ export const useGanttChartView = () => {
             }
           }
 
-          // restrictions → moguchart の resizable / movable に変換
-          const restrictions = attribute?.restrictions
-          const resizable = restrictions?.resizable !== undefined ? restrictions.resizable : undefined
-          const canMoveRow = restrictions?.moveRow !== false
-          const canMoveDate = restrictions?.moveDate !== false
-          const movable = canMoveRow && canMoveDate ? undefined
-            : canMoveDate ? 'x' as const
-            : canMoveRow ? 'y' as const
-            : 'none' as const
+          // lock → moguchart の resizable / movable に変換
+          const isLocked = attribute?.lock === true
+          const resizable = isLocked ? false : undefined
+          const movable = isLocked ? 'none' as const : undefined
 
           return {
             ...task,
@@ -648,17 +643,10 @@ export const useGanttChartView = () => {
       }
     }
 
-    // restrictions → moguchart の resizable / movable に変換
-    const restrictions = attribute?.restrictions
-    const resizable = restrictions?.resizable !== undefined ? restrictions.resizable : undefined
-    const movable = (() => {
-      const canMoveRow = restrictions?.moveRow !== false
-      const canMoveDate = restrictions?.moveDate !== false
-      return canMoveRow && canMoveDate ? undefined
-        : canMoveDate ? 'x' as const
-        : canMoveRow ? 'y' as const
-        : 'none' as const
-    })()
+    // lock → moguchart の resizable / movable に変換
+    const isLocked = attribute?.lock === true
+    const resizable = isLocked ? false : undefined
+    const movable = isLocked ? 'none' as const : undefined
 
     return {
       ...task,
@@ -1217,7 +1205,7 @@ export const useGanttChartView = () => {
         description: taskWithAttr.attribute?.description || '',
         colorPalette: taskWithAttr.attribute?.colorPalette ? { ...taskWithAttr.attribute.colorPalette } : undefined,
         labels: taskWithAttr.attribute?.labels ? [...taskWithAttr.attribute.labels] : [],
-        restrictions: taskWithAttr.attribute?.restrictions ? { ...taskWithAttr.attribute.restrictions } : undefined,
+        lock: taskWithAttr.attribute?.lock,
       }
       isDialogVisible.value = true
       // 他ユーザーにこのタスクを編集中であることを通知
@@ -1285,7 +1273,7 @@ export const useGanttChartView = () => {
         description: taskData.description || undefined,
         colorPalette: taskData.colorPalette,
         labels: taskData.labels,
-        restrictions: taskData.restrictions,
+        lock: taskData.lock || undefined,
       },
     }
 
@@ -1328,7 +1316,7 @@ export const useGanttChartView = () => {
             description: beforeAttr?.description || undefined,
             colorPalette: beforeAttr?.colorPalette ? { ...beforeAttr.colorPalette } : undefined,
             labels: beforeAttr?.labels ? [...beforeAttr.labels] : undefined,
-            restrictions: beforeAttr?.restrictions ? { ...beforeAttr.restrictions } : undefined,
+            lock: beforeAttr?.lock,
           },
         }
         pushAction({
@@ -1355,11 +1343,26 @@ export const useGanttChartView = () => {
   }
 
   const execDeleteTasksWithAnimation = async (taskIds: string[]) => {
+    // ロックされたタスクを除外
+    const unlocked = taskIds.filter((taskId) => {
+      const row = rows.value.find((r) => r.tasks.some((t) => t.id === taskId))
+      const task = row?.tasks.find((t) => t.id === taskId)
+      const attr = (task as any)?.attribute as TaskAttribute | undefined
+      return !attr?.lock
+    })
+    if (unlocked.length === 0) {
+      alert({ title: '削除不可', message: 'ロックされたタスクは削除できません。' })
+      return
+    }
+    if (unlocked.length < taskIds.length) {
+      alert({ title: '注意', message: 'ロックされたタスクはスキップされました。' })
+    }
+
     await maybeAutoSnapshot()
 
     // Undo用に削除前のタスクデータを保持
     const deletedTasks: { taskData: any; rowId: string }[] = []
-    for (const taskId of taskIds) {
+    for (const taskId of unlocked) {
       const row = rows.value.find((r) => r.tasks.some((t) => t.id === taskId))
       const task = row?.tasks.find((t) => t.id === taskId)
       if (row && task) {
@@ -1382,7 +1385,7 @@ export const useGanttChartView = () => {
     rows.value = rows.value.map((row) => ({
       ...row,
       tasks: row.tasks.map((t) => {
-        if (taskIds.includes(String(t.id))) {
+        if (unlocked.includes(String(t.id))) {
           return {
             ...t,
             style: `${(t as any).style || ''}; animation: fade-out 0.3s ease-out forwards; pointer-events: none;`,
@@ -1396,7 +1399,7 @@ export const useGanttChartView = () => {
     await new Promise((resolve) => setTimeout(resolve, 300))
 
     // 3. API削除
-    await deleteGanttTask(taskIds.map(Number))
+    await deleteGanttTask(unlocked.map(Number))
 
     // 4. Undo/Redo記録
     if (deletedTasks.length > 0) {
@@ -1841,6 +1844,25 @@ export const useGanttChartView = () => {
       taskId: String(task.id),
     }
   }
+
+  /** コンテキストメニュー対象のタスク群にロック済みのものが含まれているか */
+  const hasLockedTaskInContextMenu = computed(() => {
+    const menuTaskId = taskContextMenu.value.taskId
+    if (!menuTaskId) return false
+
+    // 複数選択中の場合は選択中のタスクをすべてチェック
+    const targetIds =
+      selectedTaskIds.value.includes(menuTaskId) && selectedTaskIds.value.length > 1
+        ? selectedTaskIds.value
+        : [menuTaskId]
+
+    return targetIds.some((taskId) => {
+      const row = rows.value.find((r) => r.tasks.some((t) => t.id === taskId))
+      const task = row?.tasks.find((t) => t.id === taskId)
+      const attr = (task as any)?.attribute as TaskAttribute | undefined
+      return attr?.lock === true
+    })
+  })
 
   const handleEditTaskFromContextMenu = () => {
     const taskId = taskContextMenu.value.taskId
@@ -2629,6 +2651,7 @@ export const useGanttChartView = () => {
     editingInputStyle,
     contextMenu,
     taskContextMenu,
+    hasLockedTaskInContextMenu,
     chartContextMenu,
     currentProject,
     showHiddenRows,

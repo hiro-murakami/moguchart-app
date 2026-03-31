@@ -2,7 +2,7 @@
 // 注意: ここにはバックエンド固有のライブラリ(firebase-admin等)をimportしないでください。
 
 /** バージョン */
-export const VERSION = '0.4.5'
+export const VERSION = '0.4.6'
 
 /** Cloud Functions の呼び出しパラメータ */
 export interface FunctionParam {
@@ -169,15 +169,8 @@ export type TaskAttribute = {
   colorPalette?: ColorPalette
   /** タスクに適用するラベル */
   labels?: Label[]
-  /** タスクの制限事項 */
-  restrictions?: {
-    /** タスクの開始日と終了日をドラッグで変更可能か */
-    resizable?: boolean
-    /** タスクを別の行にドラッグで移動可能か */
-    moveRow?: boolean
-    /** タスクを横方向（日付変更）にドラッグで移動可能か */
-    moveDate?: boolean
-  }
+  /** タスクのロック状態（trueの場合、移動・リサイズ・削除が不可） */
+  lock?: boolean
 }
 
 /** フロントエンドの編集用：行データ */
@@ -197,15 +190,8 @@ export interface EditingTaskData {
   description?: string
   colorPalette?: ColorPalette
   labels?: Label[]
-  /** タスクの制限事項 */
-  restrictions?: {
-    /** タスクの開始日と終了日をドラッグで変更可能か */
-    resizable?: boolean
-    /** タスクを別の行にドラッグで移動可能か */
-    moveRow?: boolean
-    /** タスクを横方向（日付変更）にドラッグで移動可能か */
-    moveDate?: boolean
-  }
+  /** タスクのロック状態（trueの場合、移動・リサイズ・削除が不可） */
+  lock?: boolean
 }
 
 /** 簡易的な行情報（ドロップダウン選択用など） */
