@@ -20,6 +20,8 @@ declare module 'vue' {
     CommentDialog: typeof import('./src/components/CommentDialog.vue')['default']
     ConfirmDialog: typeof import('./src/components/common/ConfirmDialog.vue')['default']
     DialogProvider: typeof import('./src/components/common/DialogProvider.vue')['default']
+    DisplaySettingsMenu: typeof import('./src/components/DisplaySettingsMenu.vue')['default']
+    ExportMenu: typeof import('./src/components/ExportMenu.vue')['default']
     GoogleIcon: typeof import('./src/components/icons/GoogleIcon.vue')['default']
     HelpText: typeof import('./src/components/common/HelpText.vue')['default']
     LabelFilter: typeof import('./src/components/LabelFilter.vue')['default']

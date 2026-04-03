@@ -170,6 +170,7 @@ const handleExportExcel = () => {
         <div>
           <div class="d-flex align-center">
             <span class="text-h6">{{ currentProject.name }}</span>
+            <RoleChip :role="isSnapshotMode ? 'snapshot' : currentProject.role" class="mr-2" />
             <TooltipBtn
               v-if="isOwner"
               icon="mdi-pencil"
@@ -193,6 +194,7 @@ const handleExportExcel = () => {
               @click="isSnapshotListDialogVisible = true"
               tooltip="スナップショット一覧"
             />
+            <ExportMenu @export-csv="handleExportCsv" @export-excel="handleExportExcel" />
             <ProjectCommentButton
               :comment-count="currentProject.commentCount ?? 0"
               :comments="projectComments"
@@ -201,7 +203,6 @@ const handleExportExcel = () => {
               @click="handleAddCommentToProject"
               @fetch="fetchProjectComments"
             />
-            <RoleChip :role="isSnapshotMode ? 'snapshot' : currentProject.role" class="ml-2" />
           </div>
           <div v-if="currentProject.attribute.description" class="text-caption text-medium-emphasis">
             {{ currentProject.attribute.description }}
@@ -247,60 +248,11 @@ const handleExportExcel = () => {
           @select-all="selectAllLabels"
           @clear-all="clearAllLabels"
         />
-        <v-menu :close-on-content-click="false" location="bottom end">
-          <template #activator="{ props: menuProps }">
-            <TooltipBtn v-bind="menuProps" icon="mdi-cog" variant="text" tooltip="表示設定" />
-          </template>
-          <v-card min-width="280" class="pa-4">
-            <div class="text-subtitle-2 mb-3">表示設定</div>
-            <v-switch
-              v-model="showHiddenRows"
-              label="非表示行を表示"
-              color="primary"
-              hide-details
-              density="compact"
-              class="mb-4"
-            />
-            <div class="text-caption text-medium-emphasis mb-1">表示倍率</div>
-            <ZoomControls v-model="pxPerDay" />
-            <div class="text-caption text-medium-emphasis mb-1 mt-3">バーの高さ</div>
-            <v-btn-toggle
-              :model-value="barHeight"
-              @update:model-value="
-                (v: number) => {
-                  if (v != null) barHeight = v
-                }
-              "
-              mandatory
-              density="compact"
-              color="primary"
-              class="w-100"
-            >
-              <v-btn :value="32" size="medium" class="flex-grow-1">小</v-btn>
-              <v-btn :value="38" size="medium" class="flex-grow-1">中</v-btn>
-              <v-btn :value="48" size="medium" class="flex-grow-1">大</v-btn>
-              <v-btn :value="56" size="medium" class="flex-grow-1">特大</v-btn>
-            </v-btn-toggle>
-          </v-card>
-        </v-menu>
-        <v-menu location="bottom end">
-          <template #activator="{ props: exportMenuProps }">
-            <TooltipBtn
-              v-bind="exportMenuProps"
-              icon="mdi-file-export-outline"
-              variant="text"
-              tooltip="エクスポート"
-            />
-          </template>
-          <v-list density="compact">
-            <v-list-item prepend-icon="mdi-file-delimited-outline" @click="handleExportCsv">
-              <v-list-item-title>CSV でエクスポート</v-list-item-title>
-            </v-list-item>
-            <v-list-item prepend-icon="mdi-file-excel-outline" @click="handleExportExcel">
-              <v-list-item-title>Excel でエクスポート</v-list-item-title>
-            </v-list-item>
-          </v-list>
-        </v-menu>
+        <DisplaySettingsMenu
+          v-model:show-hidden-rows="showHiddenRows"
+          v-model:px-per-day="pxPerDay"
+          v-model:bar-height="barHeight"
+        />
       </div>
 
       <div
