@@ -163,7 +163,10 @@ const handleExportExcel = () => {
 </script>
 
 <template>
-  <div class="gantt-app" :style="{ paddingRight: currentProject ? `${effectiveCommentSidebarWidth + 16}px` : undefined }">
+  <div
+    class="gantt-app"
+    :style="{ paddingRight: currentProject ? `${effectiveCommentSidebarWidth + 16}px` : undefined }"
+  >
     <template v-if="currentProject">
       <div class="mb-4 d-flex align-center" style="gap: 1rem">
         <TooltipBtn
@@ -258,11 +261,15 @@ const handleExportExcel = () => {
         :style="{
           position: 'relative',
           minWidth: 0,
+          minHeight: 0,
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
           paddingRight: isReadOnly ? undefined : isUnassignedTasksOpen ? '248px' : '58px',
           transition: 'padding-right 0.3s ease',
         }"
       >
-        <div>
+        <div style="flex: 1; min-height: 0;">
           <gantt-chart
             ref="ganttChartRef"
             :rows="filteredRows"
@@ -457,8 +464,16 @@ const handleExportExcel = () => {
       :initial-open="commentSidebarOpen"
       :initial-width="commentSidebarWidth"
       @updated="handleProjectCommentPanelUpdated"
-      @update:is-open="(v: boolean) => { commentSidebarOpen = v }"
-      @update:width="(w: number) => { if (w >= 220) commentSidebarWidth = w }"
+      @update:is-open="
+        (v: boolean) => {
+          commentSidebarOpen = v
+        }
+      "
+      @update:width="
+        (w: number) => {
+          if (w >= 220) commentSidebarWidth = w
+        }
+      "
     />
   </div>
 </template>
@@ -490,7 +505,7 @@ const handleExportExcel = () => {
   --task-box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   padding: 30px;
   font-family: sans-serif;
-  min-height: calc(100vh - 64px);
+  height: calc(100vh - 64px);
   display: flex;
   flex-direction: column;
   transition: padding-right 0.3s ease;
