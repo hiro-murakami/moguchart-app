@@ -165,7 +165,7 @@ const handleExportExcel = () => {
 <template>
   <div
     class="gantt-app"
-    :style="{ paddingRight: currentProject ? `${effectiveCommentSidebarWidth + 16}px` : undefined }"
+    :style="{ paddingRight: currentProject ? `${effectiveCommentSidebarWidth + 8}px` : undefined }"
   >
     <template v-if="currentProject">
       <div class="mb-4 d-flex align-center" style="gap: 1rem">
@@ -269,7 +269,7 @@ const handleExportExcel = () => {
           transition: 'padding-right 0.3s ease',
         }"
       >
-        <div style="flex: 1; min-height: 0;">
+        <div style="flex: 1; min-height: 0">
           <gantt-chart
             ref="ganttChartRef"
             :rows="filteredRows"
@@ -503,7 +503,7 @@ const handleExportExcel = () => {
 
 .gantt-app {
   --task-box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-  padding: 30px;
+  padding: 8px;
   font-family: sans-serif;
   height: calc(100vh - 64px);
   display: flex;
