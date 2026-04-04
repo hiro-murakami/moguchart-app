@@ -121,6 +121,8 @@ export type UserAttribute = {
   photoURL?: string | null
   /** アプリのバージョン */
   appVersion?: string
+  /** 権限設定で過去に入力したことのあるメールアドレスの履歴 */
+  authorityInputHistory?: string[]
 }
 
 export type NewTaskTemplate = {

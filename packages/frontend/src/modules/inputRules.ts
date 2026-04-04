@@ -20,9 +20,10 @@ const inputRules = {
   },
   isMailAddress: (value: string) =>
     !value || /^[\w\-._]+@[\w\-._]+\.[A-Za-z]+$/.test(value) || message.ERROR_INVALID_MAIL_ADDRESS,
-  areMailAddresses: (values: string[]) => {
+  areMailAddresses: (values: (string | { value: string })[]) => {
     if (!values || values.length === 0) return true
-    const hasInvalid = values.some((value) => !/^[\w\-._]+@[\w\-._]+\.[A-Za-z]+$/.test(value))
+    const emails = values.map((v) => (typeof v === 'string' ? v : v?.value ?? ''))
+    const hasInvalid = emails.some((value) => !/^[\w\-._]+@[\w\-._]+\.[A-Za-z]+$/.test(value))
     return !hasInvalid || message.ERROR_INVALID_MAIL_ADDRESS
   },
   dateBefore: (target: string) => (value: string) => {

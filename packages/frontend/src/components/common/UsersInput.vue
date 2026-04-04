@@ -13,7 +13,7 @@ const props = defineProps<{
   rules?: ((value: any) => string | boolean)[]
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'update:modelValue', value: string[]): void
 }>()
 
@@ -30,13 +30,26 @@ const mergedRules = computed(() => [
   inputRules.areMailAddresses,
   ...(props.rules ?? []),
 ])
+
+/**
+ * v-combobox の update:model-value で受け取る値を正規化する。
+ * 候補から選択した場合はオブジェクト { title, value }、
+ * 直接入力した場合は string が混在するため、
+ * すべて string（メールアドレス）に統一する。
+ */
+function handleUpdate(rawValues: (string | { title: string; value: string })[]) {
+  const normalized = rawValues
+    .map((v) => (typeof v === 'string' ? v : v?.value ?? ''))
+    .filter((v) => v !== '')
+  emit('update:modelValue', normalized)
+}
 </script>
 
 <template>
   <v-col cols="12" class="d-flex align-center">
     <v-combobox
       :model-value="modelValue"
-      @update:model-value="$emit('update:modelValue', $event)"
+      @update:model-value="handleUpdate"
       :label="label"
       :items="suggestionItems"
       item-title="title"

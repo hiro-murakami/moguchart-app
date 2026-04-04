@@ -1,5 +1,6 @@
 import type { ColorPalette, Label, Milestone, Project, User } from '@functions/types/shared'
-// import { selectUsers } from '@/modules/scripts'
+import { upsertUser } from '@/modules/scripts'
+import { useUserStore } from '@/stores/useUserStore'
 import { isEqual } from 'lodash'
 import { computed, ref, watch } from 'vue'
 import type { VForm } from 'vuetify/components'
@@ -17,6 +18,7 @@ export type ProjectDetailDialogEmits = {
 
 export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: ProjectDetailDialogEmits) {
   const { confirmAndClose } = useDiscardConfirm()
+  const userStore = useUserStore()
   const form = ref<VForm | null>(null)
   const formValid = ref(false)
   const localName = ref('')
@@ -32,11 +34,12 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
   const localMilestones = ref<Milestone[]>([])
   const localHistoryIntervalMinutes = ref<number>(0)
   const localHistoryRetentionDays = ref<number>(0)
-  const allUsers = ref<User[]>([])
 
-  // onMounted(async () => {
-  //   allUsers.value = await selectUsers()
-  // })
+  /** 過去に入力したことのあるメールアドレスを User[] 形式で返す（補完候補用） */
+  const authorityHistoryUsers = computed<User[]>(() => {
+    const history = userStore.currentUser?.attribute?.authorityInputHistory ?? []
+    return history.map((email) => ({ email, attribute: {} }))
+  })
 
   const isEdit = computed(() => !!props.project)
   const title = computed(() => (isEdit.value ? 'プロジェクト編集' : 'プロジェクト追加'))
@@ -169,6 +172,29 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
     if (isEdit.value && props.project) {
       projectData.id = props.project.id
     }
+
+    // 入力されたメールアドレスを履歴に追記して永続化
+    if (userStore.currentUser) {
+      const inputEmails = [
+        ...localOwners.value,
+        ...localEditors.value,
+        ...localViewers.value,
+      ]
+      if (inputEmails.length > 0) {
+        const existingHistory = userStore.currentUser.attribute?.authorityInputHistory ?? []
+        const merged = Array.from(new Set([...existingHistory, ...inputEmails]))
+        const updatedUser = {
+          ...userStore.currentUser,
+          attribute: {
+            ...userStore.currentUser.attribute,
+            authorityInputHistory: merged,
+          },
+        }
+        await upsertUser(updatedUser)
+        userStore.user = updatedUser
+      }
+    }
+
     emit('save', projectData)
   }
 
@@ -188,7 +214,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
     localHistoryIntervalMinutes,
     localMilestones,
     localHistoryRetentionDays,
-    allUsers,
+    authorityHistoryUsers,
     title,
     close,
     handleBeforeClose,

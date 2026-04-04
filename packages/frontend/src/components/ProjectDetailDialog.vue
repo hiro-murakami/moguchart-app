@@ -30,7 +30,7 @@ const {
   localMilestones,
   localHistoryIntervalMinutes,
   localHistoryRetentionDays,
-  allUsers,
+  authorityHistoryUsers,
   title,
   close,
   handleBeforeClose,
@@ -208,20 +208,20 @@ watch(
                       v-model="localOwners"
                       label="オーナー"
                       help-text="プロジェクトに対する全権限を持つユーザーのリスト"
-                      :users="allUsers"
+                      :users="authorityHistoryUsers"
                       :rules="[inputRules.required]"
                     />
                     <UsersInput
                       v-model="localEditors"
                       label="編集者"
                       help-text="閲覧・編集権限を持つユーザーのリスト"
-                      :users="allUsers"
+                      :users="authorityHistoryUsers"
                     />
                     <UsersInput
                       v-model="localViewers"
                       label="閲覧者"
                       help-text="閲覧権限のみを持つユーザーのリスト"
-                      :users="allUsers"
+                      :users="authorityHistoryUsers"
                     />
                   </v-row>
                 </v-window-item>
