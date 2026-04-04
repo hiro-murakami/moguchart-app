@@ -123,9 +123,7 @@ const canComment = computed(() => {
   if (!email || !currentProject.value) return false
   const auth = currentProject.value.authority
   return (
-    (auth.owners ?? []).includes(email) ||
-    (auth.editors ?? []).includes(email) ||
-    (auth.viewers ?? []).includes(email)
+    (auth.owners ?? []).includes(email) || (auth.editors ?? []).includes(email) || (auth.viewers ?? []).includes(email)
   )
 })
 
@@ -332,7 +330,7 @@ const handleExportExcel = () => {
         />
       </div>
 
-      <div v-if="!isReadOnly" class="mt-2 d-flex align-center">
+      <div v-if="!isReadOnly" class="mt-4 mb-2 d-flex align-center">
         <v-icon icon="mdi-plus" size="small" class="mr-2" />
         <v-text-field
           v-model.number="manualAddRowCount"
