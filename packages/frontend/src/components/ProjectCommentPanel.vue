@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, computed, onBeforeUnmount } from 'vue'
-import type { Comment, Role } from '@functions/types/shared'
+import type { Comment } from '@functions/types/shared'
 import { selectComments, upsertComment, deleteComment as deleteCommentApi } from '@/modules/scripts'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
@@ -24,12 +24,10 @@ interface Props {
   projectId: string
   /** コメント件数 */
   commentCount: number
-  /** スナップショットモード（読み取り専用） */
-  snapshotMode?: boolean
-  /** 読み取り専用（ロール判定） */
-  isReadOnly?: boolean
-  /** ユーザーのロール */
-  userRole?: Role
+  /** コメント入力可否 */
+  canComment?: boolean
+  /** オーナー権限（全コメントの削除が可能） */
+  isOwner?: boolean
   /** キャッシュ済みコメント（スナップショット用） */
   cachedComments?: Comment[]
   /** 初期表示時の開閉状態 */
@@ -39,8 +37,8 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  snapshotMode: false,
-  isReadOnly: false,
+  canComment: false,
+  isOwner: false,
   cachedComments: () => [],
   initialOpen: false,
   initialWidth: DEFAULT_OPEN_WIDTH,
@@ -62,6 +60,7 @@ const isResizing = ref(false)
 let fetchedAt = 0
 
 const isDark = computed(() => theme.current.value.dark)
+
 
 const sidebarBaseStyle = computed(() => {
   return isDark.value
@@ -123,7 +122,7 @@ onBeforeUnmount(() => {
 // --- コメントデータ管理 ---
 const loadComments = async () => {
   if (!props.projectId) return
-  if (props.snapshotMode && props.cachedComments.length > 0) {
+  if (props.cachedComments.length > 0) {
     comments.value = props.cachedComments
     return
   }
@@ -171,8 +170,8 @@ const removeComment = async (commentId: number) => {
 }
 
 const canDeleteComment = (comment: Comment) => {
-  if (props.isReadOnly || props.snapshotMode) return false
-  if (props.userRole === 'owner') return true
+  if (!props.canComment) return false
+  if (props.isOwner) return true
   return comment.createdBy === userStore.currentUser?.email
 }
 
@@ -268,7 +267,7 @@ defineExpose({ invalidateCache, loadComments, isOpen })
 
     <div v-if="isOpen" class="sidebar-content">
       <!-- 新規コメント入力 -->
-      <div v-if="!isReadOnly && !snapshotMode" class="comment-input-area">
+      <div v-if="canComment" class="comment-input-area">
         <v-textarea
           v-model="newComment"
           placeholder="コメントを入力..."

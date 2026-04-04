@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import splashImage from '@/assets/splash.png'
 import { useGanttChartView } from './composables/useGanttChartView'
-import { onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import ProjectCommentPanel from '@/components/ProjectCommentPanel.vue'
+import { useUserStore } from '@/stores/useUserStore'
 
 const {
   // state
@@ -110,6 +111,23 @@ const {
 } = useGanttChartView()
 
 const projectCommentPanelRef = ref<InstanceType<typeof ProjectCommentPanel>>()
+const userStore = useUserStore()
+
+/**
+ * プロジェクトの authority のいずれかに自分のメールアドレスが含まれる場合にコメント入力可
+ * snapshotMode 中は常に false
+ */
+const canComment = computed(() => {
+  if (isSnapshotMode.value) return false
+  const email = userStore.currentUser?.email
+  if (!email || !currentProject.value) return false
+  const auth = currentProject.value.authority
+  return (
+    (auth.owners ?? []).includes(email) ||
+    (auth.editors ?? []).includes(email) ||
+    (auth.viewers ?? []).includes(email)
+  )
+})
 
 const rowCountRules = [(v: number) => (v >= 1 && v <= 10) || '1〜10の範囲で入力してください']
 
@@ -457,9 +475,8 @@ const handleExportExcel = () => {
       ref="projectCommentPanelRef"
       :project-id="projectId"
       :comment-count="currentProject.commentCount ?? 0"
-      :snapshot-mode="isSnapshotMode"
-      :is-read-only="isReadOnly"
-      :user-role="currentProject.role"
+      :can-comment="canComment"
+      :is-owner="isOwner"
       :cached-comments="projectComments"
       :initial-open="commentSidebarOpen"
       :initial-width="commentSidebarWidth"
