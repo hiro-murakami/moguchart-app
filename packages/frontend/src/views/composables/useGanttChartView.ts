@@ -152,6 +152,15 @@ export const useGanttChartView = () => {
   const { currentTheme } = storeToRefs(userStore)
 
   // プロジェクト設定を保存する共通関数（debounce付き）
+  // --- コメントサイドバー設定 ---
+  const commentSidebarOpen = ref(false)
+  // commentSidebarWidth は「開いたときの幅」を保持する（閉じても50に上書きしない）
+  const commentSidebarWidth = ref(320)
+  const CLOSED_SIDEBAR_WIDTH = 50
+  const effectiveCommentSidebarWidth = computed(() =>
+    commentSidebarOpen.value ? commentSidebarWidth.value : CLOSED_SIDEBAR_WIDTH
+  )
+
   const saveProjectSettings = debounce(
     async (settings: {
       pxPerDay?: number
@@ -159,6 +168,8 @@ export const useGanttChartView = () => {
       showHiddenRows?: boolean
       rowHeaderWidth?: number
       barHeight?: number
+      commentSidebarOpen?: boolean
+      commentSidebarWidth?: number
     }) => {
       if (userStore.user && projectId.value) {
         const currentSettings = userStore.user.attribute.projectSettings?.[projectId.value] || {}
@@ -206,6 +217,14 @@ export const useGanttChartView = () => {
     saveProjectSettings({ barHeight: newValue })
   })
 
+  // コメントサイドバー開閉状態・幅変更時に保存
+  // 注意: commentSidebarOpen と commentSidebarWidth は同期的に変更されることがあるため、
+  // 個別の watch で saveProjectSettings を呼ぶと debounce により片方が失われる。
+  // 両方をまとめて監視し、一括で保存する。
+  watch([commentSidebarOpen, commentSidebarWidth], ([newOpen, newWidth]) => {
+    saveProjectSettings({ commentSidebarOpen: newOpen, commentSidebarWidth: newWidth })
+  })
+
   // プロジェクトまたはユーザーが変わったら設定を復元
   watch(
     [() => userStore.user, projectId],
@@ -246,6 +265,20 @@ export const useGanttChartView = () => {
           barHeight.value = settings.barHeight
         } else {
           barHeight.value = 38
+        }
+
+        // commentSidebarOpenの復元
+        if (settings?.commentSidebarOpen !== undefined) {
+          commentSidebarOpen.value = settings.commentSidebarOpen
+        } else {
+          commentSidebarOpen.value = false
+        }
+
+        // commentSidebarWidthの復元（開いたときの幅として保持）
+        if (settings?.commentSidebarWidth && settings.commentSidebarWidth >= 220) {
+          commentSidebarWidth.value = settings.commentSidebarWidth
+        } else {
+          commentSidebarWidth.value = 320
         }
       }
     },
@@ -579,6 +612,7 @@ export const useGanttChartView = () => {
     )
     if (hasProjectCommentUpdate) {
       invalidateProjectCommentsCache()
+      await fetchProjectComments()
       await fetchProjects()
     }
 
@@ -1129,6 +1163,15 @@ export const useGanttChartView = () => {
     } else {
       // Fallback in case selectTask is not directly available, though the user requested to call it.
       selectedTaskIds.value = [taskId]
+    }
+  }
+
+  const handleClickLogFromActivity = (log: ActivityLogEntry) => {
+    // プロジェクトコメント更新ログのクリック → サイドバーを開く（既に開いていたら何もしない）
+    if (log.type === 'comment_update' && log.commentTarget === 'project') {
+      if (!commentSidebarOpen.value) {
+        commentSidebarOpen.value = true
+      }
     }
   }
 
@@ -2034,6 +2077,29 @@ export const useGanttChartView = () => {
     }
   }
 
+  /** プロジェクトコメントサイドバーからの更新ハンドラ（ダイアログ状態に依存しない） */
+  const handleProjectCommentPanelUpdated = async () => {
+    invalidateProjectCommentsCache()
+    if (!projectId.value) return
+
+    try {
+      const comments = await selectComments({ projectId: projectId.value })
+      const project = projects.value.find((p) => p.id === projectId.value)
+      if (project) {
+        project.commentCount = comments.length
+      }
+      projectComments.value = comments
+      projectCommentsFetchedAt = Date.now()
+    } catch (e) {
+      console.error('Failed to update project comment count', e)
+    }
+
+    publishEditEvent('comment_update', {
+      targetName: currentProject.value?.name || '',
+      commentTarget: 'project',
+    })
+  }
+
   const handleRowHeaderContextMenu = (e: CustomEvent<moguchart.RowHeaderContextMenuEventDetail>) => {
     e.preventDefault()
     if (isReadOnly.value) return
@@ -2710,6 +2776,7 @@ export const useGanttChartView = () => {
     handleTaskDragEnd,
     handleTaskDrop,
     handleSelectTaskFromLog,
+    handleClickLogFromActivity,
     handleDblClickTaskFromLog,
     handleChartContextMenu,
     handleCreateNewTask,
@@ -2727,6 +2794,7 @@ export const useGanttChartView = () => {
     handleAddCommentToRow,
     handleAddCommentToProject,
     handleCommentUpdated,
+    handleProjectCommentPanelUpdated,
     handleCopyTasksFromContextMenu,
     handlePasteTasksFromContextMenu,
     handleCopyTasksShortcut,
@@ -2738,5 +2806,8 @@ export const useGanttChartView = () => {
     invalidateProjectCommentsCache,
     exportAsCsv,
     exportAsExcel,
+    commentSidebarOpen,
+    commentSidebarWidth,
+    effectiveCommentSidebarWidth,
   }
 }

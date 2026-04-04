@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import splashImage from '@/assets/splash.png'
 import { useGanttChartView } from './composables/useGanttChartView'
-import { onMounted, onUnmounted } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
+import ProjectCommentPanel from '@/components/ProjectCommentPanel.vue'
 
 const {
   // state
@@ -90,7 +91,9 @@ const {
   handleAddCommentToRow,
   handleAddCommentToProject,
   handleCommentUpdated,
+  handleProjectCommentPanelUpdated,
   handleSelectTaskFromLog,
+  handleClickLogFromActivity,
   handleDblClickTaskFromLog,
   handleCreateSnapshot,
   handleCopyTasksFromContextMenu,
@@ -99,11 +102,14 @@ const {
   handlePasteTasksShortcut,
   hasClipboardData,
   projectComments,
-  isProjectCommentsLoading,
-  fetchProjectComments,
   exportAsCsv,
   exportAsExcel,
+  commentSidebarOpen,
+  commentSidebarWidth,
+  effectiveCommentSidebarWidth,
 } = useGanttChartView()
+
+const projectCommentPanelRef = ref<InstanceType<typeof ProjectCommentPanel>>()
 
 const rowCountRules = [(v: number) => (v >= 1 && v <= 10) || '1〜10の範囲で入力してください']
 
@@ -157,7 +163,7 @@ const handleExportExcel = () => {
 </script>
 
 <template>
-  <div class="gantt-app">
+  <div class="gantt-app" :style="{ paddingRight: currentProject ? `${effectiveCommentSidebarWidth + 16}px` : undefined }">
     <template v-if="currentProject">
       <div class="mb-4 d-flex align-center" style="gap: 1rem">
         <TooltipBtn
@@ -195,14 +201,6 @@ const handleExportExcel = () => {
               tooltip="スナップショット一覧"
             />
             <ExportMenu @export-csv="handleExportCsv" @export-excel="handleExportExcel" />
-            <ProjectCommentButton
-              :comment-count="currentProject.commentCount ?? 0"
-              :comments="projectComments"
-              :loading="isProjectCommentsLoading"
-              :snapshot-mode="isSnapshotMode"
-              @click="handleAddCommentToProject"
-              @fetch="fetchProjectComments"
-            />
           </div>
           <div v-if="currentProject.attribute.description" class="text-caption text-medium-emphasis">
             {{ currentProject.attribute.description }}
@@ -433,6 +431,7 @@ const handleExportExcel = () => {
     <CollaborationActivityLog
       :logs="editLogs"
       @click-task="handleSelectTaskFromLog"
+      @click-log="handleClickLogFromActivity"
       @dblclick-task="handleDblClickTaskFromLog"
     />
 
@@ -442,6 +441,24 @@ const handleExportExcel = () => {
       v-model="isSnapshotListDialogVisible"
       :project-id="projectId"
       @restored="refresh"
+    />
+
+    <!-- Project Comment Sidebar -->
+    <ProjectCommentPanel
+      v-if="currentProject"
+      :key="projectId"
+      ref="projectCommentPanelRef"
+      :project-id="projectId"
+      :comment-count="currentProject.commentCount ?? 0"
+      :snapshot-mode="isSnapshotMode"
+      :is-read-only="isReadOnly"
+      :user-role="currentProject.role"
+      :cached-comments="projectComments"
+      :initial-open="commentSidebarOpen"
+      :initial-width="commentSidebarWidth"
+      @updated="handleProjectCommentPanelUpdated"
+      @update:is-open="(v: boolean) => { commentSidebarOpen = v }"
+      @update:width="(w: number) => { if (w >= 220) commentSidebarWidth = w }"
     />
   </div>
 </template>
@@ -476,6 +493,7 @@ const handleExportExcel = () => {
   min-height: calc(100vh - 64px);
   display: flex;
   flex-direction: column;
+  transition: padding-right 0.3s ease;
 }
 
 :global(.v-theme--dark) .gantt-app {

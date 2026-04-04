@@ -31,6 +31,7 @@ declare module 'vue' {
     MilestoneInput: typeof import('./src/components/common/MilestoneInput.vue')['default']
     OperationManualDrawer: typeof import('./src/components/OperationManualDrawer.vue')['default']
     ProjectCommentButton: typeof import('./src/components/ProjectCommentButton.vue')['default']
+    ProjectCommentPanel: typeof import('./src/components/ProjectCommentPanel.vue')['default']
     ProjectDetailDialog: typeof import('./src/components/ProjectDetailDialog.vue')['default']
     ProjectListDialog: typeof import('./src/components/ProjectListDialog.vue')['default']
     PromptDialog: typeof import('./src/components/common/PromptDialog.vue')['default']

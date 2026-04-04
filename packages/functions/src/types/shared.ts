@@ -2,7 +2,7 @@
 // 注意: ここにはバックエンド固有のライブラリ(firebase-admin等)をimportしないでください。
 
 /** バージョン */
-export const VERSION = '0.4.7'
+export const VERSION = '0.5.0'
 
 /** Cloud Functions の呼び出しパラメータ */
 export interface FunctionParam {
@@ -98,6 +98,10 @@ export type ProjectSettings = {
   rowHeaderWidth?: number
   /** ガントバーの高さ (px) */
   barHeight?: number
+  /** コメントサイドバーの開閉状態 */
+  commentSidebarOpen?: boolean
+  /** コメントサイドバーの幅 (px) */
+  commentSidebarWidth?: number
 }
 
 /** チュートリアルのキー一覧 */
