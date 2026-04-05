@@ -49,7 +49,7 @@ const onSelect = (palette: ColorPalette) => {
                   ${
                     palette.pattern
                       ? moguchart.getPatternStyle({
-                          type: palette.pattern.type,
+                          type: palette.pattern.type as moguchart.BarPattern,
                           color: palette.pattern.color,
                         })
                       : ''

@@ -150,7 +150,7 @@ const getBorderStyle = (type?: string, color?: string) => {
           border-radius: 4px;
           background-repeat: repeat;
           background-color: ${backgroundColor || '#ffffff'};
-          ${patternType && patternColor ? moguchart.getPatternStyle({ type: patternType, color: patternColor }) : ''}
+          ${patternType && patternColor ? moguchart.getPatternStyle({ type: patternType as moguchart.BarPattern, color: patternColor }) : ''}
           display: flex;
           align-items: center;
           justify-content: center;
@@ -197,7 +197,7 @@ const getBorderStyle = (type?: string, color?: string) => {
               <template #selection="{ item }">
                 <div class="d-flex align-center" v-if="item.type !== 'none'">
                   <div
-                    :style="`width: 60px; height: 24px; border: 1px solid rgba(var(--v-border-color), 0.38); background-repeat: repeat; background-color: ${backgroundColor || '#ffffff'}; ${moguchart.getPatternStyle({ type: item.type, color: patternColor || '#000000' })}`"
+                    :style="`width: 60px; height: 24px; border: 1px solid rgba(var(--v-border-color), 0.38); background-repeat: repeat; background-color: ${backgroundColor || '#ffffff'}; ${moguchart.getPatternStyle({ type: item.type as moguchart.BarPattern, color: patternColor || '#000000' })}`"
                   ></div>
                 </div>
                 <div v-else>なし</div>
@@ -207,7 +207,7 @@ const getBorderStyle = (type?: string, color?: string) => {
                   <template #prepend v-if="item.type !== 'none'">
                     <div
                       class="mr-2"
-                      :style="`width: 60px; height: 24px; border: 1px solid rgba(var(--v-border-color), 0.38); background-repeat: repeat; background-color: ${backgroundColor || '#ffffff'}; ${moguchart.getPatternStyle({ type: item.type, color: patternColor || '#000000' })}`"
+                      :style="`width: 60px; height: 24px; border: 1px solid rgba(var(--v-border-color), 0.38); background-repeat: repeat; background-color: ${backgroundColor || '#ffffff'}; ${moguchart.getPatternStyle({ type: item.type as moguchart.BarPattern, color: patternColor || '#000000' })}`"
                     ></div>
                   </template>
                 </v-list-item>
@@ -234,7 +234,7 @@ const getBorderStyle = (type?: string, color?: string) => {
               <template #selection="{ item }">
                 <div class="d-flex align-center" v-if="item.type !== 'none'">
                   <div
-                    :style="`width: 60px; height: 24px; ${getBorderStyle(item.type, borderColor || '#ffffff')} background-repeat: repeat; background-color: ${backgroundColor || '#ffffff'}; ${moguchart.getPatternStyle({ type: patternType, color: patternColor || '#000000' })}`"
+                    :style="`width: 60px; height: 24px; ${getBorderStyle(item.type, borderColor || '#ffffff')} background-repeat: repeat; background-color: ${backgroundColor || '#ffffff'}; ${moguchart.getPatternStyle({ type: patternType as moguchart.BarPattern, color: patternColor || '#000000' })}`"
                   ></div>
                 </div>
                 <div v-else>なし</div>
@@ -244,7 +244,7 @@ const getBorderStyle = (type?: string, color?: string) => {
                   <template #prepend v-if="item.type !== 'none'">
                     <div
                       class="mr-2"
-                      :style="`width: 60px; height: 24px; ${getBorderStyle(item.type, borderColor || '#ffffff')} background-repeat: repeat; background-color: ${backgroundColor || '#ffffff'}; ${moguchart.getPatternStyle({ type: patternType, color: patternColor || '#000000' })}`"
+                      :style="`width: 60px; height: 24px; ${getBorderStyle(item.type, borderColor || '#ffffff')} background-repeat: repeat; background-color: ${backgroundColor || '#ffffff'}; ${moguchart.getPatternStyle({ type: patternType as moguchart.BarPattern, color: patternColor || '#000000' })}`"
                     ></div>
                   </template>
                 </v-list-item>
