@@ -85,7 +85,7 @@ const isLocked = computed({
           class="mb-3"
         ></v-select>
       </v-col>
-      <v-col cols="6">
+      <v-col cols="4">
         <v-text-field
           v-model="localTask.start"
           label="開始日"
@@ -97,7 +97,7 @@ const isLocked = computed({
           class="mb-3"
         ></v-text-field>
       </v-col>
-      <v-col cols="6">
+      <v-col cols="4">
         <v-text-field
           v-model="localTask.end"
           label="終了日"
@@ -107,6 +107,21 @@ const isLocked = computed({
           hide-details="auto"
           :rules="[inputRules.required, inputRules.dateAfter(localTask.start)]"
           class="mb-3"
+        ></v-text-field>
+      </v-col>
+      <v-col cols="4">
+        <v-text-field
+          v-model.number="localTask.progress"
+          label="進捗率"
+          type="number"
+          :min="0"
+          :max="100"
+          density="compact"
+          variant="outlined"
+          hide-details
+          suffix="%"
+          class="mb-3"
+          clearable
         ></v-text-field>
       </v-col>
       <v-col cols="12">
@@ -121,4 +136,3 @@ const isLocked = computed({
     </template>
   </TaskFormDialog>
 </template>
-

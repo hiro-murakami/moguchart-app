@@ -140,6 +140,7 @@ export const barContent = (task: moguchart.GanttTask) => {
   const description = taskWithAttr.attribute?.description as string | undefined
   const commentCount = taskWithAttr.commentCount as number | undefined
   const isLocked = taskWithAttr.attribute?.lock === true
+  const progress = taskWithAttr.attribute?.progress as number | undefined
 
   const container = document.createElement('div')
   container.style.display = 'flex'
@@ -298,6 +299,22 @@ export const barContent = (task: moguchart.GanttTask) => {
     container.appendChild(descSpan)
   }
 
+  // プログレスバー（進捗率が設定されている場合のみ表示）
+  if (progress != null && progress >= 0) {
+    const clampedProgress = Math.min(100, Math.max(0, progress))
+    const progressOverlay = document.createElement('div')
+    progressOverlay.style.cssText = `position: absolute; bottom: 0; left: 0; width: 100%; height: 5px; background-color: rgba(0,0,0,0.35); border-radius: 0 0 4px 4px; overflow: hidden;`
+    const progressFill = document.createElement('div')
+    progressFill.style.cssText = `width: ${clampedProgress}%; height: 100%; background-color: #4caf50; transition: width 0.3s ease;`
+    progressOverlay.appendChild(progressFill)
+    container.appendChild(progressOverlay)
+
+    const progressLabel = document.createElement('span')
+    progressLabel.style.cssText = `position: absolute; right: 6px; bottom: 6px; font-size: 9px; color: rgba(255,255,255,0.95); font-weight: bold; text-shadow: 0 0 3px rgba(0,0,0,0.7), 1px 1px 2px rgba(0,0,0,0.5); pointer-events: none;`
+    progressLabel.textContent = `${clampedProgress}%`
+    container.appendChild(progressLabel)
+  }
+
   return container
 }
 
@@ -305,6 +322,7 @@ export const tooltip = (task: moguchart.GanttTask) => {
   const taskWithAttr = task as any
   const labels = taskWithAttr.attribute?.labels as { name: string; color: string }[] | undefined
   const description = taskWithAttr.attribute?.description as string | undefined
+  const progress = taskWithAttr.attribute?.progress as number | undefined
 
   const container = document.createElement('div')
   container.style.display = 'flex'
@@ -364,6 +382,39 @@ export const tooltip = (task: moguchart.GanttTask) => {
     descDiv.style.borderTop = '1px solid rgba(128, 128, 128, 0.3)'
     descDiv.textContent = description
     container.appendChild(descDiv)
+  }
+
+  // 進捗率
+  if (progress != null && progress >= 0) {
+    const clampedProgress = Math.min(100, Math.max(0, progress))
+    const progressDiv = document.createElement('div')
+    progressDiv.style.fontSize = '12px'
+    progressDiv.style.marginTop = '4px'
+    progressDiv.style.paddingTop = '4px'
+    progressDiv.style.borderTop = '1px solid rgba(128, 128, 128, 0.3)'
+
+    const progressHeader = document.createElement('div')
+    progressHeader.style.display = 'flex'
+    progressHeader.style.justifyContent = 'space-between'
+    progressHeader.style.alignItems = 'center'
+    progressHeader.style.marginBottom = '4px'
+    const progressTitle = document.createElement('span')
+    progressTitle.textContent = '進捗'
+    const progressValue = document.createElement('span')
+    progressValue.style.fontWeight = 'bold'
+    progressValue.textContent = `${clampedProgress}%`
+    progressHeader.appendChild(progressTitle)
+    progressHeader.appendChild(progressValue)
+    progressDiv.appendChild(progressHeader)
+
+    const barBg = document.createElement('div')
+    barBg.style.cssText = 'width: 100%; height: 6px; background-color: rgba(128,128,128,0.3); border-radius: 3px; overflow: hidden;'
+    const barFill = document.createElement('div')
+    barFill.style.cssText = `width: ${clampedProgress}%; height: 100%; background-color: #4caf50; border-radius: 3px;`
+    barBg.appendChild(barFill)
+    progressDiv.appendChild(barBg)
+
+    container.appendChild(progressDiv)
   }
 
 

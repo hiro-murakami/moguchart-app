@@ -1231,6 +1231,7 @@ export const useGanttChartView = () => {
     end: '',
     description: '',
     labels: [],
+    progress: undefined,
   })
 
   const startEditingTask = (taskId: string) => {
@@ -1249,6 +1250,7 @@ export const useGanttChartView = () => {
         colorPalette: taskWithAttr.attribute?.colorPalette ? { ...taskWithAttr.attribute.colorPalette } : undefined,
         labels: taskWithAttr.attribute?.labels ? [...taskWithAttr.attribute.labels] : [],
         lock: taskWithAttr.attribute?.lock,
+        progress: taskWithAttr.attribute?.progress,
       }
       isDialogVisible.value = true
       // 他ユーザーにこのタスクを編集中であることを通知
@@ -1317,6 +1319,7 @@ export const useGanttChartView = () => {
         colorPalette: taskData.colorPalette,
         labels: taskData.labels,
         lock: taskData.lock || undefined,
+        progress: taskData.progress != null ? taskData.progress : undefined,
       },
     }
 
@@ -1360,6 +1363,7 @@ export const useGanttChartView = () => {
             colorPalette: beforeAttr?.colorPalette ? { ...beforeAttr.colorPalette } : undefined,
             labels: beforeAttr?.labels ? [...beforeAttr.labels] : undefined,
             lock: beforeAttr?.lock,
+            progress: beforeAttr?.progress,
           },
         }
         pushAction({
@@ -2616,6 +2620,7 @@ export const useGanttChartView = () => {
       start: toDateString(date),
       end: toDateString(new Date(date.getTime() + 2 * 24 * 60 * 60 * 1000)), // デフォルト2日
       description: '',
+      progress: undefined,
     }
     isDialogVisible.value = true
     chartContextMenu.value.visible = false

@@ -177,6 +177,8 @@ export type TaskAttribute = {
   labels?: Label[]
   /** タスクのロック状態（trueの場合、移動・リサイズ・削除が不可） */
   lock?: boolean
+  /** タスクの進捗率（0〜100） */
+  progress?: number
 }
 
 /** フロントエンドの編集用：行データ */
@@ -198,6 +200,8 @@ export interface EditingTaskData {
   labels?: Label[]
   /** タスクのロック状態（trueの場合、移動・リサイズ・削除が不可） */
   lock?: boolean
+  /** タスクの進捗率（0〜100） */
+  progress?: number
 }
 
 /** 簡易的な行情報（ドロップダウン選択用など） */
