@@ -23,7 +23,13 @@ import { usePrompt } from '@/composables/usePrompt'
 import { useLoading } from '@/composables/useLoading'
 import { useExportData } from '@/composables/useExportData'
 import { toDateString, toLocalDate, getContrastColor } from '@/modules/utils'
-import { barContent, tooltip, rowHeaderContent, preloadCommentsCache, preloadRowCommentsCache } from '@/modules/ganttChartCustomRendering'
+import {
+  barContent,
+  tooltip,
+  rowHeaderContent,
+  preloadCommentsCache,
+  preloadRowCommentsCache,
+} from '@/modules/ganttChartCustomRendering'
 import { useProjectStore } from '@/stores/useProjectStore'
 import { useUserStore } from '@/stores/useUserStore'
 import type {
@@ -136,7 +142,12 @@ export const useGanttChartView = () => {
 
   // --- 状態 ---
   const projectStore = useProjectStore()
-  const { projects, currentProjectId: storeProjectId, currentRole: storeRole, currentProject: storeProject } = storeToRefs(projectStore)
+  const {
+    projects,
+    currentProjectId: storeProjectId,
+    currentRole: storeRole,
+    currentProject: storeProject,
+  } = storeToRefs(projectStore)
   const { fetchProjects, setProjectId, clear: clearProjectStore } = projectStore
 
   const isSnapshotMode = computed(() => !!route.params.snapshotName)
@@ -145,10 +156,10 @@ export const useGanttChartView = () => {
   const projectId = computed(() =>
     isSnapshotMode.value
       ? ((Array.isArray(route.params.projectId) ? route.params.projectId[0] : route.params.projectId) as string)
-      : storeProjectId.value
+      : storeProjectId.value,
   )
-  const currentProject = computed(() => isSnapshotMode.value ? snapshotProject.value : storeProject.value)
-  const currentRole = computed(() => isSnapshotMode.value ? 'viewer' : storeRole.value)
+  const currentProject = computed(() => (isSnapshotMode.value ? snapshotProject.value : storeProject.value))
+  const currentRole = computed(() => (isSnapshotMode.value ? 'viewer' : storeRole.value))
   const { currentTheme } = storeToRefs(userStore)
 
   // プロジェクト設定を保存する共通関数（debounce付き）
@@ -158,7 +169,7 @@ export const useGanttChartView = () => {
   const commentSidebarWidth = ref(320)
   const CLOSED_SIDEBAR_WIDTH = 50
   const effectiveCommentSidebarWidth = computed(() =>
-    commentSidebarOpen.value ? commentSidebarWidth.value : CLOSED_SIDEBAR_WIDTH
+    commentSidebarOpen.value ? commentSidebarWidth.value : CLOSED_SIDEBAR_WIDTH,
   )
 
   const saveProjectSettings = debounce(
@@ -446,6 +457,10 @@ export const useGanttChartView = () => {
         showCurrentTime: true,
         currentTimeUpdateInterval: 1000 * 60,
         milestones: milestones.length > 0 ? milestones : undefined,
+        // pxPerDay が 20 未満の場合は日付セルが狭すぎるため、週番号表示に切り替え
+        ...(pxPerDay.value < 20 ? { showWeeks: true, showDays: false, weekStartDay: 1 as const } : {}),
+        weekTextAlign: 'left',
+        weekFormat: (_, startDate) => startDate.getDate().toString(),
       },
       rowHeader: {
         maxWidth: 400,
@@ -550,7 +565,7 @@ export const useGanttChartView = () => {
           // lock → moguchart の resizable / movable に変換
           const isLocked = attribute?.lock === true
           const resizable = isLocked ? false : undefined
-          const movable = isLocked ? 'none' as const : undefined
+          const movable = isLocked ? ('none' as const) : undefined
 
           return {
             ...task,
@@ -680,7 +695,7 @@ export const useGanttChartView = () => {
     // lock → moguchart の resizable / movable に変換
     const isLocked = attribute?.lock === true
     const resizable = isLocked ? false : undefined
-    const movable = isLocked ? 'none' as const : undefined
+    const movable = isLocked ? ('none' as const) : undefined
 
     return {
       ...task,
@@ -741,7 +756,7 @@ export const useGanttChartView = () => {
       // スナップショットのコメントデータをキャッシュにプリロード
       const taskCommentEntries: { taskId: number; comments: any[] }[] = []
       const rowCommentEntries: { rowId: number; comments: any[] }[] = []
-      
+
       rows.value = data.rows.map((row: any) => {
         // 行コメントの処理
         const rowComments = row.comments as any[] | undefined
@@ -795,7 +810,7 @@ export const useGanttChartView = () => {
 
   watch(storeProjectId, async (newProjectId, oldProjectId) => {
     if (isSnapshotMode.value) return // スナップショットモード時はストアの監視を無視
-    
+
     const project = projects.value.find((p) => p.id === newProjectId)
     if (project) {
       chartStartStr.value = project.start
@@ -831,14 +846,14 @@ export const useGanttChartView = () => {
         loadSnapshotData(projectId.value, newSnapshotName as string)
       }
     },
-    { immediate: true }
+    { immediate: true },
   )
 
   watch(
     () => userStore.user,
     async (newUser) => {
       if (isSnapshotMode.value) return // スナップショットモードではプロジェクト読み込みや未ログイン解除を無視
-      
+
       if (newUser) {
         // ユーザーがログインした場合、プロジェクトリストを読み込む
         await fetchProjects()
@@ -878,8 +893,10 @@ export const useGanttChartView = () => {
       if (timeDiff === 0) return
 
       // 変更前データ（undo用）と変更後データを構築
-      const beforeDataList: { id: number; rowId: number; name: string; start: string; end: string; attribute: any }[] = []
-      const afterDataList: { id: number; rowId: number; name: string; start: string; end: string; attribute: any }[] = []
+      const beforeDataList: { id: number; rowId: number; name: string; start: string; end: string; attribute: any }[] =
+        []
+      const afterDataList: { id: number; rowId: number; name: string; start: string; end: string; attribute: any }[] =
+        []
       const affectedRowIdSet = new Set<number>()
 
       for (const taskId of selectedIds) {
@@ -2537,7 +2554,7 @@ export const useGanttChartView = () => {
     await loadData(projectId.value)
     publishEditEvent('task_upsert', {
       rowIds: [Number(rowId)],
-      targetName: tasksData.length === 1 ? tasksData[0]?.name ?? 'タスク' : `${tasksData.length}件のタスク`,
+      targetName: tasksData.length === 1 ? (tasksData[0]?.name ?? 'タスク') : `${tasksData.length}件のタスク`,
       isNew: true,
       taskId: String(newTaskIds?.[0] ?? ''),
     })
@@ -2686,7 +2703,7 @@ export const useGanttChartView = () => {
         projectId: projectId.value,
         displayName: displayName || undefined,
       })
-      
+
       const routeUrl = router.resolve({
         path: `/${projectId.value}/snapshot/${snapshotName}`,
       })
