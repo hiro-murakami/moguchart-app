@@ -78,6 +78,7 @@ export const useGanttChartView = () => {
   const barCornerRadius = ref(4)
   const labelWidth = ref(150)
   const showHiddenRows = ref(false)
+  const showCurrentTimeLine = ref(true)
   const manualAddRowCount = ref(1)
 
   const isUnassignedTasksOpen = ref(false)
@@ -177,6 +178,7 @@ export const useGanttChartView = () => {
       pxPerDay?: number
       selectedLabels?: string[]
       showHiddenRows?: boolean
+      showCurrentTimeLine?: boolean
       rowHeaderWidth?: number
       barHeight?: number
       commentSidebarOpen?: boolean
@@ -221,6 +223,11 @@ export const useGanttChartView = () => {
   // 非表示行の表示設定変更時に保存
   watch(showHiddenRows, (newValue) => {
     saveProjectSettings({ showHiddenRows: newValue })
+  })
+
+  // 現在時刻線の表示設定変更時に保存
+  watch(showCurrentTimeLine, (newValue) => {
+    saveProjectSettings({ showCurrentTimeLine: newValue })
   })
 
   // バー高さ変更時に保存
@@ -269,6 +276,13 @@ export const useGanttChartView = () => {
           showHiddenRows.value = settings.showHiddenRows
         } else {
           showHiddenRows.value = false
+        }
+
+        // showCurrentTimeLineの復元
+        if (settings?.showCurrentTimeLine !== undefined) {
+          showCurrentTimeLine.value = settings.showCurrentTimeLine
+        } else {
+          showCurrentTimeLine.value = true
         }
 
         // barHeightの復元
@@ -454,7 +468,7 @@ export const useGanttChartView = () => {
         end: toLocalDate(chartEndStr.value),
         pxPerDay: pxPerDay.value,
         isHoliday: holiday_jp.isHoliday,
-        showCurrentTime: true,
+        showCurrentTime: showCurrentTimeLine.value,
         currentTimeUpdateInterval: 1000 * 60,
         milestones: milestones.length > 0 ? milestones : undefined,
         // pxPerDay が 20 未満の場合は日付セルが狭すぎるため、週番号表示に切り替え
@@ -2743,6 +2757,7 @@ export const useGanttChartView = () => {
     chartContextMenu,
     currentProject,
     showHiddenRows,
+    showCurrentTimeLine,
     pxPerDay,
     barHeight,
     addRowCount,

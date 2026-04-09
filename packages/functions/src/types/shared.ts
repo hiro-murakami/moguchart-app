@@ -87,6 +87,7 @@ export type Label = {
   color: string
 }
 
+/** プロジェクトごとの設定 */
 export type ProjectSettings = {
   /** ズームレベル（1日あたりのpx数） */
   pxPerDay?: number
@@ -102,6 +103,8 @@ export type ProjectSettings = {
   commentSidebarOpen?: boolean
   /** コメントサイドバーの幅 (px) */
   commentSidebarWidth?: number
+  /** 現在時刻線の表示可否フラグ */
+  showCurrentTimeLine?: boolean
 }
 
 /** チュートリアルのキー一覧 */

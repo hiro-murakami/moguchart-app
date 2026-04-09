@@ -25,6 +25,7 @@ const {
   hasLockedTaskInContextMenu,
   currentProject,
   showHiddenRows,
+  showCurrentTimeLine,
   pxPerDay,
   barHeight,
   addRowCount,
@@ -267,6 +268,7 @@ const handleExportExcel = () => {
         />
         <DisplaySettingsMenu
           v-model:show-hidden-rows="showHiddenRows"
+          v-model:show-current-time-line="showCurrentTimeLine"
           v-model:px-per-day="pxPerDay"
           v-model:bar-height="barHeight"
         />

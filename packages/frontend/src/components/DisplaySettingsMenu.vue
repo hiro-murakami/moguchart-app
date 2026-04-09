@@ -1,12 +1,14 @@
 <script setup lang="ts">
 defineProps<{
   showHiddenRows: boolean
+  showCurrentTimeLine: boolean
   pxPerDay: number
   barHeight: number
 }>()
 
 const emit = defineEmits<{
   'update:showHiddenRows': [value: boolean]
+  'update:showCurrentTimeLine': [value: boolean]
   'update:pxPerDay': [value: number]
   'update:barHeight': [value: number]
 }>()
@@ -25,8 +27,17 @@ const emit = defineEmits<{
         color="primary"
         hide-details
         density="compact"
-        class="mb-4"
+        class="mb-2"
         @update:model-value="emit('update:showHiddenRows', $event as boolean)"
+      />
+      <v-switch
+        :model-value="showCurrentTimeLine"
+        label="現在時刻線を表示"
+        color="primary"
+        hide-details
+        density="compact"
+        class="mb-4"
+        @update:model-value="emit('update:showCurrentTimeLine', $event as boolean)"
       />
       <div class="text-caption text-medium-emphasis mb-1">表示倍率</div>
       <ZoomControls
