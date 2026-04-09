@@ -122,6 +122,7 @@ const isLocked = computed({
           suffix="%"
           class="mb-3"
           clearable
+          autocomplete="off"
         ></v-text-field>
       </v-col>
       <v-col cols="12">
