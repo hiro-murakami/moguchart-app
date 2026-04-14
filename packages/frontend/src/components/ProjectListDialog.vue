@@ -65,13 +65,15 @@ const handleFileChange = (e: Event) => {
           <v-btn
             color="secondary"
             prepend-icon="mdi-upload"
-            class="mr-2"
+            class="mr-2 text-body-medium"
             :loading="restoring"
             @click="handleRestoreClick"
           >
             バックアップから復元
           </v-btn>
-          <v-btn color="primary" prepend-icon="mdi-plus" class="mr-2" @click="newProject"> 新規作成 </v-btn>
+          <v-btn color="primary" prepend-icon="mdi-plus" class="mr-2 text-body-medium" @click="newProject">
+            新規作成
+          </v-btn>
           <v-btn icon="mdi-close" variant="text" @click="close"></v-btn>
         </div>
       </v-card-title>
