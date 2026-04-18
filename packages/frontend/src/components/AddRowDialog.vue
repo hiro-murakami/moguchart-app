@@ -35,8 +35,7 @@ const handleKeyEnter = () => {
       <slot name="activator" v-bind="slotProps" />
     </template>
 
-    <v-card min-width="280">
-      <v-card-title class="pa-4 pb-0"> 行追加 </v-card-title>
+    <v-card min-width="200">
       <v-card-text class="pa-4">
         <v-text-field
           v-model.number="rowCount"
@@ -56,9 +55,7 @@ const handleKeyEnter = () => {
       <v-card-actions class="pa-4 pt-0">
         <v-spacer />
         <v-btn color="grey-darken-1" variant="text" @click="isVisible = false">キャンセル</v-btn>
-        <v-btn color="primary" variant="flat" :disabled="!isValid" class="ml-2" @click="handleAdd">
-          追加
-        </v-btn>
+        <v-btn color="primary" variant="flat" :disabled="!isValid" class="ml-2" @click="handleAdd"> 追加 </v-btn>
       </v-card-actions>
     </v-card>
   </v-menu>
