@@ -163,6 +163,15 @@ export const useGanttChartView = () => {
   const currentRole = computed(() => (isSnapshotMode.value ? 'viewer' : storeRole.value))
   const { currentTheme } = storeToRefs(userStore)
 
+  // プロジェクト名に応じてブラウザのタブタイトルを更新
+  watch(
+    currentProject,
+    (project) => {
+      document.title = project?.name ? `MoguChart - ${project.name}` : 'MoguChart'
+    },
+    { immediate: true },
+  )
+
   // プロジェクト設定を保存する共通関数（debounce付き）
   // --- コメントサイドバー設定 ---
   const commentSidebarOpen = ref(false)
