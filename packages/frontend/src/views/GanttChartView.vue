@@ -128,8 +128,6 @@ const canComment = computed(() => {
   )
 })
 
-const rowCountRules = [(v: number) => (v >= 1 && v <= 10) || '1〜10の範囲で入力してください']
-
 // キーボードショートカット
 const handleKeyDown = (e: KeyboardEvent) => {
   if (e.metaKey || e.ctrlKey) {
@@ -330,32 +328,23 @@ const handleExportExcel = () => {
           @keydown.esc="cancelRowNameUpdate"
           @blur="cancelRowNameUpdate()"
         />
-      </div>
 
-      <div v-if="!isReadOnly" class="mt-4 mb-2 d-flex align-center">
-        <v-icon icon="mdi-plus" size="small" class="mr-2" />
-        <v-text-field
-          v-model.number="manualAddRowCount"
-          type="number"
-          label="行数"
-          density="compact"
-          hide-details="auto"
-          variant="outlined"
-          min="1"
-          max="10"
-          :rules="rowCountRules"
-          style="max-width: 80px"
-          class="bg-surface"
-          autocomplete="off"
-        />
-        <v-btn
-          color="primary"
-          variant="text"
-          :disabled="!manualAddRowCount || manualAddRowCount < 1 || manualAddRowCount > 10"
-          @click="handleAddRow(undefined, manualAddRowCount)"
-        >
-          行追加
-        </v-btn>
+        <!-- 行追加 FAB + ダイアログ -->
+        <AddRowDialog v-if="!isReadOnly" @add="(count: number) => handleAddRow(undefined, count)">
+          <template #activator="{ props: menuProps }">
+            <div class="add-row-fab">
+              <TooltipBtn
+                v-bind="menuProps"
+                icon="mdi-plus"
+                color="primary"
+                size="small"
+                elevation="3"
+                tooltip="行追加"
+                location="top"
+              />
+            </div>
+          </template>
+        </AddRowDialog>
       </div>
     </template>
 
@@ -562,5 +551,11 @@ const handleExportExcel = () => {
 .presence-avatar:hover {
   transform: translateY(-2px);
   z-index: 1;
+}
+.add-row-fab {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  z-index: 100;
 }
 </style>

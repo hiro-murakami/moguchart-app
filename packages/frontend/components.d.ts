@@ -11,6 +11,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    AddRowDialog: typeof import('./src/components/AddRowDialog.vue')['default']
     AlertDialog: typeof import('./src/components/common/AlertDialog.vue')['default']
     ChartContextMenu: typeof import('./src/components/ChartContextMenu.vue')['default']
     CollaborationActivityLog: typeof import('./src/components/CollaborationActivityLog.vue')['default']
