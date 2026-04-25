@@ -29,6 +29,7 @@ const {
   highlightText,
   isProjectDetailDialogVisible,
   projectToEdit,
+  originalId,
   headers,
   selectProject,
   editProject,
@@ -275,6 +276,7 @@ const handleFileChange = (e: Event) => {
     v-model="isProjectDetailDialogVisible"
     :project="projectToEdit"
     :saving="saving"
+    :is-duplicate="!!originalId"
     @save="saveProject"
   />
 </template>

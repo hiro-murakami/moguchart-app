@@ -335,6 +335,10 @@ export type DuplicateProject = (
     originalProjectId: string
     /** 新しいプロジェクトのデータ */
     newProjectData: Project
+    /** 新しい開始日（YYYY-MM-DD形式）。指定時、元の開始日との差分で全タスク・マイルストーンの日付をスライドする */
+    newStartDate?: string
+    /** trueの場合、全タスクの進捗率をクリアする */
+    clearProgress?: boolean
   },
   email?: string,
 ) => Promise<string>

@@ -34,6 +34,7 @@ export const useProjectListDialog = (
   const isProjectDetailDialogVisible = ref(false)
   const projectToEdit = ref<Project | null>(null)
   const originalId = ref<string>()
+  const originalStart = ref<string>()
   const confirm = useConfirm()
   const snackbar = useSnackbar()
 
@@ -115,23 +116,32 @@ export const useProjectListDialog = (
   const editProject = (project: Project) => {
     projectToEdit.value = project
     originalId.value = undefined
+    originalStart.value = undefined
     isProjectDetailDialogVisible.value = true
   }
 
   const newProject = () => {
     projectToEdit.value = null
     originalId.value = undefined
+    originalStart.value = undefined
     isProjectDetailDialogVisible.value = true
   }
 
-  const saveProject = async (project: Partial<Project>) => {
+  const saveProject = async (project: Partial<Project>, options?: { clearProgress?: boolean }) => {
     saving.value = true
     try {
       let projectId = project.id
       if (originalId.value) {
+        // 開始日が元と異なる場合、newStartDate を渡してタスク・マイルストーンをスライドさせる
+        const newStartDate =
+          originalStart.value && project.start && project.start !== originalStart.value
+            ? project.start
+            : undefined
         projectId = await duplicateProjectScript({
           originalProjectId: originalId.value,
           newProjectData: project as Project,
+          newStartDate,
+          clearProgress: options?.clearProgress,
         })
       } else {
         projectId = await projectStore.updateProject(project as Project)
@@ -191,6 +201,7 @@ export const useProjectListDialog = (
       public: false,
     }
     originalId.value = project.id
+    originalStart.value = project.start
     isProjectDetailDialogVisible.value = true
   }
 

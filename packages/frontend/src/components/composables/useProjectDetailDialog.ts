@@ -2,18 +2,19 @@ import type { ColorPalette, Label, Milestone, Project, User } from '@functions/t
 import { upsertUser } from '@/modules/scripts'
 import { useUserStore } from '@/stores/useUserStore'
 import { isEqual, debounce } from 'lodash'
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import type { VForm } from 'vuetify/components'
 import { useDiscardConfirm } from '../../composables/useConfirm'
 
 export interface ProjectDetailDialogProps {
   modelValue: boolean
   project?: Project | null
+  isDuplicate?: boolean
 }
 
 export type ProjectDetailDialogEmits = {
   (e: 'update:modelValue', value: boolean): void
-  (e: 'save', project: Partial<Project>): void
+  (e: 'save', project: Partial<Project>, options?: { clearProgress?: boolean }): void
 }
 
 export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: ProjectDetailDialogEmits) {
@@ -35,6 +36,12 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
   const localHistoryIntervalMinutes = ref<number>(0)
   const localHistoryRetentionDays = ref<number>(0)
 
+  /** 複製モード時の元プロジェクト期間（日数） */
+  const originalDurationDays = ref(0)
+
+  /** 複製モード時: 進捗率をクリアするかどうか */
+  const localClearProgress = ref(true)
+
   /** 過去に入力したことのあるメールアドレスを User[] 形式で返す（補完候補用） */
   const authorityHistoryUsers = computed<User[]>(() => {
     const history = userStore.currentUser?.attribute?.authorityInputHistory ?? []
@@ -42,7 +49,10 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
   })
 
   const isEdit = computed(() => !!props.project)
-  const title = computed(() => (isEdit.value ? 'プロジェクト編集' : 'プロジェクト追加'))
+  const title = computed(() => {
+    if (props.isDuplicate) return 'プロジェクト複製'
+    return isEdit.value ? 'プロジェクト編集' : 'プロジェクト追加'
+  })
 
   watch(
     () => props.modelValue,
@@ -54,6 +64,13 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
           localDescription.value = props.project.attribute.description || ''
           localStart.value = props.project.start
           localEnd.value = props.project.end
+          // 複製モード: 元のプロジェクト期間（日数）を記憶
+          if (props.isDuplicate) {
+            const s = new Date(props.project.start + 'T00:00:00Z')
+            const e = new Date(props.project.end + 'T00:00:00Z')
+            originalDurationDays.value = Math.round((e.getTime() - s.getTime()) / (1000 * 60 * 60 * 24))
+            localClearProgress.value = true
+          }
           localPublic.value = props.project.public
           if (props.project.authority) {
             const { owners, editors, viewers } = props.project.authority
@@ -96,6 +113,16 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
       }
     },
   )
+
+  /** 複製モード: 開始日の変更に応じて終了日を自動スライド */
+  watch(localStart, (newStart) => {
+    if (!props.isDuplicate || !newStart) return
+    const s = new Date(newStart + 'T00:00:00Z')
+    s.setUTCDate(s.getUTCDate() + originalDurationDays.value)
+    localEnd.value = s.toISOString().slice(0, 10)
+    // 終了日更新後にフォームを再バリデーション（dateBefore/dateAfterルールの不整合を解消）
+    nextTick(() => form.value?.validate())
+  })
 
   const hasChanges = computed(() => {
     if (!props.project) {
@@ -195,7 +222,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
       }
     }
 
-    emit('save', projectData)
+    emit('save', projectData, props.isDuplicate ? { clearProgress: localClearProgress.value } : undefined)
   }
 
   /** 連打防止: 最初のクリックのみ即実行、300ms以内の再クリックは無視 */
@@ -219,6 +246,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
     localHistoryRetentionDays,
     authorityHistoryUsers,
     title,
+    localClearProgress,
     close,
     handleBeforeClose,
     save,
