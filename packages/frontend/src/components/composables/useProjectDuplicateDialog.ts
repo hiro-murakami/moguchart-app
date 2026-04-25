@@ -3,6 +3,9 @@ import { debounce } from 'lodash'
 import { computed, nextTick, ref, watch } from 'vue'
 import type { VForm } from 'vuetify/components'
 
+/** ステッパーのステップ数 */
+const TOTAL_STEPS = 3
+
 export interface ProjectDuplicateDialogProps {
   modelValue: boolean
   project?: Project | null
@@ -22,6 +25,38 @@ export function useProjectDuplicateDialog(props: ProjectDuplicateDialogProps, em
   const localEnd = ref('')
   const localClearProgress = ref(true)
 
+  /** --- ステッパー制御 --- */
+  const currentStep = ref(1)
+
+  /** 現在のステップのバリデーションが通るかどうか */
+  const canProceed = computed(() => {
+    switch (currentStep.value) {
+      case 1:
+        return !!localName.value && localName.value.length <= 191
+      case 2:
+        return !!localStart.value && !!localEnd.value && localStart.value <= localEnd.value
+      case 3:
+        return true
+      default:
+        return false
+    }
+  })
+
+  const isFirstStep = computed(() => currentStep.value === 1)
+  const isLastStep = computed(() => currentStep.value === TOTAL_STEPS)
+
+  const nextStep = () => {
+    if (canProceed.value && currentStep.value < TOTAL_STEPS) {
+      currentStep.value++
+    }
+  }
+
+  const prevStep = () => {
+    if (currentStep.value > 1) {
+      currentStep.value--
+    }
+  }
+
   /** 元プロジェクト期間（日数） */
   const originalDurationDays = ref(0)
 
@@ -36,6 +71,7 @@ export function useProjectDuplicateDialog(props: ProjectDuplicateDialogProps, em
         localStart.value = props.project.start
         localEnd.value = props.project.end
         localClearProgress.value = true
+        currentStep.value = 1
 
         // 元のプロジェクト期間（日数）を記憶
         const s = new Date(props.project.start + 'T00:00:00Z')
@@ -88,5 +124,12 @@ export function useProjectDuplicateDialog(props: ProjectDuplicateDialogProps, em
     description,
     close,
     save,
+    // ステッパー
+    currentStep,
+    canProceed,
+    isFirstStep,
+    isLastStep,
+    nextStep,
+    prevStep,
   }
 }

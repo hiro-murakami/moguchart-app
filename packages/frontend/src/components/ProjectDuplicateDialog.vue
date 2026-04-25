@@ -14,8 +14,23 @@ const emit = defineEmits<{
   (e: 'save', project: Partial<Project>, options: { clearProgress: boolean }): void
 }>()
 
-const { form, formValid, localName, localStart, localEnd, localClearProgress, description, close, save } =
-  useProjectDuplicateDialog(props, emit)
+const {
+  form,
+  formValid,
+  localName,
+  localStart,
+  localEnd,
+  localClearProgress,
+  description,
+  close,
+  save,
+  currentStep,
+  canProceed,
+  isFirstStep,
+  isLastStep,
+  nextStep,
+  prevStep,
+} = useProjectDuplicateDialog(props, emit)
 </script>
 
 <template>
@@ -26,72 +41,103 @@ const { form, formValid, localName, localStart, localEnd, localClearProgress, de
         if (!v) close()
       }
     "
-    max-width="600px"
+    max-width="660px"
   >
     <v-card>
-      <v-card-title class="pa-6 pb-0">プロジェクト複製</v-card-title>
-      <v-card-text class="pa-6">
+      <v-card-title class="pa-6 pb-2">プロジェクト複製</v-card-title>
+
+      <v-card-text class="pa-4 pt-0">
         <v-form ref="form" v-model="formValid">
-          <v-row density="compact" class="pt-2">
-            <v-col cols="12">
-              <v-text-field
-                v-model="localName"
-                label="プロジェクト名"
-                :rules="[inputRules.required, inputRules.within(191)]"
-                autofocus
-                density="compact"
-                variant="outlined"
-                hide-details="auto"
-                autocomplete="off"
-                class="mb-3"
-              />
-            </v-col>
-            <v-col v-if="description" cols="12" class="mb-4">
-              <div class="text-caption text-medium-emphasis mb-1">説明</div>
-              <div class="description-display pa-3 rounded text-body-2">{{ description }}</div>
-            </v-col>
-            <v-col cols="6">
-              <v-text-field
-                v-model="localStart"
-                label="開始日"
-                type="date"
-                density="compact"
-                variant="outlined"
-                hide-details
-                :rules="[inputRules.required, inputRules.dateBefore(localEnd)]"
-                class="mb-3"
-              />
-            </v-col>
-            <v-col cols="6">
-              <v-text-field
-                v-model="localEnd"
-                label="終了日"
-                type="date"
-                density="compact"
-                variant="outlined"
-                hint="開始日の変更に連動して自動調整されます"
-                persistent-hint
-                disabled
-                :rules="[inputRules.required, inputRules.dateAfter(localStart)]"
-                class="mb-3"
-              />
-            </v-col>
-            <v-col cols="12">
-              <v-checkbox
-                v-model="localClearProgress"
-                label="進捗率をクリアする"
-                density="compact"
-                hide-details
-                class="mb-3"
-              />
-            </v-col>
-          </v-row>
+          <!-- ステッパーヘッダー -->
+          <v-stepper
+            v-model="currentStep"
+            :items="['プロジェクト名', '期間', 'オプション']"
+            hide-actions
+            alt-labels
+            flat
+            class="stepper-flat"
+          >
+            <!-- Step 1: プロジェクト名 -->
+            <template v-slot:item.1>
+              <v-card-subtitle>複製後のプロジェクト名を入力します。</v-card-subtitle>
+              <v-sheet class="step-content pa-4 mt-3">
+                <v-text-field
+                  v-model="localName"
+                  label="プロジェクト名"
+                  :rules="[inputRules.required, inputRules.within(191)]"
+                  autofocus
+                  density="compact"
+                  variant="outlined"
+                  hide-details="auto"
+                  autocomplete="off"
+                  class="mb-3"
+                />
+              </v-sheet>
+            </template>
+
+            <!-- Step 2: 期間 -->
+            <template v-slot:item.2>
+              <v-card-subtitle>
+                複製後のプロジェクトの開始日を入力します。<br />
+                タスク・マイルストーンの日付は新しい開始日に応じて自動調整されます。
+              </v-card-subtitle>
+              <v-sheet class="step-content pa-4 mt-3">
+                <v-row density="compact">
+                  <v-col cols="6">
+                    <v-text-field
+                      v-model="localStart"
+                      label="開始日"
+                      type="date"
+                      density="compact"
+                      variant="outlined"
+                      hide-details="auto"
+                      :rules="[inputRules.required, inputRules.dateBefore(localEnd)]"
+                    />
+                  </v-col>
+                  <v-col cols="6">
+                    <v-text-field
+                      v-model="localEnd"
+                      label="終了日"
+                      type="date"
+                      density="compact"
+                      variant="outlined"
+                      hint="開始日の変更に連動して自動調整されます"
+                      persistent-hint
+                      disabled
+                      :rules="[inputRules.required, inputRules.dateAfter(localStart)]"
+                    />
+                  </v-col>
+                </v-row>
+              </v-sheet>
+            </template>
+
+            <!-- Step 3: オプション -->
+            <template v-slot:item.3>
+              <v-card-subtitle> チェックを入れると、すべてのタスクの進捗率が 0% にリセットされます。 </v-card-subtitle>
+              <v-sheet class="step-content pa-4">
+                <v-checkbox
+                  v-model="localClearProgress"
+                  label="進捗率をクリアする"
+                  density="compact"
+                  hide-details
+                  class="mb-2"
+                />
+              </v-sheet>
+            </template>
+          </v-stepper>
         </v-form>
       </v-card-text>
+
+      <!-- ナビゲーションボタン -->
       <v-card-actions class="pa-6 pt-0">
-        <v-spacer></v-spacer>
         <v-btn color="grey-darken-1" variant="text" :disabled="props.saving" @click="close"> キャンセル </v-btn>
+        <v-spacer></v-spacer>
+        <v-btn v-if="!isFirstStep" variant="tonal" @click="prevStep" :disabled="props.saving"> 戻る </v-btn>
+        <v-btn v-if="!isLastStep" color="primary" variant="flat" :disabled="!canProceed" @click="nextStep" class="ml-2">
+          次へ
+        </v-btn>
         <v-btn
+          v-if="isLastStep"
           color="primary"
           variant="flat"
           :loading="props.saving"
@@ -107,12 +153,13 @@ const { form, formValid, localName, localStart, localEnd, localClearProgress, de
 </template>
 
 <style scoped>
-.description-display {
-  background-color: rgba(var(--v-theme-surface-variant), 0.3);
-  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
-  white-space: pre-wrap;
-  word-break: break-word;
-  max-height: 120px;
-  overflow-y: auto;
+.stepper-flat {
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+.step-content {
+  min-height: 100px;
+  background: transparent;
 }
 </style>
