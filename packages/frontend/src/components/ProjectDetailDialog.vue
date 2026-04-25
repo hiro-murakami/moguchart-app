@@ -7,6 +7,7 @@ import { useProjectDetailDialog } from './composables/useProjectDetailDialog'
 const props = defineProps<{
   modelValue: boolean
   project?: Project | null
+  saving?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -314,8 +315,8 @@ watch(
       </v-card-text>
       <v-card-actions class="pa-8 pt-0">
         <v-spacer></v-spacer>
-        <v-btn color="grey-darken-1" variant="text" @click="close"> キャンセル </v-btn>
-        <v-btn color="primary" variant="flat" @click="save" class="ml-2"> OK </v-btn>
+        <v-btn color="grey-darken-1" variant="text" :disabled="props.saving" @click="close"> キャンセル </v-btn>
+        <v-btn color="primary" variant="flat" :loading="props.saving" :disabled="props.saving" @click="save" class="ml-2"> OK </v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>

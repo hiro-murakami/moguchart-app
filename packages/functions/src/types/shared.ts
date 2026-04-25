@@ -2,7 +2,7 @@
 // 注意: ここにはバックエンド固有のライブラリ(firebase-admin等)をimportしないでください。
 
 /** バージョン */
-export const VERSION = '0.5.1'
+export const VERSION = '0.5.2'
 
 /** Cloud Functions の呼び出しパラメータ */
 export interface FunctionParam {
@@ -162,6 +162,10 @@ export type ProjectAttribute = {
   historyRetentionDays?: number
   /** マイルストーン一覧 */
   milestones?: Milestone[]
+  /** アーカイブ済みフラグ */
+  archived?: boolean
+  /** アーカイブ日時（ISO 8601形式） */
+  archivedAt?: string
 }
 
 /** 行（グループ）の追加属性 */

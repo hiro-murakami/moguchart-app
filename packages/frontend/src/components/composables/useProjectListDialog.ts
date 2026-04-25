@@ -3,11 +3,12 @@ import {
   duplicateProject as duplicateProjectScript,
   downloadProjectZip,
   restoreProject as restoreProjectScript,
+  upsertProject as upsertProjectScript,
 } from '@/modules/scripts'
 import { useConfirm } from '@/composables/useConfirm'
 import { useSnackbar } from '@/composables/useSnackbar'
 import type { Project } from '@functions/types/shared'
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 
 import { useProjectStore } from '@/stores/useProjectStore'
 import { storeToRefs } from 'pinia'
@@ -27,11 +28,50 @@ export const useProjectListDialog = (
   const deleting = ref(false)
   const downloading = ref(false)
   const restoring = ref(false)
+  const archiving = ref(false)
+  const showArchived = ref(false)
+  const searchQuery = ref('')
   const isProjectDetailDialogVisible = ref(false)
   const projectToEdit = ref<Project | null>(null)
   const originalId = ref<string>()
   const confirm = useConfirm()
   const snackbar = useSnackbar()
+
+  /** アーカイブ状態 + フリーワードでフィルタリングされたプロジェクト一覧 */
+  const filteredProjects = computed(() => {
+    let list = showArchived.value
+      ? projects.value.filter((p) => p.attribute?.archived)
+      : projects.value.filter((p) => !p.attribute?.archived)
+
+    const q = (searchQuery.value ?? '').trim().toLowerCase()
+    if (q) {
+      list = list.filter((p) => {
+        const name = (p.name ?? '').toLowerCase()
+        const desc = (p.attribute?.description ?? '').toLowerCase()
+        return name.includes(q) || desc.includes(q)
+      })
+    }
+    return list
+  })
+
+  /** 検索キーワードにマッチする部分を <mark> タグでハイライトする */
+  const highlightText = (text: string | undefined): string => {
+    if (!text) return ''
+    const q = (searchQuery.value ?? '').trim()
+    if (!q) return escapeHtml(text)
+    const escaped = escapeHtml(text)
+    const escapedQuery = escapeHtml(q)
+    const regex = new RegExp(`(${escapedQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi')
+    return escaped.replace(regex, '<mark class="search-highlight">$1</mark>')
+  }
+
+  const escapeHtml = (str: string): string => {
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+  }
 
   const fetchProjects = async (isFirst: boolean = false) => {
     loading.value = true
@@ -60,7 +100,7 @@ export const useProjectListDialog = (
     { title: 'プロジェクト名', key: 'project' },
     { title: '説明', key: 'attribute.description' },
     { title: '期間', key: 'period', sortable: false, width: '150px' },
-    { title: '操作', key: 'actions', sortable: false, width: '180px' },
+    { title: '操作', key: 'actions', sortable: false, width: '220px' },
   ]
 
   const close = () => {
@@ -262,13 +302,83 @@ export const useProjectListDialog = (
     }
   }
 
+  /** プロジェクトをアーカイブする */
+  const archiveProject = async (project: Project) => {
+    if (!project) return
+
+    archiving.value = true
+    try {
+      const updatedProject = {
+        ...project,
+        attribute: {
+          ...project.attribute,
+          archived: true,
+          archivedAt: new Date().toISOString(),
+        },
+      }
+      await upsertProjectScript(updatedProject as any)
+      await fetchProjects()
+      snackbar({
+        message: `「${project.name}」をアーカイブしました。`,
+        color: 'success',
+        timeout: 5000,
+        actionText: '元に戻す',
+        onAction: () => unarchiveProject(project),
+      })
+    } catch (e) {
+      console.error(e)
+      snackbar({
+        message: 'アーカイブに失敗しました。',
+        color: 'error',
+      })
+    } finally {
+      archiving.value = false
+    }
+  }
+
+  /** アーカイブしたプロジェクトを復元する */
+  const unarchiveProject = async (project: Project) => {
+    if (!project) return
+
+    archiving.value = true
+    try {
+      const updatedProject = {
+        ...project,
+        attribute: {
+          ...project.attribute,
+          archived: false,
+          archivedAt: undefined,
+        },
+      }
+      await upsertProjectScript(updatedProject as any)
+      snackbar({
+        message: 'プロジェクトをアーカイブから復元しました。',
+        color: 'success',
+      })
+      await fetchProjects()
+    } catch (e) {
+      console.error(e)
+      snackbar({
+        message: 'アーカイブからの復元に失敗しました。',
+        color: 'error',
+      })
+    } finally {
+      archiving.value = false
+    }
+  }
+
   return {
     projects,
+    filteredProjects,
     loading,
     saving,
     deleting,
     downloading,
     restoring,
+    archiving,
+    showArchived,
+    searchQuery,
+    highlightText,
     isProjectDetailDialogVisible,
     projectToEdit,
     originalId,
@@ -282,6 +392,8 @@ export const useProjectListDialog = (
     duplicateProject,
     downloadProjectJson,
     restoreProjectFromFile,
+    archiveProject,
+    unarchiveProject,
     close,
   }
 }

@@ -1,7 +1,7 @@
 import type { ColorPalette, Label, Milestone, Project, User } from '@functions/types/shared'
 import { upsertUser } from '@/modules/scripts'
 import { useUserStore } from '@/stores/useUserStore'
-import { isEqual } from 'lodash'
+import { isEqual, debounce } from 'lodash'
 import { computed, ref, watch } from 'vue'
 import type { VForm } from 'vuetify/components'
 import { useDiscardConfirm } from '../../composables/useConfirm'
@@ -145,7 +145,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
     }
   }
 
-  const save = async () => {
+  const _save = async () => {
     const { valid } = (await form.value?.validate()) ?? { valid: false }
     if (!valid) return
 
@@ -197,6 +197,9 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
 
     emit('save', projectData)
   }
+
+  /** 連打防止: 最初のクリックのみ即実行、300ms以内の再クリックは無視 */
+  const save = debounce(_save, 300, { leading: true, trailing: false })
 
   return {
     form,
