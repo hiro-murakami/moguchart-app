@@ -25,6 +25,7 @@ export const useProjectListDialog = (
   const { projects } = storeToRefs(projectStore)
   const loading = ref(false)
   const saving = ref(false)
+  const duplicateSaving = ref(false)
   const deleting = ref(false)
   const downloading = ref(false)
   const restoring = ref(false)
@@ -33,8 +34,8 @@ export const useProjectListDialog = (
   const searchQuery = ref('')
   const isProjectDetailDialogVisible = ref(false)
   const projectToEdit = ref<Project | null>(null)
-  const originalId = ref<string>()
-  const originalStart = ref<string>()
+  const isDuplicateDialogVisible = ref(false)
+  const projectToDuplicate = ref<Project | null>(null)
   const confirm = useConfirm()
   const snackbar = useSnackbar()
 
@@ -115,37 +116,18 @@ export const useProjectListDialog = (
 
   const editProject = (project: Project) => {
     projectToEdit.value = project
-    originalId.value = undefined
-    originalStart.value = undefined
     isProjectDetailDialogVisible.value = true
   }
 
   const newProject = () => {
     projectToEdit.value = null
-    originalId.value = undefined
-    originalStart.value = undefined
     isProjectDetailDialogVisible.value = true
   }
 
-  const saveProject = async (project: Partial<Project>, options?: { clearProgress?: boolean }) => {
+  const saveProject = async (project: Partial<Project>) => {
     saving.value = true
     try {
-      let projectId = project.id
-      if (originalId.value) {
-        // 開始日が元と異なる場合、newStartDate を渡してタスク・マイルストーンをスライドさせる
-        const newStartDate =
-          originalStart.value && project.start && project.start !== originalStart.value
-            ? project.start
-            : undefined
-        projectId = await duplicateProjectScript({
-          originalProjectId: originalId.value,
-          newProjectData: project as Project,
-          newStartDate,
-          clearProgress: options?.clearProgress,
-        })
-      } else {
-        projectId = await projectStore.updateProject(project as Project)
-      }
+      const projectId = await projectStore.updateProject(project as Project)
       isProjectDetailDialogVisible.value = false
       await fetchProjects() // Storeを最新の状態にする
 
@@ -157,6 +139,38 @@ export const useProjectListDialog = (
       console.error(e)
     } finally {
       saving.value = false
+    }
+  }
+
+  const saveDuplicateProject = async (project: Partial<Project>, options: { clearProgress: boolean }) => {
+    duplicateSaving.value = true
+    try {
+      const originalProject = projectToDuplicate.value
+      if (!originalProject) return
+
+      // 開始日が元と異なる場合、newStartDate を渡してタスク・マイルストーンをスライドさせる
+      const newStartDate =
+        originalProject.start && project.start && project.start !== originalProject.start
+          ? project.start
+          : undefined
+      const projectId = await duplicateProjectScript({
+        originalProjectId: originalProject.id,
+        newProjectData: project as Project,
+        newStartDate,
+        clearProgress: options.clearProgress,
+      })
+
+      isDuplicateDialogVisible.value = false
+      await fetchProjects() // Storeを最新の状態にする
+
+      if (projectId) {
+        emit('select', projectId)
+        close()
+      }
+    } catch (e) {
+      console.error(e)
+    } finally {
+      duplicateSaving.value = false
     }
   }
 
@@ -194,15 +208,8 @@ export const useProjectListDialog = (
   }
 
   const duplicateProject = (project: Project) => {
-    projectToEdit.value = {
-      ...project,
-      id: '', // Remove id to create a new project
-      name: `${project.name}のコピー`,
-      public: false,
-    }
-    originalId.value = project.id
-    originalStart.value = project.start
-    isProjectDetailDialogVisible.value = true
+    projectToDuplicate.value = project
+    isDuplicateDialogVisible.value = true
   }
 
   const readRestoreData = async (file: File) => {
@@ -383,6 +390,7 @@ export const useProjectListDialog = (
     filteredProjects,
     loading,
     saving,
+    duplicateSaving,
     deleting,
     downloading,
     restoring,
@@ -392,13 +400,15 @@ export const useProjectListDialog = (
     highlightText,
     isProjectDetailDialogVisible,
     projectToEdit,
-    originalId,
+    isDuplicateDialogVisible,
+    projectToDuplicate,
     headers,
     fetchProjects,
     selectProject,
     editProject,
     newProject,
     saveProject,
+    saveDuplicateProject,
     deleteProject,
     duplicateProject,
     downloadProjectJson,

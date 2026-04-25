@@ -1,10 +1,8 @@
 <script setup lang="ts">
-import ProjectDetailDialog from './ProjectDetailDialog.vue'
 import type { Project } from '@functions/types/shared'
 import { useProjectListDialog } from './composables/useProjectListDialog'
 import { toDateString } from '@/modules/utils'
 import { ref } from 'vue'
-import TutorialOverlay from '@/components/common/TutorialOverlay.vue'
 
 const props = defineProps<{
   modelValue: boolean
@@ -20,6 +18,7 @@ const {
   filteredProjects,
   loading,
   saving,
+  duplicateSaving,
   deleting,
   downloading,
   restoring,
@@ -29,12 +28,14 @@ const {
   highlightText,
   isProjectDetailDialogVisible,
   projectToEdit,
-  originalId,
+  isDuplicateDialogVisible,
+  projectToDuplicate,
   headers,
   selectProject,
   editProject,
   newProject,
   saveProject,
+  saveDuplicateProject,
   deleteProject,
   duplicateProject,
   downloadProjectJson,
@@ -144,8 +145,11 @@ const handleFileChange = (e: Event) => {
                 </div>
               </template>
               <template #item.attribute.description="{ item }">
-                <div style="white-space: pre-wrap; min-width: 200px; max-width: 400px" class="py-1" v-html="highlightText(item.attribute?.description)">
-                </div>
+                <div
+                  style="white-space: pre-wrap; min-width: 200px; max-width: 400px"
+                  class="py-1"
+                  v-html="highlightText(item.attribute?.description)"
+                ></div>
               </template>
               <template #item.period="{ item }">
                 <div class="d-flex flex-column text-caption text-no-wrap py-1">
@@ -276,8 +280,14 @@ const handleFileChange = (e: Event) => {
     v-model="isProjectDetailDialogVisible"
     :project="projectToEdit"
     :saving="saving"
-    :is-duplicate="!!originalId"
     @save="saveProject"
+  />
+
+  <ProjectDuplicateDialog
+    v-model="isDuplicateDialogVisible"
+    :project="projectToDuplicate"
+    :saving="duplicateSaving"
+    @save="saveDuplicateProject"
   />
 </template>
 

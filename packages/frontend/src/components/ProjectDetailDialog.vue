@@ -8,12 +8,11 @@ const props = defineProps<{
   modelValue: boolean
   project?: Project | null
   saving?: boolean
-  isDuplicate?: boolean
 }>()
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
-  (e: 'save', project: Partial<Project>, options?: { clearProgress?: boolean }): void
+  (e: 'save', project: Partial<Project>): void
 }>()
 
 const {
@@ -33,7 +32,6 @@ const {
   localHistoryIntervalMinutes,
   localHistoryRetentionDays,
   authorityHistoryUsers,
-  localClearProgress,
   title,
   close,
   handleBeforeClose,
@@ -154,20 +152,8 @@ watch(
                         type="date"
                         density="compact"
                         variant="outlined"
-                        :hide-details="!isDuplicate"
-                        :hint="isDuplicate ? '開始日の変更に連動して自動調整されます' : undefined"
-                        :persistent-hint="isDuplicate"
-                        :disabled="isDuplicate"
-                        :rules="[inputRules.required, inputRules.dateAfter(localStart)]"
-                        class="mb-3"
-                      />
-                    </v-col>
-                    <v-col v-if="isDuplicate" cols="12">
-                      <v-checkbox
-                        v-model="localClearProgress"
-                        label="進捗率をクリアする"
-                        density="compact"
                         hide-details
+                        :rules="[inputRules.required, inputRules.dateAfter(localStart)]"
                         class="mb-3"
                       />
                     </v-col>
