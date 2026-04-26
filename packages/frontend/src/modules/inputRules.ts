@@ -26,6 +26,20 @@ const inputRules = {
     const hasInvalid = emails.some((value) => !/^[\w\-._]+@[\w\-._]+\.[A-Za-z]+$/.test(value))
     return !hasInvalid || message.ERROR_INVALID_MAIL_ADDRESS
   },
+  /** 改行区切りテキスト内の各行がメールアドレス形式であることを検証する */
+  areMailAddressLines: (value: string) => {
+    if (!value) return true
+    const lines = value.split('\n')
+    const invalidLines: number[] = []
+    lines.forEach((line, i) => {
+      const trimmed = line.trim()
+      if (trimmed && !/^[\w\-._]+@[\w\-._]+\.[A-Za-z]+$/.test(trimmed)) {
+        invalidLines.push(i + 1)
+      }
+    })
+    if (invalidLines.length === 0) return true
+    return `${invalidLines.join(', ')} 行目: ${message.ERROR_INVALID_MAIL_ADDRESS}`
+  },
   dateBefore: (target: string) => (value: string) => {
     if (!value || !target) return true
     return value <= target || message.ERROR_DATE_BEFORE

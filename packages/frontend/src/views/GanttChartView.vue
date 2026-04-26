@@ -130,6 +130,15 @@ const canComment = computed(() => {
 
 // キーボードショートカット
 const handleKeyDown = (e: KeyboardEvent) => {
+  // テキスト入力系の要素にフォーカスがある場合はブラウザ標準の動作を優先する
+  const target = e.target as HTMLElement | null
+  if (
+    target &&
+    (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)
+  ) {
+    return
+  }
+
   if (e.metaKey || e.ctrlKey) {
     const key = e.key.toLowerCase()
     if (key === 'z') {

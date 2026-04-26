@@ -14,6 +14,7 @@ const projectStore = useProjectStore()
 const { user: appUser, firebaseUser, currentTheme } = storeToRefs(userStore)
 const showUserDetail = ref(false)
 const showManual = ref(false)
+const showAuthorityHistory = ref(false)
 
 const systemTheme = ref<'light' | 'dark'>(window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
 
@@ -75,6 +76,9 @@ onUnmounted(() => {
               <v-list-item prepend-icon="mdi-account-cog" @click="showUserDetail = true">
                 <v-list-item-title>ユーザー設定</v-list-item-title>
               </v-list-item>
+              <v-list-item prepend-icon="mdi-history" @click="showAuthorityHistory = true">
+                <v-list-item-title>メールアドレス履歴</v-list-item-title>
+              </v-list-item>
               <v-list-item prepend-icon="mdi-logout" @click="userStore.signOut">
                 <v-list-item-title>ログアウト</v-list-item-title>
               </v-list-item>
@@ -90,6 +94,7 @@ onUnmounted(() => {
         <router-view v-if="firebaseUser" />
         <LoginPrompt v-else />
         <UserDetailDialog v-model="showUserDetail" />
+        <AuthorityHistoryDialog v-model="showAuthorityHistory" />
         <OperationManualDrawer v-model="showManual" />
       </v-main>
       <v-overlay v-model="isLoading" class="align-center justify-center" persistent>
