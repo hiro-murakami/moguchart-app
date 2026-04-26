@@ -2,7 +2,7 @@
 // 注意: ここにはバックエンド固有のライブラリ(firebase-admin等)をimportしないでください。
 
 /** バージョン */
-export const VERSION = '0.5.3'
+export const VERSION = '0.5.4'
 
 /** Cloud Functions の呼び出しパラメータ */
 export interface FunctionParam {
@@ -186,6 +186,8 @@ export type TaskAttribute = {
   lock?: boolean
   /** タスクの進捗率（0〜100） */
   progress?: number
+  /** 依存タスクのID配列 */
+  dependencies?: string[]
 }
 
 /** フロントエンドの編集用：行データ */

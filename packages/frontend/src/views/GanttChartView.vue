@@ -109,6 +109,10 @@ const {
   commentSidebarOpen,
   commentSidebarWidth,
   effectiveCommentSidebarWidth,
+  handleDependencyCreate,
+  dependencyContextMenu,
+  handleDependencyClick,
+  handleDeleteDependencyFromContextMenu,
 } = useGanttChartView()
 
 const projectCommentPanelRef = ref<InstanceType<typeof ProjectCommentPanel>>()
@@ -311,6 +315,8 @@ const handleExportExcel = () => {
             @task-drop="handleTaskDrop"
             @chart-contextmenu="handleChartContextMenu"
             @row-header-resize="handleRowHeaderResize"
+            @dependency-create="handleDependencyCreate"
+            @dependency-click="handleDependencyClick"
           />
         </div>
 
@@ -403,6 +409,16 @@ const handleExportExcel = () => {
       @comment="handleAddCommentFromContextMenu"
       @copy="handleCopyTasksFromContextMenu"
       @delete="handleDeleteTaskFromContextMenu"
+    />
+
+    <!-- Dependency Context Menu -->
+    <DependencyContextMenu
+      v-model="dependencyContextMenu.visible"
+      :x="dependencyContextMenu.x"
+      :y="dependencyContextMenu.y"
+      :source-task-id="dependencyContextMenu.sourceTaskId"
+      :target-task-id="dependencyContextMenu.targetTaskId"
+      @delete="handleDeleteDependencyFromContextMenu"
     />
 
     <!-- Comment Dialog -->

@@ -21,6 +21,7 @@ declare module 'vue' {
     ColorPaletteSelect: typeof import('./src/components/common/ColorPaletteSelect.vue')['default']
     CommentDialog: typeof import('./src/components/CommentDialog.vue')['default']
     ConfirmDialog: typeof import('./src/components/common/ConfirmDialog.vue')['default']
+    DependencyContextMenu: typeof import('./src/components/DependencyContextMenu.vue')['default']
     DialogProvider: typeof import('./src/components/common/DialogProvider.vue')['default']
     DisplaySettingsMenu: typeof import('./src/components/DisplaySettingsMenu.vue')['default']
     ExportMenu: typeof import('./src/components/ExportMenu.vue')['default']

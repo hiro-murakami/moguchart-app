@@ -600,6 +600,7 @@ export const useGanttChartView = () => {
             pattern,
             resizable,
             movable,
+            dependencies: attribute?.dependencies,
             html:
               attribute?.labels && attribute.labels.length > 0
                 ? `<div style="display: flex; gap: 4px; padding: 2px 4px; overflow: hidden;">${attribute?.labels
@@ -730,6 +731,7 @@ export const useGanttChartView = () => {
       pattern,
       resizable,
       movable,
+      dependencies: attribute?.dependencies,
       html:
         attribute?.labels && attribute.labels.length > 0
           ? `<div style="display: flex; gap: 4px; padding: 2px 4px; overflow: hidden;">${attribute?.labels
@@ -1055,6 +1057,125 @@ export const useGanttChartView = () => {
       targetName: data.name,
       isNew: data.id === 0,
       taskId: affectedTaskId,
+    })
+  }
+
+  const handleDependencyCreate = async (e: CustomEvent<moguchart.DependencyCreateEventDetail>) => {
+    if (isReadOnly.value) return
+    const { sourceTaskId, targetTaskId } = e.detail
+
+    const targetRow = rows.value.find((r) => r.tasks.some((t) => t.id === targetTaskId))
+    const targetTask = targetRow?.tasks.find((t) => t.id === targetTaskId)
+    
+    if (!targetRow || !targetTask) return
+
+    const attribute = ((targetTask as any).attribute as TaskAttribute) || {}
+    const deps = attribute.dependencies || []
+    
+    // すでに依存関係が存在する場合は何もしない
+    if (deps.includes(sourceTaskId)) return
+
+    const newDependencies = [...deps, sourceTaskId]
+    
+    const data = {
+      id: Number(targetTask.id),
+      rowId: Number(targetRow.id),
+      name: targetTask.name || '',
+      start: toDateString(targetTask.start),
+      end: toDateString(targetTask.end),
+      attribute: { ...attribute, dependencies: newDependencies },
+    }
+
+    pushAction({
+      description: 'タスクの依存関係を追加',
+      undo: async () => {
+        const undoData = { ...data, attribute }
+        await upsertGanttTasks([undoData])
+        await loadData(projectId.value)
+      },
+      redo: async () => {
+        await upsertGanttTasks([data])
+        await loadData(projectId.value)
+      },
+    })
+
+    await upsertGanttTasks([data])
+    await loadData(projectId.value)
+    publishEditEvent('task_upsert', {
+      rowIds: [Number(targetRow.id)],
+      targetName: targetTask.name,
+      isNew: false,
+      taskId: String(targetTask.id),
+    })
+  }
+
+  const dependencyContextMenu = ref({
+    visible: false,
+    x: 0,
+    y: 0,
+    sourceTaskId: null as string | null,
+    targetTaskId: null as string | null,
+  })
+
+  const handleDependencyClick = (e: CustomEvent<moguchart.DependencyClickEventDetail>) => {
+    if (isReadOnly.value) return
+    const event = e.detail.event
+    if (event) {
+      event.preventDefault()
+      dependencyContextMenu.value = {
+        visible: true,
+        x: event.clientX,
+        y: event.clientY,
+        sourceTaskId: e.detail.sourceTaskId,
+        targetTaskId: e.detail.targetTaskId,
+      }
+    }
+  }
+
+  const handleDeleteDependencyFromContextMenu = async () => {
+    dependencyContextMenu.value.visible = false
+    const { sourceTaskId, targetTaskId } = dependencyContextMenu.value
+    if (!sourceTaskId || !targetTaskId) return
+
+    const targetRow = rows.value.find((r) => r.tasks.some((t) => t.id === targetTaskId))
+    const targetTask = targetRow?.tasks.find((t) => t.id === targetTaskId)
+    
+    if (!targetRow || !targetTask) return
+
+    const attribute = ((targetTask as any).attribute as TaskAttribute) || {}
+    const deps = attribute.dependencies || []
+    
+    const newDependencies = deps.filter((id) => id !== sourceTaskId)
+    
+    const data = {
+      id: Number(targetTask.id),
+      rowId: Number(targetRow.id),
+      name: targetTask.name || '',
+      start: toDateString(targetTask.start),
+      end: toDateString(targetTask.end),
+      attribute: { ...attribute, dependencies: newDependencies },
+    }
+
+    pushAction({
+      description: 'タスクの依存関係を削除',
+      undo: async () => {
+        const undoData = { ...data, attribute }
+        await upsertGanttTasks([undoData])
+        await loadData(projectId.value)
+      },
+      redo: async () => {
+        await upsertGanttTasks([data])
+        await loadData(projectId.value)
+      },
+    })
+
+    await upsertGanttTasks([data])
+    await loadData(projectId.value)
+    publishEditEvent('task_upsert', {
+      rowIds: [Number(targetRow.id)],
+      targetName: targetTask.name,
+      isNew: false,
+      taskId: String(targetTask.id),
     })
   }
 
@@ -2785,6 +2906,9 @@ export const useGanttChartView = () => {
     canRedo,
     activeUsers,
     editLogs,
+    dependencyContextMenu,
+    handleDependencyClick,
+    handleDeleteDependencyFromContextMenu,
     isCommentDialogVisible,
     commentDialogTaskId,
     commentDialogRowId,
@@ -2855,5 +2979,6 @@ export const useGanttChartView = () => {
     commentSidebarOpen,
     commentSidebarWidth,
     effectiveCommentSidebarWidth,
+    handleDependencyCreate,
   }
 }
