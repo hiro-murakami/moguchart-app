@@ -23,10 +23,15 @@ const addDays = (date: Date | string, days: number): Date => {
 }
 
 /**
- * 日付文字列に指定した日数を加算した YYYY-MM-DD 文字列を返す（JSON内の日付用）
+ * マイルストーン日付文字列に指定した日数を加算する。
+ * 元の文字列の形式（YYYY-MM-DD or YYYY-MM-DDTHH:mm 等）を保持する。
  */
-const addDaysStr = (dateStr: string, days: number): string => {
-  return addDays(dateStr, days).toISOString().slice(0, 10)
+const addDaysStrKeepFormat = (dateStr: string, days: number): string => {
+  // 日付部分(YYYY-MM-DD)のみ置換し、時刻部分はそのまま保持する
+  const datePart = dateStr.slice(0, 10)
+  const timePart = dateStr.slice(10) // 'THH:mm' や 'THH:mm:ss' など（なければ空文字）
+  const newDatePart = addDays(datePart, days).toISOString().slice(0, 10)
+  return newDatePart + timePart
 }
 
 /**
@@ -38,7 +43,10 @@ const diffDays = (from: string, to: string): number => {
   return Math.round((t.getTime() - f.getTime()) / (1000 * 60 * 60 * 24))
 }
 
-const duplicateProject: DuplicateProject = async ({ originalProjectId, newProjectData, newStartDate, clearProgress }, email?) => {
+const duplicateProject: DuplicateProject = async (
+  { originalProjectId, newProjectData, newStartDate, clearProgress },
+  email?,
+) => {
   // プロジェクト情報の取得
   const project = await prisma.project.findUnique({
     where: { id: originalProjectId },
@@ -91,7 +99,7 @@ const duplicateProject: DuplicateProject = async ({ originalProjectId, newProjec
         ...newProjectData.attribute,
         milestones: newProjectData.attribute.milestones.map((m: Milestone) => ({
           ...m,
-          date: m.date ? addDaysStr(m.date, daysDiff) : m.date,
+          date: m.date ? addDaysStrKeepFormat(m.date, daysDiff) : m.date,
         })),
       },
     }
@@ -115,7 +123,7 @@ const duplicateProject: DuplicateProject = async ({ originalProjectId, newProjec
           tasks: {
             create: row.tasks.map((task) => {
               // タスク属性をコピーし、必要に応じて進捗率をクリア
-              const taskAttr = { ...(task.attribute as any ?? {}) }
+              const taskAttr = { ...((task.attribute as any) ?? {}) }
               if (clearProgress) {
                 delete taskAttr.progress
               }
@@ -124,17 +132,17 @@ const duplicateProject: DuplicateProject = async ({ originalProjectId, newProjec
                 start: daysDiff !== 0 ? addDays(task.start, daysDiff) : task.start,
                 end: daysDiff !== 0 ? addDays(task.end, daysDiff) : task.end,
                 attribute: taskAttr,
-              comments: {
-                create: task.comments.map((comment) => ({
-                  content: comment.content,
-                  createdBy: comment.createdBy,
-                  updatedBy: comment.updatedBy,
-                  createdAt: comment.createdAt,
-                  updatedAt: comment.updatedAt,
-                })),
-              },
-              createdBy: email,
-              updatedBy: email,
+                comments: {
+                  create: task.comments.map((comment) => ({
+                    content: comment.content,
+                    createdBy: comment.createdBy,
+                    updatedBy: comment.updatedBy,
+                    createdAt: comment.createdAt,
+                    updatedAt: comment.updatedAt,
+                  })),
+                },
+                createdBy: email,
+                updatedBy: email,
               }
             }),
           },
@@ -149,4 +157,3 @@ const duplicateProject: DuplicateProject = async ({ originalProjectId, newProjec
 }
 
 export default duplicateProject
-

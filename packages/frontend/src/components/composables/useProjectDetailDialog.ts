@@ -133,7 +133,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
       !isEqual(localLabels.value, originalLabels) ||
       !isEqual(localMilestones.value, originalMilestones) ||
       localHistoryIntervalMinutes.value !== (props.project.attribute.historyIntervalMinutes || 0) ||
-      localHistoryRetentionDays.value !== (props.project.attribute.historyRetentionDays || 0)
+      localHistoryRetentionDays.value !== (props.project.attribute.historyRetentionDays || 7)
     )
   })
 
