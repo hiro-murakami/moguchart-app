@@ -503,6 +503,26 @@ export const useGanttChartView = () => {
 
   const alert = useAlert()
   const { exportAsCsv, exportAsExcel } = useExportData()
+
+  const exportAsSvg = async (projectName: string) => {
+    const chart = ganttChartRef.value
+    if (!chart) return
+    try {
+      await chart.exportImage('svg', { filename: projectName, download: true })
+    } catch (e) {
+      console.error('SVG export failed:', e)
+    }
+  }
+
+  const exportAsPng = async (projectName: string) => {
+    const chart = ganttChartRef.value
+    if (!chart) return
+    try {
+      await chart.exportImage('png', { filename: projectName, download: true })
+    } catch (e) {
+      console.error('PNG export failed:', e)
+    }
+  }
   const { setIsLoading } = useLoading()
   const confirm = useConfirm()
   const prompt = usePrompt()
@@ -2976,6 +2996,8 @@ export const useGanttChartView = () => {
     invalidateProjectCommentsCache,
     exportAsCsv,
     exportAsExcel,
+    exportAsSvg,
+    exportAsPng,
     commentSidebarOpen,
     commentSidebarWidth,
     effectiveCommentSidebarWidth,

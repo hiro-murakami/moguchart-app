@@ -106,6 +106,8 @@ const {
   projectComments,
   exportAsCsv,
   exportAsExcel,
+  exportAsSvg,
+  exportAsPng,
   commentSidebarOpen,
   commentSidebarWidth,
   effectiveCommentSidebarWidth,
@@ -188,6 +190,18 @@ const handleExportExcel = () => {
     exportAsExcel(filteredRows.value, currentProject.value.name)
   }
 }
+
+const handleExportSvg = async () => {
+  if (currentProject.value) {
+    await exportAsSvg(currentProject.value.name)
+  }
+}
+
+const handleExportPng = async () => {
+  if (currentProject.value) {
+    await exportAsPng(currentProject.value.name)
+  }
+}
 </script>
 
 <template>
@@ -231,7 +245,12 @@ const handleExportExcel = () => {
               @click="isSnapshotListDialogVisible = true"
               tooltip="スナップショット一覧"
             />
-            <ExportMenu @export-csv="handleExportCsv" @export-excel="handleExportExcel" />
+            <ExportMenu
+              @export-csv="handleExportCsv"
+              @export-excel="handleExportExcel"
+              @export-svg="handleExportSvg"
+              @export-png="handleExportPng"
+            />
           </div>
           <div v-if="currentProject.attribute.description" class="text-caption text-medium-emphasis">
             {{ currentProject.attribute.description }}
