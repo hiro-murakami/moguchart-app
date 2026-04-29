@@ -504,16 +504,6 @@ export const useGanttChartView = () => {
   const alert = useAlert()
   const { exportAsCsv, exportAsExcel } = useExportData()
 
-  const exportAsSvg = async (projectName: string) => {
-    const chart = ganttChartRef.value
-    if (!chart) return
-    try {
-      await chart.exportImage('svg', { filename: projectName, download: true })
-    } catch (e) {
-      console.error('SVG export failed:', e)
-    }
-  }
-
   const exportAsPng = async (projectName: string) => {
     const chart = ganttChartRef.value
     if (!chart) return
@@ -521,6 +511,16 @@ export const useGanttChartView = () => {
       await chart.exportImage('png', { filename: projectName, download: true })
     } catch (e) {
       console.error('PNG export failed:', e)
+    }
+  }
+
+  const exportAsPdf = async (projectName: string) => {
+    const chart = ganttChartRef.value
+    if (!chart) return
+    try {
+      await chart.exportImage('pdf', { filename: projectName, download: true })
+    } catch (e) {
+      console.error('PDF export failed:', e)
     }
   }
   const { setIsLoading } = useLoading()
@@ -2996,8 +2996,8 @@ export const useGanttChartView = () => {
     invalidateProjectCommentsCache,
     exportAsCsv,
     exportAsExcel,
-    exportAsSvg,
     exportAsPng,
+    exportAsPdf,
     commentSidebarOpen,
     commentSidebarWidth,
     effectiveCommentSidebarWidth,

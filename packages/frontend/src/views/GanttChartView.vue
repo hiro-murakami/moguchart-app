@@ -106,8 +106,8 @@ const {
   projectComments,
   exportAsCsv,
   exportAsExcel,
-  exportAsSvg,
   exportAsPng,
+  exportAsPdf,
   commentSidebarOpen,
   commentSidebarWidth,
   effectiveCommentSidebarWidth,
@@ -191,15 +191,15 @@ const handleExportExcel = () => {
   }
 }
 
-const handleExportSvg = async () => {
-  if (currentProject.value) {
-    await exportAsSvg(currentProject.value.name)
-  }
-}
-
 const handleExportPng = async () => {
   if (currentProject.value) {
     await exportAsPng(currentProject.value.name)
+  }
+}
+
+const handleExportPdf = async () => {
+  if (currentProject.value) {
+    await exportAsPdf(currentProject.value.name)
   }
 }
 </script>
@@ -245,11 +245,11 @@ const handleExportPng = async () => {
               @click="isSnapshotListDialogVisible = true"
               tooltip="スナップショット一覧"
             />
-            <ExportMenu
+              <ExportMenu
               @export-csv="handleExportCsv"
               @export-excel="handleExportExcel"
-              @export-svg="handleExportSvg"
               @export-png="handleExportPng"
+              @export-pdf="handleExportPdf"
             />
           </div>
           <div v-if="currentProject.attribute.description" class="text-caption text-medium-emphasis">

@@ -2,8 +2,8 @@
 defineEmits<{
   exportCsv: []
   exportExcel: []
-  exportSvg: []
   exportPng: []
+  exportPdf: []
 }>()
 </script>
 
@@ -25,11 +25,11 @@ defineEmits<{
         <v-list-item-title>Excel でエクスポート</v-list-item-title>
       </v-list-item>
       <v-divider />
-      <v-list-item prepend-icon="mdi-svg" @click="$emit('exportSvg')">
-        <v-list-item-title>SVG でエクスポート</v-list-item-title>
-      </v-list-item>
       <v-list-item prepend-icon="mdi-image-outline" @click="$emit('exportPng')">
         <v-list-item-title>PNG でエクスポート</v-list-item-title>
+      </v-list-item>
+      <v-list-item prepend-icon="mdi-file-pdf-box" @click="$emit('exportPdf')">
+        <v-list-item-title>PDF でエクスポート</v-list-item-title>
       </v-list-item>
     </v-list>
   </v-menu>
