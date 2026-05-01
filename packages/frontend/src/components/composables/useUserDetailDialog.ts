@@ -1,6 +1,3 @@
-import themeDarkImg from '@/assets/theme-dark.png'
-import themeLightImg from '@/assets/theme-light.png'
-import themeSystemImg from '@/assets/theme-system.png'
 import { useDiscardConfirm } from '@/composables/useConfirm'
 import { useUserStore } from '@/stores/useUserStore'
 import type { User } from '@functions/types/shared'
@@ -11,13 +8,7 @@ export function useUserDetailDialog(props: { modelValue: boolean }, emit: any) {
   const user = computed(() => userStore.user)
 
   const localDisplayName = ref('')
-  const localTheme = ref<'light' | 'dark' | 'system'>('system')
 
-  const themeOptions = [
-    { title: 'ライト', value: 'light', image: themeLightImg },
-    { title: 'ダーク', value: 'dark', image: themeDarkImg },
-    { title: 'システム', value: 'system', image: themeSystemImg },
-  ]
 
   const { confirmAndClose } = useDiscardConfirm()
 
@@ -26,17 +17,13 @@ export function useUserDetailDialog(props: { modelValue: boolean }, emit: any) {
     (val) => {
       if (val && user.value) {
         localDisplayName.value = user.value.displayName || ''
-        localTheme.value = user.value.attribute.theme || 'system'
       }
     },
   )
 
   const hasChanges = computed(() => {
     if (!user.value) return false
-    return (
-      localDisplayName.value !== (user.value.displayName || '') ||
-      localTheme.value !== (user.value.attribute.theme || 'system')
-    )
+    return localDisplayName.value !== (user.value.displayName || '')
   })
 
   const save = async () => {
@@ -44,10 +31,6 @@ export function useUserDetailDialog(props: { modelValue: boolean }, emit: any) {
     const updatedUser: User = {
       ...user.value,
       displayName: localDisplayName.value,
-      attribute: {
-        ...user.value.attribute,
-        theme: localTheme.value,
-      },
     }
     await userStore.saveUser(updatedUser)
     emit('update:modelValue', false)
@@ -66,8 +49,6 @@ export function useUserDetailDialog(props: { modelValue: boolean }, emit: any) {
   return {
     user,
     localDisplayName,
-    localTheme,
-    themeOptions,
     save,
     close,
     handleBeforeClose,

@@ -1,4 +1,10 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useUserStore } from '@/stores/useUserStore'
+import type { User } from '@functions/types/shared'
+import themeDarkImg from '@/assets/theme-dark.png'
+import themeLightImg from '@/assets/theme-light.png'
+import themeSystemImg from '@/assets/theme-system.png'
 defineProps<{
   showHiddenRows: boolean
   showCurrentTimeLine: boolean
@@ -12,6 +18,30 @@ const emit = defineEmits<{
   'update:pxPerDay': [value: number]
   'update:barHeight': [value: number]
 }>()
+
+const userStore = useUserStore()
+const user = computed(() => userStore.user)
+
+const themeOptions = [
+  { title: 'ライト', value: 'light', image: themeLightImg },
+  { title: 'ダーク', value: 'dark', image: themeDarkImg },
+  { title: 'システム', value: 'system', image: themeSystemImg },
+]
+
+const currentTheme = computed({
+  get: () => user.value?.attribute?.theme || 'system',
+  set: async (val: 'light' | 'dark' | 'system') => {
+    if (!user.value) return
+    const updatedUser: User = {
+      ...user.value,
+      attribute: {
+        ...user.value.attribute,
+        theme: val,
+      },
+    }
+    await userStore.saveUser(updatedUser)
+  }
+})
 </script>
 
 <template>
@@ -57,11 +87,28 @@ const emit = defineEmits<{
         color="primary"
         class="w-100"
       >
-        <v-btn :value="32" size="medium" class="flex-grow-1">小</v-btn>
-        <v-btn :value="38" size="medium" class="flex-grow-1">中</v-btn>
-        <v-btn :value="48" size="medium" class="flex-grow-1">大</v-btn>
-        <v-btn :value="56" size="medium" class="flex-grow-1">特大</v-btn>
+        <v-btn :value="24" size="medium" class="flex-grow-1">極小</v-btn>
+        <v-btn :value="38" size="medium" class="flex-grow-1">小</v-btn>
+        <v-btn :value="52" size="medium" class="flex-grow-1">中</v-btn>
+        <v-btn :value="66" size="medium" class="flex-grow-1">大</v-btn>
+        <v-btn :value="80" size="medium" class="flex-grow-1">特大</v-btn>
       </v-btn-toggle>
+      <div class="text-caption text-medium-emphasis mb-1 mt-4">テーマ</div>
+      <v-radio-group v-model="currentTheme" inline hide-details class="mb-3 d-flex justify-center">
+        <v-radio v-for="option in themeOptions" :key="option.value" :value="option.value">
+          <template v-slot:label>
+            <div class="d-flex flex-column align-center ma-1 mt-2 cursor-pointer">
+              <img
+                :src="option.image"
+                width="64"
+                :alt="option.title"
+                style="border-radius: 4px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2)"
+              />
+              <span class="mt-2 text-caption">{{ option.title }}</span>
+            </div>
+          </template>
+        </v-radio>
+      </v-radio-group>
     </v-card>
   </v-menu>
 </template>

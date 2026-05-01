@@ -13,7 +13,7 @@ const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
 }>()
 
-const { user, localDisplayName, localTheme, themeOptions, save, close, handleBeforeClose } = useUserDetailDialog(
+const { user, localDisplayName, save, close, handleBeforeClose } = useUserDetailDialog(
   props,
   emit,
 )
@@ -73,23 +73,6 @@ watch(
                 :rules="[inputRules.required, inputRules.within(191)]"
                 class="mb-3"
               />
-            </v-col>
-            <v-col cols="12">
-              <v-radio-group v-model="localTheme" inline label="テーマ" hide-details class="mb-3">
-                <v-radio v-for="option in themeOptions" :key="option.value" :value="option.value">
-                  <template v-slot:label>
-                    <div class="d-flex flex-column align-center ma-2 mt-4 cursor-pointer">
-                      <img
-                        :src="option.image"
-                        width="80"
-                        :alt="option.title"
-                        style="border-radius: 4px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2)"
-                      />
-                      <span class="mt-2 text-caption">{{ option.title }}</span>
-                    </div>
-                  </template>
-                </v-radio>
-              </v-radio-group>
             </v-col>
           </v-row>
         </v-form>
