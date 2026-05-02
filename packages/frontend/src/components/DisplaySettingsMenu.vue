@@ -8,6 +8,8 @@ import themeSystemImg from '@/assets/theme-system.png'
 defineProps<{
   showHiddenRows: boolean
   showCurrentTimeLine: boolean
+  readonlyMode?: boolean
+  canEdit?: boolean
   pxPerDay: number
   barHeight: number
 }>()
@@ -15,6 +17,7 @@ defineProps<{
 const emit = defineEmits<{
   'update:showHiddenRows': [value: boolean]
   'update:showCurrentTimeLine': [value: boolean]
+  'update:readonlyMode': [value: boolean]
   'update:pxPerDay': [value: number]
   'update:barHeight': [value: number]
 }>()
@@ -68,6 +71,16 @@ const currentTheme = computed({
         density="compact"
         class="mb-4"
         @update:model-value="emit('update:showCurrentTimeLine', $event as boolean)"
+      />
+      <v-switch
+        v-if="canEdit"
+        :model-value="readonlyMode"
+        label="読み取り専用モード"
+        color="primary"
+        hide-details
+        density="compact"
+        class="mb-4"
+        @update:model-value="emit('update:readonlyMode', $event as boolean)"
       />
       <div class="text-caption text-medium-emphasis mb-1">表示倍率</div>
       <ZoomControls

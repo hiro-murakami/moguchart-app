@@ -105,6 +105,8 @@ export type ProjectSettings = {
   commentSidebarWidth?: number
   /** 現在時刻線の表示可否フラグ */
   showCurrentTimeLine?: boolean
+  /** 読み取り専用モードフラグ */
+  readonlyMode?: boolean
 }
 
 /** チュートリアルのキー一覧 */

@@ -79,6 +79,7 @@ export const useGanttChartView = () => {
   const labelWidth = ref(150)
   const showHiddenRows = ref(false)
   const showCurrentTimeLine = ref(true)
+  const readonlyMode = ref(false)
   const manualAddRowCount = ref(1)
 
   const isUnassignedTasksOpen = ref(false)
@@ -192,6 +193,7 @@ export const useGanttChartView = () => {
       barHeight?: number
       commentSidebarOpen?: boolean
       commentSidebarWidth?: number
+      readonlyMode?: boolean
     }) => {
       if (userStore.user && projectId.value) {
         const currentSettings = userStore.user.attribute.projectSettings?.[projectId.value] || {}
@@ -237,6 +239,11 @@ export const useGanttChartView = () => {
   // 現在時刻線の表示設定変更時に保存
   watch(showCurrentTimeLine, (newValue) => {
     saveProjectSettings({ showCurrentTimeLine: newValue })
+  })
+
+  // 読み取り専用モード変更時に保存
+  watch(readonlyMode, (newValue) => {
+    saveProjectSettings({ readonlyMode: newValue })
   })
 
   // バー高さ変更時に保存
@@ -292,6 +299,13 @@ export const useGanttChartView = () => {
           showCurrentTimeLine.value = settings.showCurrentTimeLine
         } else {
           showCurrentTimeLine.value = true
+        }
+
+        // readonlyModeの復元
+        if (settings?.readonlyMode !== undefined) {
+          readonlyMode.value = settings.readonlyMode
+        } else {
+          readonlyMode.value = false
         }
 
         // barHeightの復元
@@ -450,7 +464,7 @@ export const useGanttChartView = () => {
       .filter(Boolean) as typeof rows.value
   })
 
-  const isReadOnly = computed(() => currentRole.value === 'viewer')
+  const isReadOnly = computed(() => readonlyMode.value || currentRole.value === 'viewer')
   const isOwner = computed(() => currentRole.value === 'owner')
 
   const chartOption = computed<moguchart.GanttChartOption>(() => {
@@ -2908,6 +2922,7 @@ export const useGanttChartView = () => {
     currentProject,
     showHiddenRows,
     showCurrentTimeLine,
+    readonlyMode,
     pxPerDay,
     barHeight,
     addRowCount,
