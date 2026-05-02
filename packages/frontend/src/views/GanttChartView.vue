@@ -571,8 +571,8 @@ const handleExportPdf = async () => {
 
 .row-edit-input {
   position: fixed;
-  background: #333;
-  color: white;
+  background: rgb(var(--v-theme-surface));
+  color: rgb(var(--v-theme-on-surface));
   border: 1px solid #007bff;
   padding: 0 6px;
   z-index: 1000;

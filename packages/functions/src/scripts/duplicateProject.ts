@@ -109,9 +109,15 @@ const duplicateProject: DuplicateProject = async (
     // 新しいプロジェクトを作成
     const newProject = await _upsertProject(tx, newProjectData, email)
 
+    // 旧タスクID → 新タスクIDのマッピング（依存関係の更新に使用）
+    // dependenciesはstring[]として保存されているため、キーも文字列で扱う
+    const taskIdMap = new Map<string, string>()
+    // 依存関係を持つ新タスクの情報（後でIDを書き換えるために保持）
+    const createdTasksWithDependencies: { newId: number; attribute: any }[] = []
+
     // 元のGanttRowとGanttTaskを新しいプロジェクトにコピー
     for (const row of originalRows) {
-      await tx.ganttRow.create({
+      const newRow = await tx.ganttRow.create({
         data: {
           name: row.name,
           order: row.order,
@@ -120,36 +126,68 @@ const duplicateProject: DuplicateProject = async (
           project: {
             connect: { id: newProject.id },
           },
-          tasks: {
-            create: row.tasks.map((task) => {
-              // タスク属性をコピーし、必要に応じて進捗率をクリア
-              const taskAttr = { ...((task.attribute as any) ?? {}) }
-              if (clearProgress) {
-                delete taskAttr.progress
-              }
-              return {
-                name: task.name,
-                start: daysDiff !== 0 ? addDays(task.start, daysDiff) : task.start,
-                end: daysDiff !== 0 ? addDays(task.end, daysDiff) : task.end,
-                attribute: taskAttr,
-                comments: {
-                  create: task.comments.map((comment) => ({
-                    content: comment.content,
-                    createdBy: comment.createdBy,
-                    updatedBy: comment.updatedBy,
-                    createdAt: comment.createdAt,
-                    updatedAt: comment.updatedAt,
-                  })),
-                },
-                createdBy: email,
-                updatedBy: email,
-              }
-            }),
-          },
           createdBy: email,
           updatedBy: email,
         },
       })
+
+      for (const task of row.tasks) {
+        // タスク属性をコピーし、必要に応じて進捗率をクリア
+        const taskAttr = { ...((task.attribute as any) ?? {}) }
+        if (clearProgress) {
+          delete taskAttr.progress
+        }
+
+        const newTask = await tx.ganttTask.create({
+          data: {
+            name: task.name,
+            start: daysDiff !== 0 ? addDays(task.start, daysDiff) : task.start,
+            end: daysDiff !== 0 ? addDays(task.end, daysDiff) : task.end,
+            attribute: taskAttr,
+            rowId: newRow.id,
+            comments: {
+              create: task.comments.map((comment) => ({
+                content: comment.content,
+                createdBy: comment.createdBy,
+                updatedBy: comment.updatedBy,
+                createdAt: comment.createdAt,
+                updatedAt: comment.updatedAt,
+              })),
+            },
+            createdBy: email,
+            updatedBy: email,
+          },
+        })
+
+        // 旧ID → 新IDのマッピングを記録（文字列として保存する）
+        taskIdMap.set(String(task.id), String(newTask.id))
+
+        // 依存関係を持つタスクは後で更新するために記録
+        if (taskAttr.dependencies && Array.isArray(taskAttr.dependencies) && taskAttr.dependencies.length > 0) {
+          createdTasksWithDependencies.push({ newId: newTask.id, attribute: taskAttr })
+        }
+      }
+    }
+
+    // 依存関係のIDを新しいタスクIDに書き換える
+    for (const { newId, attribute } of createdTasksWithDependencies) {
+      // dependenciesはstring[]として保存されているため、文字列として検索する
+      const newDependencies = (attribute.dependencies as string[])
+        .map((oldId) => taskIdMap.get(String(oldId)))
+        .filter((newDepId): newDepId is string => newDepId !== undefined)
+
+      if (newDependencies.length > 0) {
+        await tx.ganttTask.update({
+          where: { id: newId },
+          data: {
+            attribute: {
+              ...attribute,
+              dependencies: newDependencies,
+            },
+            updatedBy: email,
+          },
+        })
+      }
     }
 
     return newProject.id

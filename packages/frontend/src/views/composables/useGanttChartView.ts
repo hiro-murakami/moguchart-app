@@ -1100,17 +1100,17 @@ export const useGanttChartView = () => {
 
     const targetRow = rows.value.find((r) => r.tasks.some((t) => t.id === targetTaskId))
     const targetTask = targetRow?.tasks.find((t) => t.id === targetTaskId)
-    
+
     if (!targetRow || !targetTask) return
 
     const attribute = ((targetTask as any).attribute as TaskAttribute) || {}
     const deps = attribute.dependencies || []
-    
+
     // すでに依存関係が存在する場合は何もしない
     if (deps.includes(sourceTaskId)) return
 
     const newDependencies = [...deps, sourceTaskId]
-    
+
     const data = {
       id: Number(targetTask.id),
       rowId: Number(targetRow.id),
@@ -1173,14 +1173,14 @@ export const useGanttChartView = () => {
 
     const targetRow = rows.value.find((r) => r.tasks.some((t) => t.id === targetTaskId))
     const targetTask = targetRow?.tasks.find((t) => t.id === targetTaskId)
-    
+
     if (!targetRow || !targetTask) return
 
     const attribute = ((targetTask as any).attribute as TaskAttribute) || {}
     const deps = attribute.dependencies || []
-    
+
     const newDependencies = deps.filter((id) => id !== sourceTaskId)
-    
+
     const data = {
       id: Number(targetTask.id),
       rowId: Number(targetRow.id),
@@ -2031,7 +2031,7 @@ export const useGanttChartView = () => {
         left: `${targetRect.left}px`,
         // Ensure minimum dimensions for better UX
         width: `${Math.max(targetRect.width, 140)}px`,
-        height: `${barHeight.value - 6}px`,
+        height: `${Math.min(barHeight.value, 30)}px`,
       }
 
       // Focus the input next tick
