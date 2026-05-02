@@ -13,6 +13,7 @@ declare module 'vue' {
   export interface GlobalComponents {
     AddRowDialog: typeof import('./src/components/AddRowDialog.vue')['default']
     AlertDialog: typeof import('./src/components/common/AlertDialog.vue')['default']
+    AppUserMenu: typeof import('./src/components/AppUserMenu.vue')['default']
     AuthorityHistoryDialog: typeof import('./src/components/AuthorityHistoryDialog.vue')['default']
     ChartContextMenu: typeof import('./src/components/ChartContextMenu.vue')['default']
     CollaborationActivityLog: typeof import('./src/components/CollaborationActivityLog.vue')['default']
@@ -39,6 +40,7 @@ declare module 'vue' {
     ProjectDuplicateDialog: typeof import('./src/components/ProjectDuplicateDialog.vue')['default']
     ProjectListDialog: typeof import('./src/components/ProjectListDialog.vue')['default']
     PromptDialog: typeof import('./src/components/common/PromptDialog.vue')['default']
+    ReleaseNotesDialog: typeof import('./src/components/ReleaseNotesDialog.vue')['default']
     RoleChip: typeof import('./src/components/RoleChip.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']

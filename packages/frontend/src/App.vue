@@ -1,20 +1,19 @@
 <script setup lang="ts">
 import { provideLoading } from '@/composables/useLoading'
 import { useUserStore } from '@/stores/useUserStore'
-import { useProjectStore } from '@/stores/useProjectStore'
 import { storeToRefs } from 'pinia'
-import { onMounted, onUnmounted, ref, computed } from 'vue'
+import { onMounted, onUnmounted, ref, computed, watch } from 'vue'
 import headerImage from '@/assets/header.png'
 import { VERSION } from '@functions/types/shared'
-import TutorialOverlay from '@/components/common/TutorialOverlay.vue'
+import AppUserMenu from '@/components/AppUserMenu.vue'
 
 const { isLoading } = provideLoading()
 const userStore = useUserStore()
-const projectStore = useProjectStore()
-const { user: appUser, firebaseUser, currentTheme } = storeToRefs(userStore)
+const { firebaseUser, currentTheme, versionUpdated } = storeToRefs(userStore)
 const showUserDetail = ref(false)
 const showManual = ref(false)
 const showAuthorityHistory = ref(false)
+const showReleaseNotes = ref(false)
 
 const systemTheme = ref<'light' | 'dark'>(window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
 
@@ -37,6 +36,13 @@ onMounted(() => {
 onUnmounted(() => {
   window.matchMedia('(prefers-color-scheme: dark)').removeEventListener('change', updateSystemTheme)
 })
+
+// バージョンアップ時にリリースノートを自動表示
+watch(versionUpdated, (updated) => {
+  if (updated) {
+    showReleaseNotes.value = true
+  }
+})
 </script>
 
 <template>
@@ -53,42 +59,12 @@ onUnmounted(() => {
           @click="showManual = !showManual"
         />
         <v-btn v-if="!firebaseUser" @click="userStore.signIn"> Login </v-btn>
-        <template v-else>
-          <v-menu location="bottom end">
-            <template v-slot:activator="{ props }">
-              <TutorialOverlay
-                :condition="!!projectStore.currentProjectId"
-                tutorial-key="userSetting"
-                message="[ユーザー設定]で表示名とテーマを変更できます"
-                placement="bottom"
-              >
-                <template #activator="{ props: overlayProps }">
-                  <UserAvatar
-                    class="mr-4 cursor-pointer"
-                    v-bind="{ ...props, ...overlayProps }"
-                    :url="firebaseUser?.photoURL"
-                    :name="appUser?.displayName || firebaseUser?.displayName"
-                  />
-                </template>
-              </TutorialOverlay>
-            </template>
-            <v-list>
-              <v-list-item prepend-icon="mdi-account-cog" @click="showUserDetail = true">
-                <v-list-item-title>ユーザー設定</v-list-item-title>
-              </v-list-item>
-              <v-list-item prepend-icon="mdi-history" @click="showAuthorityHistory = true">
-                <v-list-item-title>メールアドレス履歴</v-list-item-title>
-              </v-list-item>
-              <v-list-item prepend-icon="mdi-logout" @click="userStore.signOut">
-                <v-list-item-title>ログアウト</v-list-item-title>
-              </v-list-item>
-            </v-list>
-          </v-menu>
-          <div class="d-flex flex-column mr-4">
-            <span class="text-label-large">{{ appUser?.displayName || firebaseUser.displayName }}</span>
-            <span class="text-label-medium">{{ appUser?.email || firebaseUser.email }}</span>
-          </div>
-        </template>
+        <AppUserMenu
+          v-else
+          v-model:show-user-detail="showUserDetail"
+          v-model:show-authority-history="showAuthorityHistory"
+          v-model:show-release-notes="showReleaseNotes"
+        />
       </v-app-bar>
       <v-main>
         <router-view v-if="firebaseUser" />
@@ -96,6 +72,7 @@ onUnmounted(() => {
         <UserDetailDialog v-model="showUserDetail" />
         <AuthorityHistoryDialog v-model="showAuthorityHistory" />
         <OperationManualDrawer v-model="showManual" />
+        <ReleaseNotesDialog v-model="showReleaseNotes" />
       </v-main>
       <v-overlay v-model="isLoading" class="align-center justify-center" persistent>
         <v-progress-circular indeterminate size="64" />
@@ -107,8 +84,5 @@ onUnmounted(() => {
 <style scoped lang="scss">
 .header-image {
   border-radius: 6px;
-}
-.cursor-pointer {
-  cursor: pointer;
 }
 </style>

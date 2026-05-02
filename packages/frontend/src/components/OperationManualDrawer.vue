@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { marked, Renderer } from 'marked'
-import { OPERATION_MANUAL } from '@/modules/operationManual'
+import OPERATION_MANUAL from '../../../../docs/operation-manual.md?raw'
 
 defineProps<{
   modelValue: boolean

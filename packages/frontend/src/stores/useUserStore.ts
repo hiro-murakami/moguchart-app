@@ -15,6 +15,8 @@ export const useUserStore = defineStore('user', {
   state: () => ({
     user: null as User | null,
     firebaseUser: null as FirebaseUser | null,
+    /** バージョンが更新されたかどうか（初回ログイン時はfalse） */
+    versionUpdated: false,
   }),
 
   getters: {
@@ -77,6 +79,9 @@ export const useUserStore = defineStore('user', {
           await this.fetchUser(firebaseUser.email)
 
           if (this.user) {
+            const previousVersion = this.user.attribute?.appVersion
+            // 新規ユーザーでなく、前回バージョンが現在と異なる場合はリリースノートを表示
+            this.versionUpdated = !!previousVersion && previousVersion !== VERSION
             this.user.attribute = {
               ...this.user.attribute,
               lastLoginAt: toDateTimeString(),
