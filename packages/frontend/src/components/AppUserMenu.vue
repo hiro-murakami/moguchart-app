@@ -2,8 +2,6 @@
 import { useUserStore } from '@/stores/useUserStore'
 import { useProjectStore } from '@/stores/useProjectStore'
 import { storeToRefs } from 'pinia'
-import { ref } from 'vue'
-import TutorialOverlay from '@/components/common/TutorialOverlay.vue'
 
 const userStore = useUserStore()
 const projectStore = useProjectStore()
@@ -20,7 +18,7 @@ const showReleaseNotes = defineModel<boolean>('showReleaseNotes', { required: tr
       <TutorialOverlay
         :condition="!!projectStore.currentProjectId"
         tutorial-key="userSetting"
-        message="[ユーザー設定]で表示名とテーマを変更できます"
+        message="[ユーザー設定]で表示名を変更できます"
         placement="bottom"
       >
         <template #activator="{ props: overlayProps }">
