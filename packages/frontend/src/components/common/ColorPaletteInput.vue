@@ -31,6 +31,11 @@ const isExpanded = computed({
   },
 })
 
+const name = computed({
+  get: () => props.modelValue.name ?? '',
+  set: (val) => emit('update:modelValue', { ...props.modelValue, name: val }),
+})
+
 const color = computed({
   get: () => props.modelValue.color,
   set: (val) => emit('update:modelValue', { ...props.modelValue, color: val }),
@@ -159,7 +164,7 @@ const getBorderStyle = (type?: string, color?: string) => {
           font-size: 0.85rem;
         `"
       >
-        {{ textSample || 'テキストサンプル' }}
+        {{ name || textSample || 'テキストサンプル' }}
       </div>
 
       <v-btn
@@ -175,6 +180,17 @@ const getBorderStyle = (type?: string, color?: string) => {
       <div v-show="isExpanded" class="px-2 pb-2">
         <v-divider class="mb-2" />
         <v-row density="compact">
+          <v-col cols="auto">
+            <v-text-field
+              v-model="name"
+              label="パレット名"
+              hide-details
+              density="compact"
+              variant="outlined"
+              style="min-width: 240px"
+              autocomplete="off"
+            />
+          </v-col>
           <v-col cols="auto">
             <ColorInput v-model="color" label="文字色" min-width="120px" />
           </v-col>

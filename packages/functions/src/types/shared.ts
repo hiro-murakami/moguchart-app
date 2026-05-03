@@ -63,6 +63,8 @@ export type BorderType = 'solid_thin' | 'solid_thick' | 'dashed_thin' | 'dashed_
 
 /** タスクバーの配色パレット */
 export type ColorPalette = {
+  /** パレット名 */
+  name?: string
   /** テキスト色 */
   color: string
   /** 背景色 */

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, watch } from 'vue'
 import * as moguchart from '@mogura/moguchart'
 import type { ColorPalette } from '@functions/types/shared'
 
@@ -14,6 +14,19 @@ const emit = defineEmits<{
 }>()
 
 const menu = ref(false)
+const searchQuery = ref('')
+
+watch(menu, (val) => {
+  if (!val) {
+    searchQuery.value = ''
+  }
+})
+
+const filteredPalettes = computed(() => {
+  if (!searchQuery.value) return props.palettes
+  const q = searchQuery.value.toLowerCase()
+  return props.palettes.filter((p) => (p.name || '').toLowerCase().includes(q))
+})
 
 const onSelect = (palette: ColorPalette) => {
   emit('select', palette)
@@ -29,15 +42,30 @@ const onSelect = (palette: ColorPalette) => {
       </v-btn>
     </template>
 
-    <v-card min-width="200px" max-height="500px" class="overflow-y-auto">
-      <v-list density="compact">
-        <template v-if="palettes.length === 0">
+    <v-card min-width="240px" max-height="500px" class="d-flex flex-column">
+      <div class="pa-2 pb-0">
+        <v-text-field
+          v-model="searchQuery"
+          label="パレットを検索"
+          density="compact"
+          variant="outlined"
+          hide-details
+          prepend-inner-icon="mdi-magnify"
+          clearable
+          autofocus
+          autocomplete="off"
+        />
+      </div>
+      <v-list density="compact" class="overflow-y-auto flex-grow-1">
+        <template v-if="filteredPalettes.length === 0">
           <v-list-item>
-            <v-list-item-title class="text-caption text-grey"> パレットが登録されていません </v-list-item-title>
+            <v-list-item-title class="text-caption text-grey text-center my-2">
+              {{ palettes.length === 0 ? 'パレットが登録されていません' : '見つかりませんでした' }}
+            </v-list-item-title>
           </v-list-item>
         </template>
         <template v-else>
-          <v-list-item v-for="(palette, index) in palettes" :key="index" @click="onSelect(palette)" link>
+          <v-list-item v-for="(palette, index) in filteredPalettes" :key="index" @click="onSelect(palette)" link>
             <div
               class="d-flex align-center justify-center rounded px-2"
               :style="`
@@ -57,7 +85,7 @@ const onSelect = (palette: ColorPalette) => {
                 `"
             >
               <span class="text-truncate" style="max-width: 100%">
-                {{ textSample || 'テキストサンプル' }}
+                {{ palette.name || textSample || 'テキストサンプル' }}
               </span>
             </div>
           </v-list-item>

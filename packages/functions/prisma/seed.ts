@@ -12,18 +12,20 @@ const monthlyProjectId = 'b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c'
 // カラーパレット定義
 // ============================================================
 const colorPalettes = {
-  blue: { color: '#ffffff', backgroundColor: '#2b6cb0' },
-  green: { color: '#ffffff', backgroundColor: '#2f855a' },
-  orange: { color: '#ffffff', backgroundColor: '#c05621' },
-  purple: { color: '#ffffff', backgroundColor: '#805ad5' },
-  red: { color: '#ffffff', backgroundColor: '#c53030' },
-  teal: { color: '#ffffff', backgroundColor: '#2c7a7b' },
+  blue: { name: 'Blue', color: '#ffffff', backgroundColor: '#2b6cb0' },
+  green: { name: 'Green', color: '#ffffff', backgroundColor: '#2f855a' },
+  orange: { name: 'Orange', color: '#ffffff', backgroundColor: '#c05621' },
+  purple: { name: 'Purple', color: '#ffffff', backgroundColor: '#805ad5' },
+  red: { name: 'Red', color: '#ffffff', backgroundColor: '#c53030' },
+  teal: { name: 'Teal', color: '#ffffff', backgroundColor: '#2c7a7b' },
   pending: {
+    name: 'Pending',
     color: '#ffffff',
     backgroundColor: '#718096',
     pattern: { type: 'diagonal-stripe', color: '#4a5568' },
   },
   onHold: {
+    name: 'On Hold',
     color: '#ffffff',
     backgroundColor: '#744210',
     pattern: { type: 'diagonal-stripe', color: '#542c0e' },
