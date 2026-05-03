@@ -407,6 +407,7 @@ const handleExportPdf = async () => {
 
     <!-- Row Context Menu -->
     <RowHeaderContextMenu
+      v-if="contextMenu.visible"
       v-model="contextMenu.visible"
       :x="contextMenu.x"
       :y="contextMenu.y"
@@ -424,6 +425,7 @@ const handleExportPdf = async () => {
 
     <!-- Task Context Menu -->
     <TaskContextMenu
+      v-if="taskContextMenu.visible"
       v-model="taskContextMenu.visible"
       :x="taskContextMenu.x"
       :y="taskContextMenu.y"
@@ -439,6 +441,7 @@ const handleExportPdf = async () => {
 
     <!-- Dependency Context Menu -->
     <DependencyContextMenu
+      v-if="dependencyContextMenu.visible"
       v-model="dependencyContextMenu.visible"
       :x="dependencyContextMenu.x"
       :y="dependencyContextMenu.y"
@@ -461,6 +464,7 @@ const handleExportPdf = async () => {
 
     <!-- Chart Context Menu -->
     <ChartContextMenu
+      v-if="chartContextMenu.visible"
       v-model="chartContextMenu.visible"
       :x="chartContextMenu.x"
       :y="chartContextMenu.y"
@@ -479,6 +483,7 @@ const handleExportPdf = async () => {
       v-model="isDialogVisible"
       :task="editingTask"
       :rows="rows"
+      :granularity="currentProject?.attribute?.granularity"
       @save="saveTask"
       @delete="deleteTask"
     />

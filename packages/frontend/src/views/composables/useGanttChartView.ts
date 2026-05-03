@@ -1958,7 +1958,7 @@ export const useGanttChartView = () => {
     description: '',
   })
 
-  const handleEditRowFromContextMenu = () => {
+  const handleEditRowFromContextMenu = async () => {
     const rowId = contextMenu.value.rowId
     if (rowId === null) return
 
@@ -1967,13 +1967,15 @@ export const useGanttChartView = () => {
 
     const attribute = (row as any).attribute as RowAttribute | undefined
 
+    closeContextMenu()
+    await new Promise((resolve) => setTimeout(resolve, 200))
+
     editingRowData.value = {
       id: rowId,
       name: row.name,
       description: attribute?.description || '',
     }
     isRowEditDialogVisible.value = true
-    closeContextMenu()
   }
 
   const saveRow = async (data: { id: number; name: string; description?: string }) => {
@@ -2134,12 +2136,13 @@ export const useGanttChartView = () => {
     })
   })
 
-  const handleEditTaskFromContextMenu = () => {
+  const handleEditTaskFromContextMenu = async () => {
     const taskId = taskContextMenu.value.taskId
     if (!taskId) return
 
-    startEditingTask(taskId)
     taskContextMenu.value.visible = false
+    await new Promise((resolve) => setTimeout(resolve, 200))
+    startEditingTask(taskId)
   }
 
   const handleDeleteTaskFromContextMenu = async () => {
@@ -2198,33 +2201,37 @@ export const useGanttChartView = () => {
   const commentDialogProjectId = ref<string | null>(null)
   const commentDialogTargetName = ref('')
 
-  const handleAddCommentFromContextMenu = () => {
+  const handleAddCommentFromContextMenu = async () => {
     const taskId = taskContextMenu.value.taskId
     if (!taskId) return
 
     const row = rows.value.find((r) => r.tasks.some((t) => t.id === taskId))
     const task = row?.tasks.find((t) => t.id === taskId)
 
+    taskContextMenu.value.visible = false
+    await new Promise((resolve) => setTimeout(resolve, 200))
+
     commentDialogTaskId.value = Number(taskId)
     commentDialogRowId.value = null
     commentDialogProjectId.value = null
     commentDialogTargetName.value = task?.name || ''
     isCommentDialogVisible.value = true
-    taskContextMenu.value.visible = false
   }
 
-  const handleAddCommentToRow = () => {
+  const handleAddCommentToRow = async () => {
     const rowId = contextMenu.value.rowId
     if (rowId === null) return
 
     const row = rows.value.find((r) => Number(r.id) === rowId)
+
+    contextMenu.value.visible = false
+    await new Promise((resolve) => setTimeout(resolve, 200))
 
     commentDialogTaskId.value = null
     commentDialogRowId.value = rowId
     commentDialogProjectId.value = null
     commentDialogTargetName.value = row?.name || `行 #${rowId}`
     isCommentDialogVisible.value = true
-    contextMenu.value.visible = false
   }
 
   const handleAddCommentToProject = () => {
@@ -2835,18 +2842,25 @@ export const useGanttChartView = () => {
     window.addEventListener('focus', checkClipboardData)
   }
 
-  const handleCreateNewTask = (date: Date, rowId: string) => {
+  const handleCreateNewTask = async (date: Date, rowId: string) => {
+    chartContextMenu.value.visible = false
+    await new Promise((resolve) => setTimeout(resolve, 200))
+    
+    const isMonthly = currentProject.value?.attribute?.granularity === 'monthly'
+    
     editingTask.value = {
       id: '', // 新規作成
       rowId: rowId,
       name: '新規タスク',
-      start: toDateString(date),
-      end: toDateString(new Date(date.getTime() + 2 * 24 * 60 * 60 * 1000)), // デフォルト2日
+      start: isMonthly ? dayjs(date).startOf('month').format('YYYY-MM-DD') : toDateString(date),
+      end: isMonthly
+        ? dayjs(date).startOf('month').add(3, 'month').format('YYYY-MM-DD') // デフォルト3ヶ月分
+        : toDateString(new Date(date.getTime() + 2 * 24 * 60 * 60 * 1000)), // デフォルト2日
       description: '',
       progress: undefined,
+      labels: [],
     }
     isDialogVisible.value = true
-    chartContextMenu.value.visible = false
   }
 
   const selectAllLabels = () => {

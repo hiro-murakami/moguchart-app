@@ -1,14 +1,16 @@
 <script setup lang="ts">
 import { useDiscardConfirm } from '@/composables/useConfirm'
 import inputRules from '@/modules/inputRules'
-import type { ColorPalette, EditingTaskData, Label, SimpleRowData } from '@functions/types/shared'
+import type { ColorPalette, EditingTaskData, Label, SimpleRowData, ProjectGranularity } from '@functions/types/shared'
 import { isEqual, cloneDeep } from 'lodash'
 import { computed, ref, watch } from 'vue'
+import dayjs from 'dayjs'
 
 const props = defineProps<{
   modelValue: boolean
   task: EditingTaskData
   rows: SimpleRowData[]
+  granularity?: ProjectGranularity
 }>()
 
 const emit = defineEmits<{
@@ -54,6 +56,40 @@ const isLocked = computed({
     localTask.value.lock = val || undefined
   },
 })
+
+const isMonthly = computed(() => props.granularity === 'monthly')
+
+const displayStart = computed({
+  get: () => {
+    if (isMonthly.value && localTask.value.start) {
+      return localTask.value.start.substring(0, 7)
+    }
+    return localTask.value.start
+  },
+  set: (val: string) => {
+    if (isMonthly.value && val) {
+      localTask.value.start = `${val}-01`
+    } else {
+      localTask.value.start = val
+    }
+  }
+})
+
+const displayEnd = computed({
+  get: () => {
+    if (isMonthly.value && localTask.value.end) {
+      return dayjs(localTask.value.end).subtract(1, 'day').format('YYYY-MM')
+    }
+    return localTask.value.end
+  },
+  set: (val: string) => {
+    if (isMonthly.value && val) {
+      localTask.value.end = dayjs(val).add(1, 'month').startOf('month').format('YYYY-MM-DD')
+    } else {
+      localTask.value.end = val
+    }
+  }
+})
 </script>
 
 <template>
@@ -87,25 +123,25 @@ const isLocked = computed({
       </v-col>
       <v-col cols="4">
         <v-text-field
-          v-model="localTask.start"
-          label="開始日"
-          type="date"
+          v-model="displayStart"
+          :label="isMonthly ? '開始月' : '開始日'"
+          :type="isMonthly ? 'month' : 'date'"
           density="compact"
           variant="outlined"
           hide-details="auto"
-          :rules="[inputRules.required, inputRules.dateBefore(localTask.end)]"
+          :rules="[inputRules.required, inputRules.dateBefore(displayEnd)]"
           class="mb-3"
         ></v-text-field>
       </v-col>
       <v-col cols="4">
         <v-text-field
-          v-model="localTask.end"
-          label="終了日"
-          type="date"
+          v-model="displayEnd"
+          :label="isMonthly ? '終了月' : '終了日'"
+          :type="isMonthly ? 'month' : 'date'"
           density="compact"
           variant="outlined"
           hide-details="auto"
-          :rules="[inputRules.required, inputRules.dateAfter(localTask.start)]"
+          :rules="[inputRules.required, inputRules.dateAfter(displayStart)]"
           class="mb-3"
         ></v-text-field>
       </v-col>

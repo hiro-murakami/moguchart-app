@@ -34,17 +34,14 @@ const handleNewTask = () => {
   if (props.date && props.rowId) {
     emit('new-task', props.date, props.rowId)
   }
-  isOpen.value = false
 }
 
 const handleUndo = () => {
   emit('undo')
-  isOpen.value = false
 }
 
 const handleRedo = () => {
   emit('redo')
-  isOpen.value = false
 }
 
 const handlePaste = () => {
