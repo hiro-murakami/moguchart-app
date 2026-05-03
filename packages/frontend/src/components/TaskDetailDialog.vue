@@ -59,26 +59,12 @@ const isLocked = computed({
 
 const isMonthly = computed(() => props.granularity === 'monthly')
 
-const displayStart = computed({
-  get: () => {
-    if (isMonthly.value && localTask.value.start) {
-      return localTask.value.start.substring(0, 7)
-    }
-    return localTask.value.start
-  },
-  set: (val: string) => {
-    if (isMonthly.value && val) {
-      localTask.value.start = `${val}-01`
-    } else {
-      localTask.value.start = val
-    }
-  }
-})
+
 
 const displayEnd = computed({
   get: () => {
     if (isMonthly.value && localTask.value.end) {
-      return dayjs(localTask.value.end).subtract(1, 'day').format('YYYY-MM')
+      return dayjs(localTask.value.end).subtract(1, 'day').startOf('month').format('YYYY-MM-DD')
     }
     return localTask.value.end
   },
@@ -122,28 +108,28 @@ const displayEnd = computed({
         ></v-select>
       </v-col>
       <v-col cols="4">
-        <v-text-field
-          v-model="displayStart"
-          :label="isMonthly ? '開始月' : '開始日'"
-          :type="isMonthly ? 'month' : 'date'"
-          density="compact"
-          variant="outlined"
+        <ProjectDateInput
+          v-model="localTask.start"
+          :granularity="granularity || 'daily'"
+          label-daily="開始日"
+          label-monthly="開始月"
+          :compare-target="displayEnd"
+          compare-rule="before"
           hide-details="auto"
-          :rules="[inputRules.required, inputRules.dateBefore(displayEnd)]"
           class="mb-3"
-        ></v-text-field>
+        />
       </v-col>
       <v-col cols="4">
-        <v-text-field
+        <ProjectDateInput
           v-model="displayEnd"
-          :label="isMonthly ? '終了月' : '終了日'"
-          :type="isMonthly ? 'month' : 'date'"
-          density="compact"
-          variant="outlined"
+          :granularity="granularity || 'daily'"
+          label-daily="終了日"
+          label-monthly="終了月"
+          :compare-target="localTask.start"
+          compare-rule="after"
           hide-details="auto"
-          :rules="[inputRules.required, inputRules.dateAfter(displayStart)]"
           class="mb-3"
-        ></v-text-field>
+        />
       </v-col>
       <v-col cols="4">
         <v-text-field

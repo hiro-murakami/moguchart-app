@@ -84,27 +84,27 @@ const {
               <v-sheet class="step-content pa-4 mt-3">
                 <v-row density="compact">
                   <v-col cols="6">
-                    <v-text-field
+                    <ProjectDateInput
                       v-model="localStart"
-                      label="開始日"
-                      type="date"
-                      density="compact"
-                      variant="outlined"
+                      :granularity="props.project?.attribute?.granularity || 'daily'"
+                      label-daily="開始日"
+                      label-monthly="開始月"
+                      :compare-target="localEnd"
+                      compare-rule="before"
                       hide-details="auto"
-                      :rules="[inputRules.required, inputRules.dateBefore(localEnd)]"
                     />
                   </v-col>
                   <v-col cols="6">
-                    <v-text-field
+                    <ProjectDateInput
                       v-model="localEnd"
-                      label="終了日"
-                      type="date"
-                      density="compact"
-                      variant="outlined"
+                      :granularity="props.project?.attribute?.granularity || 'daily'"
+                      label-daily="終了日"
+                      label-monthly="終了月"
+                      :compare-target="localStart"
+                      compare-rule="after"
                       hint="開始日の変更に連動して自動調整されます"
                       persistent-hint
                       disabled
-                      :rules="[inputRules.required, inputRules.dateAfter(localStart)]"
                     />
                   </v-col>
                 </v-row>

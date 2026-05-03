@@ -111,63 +111,6 @@ watch(
               <v-window v-model="tab" style="min-height: 500px">
                 <v-window-item value="general">
                   <v-row density="compact" class="pt-2">
-                    <v-col cols="12">
-                      <v-text-field
-                        v-model="localName"
-                        label="プロジェクト名"
-                        :rules="[inputRules.required, inputRules.within(191)]"
-                        autofocus
-                        density="compact"
-                        variant="outlined"
-                        hide-details="auto"
-                        autocomplete="off"
-                        class="mb-3"
-                      />
-                    </v-col>
-                    <v-col cols="12">
-                      <v-textarea
-                        v-model="localDescription"
-                        label="説明"
-                        auto-grow
-                        density="compact"
-                        variant="outlined"
-                        hide-details="auto"
-                        :rules="[inputRules.within(1024)]"
-                        class="mb-3"
-                      />
-                    </v-col>
-                    <v-col cols="6">
-                      <v-text-field
-                        v-model="localStart"
-                        label="開始日"
-                        type="date"
-                        density="compact"
-                        variant="outlined"
-                        hide-details
-                        :rules="[inputRules.required, inputRules.dateBefore(localEnd)]"
-                        class="mb-3"
-                      />
-                    </v-col>
-                    <v-col cols="6">
-                      <v-text-field
-                        v-model="localEnd"
-                        label="終了日"
-                        type="date"
-                        density="compact"
-                        variant="outlined"
-                        hide-details
-                        :rules="[inputRules.required, inputRules.dateAfter(localStart)]"
-                        class="mb-3"
-                      />
-                    </v-col>
-                    <v-col cols="12">
-                      <v-checkbox v-model="localPublic" density="compact" hide-details>
-                        <template v-slot:label>
-                          一般公開
-                          <HelpText text="ONにすると全てのユーザーが参照できるようになります" />
-                        </template>
-                      </v-checkbox>
-                    </v-col>
                     <!-- 表示粒度（作成時のみ変更可） -->
                     <v-col cols="12" class="mb-4">
                       <template v-if="!props.project">
@@ -200,6 +143,63 @@ watch(
                           {{ localGranularity === 'monthly' ? '月単位' : '日単位' }}
                         </v-chip>
                       </template>
+                    </v-col>
+                    <v-col cols="12">
+                      <v-text-field
+                        v-model="localName"
+                        label="プロジェクト名"
+                        :rules="[inputRules.required, inputRules.within(191)]"
+                        autofocus
+                        density="compact"
+                        variant="outlined"
+                        hide-details="auto"
+                        autocomplete="off"
+                        class="mb-3"
+                      />
+                    </v-col>
+                    <v-col cols="12">
+                      <v-textarea
+                        v-model="localDescription"
+                        label="説明"
+                        auto-grow
+                        density="compact"
+                        variant="outlined"
+                        hide-details="auto"
+                        :rules="[inputRules.within(1024)]"
+                        class="mb-3"
+                      />
+                    </v-col>
+                    <v-col cols="6">
+                      <ProjectDateInput
+                        v-model="localStart"
+                        :granularity="localGranularity"
+                        label-daily="開始日"
+                        label-monthly="開始月"
+                        :compare-target="localEnd"
+                        compare-rule="before"
+                        hide-details
+                        class="mb-3"
+                      />
+                    </v-col>
+                    <v-col cols="6">
+                      <ProjectDateInput
+                        v-model="localEnd"
+                        :granularity="localGranularity"
+                        label-daily="終了日"
+                        label-monthly="終了月"
+                        :compare-target="localStart"
+                        compare-rule="after"
+                        hide-details
+                        class="mb-3"
+                      />
+                    </v-col>
+                    <v-col cols="12">
+                      <v-checkbox v-model="localPublic" density="compact" hide-details>
+                        <template v-slot:label>
+                          一般公開
+                          <HelpText text="ONにすると全てのユーザーが参照できるようになります" />
+                        </template>
+                      </v-checkbox>
                     </v-col>
                     <v-col cols="6">
                       <v-select

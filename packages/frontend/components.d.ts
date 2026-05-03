@@ -36,6 +36,7 @@ declare module 'vue' {
     OperationManualDrawer: typeof import('./src/components/OperationManualDrawer.vue')['default']
     ProjectCommentButton: typeof import('./src/components/ProjectCommentButton.vue')['default']
     ProjectCommentPanel: typeof import('./src/components/ProjectCommentPanel.vue')['default']
+    ProjectDateInput: typeof import('./src/components/ProjectDateInput.vue')['default']
     ProjectDetailDialog: typeof import('./src/components/ProjectDetailDialog.vue')['default']
     ProjectDuplicateDialog: typeof import('./src/components/ProjectDuplicateDialog.vue')['default']
     ProjectListDialog: typeof import('./src/components/ProjectListDialog.vue')['default']
