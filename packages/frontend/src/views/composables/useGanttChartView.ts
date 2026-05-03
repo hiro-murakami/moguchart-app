@@ -72,7 +72,7 @@ export const useGanttChartView = () => {
   const chartStartStr = ref('2025-12-15')
   const chartEndStr = ref('2026-03-31')
   const pxPerDay = ref(28)
-  const pxPerMonth = ref(200)
+  const pxPerMonth = ref(40)
   const rowHeaderWidth = ref(200)
   const barHeight = ref(38)
   const barMargin = ref(4)
@@ -288,7 +288,7 @@ export const useGanttChartView = () => {
         if (settings?.pxPerMonth) {
           pxPerMonth.value = settings.pxPerMonth
         } else {
-          pxPerMonth.value = 200
+          pxPerMonth.value = 40
         }
 
         // rowHeaderWidthの復元

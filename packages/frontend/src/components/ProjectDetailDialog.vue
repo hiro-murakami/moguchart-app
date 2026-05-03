@@ -193,7 +193,7 @@ watch(
                         class="mb-3"
                       />
                     </v-col>
-                    <v-col cols="12">
+                    <v-col cols="12" class="mb-4">
                       <v-checkbox v-model="localPublic" density="compact" hide-details>
                         <template v-slot:label>
                           一般公開

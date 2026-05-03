@@ -67,7 +67,7 @@ const handleFileChange = (e: Event) => {
   <v-dialog
     :model-value="modelValue"
     @update:model-value="emit('update:modelValue', $event)"
-    max-width="1300px"
+    max-width="1400px"
     min-height="700px"
   >
     <v-card>
@@ -153,9 +153,24 @@ const handleFileChange = (e: Event) => {
               </template>
               <template #item.period="{ item }">
                 <div class="d-flex flex-column text-caption text-no-wrap py-1">
-                  <span>{{ toDateString(item.start, 'YYYY/MM/DD') }} <span class="text-grey">〜</span></span>
-                  <span>{{ toDateString(item.end, 'YYYY/MM/DD') }}</span>
+                  <span>
+                    {{ toDateString(item.start, item.attribute?.granularity === 'monthly' ? 'YYYY/MM' : 'YYYY/MM/DD') }}
+                    <span class="text-grey">〜</span>
+                  </span>
+                  <span>{{
+                    toDateString(item.end, item.attribute?.granularity === 'monthly' ? 'YYYY/MM' : 'YYYY/MM/DD')
+                  }}</span>
                 </div>
+              </template>
+              <template #item.granularity="{ item }">
+                <v-chip
+                  :color="item.attribute?.granularity === 'monthly' ? 'indigo' : 'teal'"
+                  size="small"
+                  variant="tonal"
+                  class="text-caption"
+                >
+                  {{ item.attribute?.granularity === 'monthly' ? '月単位' : '日単位' }}
+                </v-chip>
               </template>
               <template #item.actions="{ item }: { item: Project }">
                 <div class="d-flex justify-end align-center">

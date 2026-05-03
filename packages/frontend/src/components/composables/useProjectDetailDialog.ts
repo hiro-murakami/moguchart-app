@@ -154,10 +154,21 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
     const { valid } = (await form.value?.validate()) ?? { valid: false }
     if (!valid) return
 
+    // 月単位の場合、終了日をその月の末日に変換する
+    const granularity = localGranularity.value || props.project?.attribute?.granularity || 'daily'
+    const endValue =
+      granularity === 'monthly' && localEnd.value
+        ? (() => {
+            const [year, month] = localEnd.value.split('-').map(Number)
+            const lastDay = new Date(year, month, 0).getDate()
+            return `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
+          })()
+        : localEnd.value
+
     const projectData: Partial<Project> = {
       name: localName.value,
       start: localStart.value,
-      end: localEnd.value,
+      end: endValue,
       public: localPublic.value,
       attribute: {
         ...props.project?.attribute,

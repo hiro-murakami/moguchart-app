@@ -105,93 +105,109 @@ const duplicateProject: DuplicateProject = async (
     }
   }
 
-  return prisma.$transaction(async (tx) => {
-    // 新しいプロジェクトを作成
-    const newProject = await _upsertProject(tx, newProjectData, email)
+  return prisma.$transaction(
+    async (tx) => {
+      // 新しいプロジェクトを作成
+      const newProject = await _upsertProject(tx, newProjectData, email)
 
-    // 旧タスクID → 新タスクIDのマッピング（依存関係の更新に使用）
-    // dependenciesはstring[]として保存されているため、キーも文字列で扱う
-    const taskIdMap = new Map<string, string>()
-    // 依存関係を持つ新タスクの情報（後でIDを書き換えるために保持）
-    const createdTasksWithDependencies: { newId: number; attribute: any }[] = []
+      // 旧タスクID → 新タスクIDのマッピング（依存関係の更新に使用）
+      // dependenciesはstring[]として保存されているため、キーも文字列で扱う
+      const taskIdMap = new Map<string, string>()
+      // 依存関係を持つ新タスクの情報（後でIDを書き換えるために保持）
+      const createdTasksWithDependencies: { newId: number; attribute: any }[] = []
 
-    // 元のGanttRowとGanttTaskを新しいプロジェクトにコピー
-    for (const row of originalRows) {
-      const newRow = await tx.ganttRow.create({
-        data: {
-          name: row.name,
-          order: row.order,
-          visible: row.visible,
-          attribute: row.attribute ?? {},
-          project: {
-            connect: { id: newProject.id },
-          },
-          createdBy: email,
-          updatedBy: email,
-        },
-      })
-
-      for (const task of row.tasks) {
-        // タスク属性をコピーし、必要に応じて進捗率をクリア
-        const taskAttr = { ...((task.attribute as any) ?? {}) }
-        if (clearProgress) {
-          delete taskAttr.progress
-        }
-
-        const newTask = await tx.ganttTask.create({
+      // 元のGanttRowとGanttTaskを新しいプロジェクトにコピー
+      // 各行は順序を保つために逐次処理するが、各行内のタスクは並列で作成する
+      for (const row of originalRows) {
+        const newRow = await tx.ganttRow.create({
           data: {
-            name: task.name,
-            start: daysDiff !== 0 ? addDays(task.start, daysDiff) : task.start,
-            end: daysDiff !== 0 ? addDays(task.end, daysDiff) : task.end,
-            attribute: taskAttr,
-            rowId: newRow.id,
-            comments: {
-              create: task.comments.map((comment) => ({
-                content: comment.content,
-                createdBy: comment.createdBy,
-                updatedBy: comment.updatedBy,
-                createdAt: comment.createdAt,
-                updatedAt: comment.updatedAt,
-              })),
+            name: row.name,
+            order: row.order,
+            visible: row.visible,
+            attribute: row.attribute ?? {},
+            project: {
+              connect: { id: newProject.id },
             },
             createdBy: email,
             updatedBy: email,
           },
         })
 
-        // 旧ID → 新IDのマッピングを記録（文字列として保存する）
-        taskIdMap.set(String(task.id), String(newTask.id))
+        // タスクを並列で作成してタイムアウトを回避
+        const taskResults = await Promise.all(
+          row.tasks.map(async (task) => {
+            // タスク属性をコピーし、必要に応じて進捗率をクリア
+            const taskAttr = { ...((task.attribute as any) ?? {}) }
+            if (clearProgress) {
+              delete taskAttr.progress
+            }
 
-        // 依存関係を持つタスクは後で更新するために記録
-        if (taskAttr.dependencies && Array.isArray(taskAttr.dependencies) && taskAttr.dependencies.length > 0) {
-          createdTasksWithDependencies.push({ newId: newTask.id, attribute: taskAttr })
+            const newTask = await tx.ganttTask.create({
+              data: {
+                name: task.name,
+                start: daysDiff !== 0 ? addDays(task.start, daysDiff) : task.start,
+                end: daysDiff !== 0 ? addDays(task.end, daysDiff) : task.end,
+                attribute: taskAttr,
+                rowId: newRow.id,
+                comments: {
+                  create: task.comments.map((comment) => ({
+                    content: comment.content,
+                    createdBy: comment.createdBy,
+                    updatedBy: comment.updatedBy,
+                    createdAt: comment.createdAt,
+                    updatedAt: comment.updatedAt,
+                  })),
+                },
+                createdBy: email,
+                updatedBy: email,
+              },
+            })
+
+            return { oldId: String(task.id), newTask, taskAttr }
+          }),
+        )
+
+        for (const { oldId, newTask, taskAttr } of taskResults) {
+          // 旧ID → 新IDのマッピングを記録（文字列として保存する）
+          taskIdMap.set(oldId, String(newTask.id))
+
+          // 依存関係を持つタスクは後で更新するために記録
+          if (taskAttr.dependencies && Array.isArray(taskAttr.dependencies) && taskAttr.dependencies.length > 0) {
+            createdTasksWithDependencies.push({ newId: newTask.id, attribute: taskAttr })
+          }
         }
       }
-    }
 
-    // 依存関係のIDを新しいタスクIDに書き換える
-    for (const { newId, attribute } of createdTasksWithDependencies) {
-      // dependenciesはstring[]として保存されているため、文字列として検索する
-      const newDependencies = (attribute.dependencies as string[])
-        .map((oldId) => taskIdMap.get(String(oldId)))
-        .filter((newDepId): newDepId is string => newDepId !== undefined)
+      // 依存関係のIDを新しいタスクIDに書き換える（並列実行）
+      await Promise.all(
+        createdTasksWithDependencies.map(async ({ newId, attribute }) => {
+          // dependenciesはstring[]として保存されているため、文字列として検索する
+          const newDependencies = (attribute.dependencies as string[])
+            .map((oldId) => taskIdMap.get(String(oldId)))
+            .filter((newDepId): newDepId is string => newDepId !== undefined)
 
-      if (newDependencies.length > 0) {
-        await tx.ganttTask.update({
-          where: { id: newId },
-          data: {
-            attribute: {
-              ...attribute,
-              dependencies: newDependencies,
-            },
-            updatedBy: email,
-          },
-        })
-      }
-    }
+          if (newDependencies.length > 0) {
+            await tx.ganttTask.update({
+              where: { id: newId },
+              data: {
+                attribute: {
+                  ...attribute,
+                  dependencies: newDependencies,
+                },
+                updatedBy: email,
+              },
+            })
+          }
+        }),
+      )
 
-    return newProject.id
-  })
+      return newProject.id
+    },
+    {
+      // 大規模プロジェクトの複製でタイムアウトしないよう30秒に延長
+      timeout: 30000,
+    },
+  )
 }
 
 export default duplicateProject
