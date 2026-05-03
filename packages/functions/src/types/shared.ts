@@ -207,6 +207,8 @@ export type ProjectAttribute = {
 export type RowAttribute = {
   /** 行の説明 */
   description?: string
+  /** 行に適用するラベル */
+  labels?: Label[]
 }
 
 /** タスクの追加属性 */
@@ -230,6 +232,7 @@ export interface EditingRowData {
   id: number
   name: string
   description?: string
+  labels?: Label[]
 }
 
 /** フロントエンドの編集用：タスクデータ */

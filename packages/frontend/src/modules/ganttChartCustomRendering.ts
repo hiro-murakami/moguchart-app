@@ -426,6 +426,7 @@ export const rowHeaderContent = (row: moguchart.GanttRow) => {
   const rowWithAttr = row as any
   const description = rowWithAttr.attribute?.description as string | undefined
   const commentCount = rowWithAttr.commentCount as number | undefined
+  const labels = rowWithAttr.attribute?.labels as { name: string; color: string }[] | undefined
 
   const container = document.createElement('div')
   container.style.display = 'flex'
@@ -559,6 +560,29 @@ export const rowHeaderContent = (row: moguchart.GanttRow) => {
       descDiv.textContent = description
     }
     container.appendChild(descDiv)
+  }
+
+  if (labels && labels.length > 0) {
+    const labelsContainer = document.createElement('div')
+    labelsContainer.style.display = 'flex'
+    labelsContainer.style.flexWrap = 'wrap'
+    labelsContainer.style.gap = '3px'
+    labelsContainer.style.marginTop = '3px'
+
+    labels.forEach((l) => {
+      const labelSpan = document.createElement('span')
+      labelSpan.style.backgroundColor = l.color
+      labelSpan.style.color = getContrastColor(l.color)
+      labelSpan.style.padding = '0px 5px'
+      labelSpan.style.borderRadius = '3px'
+      labelSpan.style.fontSize = '10px'
+      labelSpan.style.fontWeight = 'bold'
+      labelSpan.style.lineHeight = '16px'
+      labelSpan.style.flexShrink = '0'
+      labelSpan.textContent = l.name
+      labelsContainer.appendChild(labelSpan)
+    })
+    container.appendChild(labelsContainer)
   }
 
   return container

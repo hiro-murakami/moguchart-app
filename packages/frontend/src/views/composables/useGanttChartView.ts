@@ -1978,11 +1978,12 @@ export const useGanttChartView = () => {
       id: rowId,
       name: row.name,
       description: attribute?.description || '',
+      labels: attribute?.labels ? attribute.labels.map((l) => ({ ...l })) : [],
     }
     isRowEditDialogVisible.value = true
   }
 
-  const saveRow = async (data: { id: number; name: string; description?: string }) => {
+  const saveRow = async (data: { id: number; name: string; description?: string; labels?: import('@functions/types/shared').Label[] }) => {
     await maybeAutoSnapshot()
 
     const row = rows.value.find((r) => Number(r.id) === data.id)
@@ -1991,6 +1992,7 @@ export const useGanttChartView = () => {
     const beforeName = row.name
     const beforeAttr = (row as any).attribute as RowAttribute | undefined
     const beforeDescription = beforeAttr?.description || ''
+    const beforeLabels = JSON.stringify(beforeAttr?.labels || [])
 
     await upsertGanttRow({
       id: data.id,
@@ -2001,11 +2003,12 @@ export const useGanttChartView = () => {
       attribute: {
         ...((row as any).attribute || {}),
         description: data.description || undefined,
+        labels: data.labels && data.labels.length > 0 ? data.labels : undefined,
       },
       tasks: [],
     })
 
-    if (beforeName !== data.name || beforeDescription !== (data.description || '')) {
+    if (beforeName !== data.name || beforeDescription !== (data.description || '') || beforeLabels !== JSON.stringify(data.labels || [])) {
       pushAction({
         description: '行編集',
         undo: async () => {
@@ -2018,6 +2021,7 @@ export const useGanttChartView = () => {
             attribute: {
               ...((row as any).attribute || {}),
               description: beforeDescription || undefined,
+              labels: beforeAttr?.labels && beforeAttr.labels.length > 0 ? beforeAttr.labels : undefined,
             },
             tasks: [],
           })
@@ -2033,6 +2037,7 @@ export const useGanttChartView = () => {
             attribute: {
               ...((row as any).attribute || {}),
               description: data.description || undefined,
+              labels: data.labels && data.labels.length > 0 ? data.labels : undefined,
             },
             tasks: [],
           })

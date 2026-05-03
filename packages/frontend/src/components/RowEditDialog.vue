@@ -2,8 +2,11 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import type { VForm } from 'vuetify/components'
 
+import LabelSelect from '@/components/LabelSelect.vue'
 import inputRules from '@/modules/inputRules'
+import { useProjectStore } from '@/stores/useProjectStore'
 import type { EditingRowData } from '@functions/types/shared'
+import { storeToRefs } from 'pinia'
 
 const props = defineProps<{
   modelValue: boolean
@@ -23,9 +26,13 @@ const isVisible = computed({
 const formRef = ref<VForm | null>(null)
 const formValid = ref(false)
 
+const projectStore = useProjectStore()
+const { labels: storeLabels } = storeToRefs(projectStore)
+
 const form = ref({
   name: '',
   description: '',
+  labels: [] as import('@functions/types/shared').Label[],
 })
 
 watch(
@@ -35,6 +42,7 @@ watch(
       form.value = {
         name: newRow.name,
         description: newRow.description || '',
+        labels: newRow.labels ? newRow.labels.map((l) => ({ ...l })) : [],
       }
       await nextTick()
       formRef.value?.validate()
@@ -51,6 +59,7 @@ const save = () => {
     id: props.row.id,
     name: form.value.name,
     description: form.value.description,
+    labels: form.value.labels,
   })
 }
 </script>
@@ -75,6 +84,9 @@ const save = () => {
                 autocomplete="off"
                 class="mb-3"
               />
+            </v-col>
+            <v-col cols="12" class="mb-3">
+              <LabelSelect v-model="form.labels" :items="storeLabels" />
             </v-col>
             <v-col cols="12">
               <v-textarea
