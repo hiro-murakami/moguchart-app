@@ -89,8 +89,10 @@ export type Label = {
 
 /** プロジェクトごとの設定 */
 export type ProjectSettings = {
-  /** ズームレベル（1日あたりのpx数） */
+  /** ズームレベル（1日あたりのpx数）: 日単位表示時に使用 */
   pxPerDay?: number
+  /** ズームレベル（1月あたりのpx数）: 月単位表示時に使用 */
+  pxPerMonth?: number
   /** 選択されたラベル（フィルタリング用） */
   selectedLabels?: string[]
   /** 非表示行を表示するかどうか */
@@ -148,6 +150,9 @@ export type Milestone = {
   color: string
 }
 
+/** プロジェクトの表示粒度 */
+export type ProjectGranularity = 'daily' | 'monthly'
+
 /** プロジェクトの追加属性 */
 export type ProjectAttribute = {
   /** プロジェクトの説明 */
@@ -168,6 +173,12 @@ export type ProjectAttribute = {
   archived?: boolean
   /** アーカイブ日時（ISO 8601形式） */
   archivedAt?: string
+  /**
+   * チャートの表示粒度（作成時に決定し、変更不可）
+   * 'daily': 日単位表示（デフォルト）
+   * 'monthly': 月単位表示
+   */
+  granularity?: ProjectGranularity
 }
 
 /** 行（グループ）の追加属性 */

@@ -72,6 +72,7 @@ export const useGanttChartView = () => {
   const chartStartStr = ref('2025-12-15')
   const chartEndStr = ref('2026-03-31')
   const pxPerDay = ref(28)
+  const pxPerMonth = ref(200)
   const rowHeaderWidth = ref(200)
   const barHeight = ref(38)
   const barMargin = ref(4)
@@ -186,6 +187,7 @@ export const useGanttChartView = () => {
   const saveProjectSettings = debounce(
     async (settings: {
       pxPerDay?: number
+      pxPerMonth?: number
       selectedLabels?: string[]
       showHiddenRows?: boolean
       showCurrentTimeLine?: boolean
@@ -215,6 +217,11 @@ export const useGanttChartView = () => {
   // pxPerDay変更時に保存
   watch(pxPerDay, (newValue) => {
     saveProjectSettings({ pxPerDay: newValue })
+  })
+
+  // pxPerMonth変更時に保存
+  watch(pxPerMonth, (newValue) => {
+    saveProjectSettings({ pxPerMonth: newValue })
   })
 
   // 行ヘッダー幅変更時に保存
@@ -271,6 +278,13 @@ export const useGanttChartView = () => {
           pxPerDay.value = settings.pxPerDay
         } else {
           pxPerDay.value = 28
+        }
+
+        // pxPerMonthの復元
+        if (settings?.pxPerMonth) {
+          pxPerMonth.value = settings.pxPerMonth
+        } else {
+          pxPerMonth.value = 200
         }
 
         // rowHeaderWidthの復元
@@ -477,6 +491,9 @@ export const useGanttChartView = () => {
       color: ms.color,
     }))
 
+    // 月単位表示かどうか
+    const isMonthly = currentProject.value?.attribute?.granularity === 'monthly'
+
     return {
       bar: {
         height: barHeight.value,
@@ -490,14 +507,25 @@ export const useGanttChartView = () => {
         start: toLocalDate(chartStartStr.value),
         end: toLocalDate(chartEndStr.value),
         pxPerDay: pxPerDay.value,
+        ...(isMonthly
+          ? {
+              // 月単位表示: pxPerMonth を直接使用
+              pxPerMonth: pxPerMonth.value,
+              showDays: false,
+              showWeeks: false,
+              showMonthsRow: true,
+              monthTextAlign: 'left' as const,
+            }
+          : {
+              // 日単位表示: pxPerDay が 20 未満の場合は週番号表示に切り替え
+              ...(pxPerDay.value < 20 ? { showWeeks: true, showDays: false, weekStartDay: 1 as const } : {}),
+              weekTextAlign: 'left' as const,
+              weekFormat: (_: number, startDate: Date) => startDate.getDate().toString(),
+            }),
         isHoliday: holiday_jp.isHoliday,
         showCurrentTime: showCurrentTimeLine.value,
         currentTimeUpdateInterval: 1000 * 60,
         milestones: milestones.length > 0 ? milestones : undefined,
-        // pxPerDay が 20 未満の場合は日付セルが狭すぎるため、週番号表示に切り替え
-        ...(pxPerDay.value < 20 ? { showWeeks: true, showDays: false, weekStartDay: 1 as const } : {}),
-        weekTextAlign: 'left',
-        weekFormat: (_, startDate) => startDate.getDate().toString(),
       },
       rowHeader: {
         maxWidth: 400,
@@ -2924,6 +2952,7 @@ export const useGanttChartView = () => {
     showCurrentTimeLine,
     readonlyMode,
     pxPerDay,
+    pxPerMonth,
     barHeight,
     addRowCount,
     manualAddRowCount,

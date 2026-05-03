@@ -4,6 +4,7 @@ import {
   downloadProjectZip,
   restoreProject as restoreProjectScript,
   upsertProject as upsertProjectScript,
+  upsertGanttRow,
 } from '@/modules/scripts'
 import { useConfirm } from '@/composables/useConfirm'
 import { useSnackbar } from '@/composables/useSnackbar'
@@ -126,12 +127,27 @@ export const useProjectListDialog = (
 
   const saveProject = async (project: Partial<Project>) => {
     saving.value = true
+    const isNew = projectToEdit.value === null
     try {
       const projectId = await projectStore.updateProject(project as Project)
       isProjectDetailDialogVisible.value = false
       await fetchProjects() // Storeを最新の状態にする
 
       if (projectId) {
+        // 新規作成時は初期行を3行作成する
+        if (isNew) {
+          const initialRows = [1, 2, 3].map((order) => ({
+            id: 0, // 新規作成なので0
+            projectId,
+            name: `新規行${order}`,
+            order,
+            visible: true,
+            attribute: {},
+            tasks: [],
+          }))
+          await Promise.all(initialRows.map((row) => upsertGanttRow(row)))
+        }
+
         emit('select', projectId)
         close()
       }

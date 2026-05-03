@@ -33,6 +33,7 @@ const {
   localMilestones,
   localHistoryIntervalMinutes,
   localHistoryRetentionDays,
+  localGranularity,
   authorityHistoryUsers,
   title,
   close,
@@ -160,12 +161,45 @@ watch(
                       />
                     </v-col>
                     <v-col cols="12">
-                      <v-checkbox v-model="localPublic" density="compact">
+                      <v-checkbox v-model="localPublic" density="compact" hide-details>
                         <template v-slot:label>
                           一般公開
                           <HelpText text="ONにすると全てのユーザーが参照できるようになります" />
                         </template>
                       </v-checkbox>
+                    </v-col>
+                    <!-- 表示粒度（作成時のみ変更可） -->
+                    <v-col cols="12" class="mb-4">
+                      <template v-if="!props.project">
+                        <div class="text-caption text-medium-emphasis mb-1 d-flex align-center">
+                          チャートの表示粒度
+                          <HelpText text="作成後は変更できません" class="ml-1" />
+                        </div>
+                        <v-btn-toggle
+                          v-model="localGranularity"
+                          mandatory
+                          density="compact"
+                          variant="outlined"
+                          color="primary"
+                          rounded="lg"
+                        >
+                          <v-btn value="daily" prepend-icon="mdi-calendar-today" size="small"> 日単位 </v-btn>
+                          <v-btn value="monthly" prepend-icon="mdi-calendar-month" size="small"> 月単位 </v-btn>
+                        </v-btn-toggle>
+                      </template>
+                      <template v-else>
+                        <div class="text-caption text-medium-emphasis mb-1 d-flex align-center">
+                          チャートの表示粒度
+                          <HelpText text="作成時に決定されたため変更できません" class="ml-1" />
+                        </div>
+                        <v-chip
+                          :prepend-icon="localGranularity === 'monthly' ? 'mdi-calendar-month' : 'mdi-calendar-today'"
+                          variant="tonal"
+                          size="small"
+                        >
+                          {{ localGranularity === 'monthly' ? '月単位' : '日単位' }}
+                        </v-chip>
+                      </template>
                     </v-col>
                     <v-col cols="6">
                       <v-select
@@ -330,7 +364,16 @@ watch(
       <v-card-actions class="pa-8 pt-0">
         <v-spacer></v-spacer>
         <v-btn color="grey-darken-1" variant="text" :disabled="props.saving" @click="close"> キャンセル </v-btn>
-        <v-btn color="primary" variant="flat" :loading="props.saving" :disabled="props.saving" @click="save" class="ml-2"> OK </v-btn>
+        <v-btn
+          color="primary"
+          variant="flat"
+          :loading="props.saving"
+          :disabled="props.saving"
+          @click="save"
+          class="ml-2"
+        >
+          OK
+        </v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>

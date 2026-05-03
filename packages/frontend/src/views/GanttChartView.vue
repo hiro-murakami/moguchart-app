@@ -29,6 +29,7 @@ const {
   readonlyMode,
   currentRole,
   pxPerDay,
+  pxPerMonth,
   barHeight,
   addRowCount,
   manualAddRowCount,
@@ -302,9 +303,11 @@ const handleExportPdf = async () => {
           v-model:show-hidden-rows="showHiddenRows"
           v-model:show-current-time-line="showCurrentTimeLine"
           v-model:px-per-day="pxPerDay"
+          v-model:px-per-month="pxPerMonth"
           v-model:bar-height="barHeight"
           v-model:readonly-mode="readonlyMode"
           :can-edit="currentRole !== 'viewer'"
+          :granularity="currentProject?.attribute?.granularity"
         />
       </div>
 

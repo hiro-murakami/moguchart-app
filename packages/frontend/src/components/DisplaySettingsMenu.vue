@@ -11,7 +11,9 @@ defineProps<{
   readonlyMode?: boolean
   canEdit?: boolean
   pxPerDay: number
+  pxPerMonth: number
   barHeight: number
+  granularity?: 'daily' | 'monthly'
 }>()
 
 const emit = defineEmits<{
@@ -19,6 +21,7 @@ const emit = defineEmits<{
   'update:showCurrentTimeLine': [value: boolean]
   'update:readonlyMode': [value: boolean]
   'update:pxPerDay': [value: number]
+  'update:pxPerMonth': [value: number]
   'update:barHeight': [value: number]
 }>()
 
@@ -43,7 +46,7 @@ const currentTheme = computed({
       },
     }
     await userStore.saveUser(updatedUser)
-  }
+  },
 })
 </script>
 
@@ -83,9 +86,23 @@ const currentTheme = computed({
         @update:model-value="emit('update:readonlyMode', $event as boolean)"
       />
       <div class="text-caption text-medium-emphasis mb-1">表示倍率</div>
+      <!-- 日単位模式 -->
       <ZoomControls
+        v-if="granularity !== 'monthly'"
         :model-value="pxPerDay"
+        :min="10"
+        :max="80"
+        :step="5"
         @update:model-value="emit('update:pxPerDay', $event)"
+      />
+      <!-- 月単位模式 -->
+      <ZoomControls
+        v-else
+        :model-value="pxPerMonth"
+        :min="20"
+        :max="80"
+        :step="5"
+        @update:model-value="emit('update:pxPerMonth', $event)"
       />
       <div class="text-caption text-medium-emphasis mb-1 mt-3">バーの高さ</div>
       <v-btn-toggle
