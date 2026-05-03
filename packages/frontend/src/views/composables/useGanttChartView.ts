@@ -165,11 +165,15 @@ export const useGanttChartView = () => {
   const currentRole = computed(() => (isSnapshotMode.value ? 'viewer' : storeRole.value))
   const { currentTheme } = storeToRefs(userStore)
 
-  // プロジェクト名に応じてブラウザのタブタイトルを更新
+  // プロジェクトの変更に応じてブラウザのタブタイトルと期間を更新
   watch(
     currentProject,
     (project) => {
       document.title = project?.name ? `MoguChart - ${project.name}` : 'MoguChart'
+      if (project && !isSnapshotMode.value) {
+        chartStartStr.value = project.start
+        chartEndStr.value = project.end
+      }
     },
     { immediate: true },
   )
