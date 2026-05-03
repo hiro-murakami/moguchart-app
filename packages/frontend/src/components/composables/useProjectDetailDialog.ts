@@ -1,6 +1,7 @@
 import type { ColorPalette, Label, Milestone, Project, User, ProjectGranularity } from '@functions/types/shared'
 import { upsertUser } from '@/modules/scripts'
 import { useUserStore } from '@/stores/useUserStore'
+import { DEFAULT_COLOR_PALETTES } from '@functions/types/shared'
 import { isEqual, debounce } from 'lodash'
 import { computed, ref, watch } from 'vue'
 import type { VForm } from 'vuetify/components'
@@ -88,7 +89,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
           localOwners.value = []
           localEditors.value = []
           localViewers.value = []
-          localColorPalettes.value = []
+          localColorPalettes.value = DEFAULT_COLOR_PALETTES.map((p) => ({ ...p }))
           localLabels.value = []
           localMilestones.value = []
           localHistoryIntervalMinutes.value = 0
@@ -159,7 +160,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
     const endValue =
       granularity === 'monthly' && localEnd.value
         ? (() => {
-            const [year, month] = localEnd.value.split('-').map(Number)
+            const [year = 0, month = 1] = localEnd.value.split('-').map(Number)
             const lastDay = new Date(year, month, 0).getDate()
             return `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
           })()

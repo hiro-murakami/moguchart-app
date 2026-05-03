@@ -1,26 +1,7 @@
 import { defineStore } from 'pinia'
 import type { Project, Role, ColorPalette, Label } from '@functions/types/shared'
+import { DEFAULT_COLOR_PALETTES } from '@functions/types/shared'
 import { selectProjects, upsertProject } from '@/modules/scripts'
-
-// 共通カラーパレット (16色固定)
-const DEFAULT_COLOR_PALETTES: ColorPalette[] = [
-  { name: 'Black', color: '#ffffff', backgroundColor: '#000000' }, // Black
-  { name: 'Red', color: '#ffffff', backgroundColor: '#ef5350' }, // Red 400
-  { name: 'Pink', color: '#ffffff', backgroundColor: '#ec407a' }, // Pink 400
-  { name: 'Purple', color: '#ffffff', backgroundColor: '#ab47bc' }, // Purple 400
-  { name: 'Deep Purple', color: '#ffffff', backgroundColor: '#7e57c2' }, // Deep Purple 400
-  { name: 'Indigo', color: '#ffffff', backgroundColor: '#5c6bc0' }, // Indigo 400
-  { name: 'Blue', color: '#ffffff', backgroundColor: '#42a5f5' }, // Blue 400
-  { name: 'Light Blue', color: '#000000', backgroundColor: '#29b6f6' }, // Light Blue 400
-  { name: 'Cyan', color: '#000000', backgroundColor: '#26c6da' }, // Cyan 400
-  { name: 'Teal', color: '#ffffff', backgroundColor: '#26a69a' }, // Teal 400
-  { name: 'Green', color: '#000000', backgroundColor: '#66bb6a' }, // Green 400
-  { name: 'Light Green', color: '#000000', backgroundColor: '#9ccc65' }, // Light Green 400
-  { name: 'Lime', color: '#000000', backgroundColor: '#d4e157' }, // Lime 400
-  { name: 'Yellow', color: '#000000', backgroundColor: '#ffee58' }, // Yellow 400
-  { name: 'Orange', color: '#000000', backgroundColor: '#ffa726' }, // Orange 400
-  { name: 'Brown', color: '#ffffff', backgroundColor: '#8d6e63' }, // Brown 400
-]
 
 export const useProjectStore = defineStore('project', {
   state: () => ({
@@ -36,8 +17,7 @@ export const useProjectStore = defineStore('project', {
       return this.currentProject?.role ?? 'viewer'
     },
     colorPalettes(): ColorPalette[] {
-      const projectPalettes = this.currentProject?.attribute.colorPalettes ?? []
-      return [...DEFAULT_COLOR_PALETTES, ...projectPalettes]
+      return this.currentProject?.attribute.colorPalettes ?? DEFAULT_COLOR_PALETTES
     },
     labels(): Label[] {
       return this.currentProject?.attribute.labels ?? []

@@ -8,16 +8,17 @@ const prisma = new PrismaClient({ adapter })
 const projectId = '3f333df6-90a4-4fda-8dd3-9485d27cee36'
 const monthlyProjectId = 'b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c'
 
+import { DEFAULT_COLOR_PALETTES } from '../src/types/shared'
+
 // ============================================================
 // カラーパレット定義
 // ============================================================
-const colorPalettes = {
-  blue: { name: 'Blue', color: '#ffffff', backgroundColor: '#2b6cb0' },
-  green: { name: 'Green', color: '#ffffff', backgroundColor: '#2f855a' },
-  orange: { name: 'Orange', color: '#ffffff', backgroundColor: '#c05621' },
-  purple: { name: 'Purple', color: '#ffffff', backgroundColor: '#805ad5' },
-  red: { name: 'Red', color: '#ffffff', backgroundColor: '#c53030' },
-  teal: { name: 'Teal', color: '#ffffff', backgroundColor: '#2c7a7b' },
+const colorPalettes: Record<string, any> = {
+  ...DEFAULT_COLOR_PALETTES.reduce((acc, p) => {
+    const key = p.name!.replace(/\s+(.)/g, (_, c) => c.toUpperCase()).replace(/^(.)/, (_, c) => c.toLowerCase())
+    acc[key] = p
+    return acc
+  }, {} as Record<string, any>),
   pending: {
     name: 'Pending',
     color: '#ffffff',
