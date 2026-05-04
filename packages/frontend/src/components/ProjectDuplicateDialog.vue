@@ -86,7 +86,7 @@ const {
                   <v-col cols="6">
                     <DateInput
                       v-model="localStart"
-                      :type="props.project?.attribute?.granularity === 'monthly' ? 'month' : 'date'"
+                      :type="props.project?.attribute?.granularity === 'monthly' ? 'month' : props.project?.attribute?.granularity === 'hourly' ? 'datetime-local' : 'date'"
                       label-daily="開始日"
                       label-monthly="開始月"
                       :compare-target="localEnd"
@@ -97,7 +97,7 @@ const {
                   <v-col cols="6">
                     <DateInput
                       v-model="localEnd"
-                      :type="props.project?.attribute?.granularity === 'monthly' ? 'month' : 'date'"
+                      :type="props.project?.attribute?.granularity === 'monthly' ? 'month' : props.project?.attribute?.granularity === 'hourly' ? 'datetime-local' : 'date'"
                       label-daily="終了日"
                       label-monthly="終了月"
                       :compare-target="localStart"

@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE `Project` MODIFY `start` DATETIME(3) NOT NULL,
+    MODIFY `end` DATETIME(3) NOT NULL;

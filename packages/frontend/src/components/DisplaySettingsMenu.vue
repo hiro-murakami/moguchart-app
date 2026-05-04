@@ -12,8 +12,9 @@ defineProps<{
   canEdit?: boolean
   pxPerDay: number
   pxPerMonth: number
+  pxPerHour: number
   barHeight: number
-  granularity?: 'daily' | 'monthly'
+  granularity?: 'daily' | 'monthly' | 'hourly'
 }>()
 
 const emit = defineEmits<{
@@ -22,6 +23,7 @@ const emit = defineEmits<{
   'update:readonlyMode': [value: boolean]
   'update:pxPerDay': [value: number]
   'update:pxPerMonth': [value: number]
+  'update:pxPerHour': [value: number]
   'update:barHeight': [value: number]
 }>()
 
@@ -88,7 +90,7 @@ const currentTheme = computed({
       <div class="text-caption text-medium-emphasis mb-1">表示倍率</div>
       <!-- 日単位模式 -->
       <ZoomControls
-        v-if="granularity !== 'monthly'"
+        v-if="granularity !== 'monthly' && granularity !== 'hourly'"
         :model-value="pxPerDay"
         :min="10"
         :max="80"
@@ -97,12 +99,21 @@ const currentTheme = computed({
       />
       <!-- 月単位模式 -->
       <ZoomControls
-        v-else
+        v-else-if="granularity === 'monthly'"
         :model-value="pxPerMonth"
         :min="20"
         :max="80"
         :step="5"
         @update:model-value="emit('update:pxPerMonth', $event)"
+      />
+      <!-- 時間単位模式 -->
+      <ZoomControls
+        v-else
+        :model-value="pxPerHour"
+        :min="20"
+        :max="100"
+        :step="5"
+        @update:model-value="emit('update:pxPerHour', $event)"
       />
       <div class="text-caption text-medium-emphasis mb-1 mt-3">バーの高さ</div>
       <v-btn-toggle

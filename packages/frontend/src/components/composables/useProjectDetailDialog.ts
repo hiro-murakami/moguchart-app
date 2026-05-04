@@ -36,6 +36,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
   const localHistoryIntervalMinutes = ref<number>(0)
   const localHistoryRetentionDays = ref<number>(0)
   const localGranularity = ref<ProjectGranularity>('daily')
+  const localSnapDurationMinutes = ref<number>(60)
 
   /** 過去に入力したことのあるメールアドレスを User[] 形式で返す（補完候補用） */
   const authorityHistoryUsers = computed<User[]>(() => {
@@ -77,6 +78,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
           localHistoryIntervalMinutes.value = props.project.attribute.historyIntervalMinutes || 0
           localHistoryRetentionDays.value = props.project.attribute.historyRetentionDays || 7
           localGranularity.value = props.project.attribute.granularity || 'daily'
+          localSnapDurationMinutes.value = props.project.attribute.snapDurationMinutes || 60
           // await nextTick() // DOMの更新を待つ
           // form.value?.validate()
         } else {
@@ -95,6 +97,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
           localHistoryIntervalMinutes.value = 0
           localHistoryRetentionDays.value = 7
           localGranularity.value = 'daily'
+          localSnapDurationMinutes.value = 60
           // form.value?.resetValidation()
         }
       } else {
@@ -181,6 +184,10 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
         historyRetentionDays: localHistoryRetentionDays.value || undefined,
         // granularity は新規作成時のみ設定（編集時は既存値を保持）
         ...(!isEdit.value ? { granularity: localGranularity.value } : {}),
+        // snapDurationMinutes は hourly モード時のみ保存
+        ...(localGranularity.value === 'hourly' || props.project?.attribute?.granularity === 'hourly'
+          ? { snapDurationMinutes: localSnapDurationMinutes.value }
+          : {}),
       },
       authority: {
         owners: localOwners.value,
@@ -237,6 +244,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
     localMilestones,
     localHistoryRetentionDays,
     localGranularity,
+    localSnapDurationMinutes,
     authorityHistoryUsers,
     title,
     close,

@@ -22,7 +22,7 @@ import { useConfirm } from '@/composables/useConfirm'
 import { usePrompt } from '@/composables/usePrompt'
 import { useLoading } from '@/composables/useLoading'
 import { useExportData } from '@/composables/useExportData'
-import { toDateString, toLocalDate, getContrastColor } from '@/modules/utils'
+import { toDateString, toDateTimeString, toLocalDate, getContrastColor } from '@/modules/utils'
 import {
   barContent,
   tooltip,
@@ -75,6 +75,7 @@ export const useGanttChartView = () => {
   const chartEndStr = ref('2026-03-31')
   const pxPerDay = ref(28)
   const pxPerMonth = ref(40)
+  const pxPerHour = ref(40)
   const rowHeaderWidth = ref(200)
   const barHeight = ref(38)
   const barMargin = ref(4)
@@ -194,6 +195,7 @@ export const useGanttChartView = () => {
     async (settings: {
       pxPerDay?: number
       pxPerMonth?: number
+      pxPerHour?: number
       selectedLabels?: string[]
       showHiddenRows?: boolean
       showCurrentTimeLine?: boolean
@@ -228,6 +230,11 @@ export const useGanttChartView = () => {
   // pxPerMonth変更時に保存
   watch(pxPerMonth, (newValue) => {
     saveProjectSettings({ pxPerMonth: newValue })
+  })
+
+  // pxPerHour変更時に保存
+  watch(pxPerHour, (newValue) => {
+    saveProjectSettings({ pxPerHour: newValue })
   })
 
   // 行ヘッダー幅変更時に保存
@@ -291,6 +298,13 @@ export const useGanttChartView = () => {
           pxPerMonth.value = settings.pxPerMonth
         } else {
           pxPerMonth.value = 40
+        }
+
+        // pxPerHourの復元
+        if (settings?.pxPerHour) {
+          pxPerHour.value = settings.pxPerHour
+        } else {
+          pxPerHour.value = 40
         }
 
         // rowHeaderWidthの復元
@@ -513,6 +527,10 @@ export const useGanttChartView = () => {
 
     // 月単位表示かどうか
     const isMonthly = currentProject.value?.attribute?.granularity === 'monthly'
+    // 時間単位表示かどうか
+    const isHourly = currentProject.value?.attribute?.granularity === 'hourly'
+    // 1時間あたりのpx数をpxPerDayに換算
+    const pxPerDayFromHour = pxPerHour.value * 24
 
     return {
       bar: {
@@ -526,7 +544,7 @@ export const useGanttChartView = () => {
       calendar: {
         start: toLocalDate(chartStartStr.value),
         end: toLocalDate(chartEndStr.value),
-        pxPerDay: pxPerDay.value,
+        pxPerDay: isHourly ? pxPerDayFromHour : pxPerDay.value,
         ...(isMonthly
           ? {
               // 月単位表示: pxPerMonth を直接使用
@@ -536,13 +554,21 @@ export const useGanttChartView = () => {
               showMonthsRow: true,
               monthTextAlign: 'left' as const,
             }
-          : {
-              // 日単位表示: pxPerDay が 20 未満の場合は週番号表示に切り替え
-              ...(pxPerDay.value < 20 ? { showWeeks: true, showDays: false, weekStartDay: 1 as const } : {}),
-              weekTextAlign: 'left' as const,
-              weekFormat: (_: number, startDate: Date) => startDate.getDate().toString(),
-            }),
-        isHoliday: holiday_jp.isHoliday,
+          : isHourly
+            ? {
+                // 時間単位表示: 時刻グリッドを表示、年月ヘッダーは非表示
+                showTime: true,
+                showMonths: false,
+                showWeeks: false,
+                weekTextAlign: 'left' as const,
+              }
+            : {
+                // 日単位表示: pxPerDay が 20 未満の場合は週番号表示に切り替え
+                ...(pxPerDay.value < 20 ? { showWeeks: true, showDays: false, weekStartDay: 1 as const } : {}),
+                weekTextAlign: 'left' as const,
+                weekFormat: (_: number, startDate: Date) => startDate.getDate().toString(),
+              }),
+        ...(isHourly ? {} : { isHoliday: holiday_jp.isHoliday }),
         showCurrentTime: showCurrentTimeLine.value,
         currentTimeUpdateInterval: 1000 * 60,
         milestones: milestones.length > 0 ? milestones : undefined,
@@ -552,9 +578,25 @@ export const useGanttChartView = () => {
         width: rowHeaderWidth.value,
       },
       enableRowReordering: true,
+      snapDuration: isHourly ? (currentProject.value?.attribute?.snapDurationMinutes ?? 60) : 1440,
       readOnly: isReadOnly.value,
       showHiddenRows: showHiddenRows.value,
       theme: currentTheme.value,
+      // 時間単位表示では曜日・祝日の背景色を無効化する
+      ...(isHourly
+        ? {
+            customTheme: {
+              saturday: '',
+              sunday: '',
+              holiday: '',
+              monday: '',
+              tuesday: '',
+              wednesday: '',
+              thursday: '',
+              friday: '',
+            },
+          }
+        : {}),
       customRendering: {
         barContent,
         tooltip,
@@ -1026,8 +1068,8 @@ export const useGanttChartView = () => {
           id: Number(taskItem.id),
           rowId: Number(taskRow.id),
           name: taskItem.name || '',
-          start: toDateString(taskItem.start),
-          end: toDateString(taskItem.end),
+          start: toDateTimeString(taskItem.start),
+          end: toDateTimeString(taskItem.end),
           attribute: attr ? { ...attr } : {},
         })
 
@@ -1035,8 +1077,8 @@ export const useGanttChartView = () => {
           id: Number(taskItem.id),
           rowId: Number(taskRow.id),
           name: taskItem.name || '',
-          start: toDateString(new Date(taskItem.start.getTime() + timeDiff)),
-          end: toDateString(new Date(taskItem.end.getTime() + timeDiff)),
+          start: toDateTimeString(new Date(taskItem.start.getTime() + timeDiff)),
+          end: toDateTimeString(new Date(taskItem.end.getTime() + timeDiff)),
           attribute: attr ? { ...attr } : {},
         })
       }
@@ -1069,8 +1111,8 @@ export const useGanttChartView = () => {
       id: e.detail.mode === 'copy' ? 0 : Number(e.detail.id),
       rowId: Number(e.detail.targetRowId),
       name: e.detail.name || '',
-      start: toDateString(e.detail.start),
-      end: toDateString(e.detail.end),
+      start: toDateTimeString(e.detail.start),
+      end: toDateTimeString(e.detail.end),
       attribute: {},
     }
 
@@ -1119,8 +1161,8 @@ export const useGanttChartView = () => {
         id: Number(task.id),
         rowId: Number(row.id),
         name: task.name || '',
-        start: toDateString(task.start),
-        end: toDateString(task.end),
+        start: toDateTimeString(task.start),
+        end: toDateTimeString(task.end),
         attribute: { ...((task as any).attribute || {}) },
       }
       pushAction({
@@ -1170,8 +1212,8 @@ export const useGanttChartView = () => {
       id: Number(targetTask.id),
       rowId: Number(targetRow.id),
       name: targetTask.name || '',
-      start: toDateString(targetTask.start),
-      end: toDateString(targetTask.end),
+      start: toDateTimeString(targetTask.start),
+      end: toDateTimeString(targetTask.end),
       attribute: { ...attribute, dependencies: newDependencies },
     }
 
@@ -1240,8 +1282,8 @@ export const useGanttChartView = () => {
       id: Number(targetTask.id),
       rowId: Number(targetRow.id),
       name: targetTask.name || '',
-      start: toDateString(targetTask.start),
-      end: toDateString(targetTask.end),
+      start: toDateTimeString(targetTask.start),
+      end: toDateTimeString(targetTask.end),
       attribute: { ...attribute, dependencies: newDependencies },
     }
 
@@ -1369,8 +1411,8 @@ export const useGanttChartView = () => {
         id: 0, // 新規作成
         rowId: Number(targetRowId),
         name: task.name,
-        start: toDateString(newStart),
-        end: toDateString(newEnd),
+        start: toDateTimeString(newStart),
+        end: toDateTimeString(newEnd),
         attribute: {
           ...(taskAny.attribute || {}),
           description: taskAny.attribute?.description || '',
@@ -1494,13 +1536,14 @@ export const useGanttChartView = () => {
         id: task.id,
         rowId: row.id,
         name: task.name || '',
-        start: toDateString(task.start),
-        end: toDateString(task.end),
+        start: toDateTimeString(task.start),
+        end: toDateTimeString(task.end),
         description: taskWithAttr.attribute?.description || '',
         colorPalette: taskWithAttr.attribute?.colorPalette ? { ...taskWithAttr.attribute.colorPalette } : undefined,
         labels: taskWithAttr.attribute?.labels ? [...taskWithAttr.attribute.labels] : [],
         lock: taskWithAttr.attribute?.lock,
         progress: taskWithAttr.attribute?.progress,
+        dependencies: taskWithAttr.attribute?.dependencies ? [...taskWithAttr.attribute.dependencies] : undefined,
       }
       isDialogVisible.value = true
       // 他ユーザーにこのタスクを編集中であることを通知
@@ -1570,6 +1613,7 @@ export const useGanttChartView = () => {
         labels: taskData.labels,
         lock: taskData.lock || undefined,
         progress: taskData.progress != null ? taskData.progress : undefined,
+        dependencies: taskData.dependencies && taskData.dependencies.length > 0 ? taskData.dependencies : undefined,
       },
     }
 
@@ -1606,14 +1650,15 @@ export const useGanttChartView = () => {
           id: Number(beforeTask.id),
           rowId: Number(beforeRow.id),
           name: beforeTask.name || '',
-          start: toDateString(beforeTask.start),
-          end: toDateString(beforeTask.end),
+          start: toDateTimeString(beforeTask.start),
+          end: toDateTimeString(beforeTask.end),
           attribute: {
             description: beforeAttr?.description || undefined,
             colorPalette: beforeAttr?.colorPalette ? { ...beforeAttr.colorPalette } : undefined,
             labels: beforeAttr?.labels ? [...beforeAttr.labels] : undefined,
             lock: beforeAttr?.lock,
             progress: beforeAttr?.progress,
+            dependencies: beforeAttr?.dependencies ? [...beforeAttr.dependencies] : undefined,
           },
         }
         pushAction({
@@ -1670,8 +1715,8 @@ export const useGanttChartView = () => {
             id: 0, // Undo時は新規作成として復元
             rowId: Number(row.id),
             name: task.name || '',
-            start: toDateString(task.start),
-            end: toDateString(task.end),
+            start: toDateTimeString(task.start),
+            end: toDateTimeString(task.end),
             attribute: attr ? { ...attr } : {},
           },
         })
@@ -1717,8 +1762,8 @@ export const useGanttChartView = () => {
               const matchingTask = row.tasks.find(
                 (t) =>
                   t.name === dt.taskData.name &&
-                  toDateString(t.start) === dt.taskData.start &&
-                  toDateString(t.end) === dt.taskData.end,
+                  toDateTimeString(t.start) === dt.taskData.start &&
+                  toDateTimeString(t.end) === dt.taskData.end,
               )
               if (matchingTask) {
                 currentTaskIds.push(Number(matchingTask.id))
@@ -2564,8 +2609,8 @@ export const useGanttChartView = () => {
               id: 0, // Undo時は新規作成
               rowId: 0, // 復元後に設定
               name: t.name || '',
-              start: toDateString(t.start),
-              end: toDateString(t.end),
+              start: toDateTimeString(t.start),
+              end: toDateTimeString(t.end),
               attribute: tAttr ? { ...tAttr } : {},
             }
           }),
@@ -2785,8 +2830,8 @@ export const useGanttChartView = () => {
         id: 0,
         rowId: Number(rowId),
         name: t.name,
-        start: toDateString(startDate),
-        end: toDateString(endDate),
+        start: toDateTimeString(startDate),
+        end: toDateTimeString(endDate),
         attribute: {
           description: t.description,
           colorPalette: t.colorPalette,
@@ -2893,15 +2938,22 @@ export const useGanttChartView = () => {
     await new Promise((resolve) => setTimeout(resolve, 200))
     
     const isMonthly = currentProject.value?.attribute?.granularity === 'monthly'
+    const isHourly = currentProject.value?.attribute?.granularity === 'hourly'
     
     editingTask.value = {
       id: '', // 新規作成
       rowId: rowId,
       name: '新規タスク',
-      start: isMonthly ? dayjs(date).startOf('month').format('YYYY-MM-DD') : toDateString(date),
+      start: isMonthly
+        ? dayjs(date).startOf('month').format('YYYY-MM-DD')
+        : isHourly
+          ? dayjs(date).format('YYYY-MM-DD HH:00:00')
+          : toDateString(date),
       end: isMonthly
         ? dayjs(date).startOf('month').add(3, 'month').format('YYYY-MM-DD') // デフォルト3ヶ月分
-        : toDateString(new Date(date.getTime() + 2 * 24 * 60 * 60 * 1000)), // デフォルト2日
+        : isHourly
+          ? dayjs(date).add(2, 'hour').format('YYYY-MM-DD HH:00:00') // デフォルト2時間
+          : toDateString(new Date(date.getTime() + 2 * 24 * 60 * 60 * 1000)), // デフォルト2日
       description: '',
       progress: undefined,
       labels: [],
@@ -3013,6 +3065,7 @@ export const useGanttChartView = () => {
     readonlyMode,
     pxPerDay,
     pxPerMonth,
+    pxPerHour,
     barHeight,
     addRowCount,
     manualAddRowCount,

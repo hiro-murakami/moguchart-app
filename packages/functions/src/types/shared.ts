@@ -115,6 +115,8 @@ export type ProjectSettings = {
   pxPerDay?: number
   /** ズームレベル（1月あたりのpx数）: 月単位表示時に使用 */
   pxPerMonth?: number
+  /** ズームレベル（1時間あたりのpx数）: 時間単位表示時に使用 */
+  pxPerHour?: number
   /** 選択されたラベル（フィルタリング用） */
   selectedLabels?: string[]
   /** 非表示行を表示するかどうか */
@@ -173,7 +175,7 @@ export type Milestone = {
 }
 
 /** プロジェクトの表示粒度 */
-export type ProjectGranularity = 'daily' | 'monthly'
+export type ProjectGranularity = 'daily' | 'monthly' | 'hourly'
 
 /** プロジェクトの追加属性 */
 export type ProjectAttribute = {
@@ -199,8 +201,14 @@ export type ProjectAttribute = {
    * チャートの表示粒度（作成時に決定し、変更不可）
    * 'daily': 日単位表示（デフォルト）
    * 'monthly': 月単位表示
+   * 'hourly': 時間単位表示
    */
   granularity?: ProjectGranularity
+  /**
+   * スナップ単位（分）。hourlyモード時に有効。
+   * 60: 60分（デフォルト） / 30: 30分 / 15: 15分 / 6: 6分
+   */
+  snapDurationMinutes?: number
 }
 
 /** 行（グループ）の追加属性 */
@@ -249,6 +257,8 @@ export interface EditingTaskData {
   lock?: boolean
   /** タスクの進捗率（0〜100） */
   progress?: number
+  /** 依存タスクのID配列 */
+  dependencies?: string[]
 }
 
 /** 簡易的な行情報（ドロップダウン選択用など） */

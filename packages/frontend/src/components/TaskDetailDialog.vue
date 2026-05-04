@@ -58,6 +58,7 @@ const isLocked = computed({
 })
 
 const isMonthly = computed(() => props.granularity === 'monthly')
+const isHourly = computed(() => props.granularity === 'hourly')
 
 
 
@@ -75,6 +76,12 @@ const displayEnd = computed({
       localTask.value.end = val
     }
   }
+})
+
+const inputType = computed(() => {
+  if (isMonthly.value) return 'month'
+  if (isHourly.value) return 'datetime-local'
+  return 'date'
 })
 </script>
 
@@ -110,7 +117,7 @@ const displayEnd = computed({
       <v-col cols="4">
         <DateInput
           v-model="localTask.start"
-          :type="granularity === 'monthly' ? 'month' : 'date'"
+          :type="inputType"
           label-daily="開始日"
           label-monthly="開始月"
           :compare-target="displayEnd"
@@ -122,7 +129,7 @@ const displayEnd = computed({
       <v-col cols="4">
         <DateInput
           v-model="displayEnd"
-          :type="granularity === 'monthly' ? 'month' : 'date'"
+          :type="inputType"
           label-daily="終了日"
           label-monthly="終了月"
           :compare-target="localTask.start"

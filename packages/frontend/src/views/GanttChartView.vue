@@ -30,6 +30,7 @@ const {
   currentRole,
   pxPerDay,
   pxPerMonth,
+  pxPerHour,
   barHeight,
   addRowCount,
   manualAddRowCount,
@@ -306,6 +307,7 @@ const handleExportPdf = async () => {
           v-model:show-current-time-line="showCurrentTimeLine"
           v-model:px-per-day="pxPerDay"
           v-model:px-per-month="pxPerMonth"
+          v-model:px-per-hour="pxPerHour"
           v-model:bar-height="barHeight"
           v-model:readonly-mode="readonlyMode"
           :can-edit="currentRole !== 'viewer'"

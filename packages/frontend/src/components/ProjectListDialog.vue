@@ -164,12 +164,12 @@ const handleFileChange = (e: Event) => {
               </template>
               <template #item.granularity="{ item }">
                 <v-chip
-                  :color="item.attribute?.granularity === 'monthly' ? 'indigo' : 'teal'"
+                  :color="item.attribute?.granularity === 'monthly' ? 'indigo' : item.attribute?.granularity === 'hourly' ? 'orange' : 'teal'"
                   size="small"
                   variant="tonal"
                   class="text-caption"
                 >
-                  {{ item.attribute?.granularity === 'monthly' ? '月単位' : '日単位' }}
+                  {{ item.attribute?.granularity === 'monthly' ? '月単位' : item.attribute?.granularity === 'hourly' ? '時間単位' : '日単位' }}
                 </v-chip>
               </template>
               <template #item.actions="{ item }: { item: Project }">

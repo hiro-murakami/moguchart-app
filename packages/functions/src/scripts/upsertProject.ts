@@ -22,13 +22,28 @@ export const _upsertProject = async (
     }
   }
 
+  /**
+   * TZなし文字列（"YYYY-MM-DDTHH:mm:ss"）をUTCのDateとして解釈する。
+   * new Date("2025-05-03T03:00:00") はサーバーのローカルTZで解釈されるため、
+   * 末尾に "Z" を付けてUTCとして明示的にパースする。
+   */
+  const toUtcDate = (dateStr: string): Date => {
+    // 既にTZ情報が含まれている場合はそのまま使う
+    if (/[Z+\-]\d{2}:?\d{2}$/.test(dateStr) || dateStr.endsWith('Z')) {
+      return new Date(dateStr)
+    }
+    // TZなし → UTC として扱う（末尾に "Z" を追加）
+    return new Date(`${dateStr}Z`)
+  }
+
   const dataForDb = {
     ...data,
-    start: new Date(data.start),
-    end: new Date(data.end),
+    start: toUtcDate(data.start),
+    end: toUtcDate(data.end),
     attribute: data.attribute,
     authority: data.authority,
   }
+
 
   if (isNew) {
     // 新規作成

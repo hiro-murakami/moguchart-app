@@ -61,9 +61,15 @@ export const toDateString = (value: Date | dayjs.Dayjs, format: string = 'YYYY-M
   return dayjs(value).format(format)
 }
 
+/**
+ * DB から取得した Date を "YYYY-MM-DDTHH:mm:ss" 形式のウォールクロック文字列に変換する。
+ * フロントエンドは TZなし文字列を UTC として扱い保存しているため、
+ * サーバーのローカルTZに依存しないよう dayjs.utc() でUTCのままフォーマットする。
+ */
 export const toDateTimeString = (value: Date | dayjs.Dayjs): string => {
-  return toDateString(value, 'YYYY-MM-DDTHH:mm:ss')
+  return (dayjs as any).utc(value).format('YYYY-MM-DDTHH:mm:ss')
 }
+
 
 export const getUpdateCommonColumns = (email?: string) => ({
   updatedBy: email,

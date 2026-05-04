@@ -14,15 +14,15 @@ import type {
   TaskAttribute,
   RowAttribute,
 } from '../../types/shared'
-import { toDateString } from './commonFunctions'
+import { toDateTimeString } from './commonFunctions'
 
 type CommonColumns = 'createdBy' | 'createdAt' | 'updatedBy' | 'updatedAt'
 
 export const toGanttTask = (task: PrismaGanttTask, commentCount?: number): GanttTask => {
   return {
     ...omit(task, ['createdBy', 'createdAt', 'updatedBy', 'updatedAt']),
-    start: toDateString(task.start),
-    end: toDateString(task.end),
+    start: toDateTimeString(task.start),
+    end: toDateTimeString(task.end),
     attribute: (task.attribute ?? {}) as TaskAttribute,
     commentCount: commentCount ?? 0,
   }
@@ -72,8 +72,8 @@ export const toProject =
 
     return {
       ...omit(project, ['createdBy', 'createdAt', 'updatedBy', 'updatedAt']),
-      start: toDateString(project.start),
-      end: toDateString(project.end),
+      start: toDateTimeString(project.start),
+      end: toDateTimeString(project.end),
       attribute: (project.attribute ?? {}) as ProjectAttribute,
       authority: (project.authority ?? {}) as Authority,
       role: getRole(project.authority as Authority, email),

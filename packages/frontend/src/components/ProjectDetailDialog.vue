@@ -34,6 +34,7 @@ const {
   localHistoryIntervalMinutes,
   localHistoryRetentionDays,
   localGranularity,
+  localSnapDurationMinutes,
   authorityHistoryUsers,
   title,
   close,
@@ -127,6 +128,7 @@ watch(
                           rounded="lg"
                         >
                           <v-btn value="daily" prepend-icon="mdi-calendar-today"> 日単位 </v-btn>
+                          <v-btn value="hourly" prepend-icon="mdi-clock-outline"> 時間単位 </v-btn>
                           <v-btn value="monthly" prepend-icon="mdi-calendar-month"> 月単位 </v-btn>
                         </v-btn-toggle>
                       </template>
@@ -136,10 +138,10 @@ watch(
                           <HelpText text="作成時に決定されたため変更できません" class="ml-1" />
                         </div>
                         <v-chip
-                          :prepend-icon="localGranularity === 'monthly' ? 'mdi-calendar-month' : 'mdi-calendar-today'"
+                          :prepend-icon="localGranularity === 'monthly' ? 'mdi-calendar-month' : localGranularity === 'hourly' ? 'mdi-clock-outline' : 'mdi-calendar-today'"
                           variant="tonal"
                         >
-                          {{ localGranularity === 'monthly' ? '月単位' : '日単位' }}
+                          {{ localGranularity === 'monthly' ? '月単位' : localGranularity === 'hourly' ? '時間単位' : '日単位' }}
                         </v-chip>
                       </template>
                     </v-col>
@@ -171,7 +173,7 @@ watch(
                     <v-col cols="6">
                       <DateInput
                         v-model="localStart"
-                        :type="localGranularity === 'monthly' ? 'month' : 'date'"
+                        :type="localGranularity === 'monthly' ? 'month' : localGranularity === 'hourly' ? 'datetime-local' : 'date'"
                         label-daily="開始日"
                         label-monthly="開始月"
                         :compare-target="localEnd"
@@ -183,7 +185,7 @@ watch(
                     <v-col cols="6">
                       <DateInput
                         v-model="localEnd"
-                        :type="localGranularity === 'monthly' ? 'month' : 'date'"
+                        :type="localGranularity === 'monthly' ? 'month' : localGranularity === 'hourly' ? 'datetime-local' : 'date'"
                         label-daily="終了日"
                         label-monthly="終了月"
                         :compare-target="localStart"
@@ -191,6 +193,26 @@ watch(
                         hide-details
                         class="mb-3"
                       />
+                    </v-col>
+                    <!-- hourly モード時のスナップ単位設定 -->
+                    <v-col v-if="localGranularity === 'hourly'" cols="6" class="mb-4">
+                      <v-btn-toggle
+                        v-model="localSnapDurationMinutes"
+                        mandatory
+                        density="compact"
+                        variant="outlined"
+                        color="primary"
+                        class="w-100"
+                      >
+                        <v-btn :value="60" class="flex-grow-1">60分</v-btn>
+                        <v-btn :value="30" class="flex-grow-1">30分</v-btn>
+                        <v-btn :value="15" class="flex-grow-1">15分</v-btn>
+                        <v-btn :value="6" class="flex-grow-1">6分</v-btn>
+                      </v-btn-toggle>
+                      <div class="text-caption text-medium-emphasis mt-1 d-flex align-center">
+                        スナップ単位
+                        <HelpText text="タスクの移動・リサイズ時にスナップする時間単位です" class="ml-1" />
+                      </div>
                     </v-col>
                     <v-col cols="12" class="mb-4">
                       <v-checkbox v-model="localPublic" density="compact" hide-details>

@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import dayjs from 'dayjs'
 import inputRules from '@/modules/inputRules'
-import type { ProjectGranularity } from '@functions/types/shared'
 
 defineOptions({
   inheritAttrs: false,
@@ -29,7 +27,9 @@ const inputType = computed(() => {
 const displayValue = computed(() => {
   if (!props.modelValue) return ''
   if (inputType.value === 'month') return props.modelValue.slice(0, 7)
-  if (inputType.value === 'datetime-local') return dayjs(props.modelValue).format('YYYY-MM-DDTHH:mm')
+  // datetime-local: TZなしの文字列（例: "2025-05-03T03:00:00"）をそのままスライスして表示
+  // dayjs() でパースするとブラウザのローカルTZが介入してズレが生じるため使用しない
+  if (inputType.value === 'datetime-local') return props.modelValue.slice(0, 16)
   // date
   return props.modelValue.slice(0, 10)
 })
@@ -40,7 +40,9 @@ const onUpdateModelValue = (val: string) => {
     if (inputType.value === 'month' && val.length === 7) {
       newValue = `${val}-01`
     } else if (inputType.value === 'datetime-local') {
-      newValue = dayjs(val).format() // ISO format
+      // TZオフセットを付けずウォールクロック時刻として保持する
+      // dayjs(val).format() は "+09:00" 付きになりバックエンドでUTC変換されて9時間ずれるため使用しない
+      newValue = val.length === 16 ? `${val}:00` : val // "YYYY-MM-DDTHH:mm" → "YYYY-MM-DDTHH:mm:ss"
     }
   }
   emit('update:modelValue', newValue)
@@ -59,11 +61,12 @@ const rules = computed(() => {
     if (inputType.value === 'month') {
       target = target.slice(0, 7)
     } else if (inputType.value === 'datetime-local') {
-      target = dayjs(target).format('YYYY-MM-DDTHH:mm')
+      // TZなしのウォールクロック文字列として比較する（dayjs はTZ変換が入るため使わない）
+      target = target.slice(0, 16)
     } else {
       target = target.slice(0, 10)
     }
-    
+
     if (props.compareRule === 'before') {
       baseRules.push(inputRules.dateBefore(target))
     } else if (props.compareRule === 'after') {
