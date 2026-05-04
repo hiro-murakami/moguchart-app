@@ -62,10 +62,10 @@ const projects = [
       colorPalettes: Object.values(colorPalettes),
       labels: Object.values(labels),
       milestones: [
-        { name: '要件定義完了', date: '2025-12-19', color: '#1e88e5' },
-        { name: 'デザインFix', date: '2026-01-09', color: '#8e24aa' },
-        { name: '開発完了', date: '2026-03-06', color: '#43a047' },
-        { name: 'リリース', date: '2026-04-20', color: '#e53935' },
+        { name: '要件定義完了', datetime: '2025-12-19T10:00:00+09:00', color: '#1e88e5' },
+        { name: 'デザインFix', datetime: '2026-01-09T10:00:00+09:00', color: '#8e24aa' },
+        { name: '開発完了', datetime: '2026-03-06T10:00:00+09:00', color: '#43a047' },
+        { name: 'リリース', datetime: '2026-04-20T10:00:00+09:00', color: '#e53935' },
       ],
       newTaskTemplates: [
         {
@@ -117,10 +117,10 @@ const monthlyProject = {
     colorPalettes: Object.values(colorPalettes),
     labels: Object.values(labels),
     milestones: [
-      { name: 'フェーズ1完了', date: '2026-12-31', color: '#1e88e5' },
-      { name: 'MVPリリース', date: '2028-06-30', color: '#43a047' },
-      { name: 'グローバル展開', date: '2031-03-31', color: '#8e24aa' },
-      { name: 'プロジェクト完了', date: '2034-12-31', color: '#e53935' },
+      { name: 'フェーズ1完了', datetime: '2026-12-31T10:00:00+09:00', color: '#1e88e5' },
+      { name: 'MVPリリース', datetime: '2028-06-30T10:00:00+09:00', color: '#43a047' },
+      { name: 'グローバル展開', datetime: '2031-03-31T10:00:00+09:00', color: '#8e24aa' },
+      { name: 'プロジェクト完了', datetime: '2034-12-31T10:00:00+09:00', color: '#e53935' },
     ],
   },
 }

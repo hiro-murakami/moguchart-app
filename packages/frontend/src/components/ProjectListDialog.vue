@@ -223,13 +223,7 @@ const handleFileChange = (e: Event) => {
                       @click.stop="editProject(item)"
                     />
                     <TutorialOverlay
-                      :condition="
-                        modelValue &&
-                        !loading &&
-                        filteredProjects.length === 1 &&
-                        item.id === filteredProjects[0]?.id &&
-                        item.name === 'サンプルプロジェクト'
-                      "
+                      :condition="modelValue && !loading && item.id === filteredProjects[0]?.id"
                       tutorial-key="duplicateBtn"
                       message="複製ボタンでサンプルプロジェクトのコピーを作成すると、編集できます"
                       placement="bottom"

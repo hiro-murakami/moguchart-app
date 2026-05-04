@@ -170,9 +170,9 @@ watch(
                       />
                     </v-col>
                     <v-col cols="6">
-                      <ProjectDateInput
+                      <DateInput
                         v-model="localStart"
-                        :granularity="localGranularity"
+                        :type="localGranularity === 'monthly' ? 'month' : 'date'"
                         label-daily="開始日"
                         label-monthly="開始月"
                         :compare-target="localEnd"
@@ -182,9 +182,9 @@ watch(
                       />
                     </v-col>
                     <v-col cols="6">
-                      <ProjectDateInput
+                      <DateInput
                         v-model="localEnd"
-                        :granularity="localGranularity"
+                        :type="localGranularity === 'monthly' ? 'month' : 'date'"
                         label-daily="終了日"
                         label-monthly="終了月"
                         :compare-target="localStart"
@@ -338,7 +338,7 @@ watch(
                         variant="text"
                         prepend-icon="mdi-plus"
                         color="primary"
-                        @click="localMilestones.push({ name: '', date: '', color: '#FF0000' })"
+                        @click="localMilestones.push({ name: '', datetime: '', color: '#FF0000' })"
                       >
                         マイルストーン追加
                       </v-btn>

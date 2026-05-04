@@ -17,9 +17,9 @@ const name = computed({
   set: (val) => emit('update:modelValue', { ...props.modelValue, name: val }),
 })
 
-const date = computed({
-  get: () => props.modelValue.date,
-  set: (val) => emit('update:modelValue', { ...props.modelValue, date: val }),
+const datetime = computed({
+  get: () => props.modelValue.datetime,
+  set: (val) => emit('update:modelValue', { ...props.modelValue, datetime: val }),
 })
 
 const color = computed({
@@ -58,14 +58,11 @@ const color = computed({
             />
           </v-col>
           <v-col cols="5">
-            <v-text-field
-              v-model="date"
-              label="日時"
+            <DateInput
+              v-model="datetime"
               type="datetime-local"
-              density="compact"
-              variant="outlined"
+              label-datetime="日時"
               hide-details="auto"
-              :rules="[inputRules.required]"
               class="small-input"
             />
           </v-col>

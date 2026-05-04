@@ -166,8 +166,8 @@ export type NewTaskTemplate = {
 export type Milestone = {
   /** マイルストーン名 */
   name: string
-  /** マイルストーン日 */
-  date: string
+  /** マイルストーン日時 */
+  datetime: string
   /** マイルストーンの色 */
   color: string
 }

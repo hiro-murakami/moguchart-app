@@ -84,9 +84,9 @@ const {
               <v-sheet class="step-content pa-4 mt-3">
                 <v-row density="compact">
                   <v-col cols="6">
-                    <ProjectDateInput
+                    <DateInput
                       v-model="localStart"
-                      :granularity="props.project?.attribute?.granularity || 'daily'"
+                      :type="props.project?.attribute?.granularity === 'monthly' ? 'month' : 'date'"
                       label-daily="開始日"
                       label-monthly="開始月"
                       :compare-target="localEnd"
@@ -95,9 +95,9 @@ const {
                     />
                   </v-col>
                   <v-col cols="6">
-                    <ProjectDateInput
+                    <DateInput
                       v-model="localEnd"
-                      :granularity="props.project?.attribute?.granularity || 'daily'"
+                      :type="props.project?.attribute?.granularity === 'monthly' ? 'month' : 'date'"
                       label-daily="終了日"
                       label-monthly="終了月"
                       :compare-target="localStart"

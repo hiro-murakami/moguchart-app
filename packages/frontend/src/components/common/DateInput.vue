@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import dayjs from 'dayjs'
 import inputRules from '@/modules/inputRules'
 import type { ProjectGranularity } from '@functions/types/shared'
 
@@ -9,9 +10,10 @@ defineOptions({
 
 const props = defineProps<{
   modelValue: string
-  granularity: ProjectGranularity | string
+  type?: 'month' | 'date' | 'datetime-local'
   labelDaily?: string
   labelMonthly?: string
+  labelDatetime?: string
   compareTarget?: string
   compareRule?: 'before' | 'after'
 }>()
@@ -20,25 +22,48 @@ const emit = defineEmits<{
   (e: 'update:modelValue', value: string): void
 }>()
 
-const isMonthly = computed(() => props.granularity === 'monthly')
+const inputType = computed(() => {
+  return props.type || 'date'
+})
 
 const displayValue = computed(() => {
-  return isMonthly.value && props.modelValue ? props.modelValue.slice(0, 7) : props.modelValue
+  if (!props.modelValue) return ''
+  if (inputType.value === 'month') return props.modelValue.slice(0, 7)
+  if (inputType.value === 'datetime-local') return dayjs(props.modelValue).format('YYYY-MM-DDTHH:mm')
+  // date
+  return props.modelValue.slice(0, 10)
 })
 
 const onUpdateModelValue = (val: string) => {
-  const newValue = (isMonthly.value && val && val.length === 7) ? `${val}-01` : val
+  let newValue = val
+  if (val) {
+    if (inputType.value === 'month' && val.length === 7) {
+      newValue = `${val}-01`
+    } else if (inputType.value === 'datetime-local') {
+      newValue = dayjs(val).format() // ISO format
+    }
+  }
   emit('update:modelValue', newValue)
 }
 
 const label = computed(() => {
-  return isMonthly.value ? (props.labelMonthly || '月') : (props.labelDaily || '日')
+  if (inputType.value === 'month') return props.labelMonthly || '月'
+  if (inputType.value === 'datetime-local') return props.labelDatetime || '日時'
+  return props.labelDaily || '日'
 })
 
 const rules = computed(() => {
   const baseRules: any[] = [inputRules.required]
   if (props.compareTarget) {
-    const target = isMonthly.value && props.compareTarget ? props.compareTarget.slice(0, 7) : props.compareTarget
+    let target = props.compareTarget
+    if (inputType.value === 'month') {
+      target = target.slice(0, 7)
+    } else if (inputType.value === 'datetime-local') {
+      target = dayjs(target).format('YYYY-MM-DDTHH:mm')
+    } else {
+      target = target.slice(0, 10)
+    }
+    
     if (props.compareRule === 'before') {
       baseRules.push(inputRules.dateBefore(target))
     } else if (props.compareRule === 'after') {
@@ -55,7 +80,7 @@ const rules = computed(() => {
     :model-value="displayValue"
     @update:model-value="onUpdateModelValue"
     :label="label"
-    :type="isMonthly ? 'month' : 'date'"
+    :type="inputType"
     density="compact"
     variant="outlined"
     :rules="rules"

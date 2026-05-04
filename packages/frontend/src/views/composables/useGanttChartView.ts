@@ -507,7 +507,7 @@ export const useGanttChartView = () => {
     const milestones: moguchart.GanttChartMilestone[] = projectMilestones.map((ms, i) => ({
       id: `milestone-${i}`,
       name: ms.name,
-      start: toLocalDate(ms.date),
+      start: toLocalDate(ms.datetime),
       color: ms.color,
     }))
 

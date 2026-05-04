@@ -108,9 +108,9 @@ const displayEnd = computed({
         ></v-select>
       </v-col>
       <v-col cols="4">
-        <ProjectDateInput
+        <DateInput
           v-model="localTask.start"
-          :granularity="granularity || 'daily'"
+          :type="granularity === 'monthly' ? 'month' : 'date'"
           label-daily="開始日"
           label-monthly="開始月"
           :compare-target="displayEnd"
@@ -120,9 +120,9 @@ const displayEnd = computed({
         />
       </v-col>
       <v-col cols="4">
-        <ProjectDateInput
+        <DateInput
           v-model="displayEnd"
-          :granularity="granularity || 'daily'"
+          :type="granularity === 'monthly' ? 'month' : 'date'"
           label-daily="終了日"
           label-monthly="終了月"
           :compare-target="localTask.start"
