@@ -29,6 +29,7 @@ import {
   rowHeaderContent,
   preloadCommentsCache,
   preloadRowCommentsCache,
+  createCornerContent,
 } from '@/modules/ganttChartCustomRendering'
 import { useProjectStore } from '@/stores/useProjectStore'
 import { useUserStore } from '@/stores/useUserStore'
@@ -67,6 +68,7 @@ export const useGanttChartView = () => {
 
   // --- 設定値 ---
   const selectedFilterLabelNames = ref<string[]>([])
+  const selectedRowFilterLabelNames = ref<string[]>([]) // 行フィルター（コーナーセル用）
   const searchText = ref('')
   const searchIncludeRows = ref(false)
   const chartStartStr = ref('2025-12-15')
@@ -379,17 +381,18 @@ export const useGanttChartView = () => {
 
   const filteredRows = computed(() => {
     const hasLabelFilter = selectedFilterLabelNames.value.length > 0
+    const hasRowLabelFilter = selectedRowFilterLabelNames.value.length > 0
     const trimmed = (searchText.value || '').trim()
     const hasKeywordFilter = trimmed !== ''
     const editingMap = remoteEditingTaskMap.value
     const hasRemoteEditing = editingMap.size > 0
 
-    if (!hasLabelFilter && !hasKeywordFilter && !hasRemoteEditing) {
+    if (!hasLabelFilter && !hasRowLabelFilter && !hasKeywordFilter && !hasRemoteEditing) {
       return rows.value
     }
 
     // フィルタ不要だが他ユーザー編集中のタスクだけハイライトする場合
-    if (!hasLabelFilter && !hasKeywordFilter && hasRemoteEditing) {
+    if (!hasLabelFilter && !hasRowLabelFilter && !hasKeywordFilter && hasRemoteEditing) {
       return rows.value.map((row) => ({
         ...row,
         tasks: row.tasks.map((task) => applyRemoteEditingHighlight(task, editingMap)),
@@ -407,6 +410,19 @@ export const useGanttChartView = () => {
 
     return rows.value
       .map((row) => {
+        // --- 行ラベルフィルター（コーナーセル）: マッチしない行は除外 ---
+        if (hasRowLabelFilter) {
+          const rowAttr = (row as any).attribute as RowAttribute | undefined
+          const rowLabels: string[] = rowAttr?.labels?.map((l: any) => l.name) ?? []
+          let rowLabelMatch = false
+          if (selectedRowFilterLabelNames.value.includes(UNLABELED_VALUE) && rowLabels.length === 0) {
+            rowLabelMatch = true
+          } else {
+            rowLabelMatch = rowLabels.some((l) => selectedRowFilterLabelNames.value.includes(l))
+          }
+          if (!rowLabelMatch) return null
+        }
+
         const rowAttr = (row as any).attribute as RowAttribute | undefined
         const rowNameMatch = matchesAnyKw(row.name)
         const rowDescMatch = matchesAnyKw(rowAttr?.description)
@@ -543,6 +559,13 @@ export const useGanttChartView = () => {
         barContent,
         tooltip,
         rowHeaderContent,
+        cornerContent: createCornerContent(() => ({
+          availableLabels: availableLabels.value,
+          selectedLabels: selectedRowFilterLabelNames.value,
+          onSelectionChange: (labels: string[]) => {
+            selectedRowFilterLabelNames.value = labels
+          },
+        })),
       },
     }
   })
@@ -2983,6 +3006,7 @@ export const useGanttChartView = () => {
     ganttChartRef,
     availableLabels,
     selectedFilterLabelNames,
+    selectedRowFilterLabelNames,
     searchText,
     searchIncludeRows,
     filteredRows,

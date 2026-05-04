@@ -3,6 +3,7 @@ import { getContrastColor, toDateString } from '@/modules/utils'
 import * as moguchart from '@mogura/moguchart'
 import { selectTaskComments, selectComments } from '@/modules/scripts'
 import type { Comment, TaskComment } from '@functions/types/shared'
+import { UNLABELED_VALUE } from '@/modules/constants'
 
 const commentsCache = new Map<number, { data: TaskComment[]; fetchedAt: number }>()
 const rowCommentsCache = new Map<number, { data: Comment[]; fetchedAt: number }>()
@@ -586,4 +587,338 @@ export const rowHeaderContent = (row: moguchart.GanttRow) => {
   }
 
   return container
+}
+
+/** ラベルフィルターのコーナーセルを生成するファクトリ関数のオプション */
+export interface CornerContentOptions {
+  /** 利用可能なラベルの一覧 */
+  availableLabels: { name: string; color: string }[]
+  /** 現在選択中のラベル名の配列 */
+  selectedLabels: string[]
+  /** 選択変更時のコールバック */
+  onSelectionChange: (labels: string[]) => void
+}
+
+/**
+ * ガントチャートの左上コーナーセルにラベルフィルタアイコンとポップアップを表示するコンテンツを生成する。
+ * moguchart の customRendering.cornerContent に渡す関数を返す。
+ */
+export const createCornerContent = (getOptions: () => CornerContentOptions) => {
+  return () => {
+    const { selectedLabels: initSelectedLabels } = getOptions()
+    const isDark = !!document.querySelector('.v-theme--dark')
+
+    const hasFilter = initSelectedLabels.length > 0
+
+    // --- フィルタアイコンボタン ---
+    const btn = document.createElement('button')
+    btn.style.cssText = `
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 38px;
+      height: 38px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      background: ${hasFilter
+        ? (isDark ? 'rgba(99,102,241,0.25)' : 'rgba(99,102,241,0.15)')
+        : 'transparent'};
+      color: ${hasFilter
+        ? (isDark ? '#a5b4fc' : '#4f46e5')
+        : (isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)')};
+      transition: background 0.15s, color 0.15s;
+      position: relative;
+    `
+    btn.title = 'ラベル絞り込み'
+
+    // フィルタアイコン（SVG）
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+    svg.setAttribute('width', '20')
+    svg.setAttribute('height', '20')
+    svg.setAttribute('viewBox', '0 0 24 24')
+    svg.setAttribute('fill', 'currentColor')
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+    path.setAttribute('d', 'M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z')
+    svg.appendChild(path)
+    btn.appendChild(svg)
+
+    // アクティブバッジ（常時生成・フィルタ未使用時は非表示）
+    const badge = document.createElement('span')
+    badge.style.cssText = `
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: ${isDark ? '#818cf8' : '#4f46e5'};
+      display: ${hasFilter ? 'block' : 'none'};
+    `
+    btn.appendChild(badge)
+
+    // ボタンの外観をフィルタ状態に合わせて更新する関数
+    const updateBtnAppearance = () => {
+      const { selectedLabels } = getOptions()
+      const active = selectedLabels.length > 0
+      btn.style.background = active
+        ? (isDark ? 'rgba(99,102,241,0.25)' : 'rgba(99,102,241,0.15)')
+        : 'transparent'
+      btn.style.color = active
+        ? (isDark ? '#a5b4fc' : '#4f46e5')
+        : (isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)')
+      badge.style.display = active ? 'block' : 'none'
+    }
+
+    btn.addEventListener('mouseenter', () => {
+      const { selectedLabels } = getOptions()
+      if (selectedLabels.length === 0) {
+        btn.style.background = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'
+      }
+    })
+    btn.addEventListener('mouseleave', () => {
+      const { selectedLabels } = getOptions()
+      if (selectedLabels.length === 0) {
+        btn.style.background = 'transparent'
+      }
+    })
+
+    // --- ポップアップパネル ---
+    let panel: HTMLElement | null = null
+
+    const removePanel = () => {
+      if (panel) {
+        panel.remove()
+        panel = null
+      }
+    }
+
+    const createPanel = () => {
+      const isDarkNow = !!document.querySelector('.v-theme--dark')
+      const bg = isDarkNow ? '#1e1e2e' : '#ffffff'
+      const text = isDarkNow ? 'rgba(255,255,255,0.87)' : 'rgba(0,0,0,0.87)'
+      const border = isDarkNow ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)'
+      const hoverBg = isDarkNow ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'
+
+      const p = document.createElement('div')
+      p.style.cssText = `
+        position: fixed;
+        z-index: 9999;
+        background: ${bg};
+        color: ${text};
+        border: 1px solid ${border};
+        border-radius: 10px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+        min-width: 220px;
+        max-width: 280px;
+        overflow: hidden;
+        font-size: 13px;
+        user-select: none;
+      `
+
+      // パネルの位置（ボタンの下）
+      const rect = btn.getBoundingClientRect()
+      p.style.left = `${rect.left}px`
+      p.style.top = `${rect.bottom + 4}px`
+
+      // --- ヘッダー ---
+      const header = document.createElement('div')
+      header.style.cssText = `
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 12px 6px;
+        font-weight: bold;
+        font-size: 12px;
+        color: ${isDarkNow ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)'};
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+      `
+      const headerTitle = document.createElement('span')
+      headerTitle.textContent = 'ラベル絞り込み'
+      header.appendChild(headerTitle)
+
+      const clearBtn = document.createElement('button')
+      clearBtn.textContent = 'クリア'
+      clearBtn.style.cssText = `
+        border: none;
+        background: none;
+        cursor: pointer;
+        color: ${isDarkNow ? '#a5b4fc' : '#4f46e5'};
+        font-size: 11px;
+        font-weight: bold;
+        padding: 2px 4px;
+        border-radius: 4px;
+        transition: opacity 0.15s;
+      `
+      clearBtn.addEventListener('click', (e) => {
+        e.stopPropagation()
+        const { onSelectionChange: onChange } = getOptions()
+        onChange([])
+        removePanel()
+      })
+      header.appendChild(clearBtn)
+      p.appendChild(header)
+
+      const divider = document.createElement('div')
+      divider.style.cssText = `height: 1px; background: ${border}; margin: 0 0 4px;`
+      p.appendChild(divider)
+
+      // --- アイテムコンテナ ---
+      const itemsContainer = document.createElement('div')
+      p.appendChild(itemsContainer)
+
+      // アイテムを描画・再描画する関数
+      const renderItems = () => {
+        const { availableLabels: labels, selectedLabels: selected, onSelectionChange: onChange } = getOptions()
+
+        const allItems = [
+          { name: 'ラベルなし', color: '#9e9e9e', value: UNLABELED_VALUE },
+          ...labels.map(l => ({ name: l.name, color: l.color, value: l.name })),
+        ]
+
+        // 既存の行をクリアして再描画
+        itemsContainer.innerHTML = ''
+
+        allItems.forEach(item => {
+          const isChecked = selected.includes(item.value)
+          const row = document.createElement('div')
+          row.style.cssText = `
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 12px;
+            cursor: pointer;
+            border-radius: 6px;
+            margin: 0 4px;
+            transition: background 0.12s;
+          `
+
+          row.addEventListener('mouseenter', () => {
+            row.style.background = hoverBg
+          })
+          row.addEventListener('mouseleave', () => {
+            row.style.background = 'transparent'
+          })
+
+          // チェックボックス
+          const check = document.createElement('div')
+          check.style.cssText = `
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+            border: 2px solid ${isChecked ? item.color : (isDarkNow ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.2)')};
+            background: ${isChecked ? item.color : 'transparent'};
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.12s;
+          `
+          if (isChecked) {
+            const checkSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+            checkSvg.setAttribute('width', '10')
+            checkSvg.setAttribute('height', '10')
+            checkSvg.setAttribute('viewBox', '0 0 24 24')
+            checkSvg.setAttribute('fill', getContrastColor(item.color))
+            const checkPath = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+            checkPath.setAttribute('d', 'M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z')
+            checkSvg.appendChild(checkPath)
+            check.appendChild(checkSvg)
+          }
+
+          // ラベルチップ
+          const chip = document.createElement('span')
+          chip.textContent = item.name
+          chip.style.cssText = `
+            background: ${item.color};
+            color: ${getContrastColor(item.color)};
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+            flex-shrink: 0;
+          `
+
+          row.appendChild(check)
+          row.appendChild(chip)
+          itemsContainer.appendChild(row)
+
+          row.addEventListener('click', (e) => {
+            e.stopPropagation()
+            const { selectedLabels: currentSelected, onSelectionChange: currentOnChange } = getOptions()
+            let next: string[]
+            if (currentSelected.includes(item.value)) {
+              next = currentSelected.filter(v => v !== item.value)
+            } else {
+              next = [...currentSelected, item.value]
+            }
+            currentOnChange(next)
+            // パネルは閉じず、チェック状態とボタン外観を更新する
+            renderItems()
+            updateBtnAppearance()
+          })
+        })
+      }
+
+      // 初回描画
+      renderItems()
+
+      // 全選択ボタン
+      const footer = document.createElement('div')
+      footer.style.cssText = `
+        padding: 6px 8px 8px;
+        border-top: 1px solid ${border};
+        margin-top: 4px;
+        display: flex;
+        gap: 6px;
+      `
+      const selectAllBtn = document.createElement('button')
+      selectAllBtn.textContent = 'すべて選択'
+      selectAllBtn.style.cssText = `
+        flex: 1;
+        border: none;
+        background: ${isDarkNow ? 'rgba(99,102,241,0.2)' : 'rgba(99,102,241,0.1)'};
+        color: ${isDarkNow ? '#a5b4fc' : '#4f46e5'};
+        border-radius: 6px;
+        padding: 5px 8px;
+        font-size: 11px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background 0.12s;
+      `
+      selectAllBtn.addEventListener('click', (e) => {
+        e.stopPropagation()
+        const { availableLabels: latestLabels, onSelectionChange: latestOnChange } = getOptions()
+        latestOnChange([...latestLabels.map(l => l.name), UNLABELED_VALUE])
+        removePanel()
+      })
+      footer.appendChild(selectAllBtn)
+      p.appendChild(footer)
+
+      return p
+    }
+
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation()
+      if (panel) {
+        removePanel()
+        return
+      }
+      panel = createPanel()
+      document.body.appendChild(panel)
+
+      // 外クリックで閉じる
+      const onOutside = (ev: MouseEvent) => {
+        if (panel && !panel.contains(ev.target as Node) && ev.target !== btn) {
+          removePanel()
+          document.removeEventListener('mousedown', onOutside)
+        }
+      }
+      // 次のイベントループで登録（今回のクリックに反応しないよう）
+      setTimeout(() => document.addEventListener('mousedown', onOutside), 0)
+    })
+
+    return btn
+  }
 }
