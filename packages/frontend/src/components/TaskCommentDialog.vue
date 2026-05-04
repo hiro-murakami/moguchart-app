@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import type { TaskComment, Role } from '@functions/types/shared'
+import type { Comment, Role } from '@functions/types/shared'
 import { selectTaskComments, upsertTaskComment, deleteTaskComment as deleteTaskCommentApi } from '@/modules/scripts'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
@@ -25,7 +25,7 @@ const emit = defineEmits<{
   (e: 'updated'): void
 }>()
 
-const comments = ref<TaskComment[]>([])
+const comments = ref<Comment[]>([])
 const newComment = ref('')
 const isLoading = ref(false)
 const isSending = ref(false)
@@ -76,7 +76,7 @@ const formatTime = (dateStr?: string) => {
   return dayjs(dateStr).fromNow()
 }
 
-const canDeleteComment = (comment: TaskComment) => {
+const canDeleteComment = (comment: Comment) => {
   if (props.isReadOnly) return false
   if (props.userRole === 'owner') return true
   return comment.createdBy === userStore.currentUser?.email

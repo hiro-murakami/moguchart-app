@@ -483,9 +483,6 @@ export interface Comment {
   createdAt?: string
 }
 
-/** @deprecated Comment を使用してください */
-export type TaskComment = Comment
-
 /** タスクコメント一覧を取得する関数の型 */
 export type SelectTaskComments = (taskId: number, email?: string) => Promise<Comment[]>
 /** タスクコメントを作成または更新する関数の型 */

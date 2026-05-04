@@ -2,10 +2,10 @@ import dayjs from 'dayjs'
 import { getContrastColor, toDateString } from '@/modules/utils'
 import * as moguchart from '@mogura/moguchart'
 import { selectTaskComments, selectComments } from '@/modules/scripts'
-import type { Comment, TaskComment } from '@functions/types/shared'
+import type { Comment } from '@functions/types/shared'
 import { UNLABELED_VALUE } from '@/modules/constants'
 
-const commentsCache = new Map<number, { data: TaskComment[]; fetchedAt: number }>()
+const commentsCache = new Map<number, { data: Comment[]; fetchedAt: number }>()
 const rowCommentsCache = new Map<number, { data: Comment[]; fetchedAt: number }>()
 
 /** ダークモード判定に基づくツールチップの配色を返す */
@@ -25,7 +25,7 @@ const getTooltipColors = () => {
  * スナップショットモードなどAPI不要の場面で、コメントデータをキャッシュに事前ロードする。
  * fetchedAt を Infinity にすることでキャッシュ有効期限が切れないようにする。
  */
-export const preloadCommentsCache = (entries: { taskId: number; comments: TaskComment[] }[]) => {
+export const preloadCommentsCache = (entries: { taskId: number; comments: Comment[] }[]) => {
   for (const entry of entries) {
     commentsCache.set(entry.taskId, { data: entry.comments, fetchedAt: Infinity })
   }
@@ -41,20 +41,20 @@ export const preloadRowCommentsCache = (entries: { rowId: number; comments: Comm
   }
 }
 
-const renderComments = (container: HTMLElement, comments: TaskComment[], count: number) => {
+const renderComments = (container: HTMLElement, comments: Comment[], count: number) => {
   const colors = getTooltipColors()
   container.innerHTML = ''
   container.style.display = 'flex'
   container.style.flexDirection = 'column'
   container.style.gap = '6px'
-  
+
   const titleSpan = document.createElement('div')
   titleSpan.style.fontWeight = 'bold'
   titleSpan.style.color = colors.textStrong
   titleSpan.style.fontSize = '12px'
   titleSpan.textContent = `💬 コメント (${count}件)`
   container.appendChild(titleSpan)
-  
+
   // 最大5件表示
   const displayComments = [...comments]
     .sort((a, b) => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime())
@@ -69,7 +69,7 @@ const renderComments = (container: HTMLElement, comments: TaskComment[], count: 
       cDiv.style.borderTop = `1px solid ${colors.divider}`
       cDiv.style.paddingTop = '5px'
     }
-    
+
     const headerDiv = document.createElement('div')
     headerDiv.style.fontSize = '10px'
     headerDiv.style.color = colors.textMuted
@@ -77,7 +77,7 @@ const renderComments = (container: HTMLElement, comments: TaskComment[], count: 
     const name = c.createdByDisplayName || '名無し'
     const time = c.createdAt ? dayjs(c.createdAt).format('YYYY/MM/DD HH:mm') : ''
     headerDiv.textContent = `${name} ${time}`
-    
+
     const contentDiv = document.createElement('div')
     contentDiv.style.wordBreak = 'break-word'
     contentDiv.style.whiteSpace = 'pre-wrap'
@@ -85,12 +85,12 @@ const renderComments = (container: HTMLElement, comments: TaskComment[], count: 
     // 100文字で制限
     const content = c.content.length > 100 ? c.content.slice(0, 100) + '...' : c.content
     contentDiv.textContent = content
-    
+
     cDiv.appendChild(headerDiv)
     cDiv.appendChild(contentDiv)
     container.appendChild(cDiv)
   })
-  
+
   if (comments.length > 5) {
     const moreDiv = document.createElement('div')
     moreDiv.style.fontSize = '10px'
@@ -229,7 +229,10 @@ export const barContent = (task: moguchart.GanttTask) => {
     let hideTimeout: ReturnType<typeof setTimeout> | null = null
 
     const showTooltip = () => {
-      if (hideTimeout) { clearTimeout(hideTimeout); hideTimeout = null }
+      if (hideTimeout) {
+        clearTimeout(hideTimeout)
+        hideTimeout = null
+      }
       if (tooltipEl) return
 
       const colors = getTooltipColors()
@@ -255,18 +258,23 @@ export const barContent = (task: moguchart.GanttTask) => {
         renderComments(tooltipEl, cached.data, commentCount)
       } else {
         tooltipEl.textContent = `コメント読み込み中... (${commentCount}件)`
-        selectTaskComments(taskId).then((comments) => {
-          commentsCache.set(taskId, { data: comments, fetchedAt: Date.now() })
-          if (tooltipEl) renderComments(tooltipEl, comments, commentCount)
-        }).catch(() => {
-          if (tooltipEl) tooltipEl.textContent = 'コメントの読み込みに失敗しました'
-        })
+        selectTaskComments(taskId)
+          .then((comments) => {
+            commentsCache.set(taskId, { data: comments, fetchedAt: Date.now() })
+            if (tooltipEl) renderComments(tooltipEl, comments, commentCount)
+          })
+          .catch(() => {
+            if (tooltipEl) tooltipEl.textContent = 'コメントの読み込みに失敗しました'
+          })
       }
       document.body.appendChild(tooltipEl)
     }
 
     const removeTooltip = () => {
-      if (hideTimeout) { clearTimeout(hideTimeout); hideTimeout = null }
+      if (hideTimeout) {
+        clearTimeout(hideTimeout)
+        hideTimeout = null
+      }
       if (tooltipEl) {
         tooltipEl.remove()
         tooltipEl = null
@@ -409,7 +417,8 @@ export const tooltip = (task: moguchart.GanttTask) => {
     progressDiv.appendChild(progressHeader)
 
     const barBg = document.createElement('div')
-    barBg.style.cssText = 'width: 100%; height: 6px; background-color: rgba(128,128,128,0.3); border-radius: 3px; overflow: hidden;'
+    barBg.style.cssText =
+      'width: 100%; height: 6px; background-color: rgba(128,128,128,0.3); border-radius: 3px; overflow: hidden;'
     const barFill = document.createElement('div')
     barFill.style.cssText = `width: ${clampedProgress}%; height: 100%; background-color: #4caf50; border-radius: 3px;`
     barBg.appendChild(barFill)
@@ -417,8 +426,6 @@ export const tooltip = (task: moguchart.GanttTask) => {
 
     container.appendChild(progressDiv)
   }
-
-
 
   return container
 }
@@ -508,7 +515,10 @@ export const rowHeaderContent = (row: moguchart.GanttRow) => {
     let hideTimeout: ReturnType<typeof setTimeout> | null = null
 
     const showTooltip = (e: MouseEvent) => {
-      if (hideTimeout) { clearTimeout(hideTimeout); hideTimeout = null }
+      if (hideTimeout) {
+        clearTimeout(hideTimeout)
+        hideTimeout = null
+      }
       if (tooltipEl) return
 
       const colors = getTooltipColors()
@@ -535,18 +545,23 @@ export const rowHeaderContent = (row: moguchart.GanttRow) => {
         renderComments(tooltipEl, cached.data, commentCount)
       } else {
         tooltipEl.textContent = `コメント読み込み中... (${commentCount}件)`
-        selectComments({ rowId }).then((comments) => {
-          rowCommentsCache.set(rowId, { data: comments, fetchedAt: Date.now() })
-          if (tooltipEl) renderComments(tooltipEl, comments, commentCount)
-        }).catch(() => {
-          if (tooltipEl) tooltipEl.textContent = 'コメントの読み込みに失敗しました'
-        })
+        selectComments({ rowId })
+          .then((comments) => {
+            rowCommentsCache.set(rowId, { data: comments, fetchedAt: Date.now() })
+            if (tooltipEl) renderComments(tooltipEl, comments, commentCount)
+          })
+          .catch(() => {
+            if (tooltipEl) tooltipEl.textContent = 'コメントの読み込みに失敗しました'
+          })
       }
       document.body.appendChild(tooltipEl)
     }
 
     const removeTooltip = () => {
-      if (hideTimeout) { clearTimeout(hideTimeout); hideTimeout = null }
+      if (hideTimeout) {
+        clearTimeout(hideTimeout)
+        hideTimeout = null
+      }
       if (tooltipEl) {
         tooltipEl.remove()
         tooltipEl = null
@@ -620,12 +635,8 @@ export const createCornerContent = (getOptions: () => CornerContentOptions) => {
       border: none;
       border-radius: 6px;
       cursor: pointer;
-      background: ${hasFilter
-        ? (isDark ? 'rgba(99,102,241,0.25)' : 'rgba(99,102,241,0.15)')
-        : 'transparent'};
-      color: ${hasFilter
-        ? (isDark ? '#a5b4fc' : '#4f46e5')
-        : (isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)')};
+      background: ${hasFilter ? (isDark ? 'rgba(99,102,241,0.25)' : 'rgba(99,102,241,0.15)') : 'transparent'};
+      color: ${hasFilter ? (isDark ? '#a5b4fc' : '#4f46e5') : isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)'};
       transition: background 0.15s, color 0.15s;
       position: relative;
     `
@@ -660,12 +671,8 @@ export const createCornerContent = (getOptions: () => CornerContentOptions) => {
     const updateBtnAppearance = () => {
       const { selectedLabels } = getOptions()
       const active = selectedLabels.length > 0
-      btn.style.background = active
-        ? (isDark ? 'rgba(99,102,241,0.25)' : 'rgba(99,102,241,0.15)')
-        : 'transparent'
-      btn.style.color = active
-        ? (isDark ? '#a5b4fc' : '#4f46e5')
-        : (isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)')
+      btn.style.background = active ? (isDark ? 'rgba(99,102,241,0.25)' : 'rgba(99,102,241,0.15)') : 'transparent'
+      btn.style.color = active ? (isDark ? '#a5b4fc' : '#4f46e5') : isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)'
       badge.style.display = active ? 'block' : 'none'
     }
 
@@ -773,13 +780,13 @@ export const createCornerContent = (getOptions: () => CornerContentOptions) => {
 
         const allItems = [
           { name: 'ラベルなし', color: '#9e9e9e', value: UNLABELED_VALUE },
-          ...labels.map(l => ({ name: l.name, color: l.color, value: l.name })),
+          ...labels.map((l) => ({ name: l.name, color: l.color, value: l.name })),
         ]
 
         // 既存の行をクリアして再描画
         itemsContainer.innerHTML = ''
 
-        allItems.forEach(item => {
+        allItems.forEach((item) => {
           const isChecked = selected.includes(item.value)
           const row = document.createElement('div')
           row.style.cssText = `
@@ -806,7 +813,7 @@ export const createCornerContent = (getOptions: () => CornerContentOptions) => {
             width: 16px;
             height: 16px;
             border-radius: 4px;
-            border: 2px solid ${isChecked ? item.color : (isDarkNow ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.2)')};
+            border: 2px solid ${isChecked ? item.color : isDarkNow ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.2)'};
             background: ${isChecked ? item.color : 'transparent'};
             display: flex;
             align-items: center;
@@ -848,7 +855,7 @@ export const createCornerContent = (getOptions: () => CornerContentOptions) => {
             const { selectedLabels: currentSelected, onSelectionChange: currentOnChange } = getOptions()
             let next: string[]
             if (currentSelected.includes(item.value)) {
-              next = currentSelected.filter(v => v !== item.value)
+              next = currentSelected.filter((v) => v !== item.value)
             } else {
               next = [...currentSelected, item.value]
             }
@@ -889,7 +896,7 @@ export const createCornerContent = (getOptions: () => CornerContentOptions) => {
       selectAllBtn.addEventListener('click', (e) => {
         e.stopPropagation()
         const { availableLabels: latestLabels, onSelectionChange: latestOnChange } = getOptions()
-        latestOnChange([...latestLabels.map(l => l.name), UNLABELED_VALUE])
+        latestOnChange([...latestLabels.map((l) => l.name), UNLABELED_VALUE])
         removePanel()
       })
       footer.appendChild(selectAllBtn)

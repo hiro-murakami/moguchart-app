@@ -26,7 +26,6 @@ import type {
   CreateSnapshot,
   LoadSnapshot,
   GanttDataJson,
-  TaskComment,
   Comment,
   SelectTaskComments,
   UpsertTaskComment,
@@ -146,7 +145,7 @@ export const loadSnapshot: LoadSnapshot = (params) => {
 }
 
 export const selectTaskComments: SelectTaskComments = (taskId) => {
-  return callFunction<TaskComment[]>('selectTaskComments', taskId)
+  return callFunction<Comment[]>('selectTaskComments', taskId)
 }
 
 export const upsertTaskComment: UpsertTaskComment = (comment) => {
