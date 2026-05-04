@@ -2078,29 +2078,43 @@ export const useGanttChartView = () => {
     if (isReadOnly.value) return
     if (editingRowId.value !== null) return // Already editing
 
-    const { row, target } = e.detail
+    const { row, target, event } = e.detail
     if (!row) return
 
-    editingRowId.value = Number(row.id)
-    editingRowName.value = row.name
+    if (event.shiftKey) {
+      editingRowId.value = Number(row.id)
+      editingRowName.value = row.name
 
-    if (target) {
-      const targetRect = (target as HTMLElement).getBoundingClientRect()
+      if (target) {
+        const targetRect = (target as HTMLElement).getBoundingClientRect()
 
-      // Use fixed positioning relative to the viewport
-      editingInputStyle.value = {
-        top: `${targetRect.top}px`,
-        left: `${targetRect.left}px`,
-        // Ensure minimum dimensions for better UX
-        width: `${Math.max(targetRect.width, 140)}px`,
-        height: `${Math.min(barHeight.value, 30)}px`,
+        // Use fixed positioning relative to the viewport
+        editingInputStyle.value = {
+          top: `${targetRect.top}px`,
+          left: `${targetRect.left}px`,
+          // Ensure minimum dimensions for better UX
+          width: `${Math.max(targetRect.width, 140)}px`,
+          height: `${Math.min(barHeight.value, 30)}px`,
+        }
+
+        // Focus the input next tick
+        setTimeout(() => {
+          const input = document.getElementById('row-edit-input')
+          if (input) (input as HTMLInputElement).focus()
+        }, 0)
       }
+    } else {
+      const r = rows.value.find((r) => Number(r.id) === Number(row.id))
+      if (!r) return
+      const attribute = (r as any).attribute as RowAttribute | undefined
 
-      // Focus the input next tick
-      setTimeout(() => {
-        const input = document.getElementById('row-edit-input')
-        if (input) (input as HTMLInputElement).focus()
-      }, 0)
+      editingRowData.value = {
+        id: Number(row.id),
+        name: r.name,
+        description: attribute?.description || '',
+        labels: attribute?.labels ? attribute.labels.map((l) => ({ ...l })) : [],
+      }
+      isRowEditDialogVisible.value = true
     }
   }
 
