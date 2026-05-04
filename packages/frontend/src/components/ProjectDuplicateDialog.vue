@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { Project } from '@functions/types/shared'
 import inputRules from '@/modules/inputRules'
+import { granularityToInputType } from '@/modules/utils'
 import { useProjectDuplicateDialog } from './composables/useProjectDuplicateDialog'
 
 const props = defineProps<{
@@ -31,6 +33,8 @@ const {
   nextStep,
   prevStep,
 } = useProjectDuplicateDialog(props, emit)
+
+const dateInputType = computed(() => granularityToInputType(props.project?.attribute?.granularity))
 </script>
 
 <template>
@@ -86,9 +90,10 @@ const {
                   <v-col cols="6">
                     <DateInput
                       v-model="localStart"
-                      :type="props.project?.attribute?.granularity === 'monthly' ? 'month' : props.project?.attribute?.granularity === 'hourly' ? 'datetime-local' : 'date'"
+                      :type="dateInputType"
                       label-daily="開始日"
                       label-monthly="開始月"
+                      label-datetime="開始日時"
                       :compare-target="localEnd"
                       compare-rule="before"
                       hide-details="auto"
@@ -97,9 +102,10 @@ const {
                   <v-col cols="6">
                     <DateInput
                       v-model="localEnd"
-                      :type="props.project?.attribute?.granularity === 'monthly' ? 'month' : props.project?.attribute?.granularity === 'hourly' ? 'datetime-local' : 'date'"
+                      :type="dateInputType"
                       label-daily="終了日"
                       label-monthly="終了月"
+                      label-datetime="終了日時"
                       :compare-target="localStart"
                       compare-rule="after"
                       hint="開始日の変更に連動して自動調整されます"

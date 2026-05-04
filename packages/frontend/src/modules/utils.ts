@@ -24,3 +24,7 @@ export const getContrastColor = (hex: string): string => {
   const yiq = (r * 299 + g * 587 + b * 114) / 1000
   return yiq >= 128 ? '#000000' : '#ffffff'
 }
+
+export const granularityToInputType = (granularity?: string): 'month' | 'datetime-local' | 'date' => {
+  return granularity === 'monthly' ? 'month' : granularity === 'hourly' ? 'datetime-local' : 'date'
+}

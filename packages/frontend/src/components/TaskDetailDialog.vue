@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useDiscardConfirm } from '@/composables/useConfirm'
 import inputRules from '@/modules/inputRules'
+import { granularityToInputType } from '@/modules/utils'
 import type { ColorPalette, EditingTaskData, Label, SimpleRowData, ProjectGranularity } from '@functions/types/shared'
 import { isEqual, cloneDeep } from 'lodash'
 import { computed, ref, watch } from 'vue'
@@ -60,8 +61,6 @@ const isLocked = computed({
 const isMonthly = computed(() => props.granularity === 'monthly')
 const isHourly = computed(() => props.granularity === 'hourly')
 
-
-
 const displayEnd = computed({
   get: () => {
     if (isMonthly.value && localTask.value.end) {
@@ -75,14 +74,10 @@ const displayEnd = computed({
     } else {
       localTask.value.end = val
     }
-  }
+  },
 })
 
-const inputType = computed(() => {
-  if (isMonthly.value) return 'month'
-  if (isHourly.value) return 'datetime-local'
-  return 'date'
-})
+const inputType = computed(() => granularityToInputType(props.granularity))
 </script>
 
 <template>
@@ -120,6 +115,7 @@ const inputType = computed(() => {
           :type="inputType"
           label-daily="開始日"
           label-monthly="開始月"
+          label-datetime="開始日時"
           :compare-target="displayEnd"
           compare-rule="before"
           hide-details="auto"
@@ -132,6 +128,7 @@ const inputType = computed(() => {
           :type="inputType"
           label-daily="終了日"
           label-monthly="終了月"
+          label-datetime="終了日時"
           :compare-target="localTask.start"
           compare-rule="after"
           hide-details="auto"

@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import type { Project, ColorPalette, Label, Milestone } from '@functions/types/shared'
 import inputRules from '@/modules/inputRules'
+import { granularityToInputType } from '@/modules/utils'
 import { useProjectDetailDialog } from './composables/useProjectDetailDialog'
 
 const props = defineProps<{
@@ -65,6 +66,8 @@ const historyRetentionOptions = [
 
 const tab = ref<'general' | 'permissions' | 'colorPalettes' | 'labels' | 'milestones'>('general')
 const expandedPaletteIndex = ref<number | null>(null)
+
+const dateInputType = computed(() => granularityToInputType(localGranularity.value))
 
 watch(
   () => props.modelValue,
@@ -138,10 +141,22 @@ watch(
                           <HelpText text="作成時に決定されたため変更できません" class="ml-1" />
                         </div>
                         <v-chip
-                          :prepend-icon="localGranularity === 'monthly' ? 'mdi-calendar-month' : localGranularity === 'hourly' ? 'mdi-clock-outline' : 'mdi-calendar-today'"
+                          :prepend-icon="
+                            localGranularity === 'monthly'
+                              ? 'mdi-calendar-month'
+                              : localGranularity === 'hourly'
+                                ? 'mdi-clock-outline'
+                                : 'mdi-calendar-today'
+                          "
                           variant="tonal"
                         >
-                          {{ localGranularity === 'monthly' ? '月単位' : localGranularity === 'hourly' ? '時間単位' : '日単位' }}
+                          {{
+                            localGranularity === 'monthly'
+                              ? '月単位'
+                              : localGranularity === 'hourly'
+                                ? '時間単位'
+                                : '日単位'
+                          }}
                         </v-chip>
                       </template>
                     </v-col>
@@ -173,9 +188,10 @@ watch(
                     <v-col cols="6">
                       <DateInput
                         v-model="localStart"
-                        :type="localGranularity === 'monthly' ? 'month' : localGranularity === 'hourly' ? 'datetime-local' : 'date'"
+                        :type="dateInputType"
                         label-daily="開始日"
                         label-monthly="開始月"
+                        label-datetime="開始日時"
                         :compare-target="localEnd"
                         compare-rule="before"
                         hide-details
@@ -185,9 +201,10 @@ watch(
                     <v-col cols="6">
                       <DateInput
                         v-model="localEnd"
-                        :type="localGranularity === 'monthly' ? 'month' : localGranularity === 'hourly' ? 'datetime-local' : 'date'"
+                        :type="dateInputType"
                         label-daily="終了日"
                         label-monthly="終了月"
+                        label-datetime="終了日時"
                         :compare-target="localStart"
                         compare-rule="after"
                         hide-details
