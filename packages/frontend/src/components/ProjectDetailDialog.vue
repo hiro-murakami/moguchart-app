@@ -111,11 +111,11 @@ watch(
               <v-window v-model="tab" style="min-height: 500px">
                 <v-window-item value="general">
                   <v-row density="compact" class="pt-2">
-                    <!-- 表示粒度（作成時のみ変更可） -->
-                    <v-col cols="12" class="mb-4">
+                    <!-- モード（作成時のみ変更可） -->
+                    <v-col cols="12" class="mb-4 d-flex">
                       <template v-if="!props.project">
-                        <div class="text-caption text-medium-emphasis mb-1 d-flex align-center">
-                          チャートの表示粒度
+                        <div class="text-caption text-medium-emphasis mr-4 d-flex align-center">
+                          モード
                           <HelpText text="作成後は変更できません" class="ml-1" />
                         </div>
                         <v-btn-toggle
@@ -126,19 +126,18 @@ watch(
                           color="primary"
                           rounded="lg"
                         >
-                          <v-btn value="daily" prepend-icon="mdi-calendar-today" size="small"> 日単位 </v-btn>
-                          <v-btn value="monthly" prepend-icon="mdi-calendar-month" size="small"> 月単位 </v-btn>
+                          <v-btn value="daily" prepend-icon="mdi-calendar-today"> 日単位 </v-btn>
+                          <v-btn value="monthly" prepend-icon="mdi-calendar-month"> 月単位 </v-btn>
                         </v-btn-toggle>
                       </template>
                       <template v-else>
-                        <div class="text-caption text-medium-emphasis mb-1 d-flex align-center">
-                          チャートの表示粒度
+                        <div class="text-caption text-medium-emphasis mr-4 d-flex align-center">
+                          モード
                           <HelpText text="作成時に決定されたため変更できません" class="ml-1" />
                         </div>
                         <v-chip
                           :prepend-icon="localGranularity === 'monthly' ? 'mdi-calendar-month' : 'mdi-calendar-today'"
                           variant="tonal"
-                          size="small"
                         >
                           {{ localGranularity === 'monthly' ? '月単位' : '日単位' }}
                         </v-chip>
