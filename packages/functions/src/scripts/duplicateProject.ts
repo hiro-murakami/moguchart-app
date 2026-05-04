@@ -99,7 +99,7 @@ const duplicateProject: DuplicateProject = async (
         ...newProjectData.attribute,
         milestones: newProjectData.attribute.milestones.map((m: Milestone) => ({
           ...m,
-          date: m.date ? addDaysStrKeepFormat(m.date, daysDiff) : m.date,
+          datetime: m.datetime ? addDaysStrKeepFormat(m.datetime, daysDiff) : m.datetime,
         })),
       },
     }
