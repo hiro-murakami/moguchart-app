@@ -75,7 +75,7 @@ export const useGanttChartView = () => {
   const chartEndStr = ref('2026-03-31')
   const pxPerDay = ref(28)
   const pxPerMonth = ref(40)
-  const pxPerHour = ref(40)
+  const pxPerHour = ref(140)
   const rowHeaderWidth = ref(200)
   const barHeight = ref(38)
   const barMargin = ref(4)
@@ -304,7 +304,7 @@ export const useGanttChartView = () => {
         if (settings?.pxPerHour) {
           pxPerHour.value = settings.pxPerHour
         } else {
-          pxPerHour.value = 40
+          pxPerHour.value = 140
         }
 
         // rowHeaderWidthの復元
@@ -2051,7 +2051,12 @@ export const useGanttChartView = () => {
     isRowEditDialogVisible.value = true
   }
 
-  const saveRow = async (data: { id: number; name: string; description?: string; labels?: import('@functions/types/shared').Label[] }) => {
+  const saveRow = async (data: {
+    id: number
+    name: string
+    description?: string
+    labels?: import('@functions/types/shared').Label[]
+  }) => {
     await maybeAutoSnapshot()
 
     const row = rows.value.find((r) => Number(r.id) === data.id)
@@ -2076,7 +2081,11 @@ export const useGanttChartView = () => {
       tasks: [],
     })
 
-    if (beforeName !== data.name || beforeDescription !== (data.description || '') || beforeLabels !== JSON.stringify(data.labels || [])) {
+    if (
+      beforeName !== data.name ||
+      beforeDescription !== (data.description || '') ||
+      beforeLabels !== JSON.stringify(data.labels || [])
+    ) {
       pushAction({
         description: '行編集',
         undo: async () => {
@@ -2936,10 +2945,10 @@ export const useGanttChartView = () => {
   const handleCreateNewTask = async (date: Date, rowId: string) => {
     chartContextMenu.value.visible = false
     await new Promise((resolve) => setTimeout(resolve, 200))
-    
+
     const isMonthly = currentProject.value?.attribute?.granularity === 'monthly'
     const isHourly = currentProject.value?.attribute?.granularity === 'hourly'
-    
+
     editingTask.value = {
       id: '', // 新規作成
       rowId: rowId,

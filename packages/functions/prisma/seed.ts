@@ -7,6 +7,15 @@ const prisma = new PrismaClient({ adapter })
 
 const projectId = '3f333df6-90a4-4fda-8dd3-9485d27cee36'
 const monthlyProjectId = 'b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c'
+const hourlyProjectId = 'c2a1b3d4-e5f6-7890-abcd-ef1234567890'
+
+/**
+ * JST の日時文字列（タイムゾーン指定なし）を受け取り、
+ * UTC オフセットなしの Date として返すことで、
+ * Prisma（MySQL DATETIME）に JST の時刻値をそのまま保存する。
+ * 例: jst('2026-05-10T09:00:00') → DB: 2026-05-10 09:00:00
+ */
+const jst = (localDateTimeStr: string): Date => new Date(`${localDateTimeStr}Z`)
 
 import { DEFAULT_COLOR_PALETTES } from '../src/types/shared'
 
@@ -14,11 +23,14 @@ import { DEFAULT_COLOR_PALETTES } from '../src/types/shared'
 // カラーパレット定義
 // ============================================================
 const colorPalettes: Record<string, any> = {
-  ...DEFAULT_COLOR_PALETTES.reduce((acc, p) => {
-    const key = p.name!.replace(/\s+(.)/g, (_, c) => c.toUpperCase()).replace(/^(.)/, (_, c) => c.toLowerCase())
-    acc[key] = p
-    return acc
-  }, {} as Record<string, any>),
+  ...DEFAULT_COLOR_PALETTES.reduce(
+    (acc, p) => {
+      const key = p.name!.replace(/\s+(.)/g, (_, c) => c.toUpperCase()).replace(/^(.)/, (_, c) => c.toLowerCase())
+      acc[key] = p
+      return acc
+    },
+    {} as Record<string, any>,
+  ),
   pending: {
     name: 'Pending',
     color: '#ffffff',
@@ -121,6 +133,51 @@ const monthlyProject = {
       { name: 'MVPリリース', datetime: '2028-06-30T10:00:00+09:00', color: '#43a047' },
       { name: 'グローバル展開', datetime: '2031-03-31T10:00:00+09:00', color: '#8e24aa' },
       { name: 'プロジェクト完了', datetime: '2034-12-31T10:00:00+09:00', color: '#e53935' },
+    ],
+  },
+}
+
+const hourlyProject = {
+  id: hourlyProjectId,
+  name: 'サンプルプロジェクト（時間単位）',
+  start: jst('2026-05-10T08:00:00'),
+  end: jst('2026-05-10T20:00:00'),
+  public: true,
+  authority: { owners: ['h.murakami@esm.co.jp'] },
+  attribute: {
+    granularity: 'hourly',
+    description: '本番障害インシデント対応の1日タイムライン。時間単位ガントチャートのサンプルです。',
+    snapDurationMinutes: 15,
+    colorPalettes: Object.values(colorPalettes),
+    labels: Object.values(labels),
+    milestones: [
+      { name: '障害検知', datetime: '2026-05-10T09:15:00+09:00', color: '#e53935' },
+      { name: '原因特定', datetime: '2026-05-10T11:00:00+09:00', color: '#fb8c00' },
+      { name: '暫定復旧', datetime: '2026-05-10T13:00:00+09:00', color: '#43a047' },
+      { name: '完全復旧・クローズ', datetime: '2026-05-10T18:00:00+09:00', color: '#1e88e5' },
+    ],
+    newTaskTemplates: [
+      {
+        name: '調査タスク',
+        duration: 1,
+        attribute: { colorPalette: colorPalettes.teal },
+      },
+      {
+        name: '対応タスク',
+        duration: 2,
+        attribute: {
+          colorPalette: colorPalettes.orange,
+          labels: [labels.high],
+        },
+      },
+      {
+        name: 'レビュー・確認',
+        duration: 1,
+        attribute: {
+          colorPalette: colorPalettes.purple,
+          labels: [labels.review],
+        },
+      },
     ],
   },
 }
@@ -606,6 +663,271 @@ const monthlyGanttTasks = [
 ]
 
 // ============================================================
+// 時間単位ガント行
+// ============================================================
+const hourlyGanttRows = [
+  {
+    id: 201,
+    projectId: hourlyProjectId,
+    name: '障害検知・初動対応',
+    order: 1,
+    attribute: { description: 'アラート受信から第一報発出までの対応フェーズ。' },
+  },
+  {
+    id: 202,
+    projectId: hourlyProjectId,
+    name: '原因調査',
+    order: 2,
+    attribute: { description: '障害原因を特定するための調査フェーズ。' },
+  },
+  {
+    id: 203,
+    projectId: hourlyProjectId,
+    name: 'インフラ・環境対応',
+    order: 3,
+    attribute: { description: 'インフラ側の暫定・恒久対策フェーズ。' },
+  },
+  {
+    id: 204,
+    projectId: hourlyProjectId,
+    name: 'アプリ修正・デプロイ',
+    order: 4,
+    attribute: { description: 'アプリケーションコードの修正と本番反映。' },
+  },
+  {
+    id: 205,
+    projectId: hourlyProjectId,
+    name: '動作確認・リリース後検証',
+    order: 5,
+    attribute: { description: '修正後の正常性確認と監視強化。' },
+  },
+  {
+    id: 206,
+    projectId: hourlyProjectId,
+    name: 'コミュニケーション・報告',
+    order: 6,
+    attribute: { description: '社内外への状況共有・報告対応フェーズ。' },
+  },
+]
+
+// ============================================================
+// 時間単位ガントタスク
+// ============================================================
+const hourlyGanttTaskDefs: TaskDef[] = [
+  // ── 障害検知・初動対応 ──
+  {
+    rowId: 201,
+    name: 'アラート受信・確認',
+    start: jst('2026-05-10T09:00:00'),
+    end: jst('2026-05-10T09:30:00'),
+    attribute: {
+      description: '監視ツールのアラートを受信し、担当者が内容を確認する。',
+      colorPalette: colorPalettes.red,
+      labels: [labels.high],
+    },
+  },
+  {
+    rowId: 201,
+    name: 'インシデント宣言・体制召集',
+    start: jst('2026-05-10T09:30:00'),
+    end: jst('2026-05-10T10:00:00'),
+    attribute: {
+      colorPalette: colorPalettes.red,
+      labels: [labels.high],
+    },
+    dependsOn: ['アラート受信・確認'],
+  },
+  {
+    rowId: 201,
+    name: '第一報・社内エスカレーション',
+    start: jst('2026-05-10T09:45:00'),
+    end: jst('2026-05-10T10:15:00'),
+    attribute: {
+      colorPalette: colorPalettes.orange,
+      labels: [labels.high],
+    },
+  },
+
+  // ── 原因調査 ──
+  {
+    rowId: 202,
+    name: 'ログ収集・解析',
+    start: jst('2026-05-10T09:30:00'),
+    end: jst('2026-05-10T11:00:00'),
+    attribute: {
+      description: 'アプリ・インフラ各層のログを収集し、エラー箇所を特定する。',
+      colorPalette: colorPalettes.teal,
+      labels: [labels.high],
+    },
+    dependsOn: ['アラート受信・確認'],
+  },
+  {
+    rowId: 202,
+    name: '原因仮説立案',
+    start: jst('2026-05-10T10:30:00'),
+    end: jst('2026-05-10T11:30:00'),
+    attribute: {
+      colorPalette: colorPalettes.teal,
+      labels: [labels.medium],
+    },
+    dependsOn: ['ログ収集・解析'],
+  },
+  {
+    rowId: 202,
+    name: '根本原因特定',
+    start: jst('2026-05-10T11:30:00'),
+    end: jst('2026-05-10T13:00:00'),
+    attribute: {
+      colorPalette: colorPalettes.teal,
+      labels: [labels.high],
+    },
+    dependsOn: ['原因仮説立案'],
+  },
+
+  // ── インフラ・環境対応 ──
+  {
+    rowId: 203,
+    name: '暫定対処（サービス切り戻し）',
+    start: jst('2026-05-10T10:00:00'),
+    end: jst('2026-05-10T11:00:00'),
+    attribute: {
+      description: '影響範囲を最小化するため旧バージョンへ切り戻す。',
+      colorPalette: colorPalettes.orange,
+      labels: [labels.high, labels.blocked],
+    },
+    dependsOn: ['インシデント宣言・体制召集'],
+  },
+  {
+    rowId: 203,
+    name: 'インフラ設定修正',
+    start: jst('2026-05-10T13:00:00'),
+    end: jst('2026-05-10T15:00:00'),
+    attribute: {
+      colorPalette: colorPalettes.orange,
+      labels: [labels.medium],
+    },
+    dependsOn: ['根本原因特定'],
+  },
+  {
+    rowId: 203,
+    name: 'スケールアウト・負荷分散確認',
+    start: jst('2026-05-10T15:00:00'),
+    end: jst('2026-05-10T16:00:00'),
+    attribute: {
+      colorPalette: colorPalettes.green,
+      labels: [labels.medium],
+    },
+    dependsOn: ['インフラ設定修正'],
+  },
+
+  // ── アプリ修正・デプロイ ──
+  {
+    rowId: 204,
+    name: 'コード修正・ローカル検証',
+    start: jst('2026-05-10T11:30:00'),
+    end: jst('2026-05-10T14:00:00'),
+    attribute: {
+      description: 'バグ修正のコーディングとローカル環境での動作確認。',
+      colorPalette: colorPalettes.blue,
+      labels: [labels.high],
+    },
+    dependsOn: ['根本原因特定'],
+  },
+  {
+    rowId: 204,
+    name: 'コードレビュー',
+    start: jst('2026-05-10T14:00:00'),
+    end: jst('2026-05-10T15:00:00'),
+    attribute: {
+      colorPalette: colorPalettes.purple,
+      labels: [labels.review],
+    },
+    dependsOn: ['コード修正・ローカル検証'],
+  },
+  {
+    rowId: 204,
+    name: '本番デプロイ',
+    start: jst('2026-05-10T15:00:00'),
+    end: jst('2026-05-10T16:00:00'),
+    attribute: {
+      colorPalette: colorPalettes.red,
+      labels: [labels.high],
+    },
+    dependsOn: ['コードレビュー', 'インフラ設定修正'],
+  },
+
+  // ── 動作確認・リリース後検証 ──
+  {
+    rowId: 205,
+    name: '動作確認・スモークテスト',
+    start: jst('2026-05-10T16:00:00'),
+    end: jst('2026-05-10T17:00:00'),
+    attribute: {
+      description: 'リリース後の主要機能が正常に動作していることを確認する。',
+      colorPalette: colorPalettes.green,
+    },
+    dependsOn: ['本番デプロイ', 'スケールアウト・負荷分散確認'],
+  },
+  {
+    rowId: 205,
+    name: '監視強化・異常値監視',
+    start: jst('2026-05-10T16:00:00'),
+    end: jst('2026-05-10T18:00:00'),
+    attribute: {
+      colorPalette: colorPalettes.teal,
+      labels: [labels.medium],
+    },
+    dependsOn: ['本番デプロイ'],
+  },
+  {
+    rowId: 205,
+    name: 'インシデントクローズ判定',
+    start: jst('2026-05-10T18:00:00'),
+    end: jst('2026-05-10T18:30:00'),
+    attribute: {
+      colorPalette: colorPalettes.green,
+      labels: [labels.review],
+    },
+    dependsOn: ['動作確認・スモークテスト', '監視強化・異常値監視'],
+  },
+
+  // ── コミュニケーション・報告 ──
+  {
+    rowId: 206,
+    name: 'カスタマー向け障害告知',
+    start: jst('2026-05-10T10:15:00'),
+    end: jst('2026-05-10T11:00:00'),
+    attribute: {
+      description: 'ステータスページ・SNSへの障害情報公開。',
+      colorPalette: colorPalettes.orange,
+      labels: [labels.external],
+    },
+    dependsOn: ['第一報・社内エスカレーション'],
+  },
+  {
+    rowId: 206,
+    name: '中間報告（経営層向け）',
+    start: jst('2026-05-10T13:00:00'),
+    end: jst('2026-05-10T13:30:00'),
+    attribute: {
+      colorPalette: colorPalettes.orange,
+      labels: [labels.high],
+    },
+  },
+  {
+    rowId: 206,
+    name: '復旧完了報告・ポストモーテム開始',
+    start: jst('2026-05-10T18:30:00'),
+    end: jst('2026-05-10T19:30:00'),
+    attribute: {
+      colorPalette: colorPalettes.purple,
+      labels: [labels.review],
+    },
+    dependsOn: ['インシデントクローズ判定'],
+  },
+]
+
+// ============================================================
 // ガント行
 // ============================================================
 const ganttRows = [
@@ -949,10 +1271,10 @@ const main = async () => {
   await prisma.project.deleteMany()
 
   await prisma.project.createMany({
-    data: [...projects, monthlyProject],
+    data: [...projects, monthlyProject, hourlyProject],
   })
   await prisma.ganttRow.createMany({
-    data: [...ganttRows, ...monthlyGanttRows],
+    data: [...ganttRows, ...monthlyGanttRows, ...hourlyGanttRows],
   })
   // ── 日単位プロジェクト：タスクを順番に create してIDを取得し、依存関係を設定 ──
   const taskIdMap = new Map<string, number>()
@@ -965,9 +1287,7 @@ const main = async () => {
         .filter((id): id is number => id !== undefined)
         .map(String) ?? []
 
-    const attribute = depIds.length > 0
-      ? { ...taskData.attribute, dependencies: depIds }
-      : taskData.attribute
+    const attribute = depIds.length > 0 ? { ...taskData.attribute, dependencies: depIds } : taskData.attribute
 
     const created = await prisma.ganttTask.create({
       data: { ...taskData, attribute },
@@ -979,6 +1299,24 @@ const main = async () => {
   await prisma.ganttTask.createMany({
     data: monthlyGanttTasks,
   })
+
+  // 時間単位プロジェクト：タスクを順番に create してIDを取得し、依存関係を設定
+  const hourlyTaskIdMap = new Map<string, number>()
+
+  for (const { dependsOn, ...taskData } of hourlyGanttTaskDefs) {
+    const depIds =
+      dependsOn
+        ?.map((name) => hourlyTaskIdMap.get(name))
+        .filter((id): id is number => id !== undefined)
+        .map(String) ?? []
+
+    const attribute = depIds.length > 0 ? { ...taskData.attribute, dependencies: depIds } : taskData.attribute
+
+    const created = await prisma.ganttTask.create({
+      data: { ...taskData, attribute },
+    })
+    hourlyTaskIdMap.set(taskData.name, created.id)
+  }
 
   console.log('Seeding finished.')
 }

@@ -110,9 +110,9 @@ const currentTheme = computed({
       <ZoomControls
         v-else
         :model-value="pxPerHour"
-        :min="40"
-        :max="140"
-        :step="5"
+        :min="50"
+        :max="300"
+        :step="50"
         @update:model-value="emit('update:pxPerHour', $event)"
       />
       <div class="text-caption text-medium-emphasis mb-1 mt-3">バーの高さ</div>
