@@ -142,10 +142,7 @@ const canComment = computed(() => {
 const handleKeyDown = (e: KeyboardEvent) => {
   // テキスト入力系の要素にフォーカスがある場合はブラウザ標準の動作を優先する
   const target = e.target as HTMLElement | null
-  if (
-    target &&
-    (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)
-  ) {
+  if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
     return
   }
 
@@ -249,7 +246,7 @@ const handleExportPdf = async () => {
               @click="isSnapshotListDialogVisible = true"
               tooltip="スナップショット一覧"
             />
-              <ExportMenu
+            <ExportMenu
               @export-csv="handleExportCsv"
               @export-excel="handleExportExcel"
               @export-png="handleExportPng"
@@ -296,6 +293,7 @@ const handleExportPdf = async () => {
         />
 
         <LabelFilter
+          class="mr-n2"
           v-model="selectedFilterLabelNames"
           :available-labels="availableLabels"
           @select-all="selectAllLabels"
