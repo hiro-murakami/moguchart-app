@@ -59,7 +59,6 @@ const isLocked = computed({
 })
 
 const isMonthly = computed(() => props.granularity === 'monthly')
-const isHourly = computed(() => props.granularity === 'hourly')
 
 const displayEnd = computed({
   get: () => {

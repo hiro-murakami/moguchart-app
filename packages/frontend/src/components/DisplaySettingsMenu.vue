@@ -110,8 +110,8 @@ const currentTheme = computed({
       <ZoomControls
         v-else
         :model-value="pxPerHour"
-        :min="20"
-        :max="100"
+        :min="40"
+        :max="140"
         :step="5"
         @update:model-value="emit('update:pxPerHour', $event)"
       />

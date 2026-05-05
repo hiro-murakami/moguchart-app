@@ -130,8 +130,8 @@ watch(
                           color="primary"
                           rounded="lg"
                         >
-                          <v-btn value="daily" prepend-icon="mdi-calendar-today"> 日単位 </v-btn>
                           <v-btn value="hourly" prepend-icon="mdi-clock-outline"> 時間単位 </v-btn>
+                          <v-btn value="daily" prepend-icon="mdi-calendar-today"> 日単位 </v-btn>
                           <v-btn value="monthly" prepend-icon="mdi-calendar-month"> 月単位 </v-btn>
                         </v-btn-toggle>
                       </template>
@@ -212,24 +212,26 @@ watch(
                       />
                     </v-col>
                     <!-- hourly モード時のスナップ単位設定 -->
-                    <v-col v-if="localGranularity === 'hourly'" cols="6" class="mb-4">
+                    <v-col v-if="localGranularity === 'hourly'" cols="12" class="mb-4">
+                      <div class="text-caption text-medium-emphasis mt-1 d-flex align-center">
+                        スナップ単位
+                        <HelpText text="タスクの移動・リサイズ時にスナップする時間単位です" class="ml-1" />
+                      </div>
                       <v-btn-toggle
                         v-model="localSnapDurationMinutes"
                         mandatory
                         density="compact"
                         variant="outlined"
                         color="primary"
-                        class="w-100"
+                        class="w-70"
                       >
                         <v-btn :value="60" class="flex-grow-1">60分</v-btn>
                         <v-btn :value="30" class="flex-grow-1">30分</v-btn>
                         <v-btn :value="15" class="flex-grow-1">15分</v-btn>
+                        <v-btn :value="12" class="flex-grow-1">12分</v-btn>
                         <v-btn :value="6" class="flex-grow-1">6分</v-btn>
+                        <v-btn :value="5" class="flex-grow-1">5分</v-btn>
                       </v-btn-toggle>
-                      <div class="text-caption text-medium-emphasis mt-1 d-flex align-center">
-                        スナップ単位
-                        <HelpText text="タスクの移動・リサイズ時にスナップする時間単位です" class="ml-1" />
-                      </div>
                     </v-col>
                     <v-col cols="12" class="mb-4">
                       <v-checkbox v-model="localPublic" density="compact" hide-details>
