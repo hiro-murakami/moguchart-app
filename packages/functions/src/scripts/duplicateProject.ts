@@ -3,44 +3,46 @@ import { prisma } from './common/commonFunctions'
 import { _upsertProject } from './upsertProject'
 
 /**
- * Date または文字列を YYYY-MM-DD 形式の文字列に変換する
+ * Date または文字列を UTC の Date としてパースする
  */
-const toDateStr = (date: Date | string): string => {
-  if (date instanceof Date) {
-    return date.toISOString().slice(0, 10)
+const toUtcDate = (dateStr: string | Date): Date => {
+  if (dateStr instanceof Date) return dateStr
+  if (/[Z+\-]\d{2}:?\d{2}$/.test(dateStr) || dateStr.endsWith('Z')) {
+    return new Date(dateStr)
   }
-  return String(date).slice(0, 10)
+  // TZなし文字列をUTCとして解釈
+  if (dateStr.length === 10) return new Date(`${dateStr}T00:00:00Z`)
+  if (dateStr.length === 7) return new Date(`${dateStr}-01T00:00:00Z`)
+  return new Date(`${dateStr}Z`)
 }
 
 /**
- * 日付(Date or YYYY-MM-DD文字列)に指定した日数を加算した Date オブジェクトを返す
+ * 2つの日付の差分（ミリ秒）を返す (to - from)
  */
-const addDays = (date: Date | string, days: number): Date => {
-  const dateStr = toDateStr(date)
-  const d = new Date(dateStr + 'T00:00:00Z')
-  d.setUTCDate(d.getUTCDate() + days)
-  return d
+const diffMs = (from: string | Date, to: string | Date): number => {
+  return toUtcDate(to).getTime() - toUtcDate(from).getTime()
 }
 
 /**
- * マイルストーン日付文字列に指定した日数を加算する。
- * 元の文字列の形式（YYYY-MM-DD or YYYY-MM-DDTHH:mm 等）を保持する。
+ * 日付(Date or 文字列)に指定したミリ秒を加算した Date オブジェクトを返す
  */
-const addDaysStrKeepFormat = (dateStr: string, days: number): string => {
-  // 日付部分(YYYY-MM-DD)のみ置換し、時刻部分はそのまま保持する
-  const datePart = dateStr.slice(0, 10)
-  const timePart = dateStr.slice(10) // 'THH:mm' や 'THH:mm:ss' など（なければ空文字）
-  const newDatePart = addDays(datePart, days).toISOString().slice(0, 10)
-  return newDatePart + timePart
+const addMs = (date: Date | string, ms: number): Date => {
+  return new Date(toUtcDate(date).getTime() + ms)
 }
 
 /**
- * 2つの日付文字列(YYYY-MM-DD)の差分（日数）を返す (to - from)
+ * マイルストーン日付文字列に指定したミリ秒を加算する。
+ * 元の文字列の形式（YYYY-MM-DD や YYYY-MM-DDTHH:mm 等）を保持する。
  */
-const diffDays = (from: string, to: string): number => {
-  const f = new Date(from + 'T00:00:00Z')
-  const t = new Date(to + 'T00:00:00Z')
-  return Math.round((t.getTime() - f.getTime()) / (1000 * 60 * 60 * 24))
+const addMsStrKeepFormat = (dateStr: string, ms: number): string => {
+  if (!dateStr) return dateStr
+  const newD = addMs(dateStr, ms)
+  const iso = newD.toISOString()
+  if (dateStr.length === 7) return iso.slice(0, 7) // YYYY-MM
+  if (dateStr.length === 10) return iso.slice(0, 10) // YYYY-MM-DD
+  if (dateStr.length === 16) return iso.slice(0, 16) // YYYY-MM-DDTHH:mm
+  if (dateStr.length === 19) return iso.slice(0, 19) // YYYY-MM-DDTHH:mm:ss
+  return iso
 }
 
 const duplicateProject: DuplicateProject = async (
@@ -87,19 +89,18 @@ const duplicateProject: DuplicateProject = async (
     orderBy: { order: 'asc' },
   })
 
-  // 開始日スライドの差分日数を計算
-  const originalStart = toDateStr(project.start)
-  const daysDiff = newStartDate ? diffDays(originalStart, newStartDate) : 0
+  // 開始日スライドの差分ミリ秒を計算
+  const msDiff = newStartDate ? diffMs(project.start, newStartDate) : 0
 
-  // マイルストーンの日付をスライド（JSON内の文字列なので addDaysStr を使用）
-  if (daysDiff !== 0 && newProjectData.attribute?.milestones) {
+  // マイルストーンの日付をスライド（JSON内の文字列なので addMsStrKeepFormat を使用）
+  if (msDiff !== 0 && newProjectData.attribute?.milestones) {
     newProjectData = {
       ...newProjectData,
       attribute: {
         ...newProjectData.attribute,
         milestones: newProjectData.attribute.milestones.map((m: Milestone) => ({
           ...m,
-          datetime: m.datetime ? addDaysStrKeepFormat(m.datetime, daysDiff) : m.datetime,
+          datetime: m.datetime ? addMsStrKeepFormat(m.datetime, msDiff) : m.datetime,
         })),
       },
     }
@@ -145,8 +146,8 @@ const duplicateProject: DuplicateProject = async (
             const newTask = await tx.ganttTask.create({
               data: {
                 name: task.name,
-                start: daysDiff !== 0 ? addDays(task.start, daysDiff) : task.start,
-                end: daysDiff !== 0 ? addDays(task.end, daysDiff) : task.end,
+                start: msDiff !== 0 ? addMs(task.start, msDiff) : task.start,
+                end: msDiff !== 0 ? addMs(task.end, msDiff) : task.end,
                 attribute: taskAttr,
                 rowId: newRow.id,
                 comments: {

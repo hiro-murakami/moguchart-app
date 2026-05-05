@@ -2,6 +2,7 @@ import type { Project } from '@functions/types/shared'
 import { debounce } from 'lodash'
 import { computed, nextTick, ref, watch } from 'vue'
 import type { VForm } from 'vuetify/components'
+import dayjs from 'dayjs'
 
 /** ステッパーのステップ数 */
 const TOTAL_STEPS = 3
@@ -57,8 +58,9 @@ export function useProjectDuplicateDialog(props: ProjectDuplicateDialogProps, em
     }
   }
 
-  /** 元プロジェクト期間（日数） */
-  const originalDurationDays = ref(0)
+  /** 元プロジェクト期間（ミリ秒） */
+  const originalDurationMs = ref(0)
+  const projectGranularity = ref('daily')
 
   /** 元プロジェクトの説明文（表示用） */
   const description = computed(() => props.project?.attribute?.description || '')
@@ -67,16 +69,29 @@ export function useProjectDuplicateDialog(props: ProjectDuplicateDialogProps, em
     () => props.modelValue,
     (isVisible) => {
       if (isVisible && props.project) {
+        const startRaw = props.project.start
+        const endRaw = props.project.end
+        
+        const granularity = props.project.attribute?.granularity || 'daily'
+        projectGranularity.value = granularity
+
+        const isHourly = granularity === 'hourly'
+        const isMonthly = granularity === 'monthly'
+
+        const formatLength = isHourly ? 16 : isMonthly ? 7 : 10
+        const startStr = startRaw.slice(0, formatLength)
+        const endStr = endRaw.slice(0, formatLength)
+
+        // 元のプロジェクト期間（ミリ秒）を記憶
+        const s = dayjs(startRaw)
+        const e = dayjs(endRaw)
+        originalDurationMs.value = e.diff(s, 'millisecond')
+
         localName.value = `${props.project.name}のコピー`
-        localStart.value = props.project.start
-        localEnd.value = props.project.end
+        localStart.value = startStr
+        localEnd.value = endStr
         localClearProgress.value = true
         currentStep.value = 1
-
-        // 元のプロジェクト期間（日数）を記憶
-        const s = new Date(props.project.start + 'T00:00:00Z')
-        const e = new Date(props.project.end + 'T00:00:00Z')
-        originalDurationDays.value = Math.round((e.getTime() - s.getTime()) / (1000 * 60 * 60 * 24))
       }
     },
   )
@@ -84,9 +99,16 @@ export function useProjectDuplicateDialog(props: ProjectDuplicateDialogProps, em
   /** 開始日の変更に応じて終了日を自動スライド */
   watch(localStart, (newStart) => {
     if (!newStart) return
-    const s = new Date(newStart + 'T00:00:00Z')
-    s.setUTCDate(s.getUTCDate() + originalDurationDays.value)
-    localEnd.value = s.toISOString().slice(0, 10)
+    const s = dayjs(newStart)
+    if (!s.isValid()) return
+    
+    const isHourly = projectGranularity.value === 'hourly'
+    const isMonthly = projectGranularity.value === 'monthly'
+    
+    const e = s.add(originalDurationMs.value, 'millisecond')
+    
+    localEnd.value = e.format(isHourly ? 'YYYY-MM-DDTHH:mm' : isMonthly ? 'YYYY-MM' : 'YYYY-MM-DD')
+    
     // 終了日更新後にフォームを再バリデーション（dateBefore/dateAfterルールの不整合を解消）
     nextTick(() => form.value?.validate())
   })

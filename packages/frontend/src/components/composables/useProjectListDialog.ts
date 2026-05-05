@@ -167,7 +167,7 @@ export const useProjectListDialog = (
 
       // 開始日が元と異なる場合、newStartDate を渡してタスク・マイルストーンをスライドさせる
       const newStartDate =
-        originalProject.start && project.start && project.start !== originalProject.start
+        originalProject.start && project.start && project.start !== originalProject.start.slice(0, project.start.length)
           ? project.start
           : undefined
       const projectId = await duplicateProjectScript({

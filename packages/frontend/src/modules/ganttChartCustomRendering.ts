@@ -327,7 +327,7 @@ export const barContent = (task: moguchart.GanttTask) => {
   return container
 }
 
-export const tooltip = (task: moguchart.GanttTask) => {
+export const tooltip = (task: moguchart.GanttTask, isHourly?: boolean) => {
   const taskWithAttr = task as any
   const labels = taskWithAttr.attribute?.labels as { name: string; color: string }[] | undefined
   const description = taskWithAttr.attribute?.description as string | undefined
@@ -346,8 +346,16 @@ export const tooltip = (task: moguchart.GanttTask) => {
   dateSpan.style.opacity = '0.9'
   const start = dayjs(task.start)
   const end = dayjs(task.end)
-  const days = end.diff(start, 'day') + 1
-  dateSpan.textContent = `${toDateString(task.start, 'YYYY/MM/DD')} - ${toDateString(task.end, 'YYYY/MM/DD')} (${days}日)`
+  
+  if (isHourly) {
+    const diffMinutes = end.diff(start, 'minute')
+    const diffHours = diffMinutes / 60
+    const hoursStr = Number.isInteger(diffHours) ? diffHours.toString() : diffHours.toFixed(1)
+    dateSpan.textContent = `${start.format('YYYY/MM/DD HH:mm')} - ${end.format('YYYY/MM/DD HH:mm')} (${hoursStr}時間)`
+  } else {
+    const days = end.diff(start, 'day') + 1
+    dateSpan.textContent = `${toDateString(task.start, 'YYYY/MM/DD')} - ${toDateString(task.end, 'YYYY/MM/DD')} (${days}日)`
+  }
   container.appendChild(dateSpan)
 
   // タスク名

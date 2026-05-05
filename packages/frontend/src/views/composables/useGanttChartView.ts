@@ -599,7 +599,7 @@ export const useGanttChartView = () => {
         : {}),
       customRendering: {
         barContent,
-        tooltip,
+        tooltip: (task: moguchart.GanttTask) => tooltip(task, isHourly),
         rowHeaderContent,
         cornerContent: createCornerContent(() => ({
           availableLabels: availableLabels.value,
