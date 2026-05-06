@@ -18,12 +18,12 @@ export default createVuetify({
     themes: {
       light: {
         colors: {
-          moguChartColor: '#a7d1e5',
+          moguChartColor: '#4a55aa',
         },
       },
       dark: {
         colors: {
-          moguChartColor: '#507B80',
+          moguChartColor: '#3c4060',
         },
       },
     },

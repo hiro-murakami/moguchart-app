@@ -63,7 +63,7 @@ const labels = {
 const projects = [
   {
     id: projectId,
-    name: 'サンプルプロジェクト（日単位）',
+    name: '[日単位]サンプルプロジェクト',
     start: new Date('2025-12-01'),
     end: new Date('2026-04-30'),
     public: true,
@@ -118,7 +118,7 @@ const projects = [
 
 const monthlyProject = {
   id: monthlyProjectId,
-  name: 'サンプルプロジェクト（月単位）',
+  name: '[月単位]サンプルプロジェクト',
   start: new Date('2025-01-01'),
   end: new Date('2034-12-31'),
   public: true,
@@ -139,7 +139,7 @@ const monthlyProject = {
 
 const hourlyProject = {
   id: hourlyProjectId,
-  name: 'サンプルプロジェクト（時間単位）',
+  name: '[時間単位]サンプルプロジェクト',
   start: jst('2026-05-10T08:00:00'),
   end: jst('2026-05-10T20:00:00'),
   public: true,

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import splashImage from '@/assets/splash.png'
+import splashImage from '@/assets/splash2.png'
 import { useGanttChartView } from './composables/useGanttChartView'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import ProjectCommentPanel from '@/components/ProjectCommentPanel.vue'

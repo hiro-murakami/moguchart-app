@@ -1,14 +1,18 @@
 <script setup lang="ts">
 import { provideLoading } from '@/composables/useLoading'
 import { useUserStore } from '@/stores/useUserStore'
+import { useProjectStore } from '@/stores/useProjectStore'
 import { storeToRefs } from 'pinia'
 import { onMounted, onUnmounted, ref, computed, watch } from 'vue'
-import headerImage from '@/assets/header.png'
+import { useRouter } from 'vue-router'
+import headerImage from '@/assets/header2.png'
 import { VERSION } from '@functions/types/shared'
 import AppUserMenu from '@/components/AppUserMenu.vue'
 
 const { isLoading } = provideLoading()
 const userStore = useUserStore()
+const projectStore = useProjectStore()
+const router = useRouter()
 const { firebaseUser, currentTheme, versionUpdated } = storeToRefs(userStore)
 const showUserDetail = ref(false)
 const showManual = ref(false)
@@ -43,13 +47,18 @@ watch(versionUpdated, (updated) => {
     showReleaseNotes.value = true
   }
 })
+
+const returnToSplash = () => {
+  projectStore.setProjectId('')
+  router.push('/')
+}
 </script>
 
 <template>
   <DialogProvider>
     <v-app :theme="effectiveTheme">
-      <v-app-bar color="moguChartColor">
-        <img :src="headerImage" height="42" class="header-image ml-4" />
+      <v-app-bar color="moguChartColor" height="54">
+        <img :src="headerImage" height="42" class="header-image ml-4" @click="returnToSplash" />
         <span class="ml-2 text-label-large" style="opacity: 0.7">v{{ VERSION }}</span>
         <v-spacer />
         <TooltipBtn
@@ -84,5 +93,6 @@ watch(versionUpdated, (updated) => {
 <style scoped lang="scss">
 .header-image {
   border-radius: 6px;
+  cursor: pointer;
 }
 </style>
