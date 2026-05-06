@@ -58,7 +58,7 @@ const returnToSplash = () => {
   <DialogProvider>
     <v-app :theme="effectiveTheme">
       <v-app-bar color="moguChartColor" height="54">
-        <img :src="headerImage" height="42" class="header-image ml-4" @click="returnToSplash" />
+        <img :src="headerImage" height="32" class="header-image ml-4" @click="returnToSplash" />
         <span class="ml-2 text-label-large" style="opacity: 0.7">v{{ VERSION }}</span>
         <v-spacer />
         <TooltipBtn

@@ -2,6 +2,7 @@
 import splashImage from '@/assets/splash2.png'
 import { useGanttChartView } from './composables/useGanttChartView'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { useTheme } from 'vuetify'
 import ProjectCommentPanel from '@/components/ProjectCommentPanel.vue'
 import { useUserStore } from '@/stores/useUserStore'
 
@@ -26,6 +27,7 @@ const {
   currentProject,
   showHiddenRows,
   showCurrentTimeLine,
+  barShadowLevel,
   readonlyMode,
   currentRole,
   pxPerDay,
@@ -123,6 +125,20 @@ const {
 
 const projectCommentPanelRef = ref<InstanceType<typeof ProjectCommentPanel>>()
 const userStore = useUserStore()
+const vuetifyTheme = useTheme()
+
+// ダーク/ライトテーマに対応した影のCSS変数値を計算
+const barShadowCssVar = computed(() => {
+  const dark = vuetifyTheme.global.current.value.dark
+  const shadowMap = {
+    none: 'none',
+    // ダークモード: 白系の影でダーク背景との対比を出す
+    small: dark ? '0 1px 6px rgba(255,255,255,0.30), 0 1px 3px rgba(0,0,0,0.5)' : '0 1px 2px rgba(0,0,0,0.07)',
+    medium: dark ? '0 2px 8px rgba(255,255,255,0.40), 0 2px 4px rgba(0,0,0,0.6)' : '0 1px 4px rgba(0,0,0,0.13)',
+    large: dark ? '0 2px 10px rgba(255,255,255,0.50), 0 2px 5px rgba(0,0,0,0.7)' : '0 2px 6px rgba(0,0,0,0.20)',
+  }
+  return shadowMap[barShadowLevel.value]
+})
 
 /**
  * プロジェクトの authority のいずれかに自分のメールアドレスが含まれる場合にコメント入力可
@@ -208,7 +224,10 @@ const handleExportPdf = async () => {
 <template>
   <div
     class="gantt-app"
-    :style="{ paddingRight: currentProject ? `${effectiveCommentSidebarWidth + 8}px` : undefined }"
+    :style="{
+      paddingRight: currentProject ? `${effectiveCommentSidebarWidth + 8}px` : undefined,
+      '--task-box-shadow': barShadowCssVar,
+    }"
   >
     <template v-if="currentProject">
       <div class="mb-4 d-flex align-center" style="gap: 1rem">
@@ -303,6 +322,7 @@ const handleExportPdf = async () => {
         <DisplaySettingsMenu
           v-model:show-hidden-rows="showHiddenRows"
           v-model:show-current-time-line="showCurrentTimeLine"
+          v-model:bar-shadow-level="barShadowLevel"
           v-model:px-per-day="pxPerDay"
           v-model:px-per-month="pxPerMonth"
           v-model:px-per-hour="pxPerHour"
@@ -569,14 +589,15 @@ const handleExportPdf = async () => {
   --task-box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   padding: 8px;
   font-family: sans-serif;
-  height: calc(100vh - 64px);
+  height: calc(100vh - 54px);
   display: flex;
   flex-direction: column;
   transition: padding-right 0.3s ease;
 }
 
 :global(.v-theme--dark) .gantt-app {
-  --task-box-shadow: 0 3px 6px rgba(0, 0, 0, 0.8);
+  /* ダークモード: 白系グローと黒影の組み合わせで視認性を確保 */
+  --task-box-shadow: 0 2px 10px rgba(255, 255, 255, 0.4), 0 2px 5px rgba(0, 0, 0, 0.6);
 }
 
 .row-edit-input {

@@ -83,6 +83,7 @@ export const useGanttChartView = () => {
   const labelWidth = ref(150)
   const showHiddenRows = ref(false)
   const showCurrentTimeLine = ref(true)
+  const barShadowLevel = ref<'none' | 'small' | 'medium' | 'large'>('medium')
   const readonlyMode = ref(false)
   const manualAddRowCount = ref(1)
 
@@ -199,6 +200,7 @@ export const useGanttChartView = () => {
       selectedLabels?: string[]
       showHiddenRows?: boolean
       showCurrentTimeLine?: boolean
+      barShadowLevel?: 'none' | 'small' | 'medium' | 'large'
       rowHeaderWidth?: number
       barHeight?: number
       commentSidebarOpen?: boolean
@@ -259,6 +261,11 @@ export const useGanttChartView = () => {
   // 現在時刻線の表示設定変更時に保存
   watch(showCurrentTimeLine, (newValue) => {
     saveProjectSettings({ showCurrentTimeLine: newValue })
+  })
+
+  // バーの影段階設定変更時に保存
+  watch(barShadowLevel, (newValue) => {
+    saveProjectSettings({ barShadowLevel: newValue })
   })
 
   // 読み取り専用モード変更時に保存
@@ -333,6 +340,16 @@ export const useGanttChartView = () => {
           showCurrentTimeLine.value = settings.showCurrentTimeLine
         } else {
           showCurrentTimeLine.value = true
+        }
+
+        // barShadowLevelの復元
+        if (settings?.barShadowLevel !== undefined) {
+          barShadowLevel.value = settings.barShadowLevel
+        } else if (settings?.showBarShadow !== undefined) {
+          // 旧設定(boolean)からの移行: falseはnone、trueはmedium
+          barShadowLevel.value = settings.showBarShadow ? 'medium' : 'none'
+        } else {
+          barShadowLevel.value = 'medium'
         }
 
         // readonlyModeの復元
@@ -3071,6 +3088,7 @@ export const useGanttChartView = () => {
     currentProject,
     showHiddenRows,
     showCurrentTimeLine,
+    barShadowLevel,
     readonlyMode,
     pxPerDay,
     pxPerMonth,

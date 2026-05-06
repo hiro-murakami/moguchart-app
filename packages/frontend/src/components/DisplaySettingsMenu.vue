@@ -8,6 +8,7 @@ import themeSystemImg from '@/assets/theme-system.png'
 defineProps<{
   showHiddenRows: boolean
   showCurrentTimeLine: boolean
+  barShadowLevel: 'none' | 'small' | 'medium' | 'large'
   readonlyMode?: boolean
   canEdit?: boolean
   pxPerDay: number
@@ -20,6 +21,7 @@ defineProps<{
 const emit = defineEmits<{
   'update:showHiddenRows': [value: boolean]
   'update:showCurrentTimeLine': [value: boolean]
+  'update:barShadowLevel': [value: 'none' | 'small' | 'medium' | 'large']
   'update:readonlyMode': [value: boolean]
   'update:pxPerDay': [value: number]
   'update:pxPerMonth': [value: number]
@@ -74,7 +76,7 @@ const currentTheme = computed({
         color="primary"
         hide-details
         density="compact"
-        class="mb-4"
+        class="mb-2"
         @update:model-value="emit('update:showCurrentTimeLine', $event as boolean)"
       />
       <v-switch
@@ -133,6 +135,24 @@ const currentTheme = computed({
         <v-btn :value="52" size="medium" class="flex-grow-1">中</v-btn>
         <v-btn :value="66" size="medium" class="flex-grow-1">大</v-btn>
         <v-btn :value="80" size="medium" class="flex-grow-1">特大</v-btn>
+      </v-btn-toggle>
+      <div class="text-caption text-medium-emphasis mb-1 mt-2">バーの影</div>
+      <v-btn-toggle
+        :model-value="barShadowLevel"
+        @update:model-value="
+          (v: 'none' | 'small' | 'medium' | 'large') => {
+            if (v != null) emit('update:barShadowLevel', v)
+          }
+        "
+        mandatory
+        density="compact"
+        color="primary"
+        class="w-100 mb-4"
+      >
+        <v-btn value="none" size="medium" class="flex-grow-1">なし</v-btn>
+        <v-btn value="small" size="medium" class="flex-grow-1">小</v-btn>
+        <v-btn value="medium" size="medium" class="flex-grow-1">中</v-btn>
+        <v-btn value="large" size="medium" class="flex-grow-1">大</v-btn>
       </v-btn-toggle>
       <div class="text-caption text-medium-emphasis mb-1 mt-4">テーマ</div>
       <v-radio-group v-model="currentTheme" inline hide-details class="mb-3 d-flex justify-center">

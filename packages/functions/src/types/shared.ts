@@ -133,6 +133,10 @@ export type ProjectSettings = {
   showCurrentTimeLine?: boolean
   /** 読み取り専用モードフラグ */
   readonlyMode?: boolean
+  /** ガントバーの影の段階（none/small/medium/large） */
+  barShadowLevel?: 'none' | 'small' | 'medium' | 'large'
+  /** @deprecated barShadowLevel に移行済み。後方互換のため残存 */
+  showBarShadow?: boolean
 }
 
 /** チュートリアルのキー一覧 */
