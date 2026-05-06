@@ -1140,7 +1140,13 @@ export const useGanttChartView = () => {
     if (task) {
       const attribute = (task as any).attribute as TaskAttribute | undefined
       if (attribute) {
-        data.attribute = { ...attribute }
+        if (e.detail.mode === 'copy') {
+          // コピー時は接続線情報（dependencies）を引き継がない
+          const { dependencies: _deps, ...attributeWithoutDeps } = attribute
+          data.attribute = attributeWithoutDeps
+        } else {
+          data.attribute = { ...attribute }
+        }
       }
 
       // 変更がない場合は何もしない
