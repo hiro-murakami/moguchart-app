@@ -3,6 +3,7 @@ import { VERSION, type User, type TutorialKey } from '@functions/types/shared'
 import { selectUser, upsertUser } from '@/modules/scripts'
 import {
   signInWithPopup,
+  signInAnonymously,
   GoogleAuthProvider,
   onAuthStateChanged,
   signOut as firebaseSignOut,
@@ -10,6 +11,14 @@ import {
 } from 'firebase/auth'
 import { auth } from '@/firebase'
 import { toDateTimeString } from '@/modules/utils'
+
+/**
+ * ユーザーの識別子を取得する。
+ * Googleログインユーザーはemail、匿名ユーザーはuidを返す。
+ */
+const getUserIdentifier = (firebaseUser: FirebaseUser): string => {
+  return firebaseUser.email || firebaseUser.uid
+}
 
 export const useUserStore = defineStore('user', {
   state: () => ({
@@ -26,15 +35,19 @@ export const useUserStore = defineStore('user', {
     isAuthenticated(state): boolean {
       return !!state.firebaseUser
     },
+    /** 匿名ログイン中かどうか */
+    isAnonymous(state): boolean {
+      return !!state.firebaseUser?.isAnonymous
+    },
     currentTheme(state): 'light' | 'dark' | 'system' | undefined {
       return state.user?.attribute.theme
     },
   },
 
   actions: {
-    async fetchUser(email: string) {
-      if (!email) return
-      this.user = await selectUser(email)
+    async fetchUser(identifier: string) {
+      if (!identifier) return
+      this.user = await selectUser(identifier)
     },
 
     async saveUser(user: User) {
@@ -63,6 +76,15 @@ export const useUserStore = defineStore('user', {
       }
     },
 
+    /** 匿名ログイン */
+    async signInAnonymously() {
+      try {
+        await signInAnonymously(auth)
+      } catch (error) {
+        console.error('Anonymous sign in error:', error)
+      }
+    },
+
     async signOut() {
       try {
         await firebaseSignOut(auth)
@@ -75,8 +97,9 @@ export const useUserStore = defineStore('user', {
     initializeAuthListener() {
       onAuthStateChanged(auth, async (firebaseUser) => {
         this.firebaseUser = firebaseUser
-        if (firebaseUser?.email) {
-          await this.fetchUser(firebaseUser.email)
+        if (firebaseUser) {
+          const identifier = getUserIdentifier(firebaseUser)
+          await this.fetchUser(identifier)
 
           if (this.user) {
             const previousVersion = this.user.attribute?.appVersion
@@ -90,8 +113,8 @@ export const useUserStore = defineStore('user', {
             }
           } else {
             this.user = {
-              email: firebaseUser.email!,
-              displayName: firebaseUser.displayName || '',
+              email: identifier,
+              displayName: firebaseUser.displayName || (firebaseUser.isAnonymous ? 'ゲスト' : ''),
               attribute: {
                 lastLoginAt: toDateTimeString(),
                 photoURL: firebaseUser.photoURL,

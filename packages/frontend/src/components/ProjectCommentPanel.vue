@@ -343,7 +343,7 @@ defineExpose({ invalidateCache, loadComments, isOpen })
 .project-comment-sidebar {
   position: fixed;
   right: 0;
-  top: 64px;
+  top: 54px;
   bottom: 0;
   border-left: 1px solid transparent;
   transition:

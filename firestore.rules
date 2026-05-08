@@ -4,9 +4,11 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // プロジェクト配下のプレゼンス情報
-    match /projects/{projectId}/presence/{userEmail} {
+    match /projects/{projectId}/presence/{userId} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null && request.auth.token.email == userEmail;
+      // emailが存在する場合はemail一致、匿名ユーザーの場合はuid一致で書き込み許可
+      allow write: if request.auth != null
+        && (request.auth.token.email == userId || request.auth.uid == userId);
     }
 
     // プロジェクト配下の編集イベント
@@ -19,3 +21,4 @@ service cloud.firestore {
     }
   }
 }
+

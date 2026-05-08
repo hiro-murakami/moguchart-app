@@ -1,4 +1,5 @@
 import message from '@/modules/message'
+import { isEmailFormat } from '@/modules/utils'
 
 export type ComponentRule = (value: any) => string | boolean
 
@@ -23,7 +24,8 @@ const inputRules = {
   areMailAddresses: (values: (string | { value: string })[]) => {
     if (!values || values.length === 0) return true
     const emails = values.map((v) => (typeof v === 'string' ? v : v?.value ?? ''))
-    const hasInvalid = emails.some((value) => !/^[\w\-._]+@[\w\-._]+\.[A-Za-z]+$/.test(value))
+    // 匿名ユーザーのuid（メールアドレス形式でない値）はバリデーション対象外とする
+    const hasInvalid = emails.some((value) => isEmailFormat(value) ? false : value.includes('@') ? true : false)
     return !hasInvalid || message.ERROR_INVALID_MAIL_ADDRESS
   },
   /** 改行区切りテキスト内の各行がメールアドレス形式であることを検証する */

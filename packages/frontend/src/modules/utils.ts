@@ -28,3 +28,22 @@ export const getContrastColor = (hex: string): string => {
 export const granularityToInputType = (granularity?: string): 'month' | 'datetime-local' | 'date' => {
   return granularity === 'monthly' ? 'month' : granularity === 'hourly' ? 'datetime-local' : 'date'
 }
+
+/** メールアドレス形式かどうかを判定する */
+export const isEmailFormat = (value: string): boolean => {
+  return /^[\w\-._]+@[\w\-._]+\.[A-Za-z]+$/.test(value)
+}
+
+/**
+ * 匿名ユーザーの識別子（uid）かどうかを判定する。
+ * メールアドレス形式でなければ匿名ユーザーのuidとみなす。
+ */
+export const isAnonymousIdentifier = (value: string): boolean => {
+  return !!value && !isEmailFormat(value)
+}
+
+/** 匿名ユーザーの識別子を表示用のラベルに変換する */
+export const toDisplayIdentifier = (value: string): string => {
+  return isAnonymousIdentifier(value) ? '匿名ユーザー' : value
+}
+

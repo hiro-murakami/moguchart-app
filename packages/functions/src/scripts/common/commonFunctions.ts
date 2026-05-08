@@ -43,7 +43,10 @@ export const setupFirebaseFunction = (targetFunctions: FirebaseFunction): Functi
 
     const requestData = data.data as FunctionParam
 
-    await targetFunctions[requestData.name](requestData.param, data.auth.token.email)
+    // 匿名ログインユーザーはemailを持たないため、uidをフォールバック識別子として使用
+    const userIdentifier = data.auth.token.email || data.auth.uid
+
+    await targetFunctions[requestData.name](requestData.param, userIdentifier)
       .then((resultData: any) => {
         result.data = resultData
       })

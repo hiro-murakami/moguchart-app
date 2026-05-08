@@ -12,15 +12,22 @@ const userStore = useUserStore()
           <v-toolbar color="primary" dark>
             <v-toolbar-title>Login Required</v-toolbar-title>
           </v-toolbar>
-          <v-card-text>
-            <p class="text-center">この機能を利用するにはログインが必要です。</p>
-          </v-card-text>
-          <v-card-actions class="justify-center">
+          <v-card-actions class="flex-column align-center py-8">
             <v-btn class="text-none mb-2" color="white" min-width="220" variant="flat" @click="userStore.signIn">
               <template v-slot:prepend>
                 <GoogleIcon />
               </template>
               Sign in with Google
+            </v-btn>
+            <v-btn
+              class="text-none"
+              color="grey-darken-1"
+              min-width="220"
+              variant="outlined"
+              prepend-icon="mdi-account-outline"
+              @click="userStore.signInAnonymously"
+            >
+              ログインせずに利用する
             </v-btn>
           </v-card-actions>
         </v-card>
