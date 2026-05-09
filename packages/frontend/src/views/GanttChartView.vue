@@ -287,6 +287,7 @@ const handleExportPdf = async () => {
                 class="presence-avatar"
                 :url="user.avatarUrl"
                 :name="user.displayName"
+                :is-anonymous="!user.avatarUrl"
               />
             </template>
           </v-tooltip>

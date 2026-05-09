@@ -68,12 +68,6 @@ const returnToSplash = () => {
           @click="showManual = !showManual"
         />
         <v-btn v-if="!firebaseUser" @click="userStore.signIn"> Login </v-btn>
-        <template v-else-if="userStore.isAnonymous">
-          <v-btn variant="text" prepend-icon="mdi-login" @click="userStore.signIn" class="mr-1">
-            Googleでログイン
-          </v-btn>
-          <v-btn icon="mdi-logout" variant="text" @click="userStore.signOut" />
-        </template>
         <AppUserMenu
           v-else
           v-model:show-user-detail="showUserDetail"
