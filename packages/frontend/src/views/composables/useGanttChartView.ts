@@ -47,7 +47,7 @@ import type {
   Comment,
 } from '@functions/types/shared'
 import * as holiday_jp from '@holiday-jp/holiday_jp'
-import * as moguchart from '@mogura/moguchart'
+import * as moguchart from '@mogura/moguchart-core'
 import { debounce } from 'lodash'
 import { storeToRefs } from 'pinia'
 import { computed, nextTick, ref, watch } from 'vue'
@@ -1063,7 +1063,6 @@ export const useGanttChartView = () => {
       }
     },
   )
-
 
   const handleTaskUpdate = async (e: CustomEvent<moguchart.TaskUpdateEventDetail>) => {
     if (e.detail.isDragging) {

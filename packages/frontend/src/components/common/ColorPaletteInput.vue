@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import * as moguchart from '@mogura/moguchart'
+import * as moguchart from '@mogura/moguchart-core'
 import type { ColorPalette, BorderType } from '@functions/types/shared'
 
 const props = withDefaults(

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import * as moguchart from '@mogura/moguchart'
+import * as moguchart from '@mogura/moguchart-core'
 import dayjs from 'dayjs'
 
 import { getContrastColor } from '@/modules/utils'

@@ -3,7 +3,7 @@ import { useTheme } from 'vuetify'
 import { useProjectStore } from '@/stores/useProjectStore'
 import { useConfirm } from '@/composables/useConfirm'
 import type { TaskAttribute, NewTaskTemplate } from '@functions/types/shared'
-import * as moguchart from '@mogura/moguchart'
+import * as moguchart from '@mogura/moguchart-core'
 
 export interface DraggableTask extends moguchart.GanttTask {
   style?: string

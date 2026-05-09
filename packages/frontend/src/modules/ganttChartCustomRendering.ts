@@ -1,6 +1,6 @@
 import dayjs from 'dayjs'
 import { getContrastColor, toDateString } from '@/modules/utils'
-import * as moguchart from '@mogura/moguchart'
+import * as moguchart from '@mogura/moguchart-core'
 import { selectTaskComments, selectComments } from '@/modules/scripts'
 import type { Comment } from '@functions/types/shared'
 import { UNLABELED_VALUE } from '@/modules/constants'
@@ -346,7 +346,7 @@ export const tooltip = (task: moguchart.GanttTask, isHourly?: boolean) => {
   dateSpan.style.opacity = '0.9'
   const start = dayjs(task.start)
   const end = dayjs(task.end)
-  
+
   if (isHourly) {
     const diffMinutes = end.diff(start, 'minute')
     const diffHours = diffMinutes / 60
