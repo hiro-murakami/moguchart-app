@@ -26,6 +26,8 @@ export const useUserStore = defineStore('user', {
     firebaseUser: null as FirebaseUser | null,
     /** バージョンが更新されたかどうか（初回ログイン時はfalse） */
     versionUpdated: false,
+    /** プロジェクト一覧ダイアログの自動表示を抑制するフラグ（匿名ログイン後の案内ダイアログ表示中に使用） */
+    suppressProjectList: false,
   }),
 
   getters: {
@@ -134,6 +136,10 @@ export const useUserStore = defineStore('user', {
     clear() {
       this.user = null
       this.firebaseUser = null
+    },
+
+    setSuppressProjectList(value: boolean) {
+      this.suppressProjectList = value
     },
   },
 })

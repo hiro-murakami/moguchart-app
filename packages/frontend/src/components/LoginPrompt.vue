@@ -6,11 +6,13 @@ const userStore = useUserStore()
 const alert = useAlert()
 
 const handleSignInAnonymously = async () => {
+  userStore.setSuppressProjectList(true)
   await userStore.signInAnonymously()
   await alert({
     title: 'ゲストユーザーとしてログインしました',
     message: 'ゲストユーザーで作成したデータは、およそ24時間後に自動削除されます。',
   })
+  userStore.setSuppressProjectList(false)
 }
 </script>
 
@@ -37,7 +39,7 @@ const handleSignInAnonymously = async () => {
               prepend-icon="mdi-account-outline"
               @click="handleSignInAnonymously"
             >
-              ログインせずに利用する
+              ゲストとしてログインする
             </v-btn>
           </v-card-actions>
         </v-card>

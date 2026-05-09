@@ -1036,7 +1036,8 @@ export const useGanttChartView = () => {
 
         if (targetProject) {
           setProjectId(targetProject.id)
-        } else {
+        } else if (!userStore.suppressProjectList) {
+          // 匿名ログイン後の案内ダイアログ表示中は抑制する
           isProjectListDialogVisible.value = true
         }
       } else {
@@ -1048,6 +1049,21 @@ export const useGanttChartView = () => {
     },
     { immediate: true }, // コンポーネントのマウント時に即時実行する
   )
+
+  // 匿名ログイン後の案内ダイアログが閉じられたらプロジェクト一覧を表示する
+  watch(
+    () => userStore.suppressProjectList,
+    (suppressed) => {
+      if (!suppressed && userStore.user && !isSnapshotMode.value) {
+        const routeId = Array.isArray(route.params.id) ? route.params.id[0] : route.params.id
+        const targetProject = routeId ? projects.value.find((p) => p.id === routeId) : undefined
+        if (!targetProject) {
+          isProjectListDialogVisible.value = true
+        }
+      }
+    },
+  )
+
 
   const handleTaskUpdate = async (e: CustomEvent<moguchart.TaskUpdateEventDetail>) => {
     if (e.detail.isDragging) {
