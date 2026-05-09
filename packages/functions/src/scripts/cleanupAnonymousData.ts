@@ -15,13 +15,13 @@ const CLEANUP_AGE_MS = 24 * 60 * 60 * 1000
 /**
  * 定期実行: 匿名ログインで生成された古い Project と User データを一括削除
  *
- * - 24時間ごとに実行
+ * - 1時間ごとに実行
  * - 最終更新日時（updatedAt）から24時間経過した匿名データを削除対象とする
  * - 匿名ユーザーは email（または createdBy）に UID が格納されており、'@' が含まれていないことで判定する
  */
 export const cleanupAnonymousData = onSchedule(
   {
-    schedule: 'every 24 hours',
+    schedule: 'every 60 minutes',
     region: 'asia-northeast1',
     timeZone: 'Asia/Tokyo',
   },

@@ -1,7 +1,17 @@
 <script setup lang="ts">
 import { useUserStore } from '@/stores/useUserStore'
+import { useAlert } from '@/composables/useAlert'
 
 const userStore = useUserStore()
+const alert = useAlert()
+
+const handleSignInAnonymously = async () => {
+  await userStore.signInAnonymously()
+  await alert({
+    title: 'ゲストユーザーとしてログインしました',
+    message: 'ゲストユーザーで作成したデータは、およそ24時間後に自動削除されます。',
+  })
+}
 </script>
 
 <template>
@@ -25,7 +35,7 @@ const userStore = useUserStore()
               min-width="220"
               variant="outlined"
               prepend-icon="mdi-account-outline"
-              @click="userStore.signInAnonymously"
+              @click="handleSignInAnonymously"
             >
               ログインせずに利用する
             </v-btn>
