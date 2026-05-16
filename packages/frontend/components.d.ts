@@ -48,6 +48,7 @@ declare module 'vue' {
     RowEditDialog: typeof import('./src/components/RowEditDialog.vue')['default']
     RowHeaderContextMenu: typeof import('./src/components/RowHeaderContextMenu.vue')['default']
     Snackbar: typeof import('./src/components/common/Snackbar.vue')['default']
+    SnapDurationInput: typeof import('./src/components/SnapDurationInput.vue')['default']
     SnapshotListDialog: typeof import('./src/components/SnapshotListDialog.vue')['default']
     TaskCommentDialog: typeof import('./src/components/TaskCommentDialog.vue')['default']
     TaskContextMenu: typeof import('./src/components/TaskContextMenu.vue')['default']

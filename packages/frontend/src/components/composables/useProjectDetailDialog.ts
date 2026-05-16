@@ -79,7 +79,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
           localHistoryIntervalMinutes.value = props.project.attribute.historyIntervalMinutes || 0
           localHistoryRetentionDays.value = props.project.attribute.historyRetentionDays || 7
           localGranularity.value = props.project.attribute.granularity || 'daily'
-          localSnapDurationMinutes.value = props.project.attribute.snapDurationMinutes || 60
+          localSnapDurationMinutes.value = props.project.attribute.snapDurationMinutes || (localGranularity.value === 'hourly' ? 60 : 1440)
           // await nextTick() // DOMの更新を待つ
           // form.value?.validate()
         } else {
@@ -98,7 +98,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
           localHistoryIntervalMinutes.value = 0
           localHistoryRetentionDays.value = 7
           localGranularity.value = props.initialGranularity || 'daily'
-          localSnapDurationMinutes.value = 60
+          localSnapDurationMinutes.value = localGranularity.value === 'hourly' ? 60 : 1440
           // form.value?.resetValidation()
         }
       } else {
@@ -141,7 +141,10 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
       !isEqual(localLabels.value, originalLabels) ||
       !isEqual(localMilestones.value, originalMilestones) ||
       localHistoryIntervalMinutes.value !== (props.project.attribute.historyIntervalMinutes || 0) ||
-      localHistoryRetentionDays.value !== (props.project.attribute.historyRetentionDays || 7)
+      localHistoryRetentionDays.value !== (props.project.attribute.historyRetentionDays || 7) ||
+      (localGranularity.value === 'hourly' || localGranularity.value === 'daily'
+        ? localSnapDurationMinutes.value !== (props.project.attribute.snapDurationMinutes || (props.project.attribute.granularity === 'hourly' ? 60 : 1440))
+        : false)
     )
   })
 
@@ -185,8 +188,8 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
         historyRetentionDays: localHistoryRetentionDays.value || undefined,
         // granularity は新規作成時のみ設定（編集時は既存値を保持）
         ...(!isEdit.value ? { granularity: localGranularity.value } : {}),
-        // snapDurationMinutes は hourly モード時のみ保存
-        ...(localGranularity.value === 'hourly' || props.project?.attribute?.granularity === 'hourly'
+        // snapDurationMinutes は hourly および daily モード時のみ保存
+        ...(granularity === 'hourly' || granularity === 'daily'
           ? { snapDurationMinutes: localSnapDurationMinutes.value }
           : {}),
       },

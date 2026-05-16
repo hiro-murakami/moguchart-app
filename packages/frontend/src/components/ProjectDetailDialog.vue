@@ -92,7 +92,7 @@ const dateDurationRules = computed(() => {
         }
       }
       return true
-    }
+    },
   ]
 })
 
@@ -111,7 +111,7 @@ watch(
   <v-dialog :model-value="modelValue" @update:model-value="handleBeforeClose" max-width="850px">
     <v-card>
       <v-card-title class="pa-8 pb-0">{{ title }}</v-card-title>
-      <v-card-text class="pa-8">
+      <v-card-text class="px-8 py-4">
         <v-form ref="form" v-model="formValid">
           <v-row>
             <v-col cols="3">
@@ -139,7 +139,7 @@ watch(
               </v-tabs>
             </v-col>
             <v-col cols="9">
-              <v-window v-model="tab" style="min-height: 500px">
+              <v-window v-model="tab" style="min-height: 610px">
                 <v-window-item value="general">
                   <v-row density="compact" class="pt-2">
                     <!-- モード（作成後変更不可） -->
@@ -220,27 +220,9 @@ watch(
                         class="mb-3"
                       />
                     </v-col>
-                    <!-- hourly モード時のスナップ単位設定 -->
-                    <v-col v-if="localGranularity === 'hourly'" cols="12" class="mb-4">
-                      <div class="text-caption text-medium-emphasis mt-1 d-flex align-center">
-                        スナップ単位
-                        <HelpText text="タスクの移動・リサイズ時にスナップする時間単位です" class="ml-1" />
-                      </div>
-                      <v-btn-toggle
-                        v-model="localSnapDurationMinutes"
-                        mandatory
-                        density="compact"
-                        variant="outlined"
-                        color="primary"
-                        class="w-70"
-                      >
-                        <v-btn :value="60" class="flex-grow-1">60分</v-btn>
-                        <v-btn :value="30" class="flex-grow-1">30分</v-btn>
-                        <v-btn :value="15" class="flex-grow-1">15分</v-btn>
-                        <v-btn :value="12" class="flex-grow-1">12分</v-btn>
-                        <v-btn :value="6" class="flex-grow-1">6分</v-btn>
-                        <v-btn :value="5" class="flex-grow-1">5分</v-btn>
-                      </v-btn-toggle>
+                    <!-- hourly および daily モード時のスナップ単位設定 -->
+                    <v-col v-if="localGranularity === 'hourly' || localGranularity === 'daily'" cols="12" class="mb-4">
+                      <SnapDurationInput v-model="localSnapDurationMinutes" :granularity="localGranularity" />
                     </v-col>
                     <v-col cols="12" class="mb-4">
                       <v-checkbox v-model="localPublic" density="compact" hide-details>

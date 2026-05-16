@@ -595,7 +595,7 @@ export const useGanttChartView = () => {
         width: rowHeaderWidth.value,
       },
       enableRowReordering: true,
-      snapDuration: isHourly ? (currentProject.value?.attribute?.snapDurationMinutes ?? 60) : 1440,
+      snapDuration: currentProject.value?.attribute?.snapDurationMinutes ?? (isHourly ? 60 : 1440),
       readOnly: isReadOnly.value,
       showHiddenRows: showHiddenRows.value,
       theme: currentTheme.value,
