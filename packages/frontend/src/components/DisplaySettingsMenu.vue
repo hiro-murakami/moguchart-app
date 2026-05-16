@@ -57,7 +57,16 @@ const currentTheme = computed({
 <template>
   <v-menu :close-on-content-click="false" location="bottom end">
     <template #activator="{ props: menuProps }">
-      <TooltipBtn v-bind="menuProps" icon="mdi-cog" variant="text" tooltip="表示設定" />
+      <TutorialOverlay
+        :condition="true"
+        tutorial-key="displaySetting"
+        message="表示倍率・テーマなどを変更できます"
+        placement="bottom"
+      >
+        <template #activator="{ props: overlayProps }">
+          <TooltipBtn v-bind="{ ...menuProps, ...overlayProps }" icon="mdi-cog" variant="text" tooltip="表示設定" />
+        </template>
+      </TutorialOverlay>
     </template>
     <v-card min-width="280" class="pa-4">
       <div class="text-subtitle-2 mb-3">表示設定</div>

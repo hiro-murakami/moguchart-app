@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
+import { ref, watch, computed, nextTick } from 'vue'
 import type { Project, ColorPalette, Label, Milestone, ProjectGranularity } from '@functions/types/shared'
 import inputRules from '@/modules/inputRules'
 import { granularityToInputType } from '@/modules/utils'
@@ -73,6 +73,34 @@ const historyRetentionOptions = [
 
 const tab = ref<'general' | 'permissions' | 'colorPalettes' | 'labels' | 'milestones'>('general')
 const expandedPaletteIndex = ref<number | null>(null)
+const palettesContainer = ref<HTMLElement | null>(null)
+const labelsContainer = ref<HTMLElement | null>(null)
+const milestonesContainer = ref<HTMLElement | null>(null)
+
+const scrollToBottom = async (container: HTMLElement | null) => {
+  await nextTick()
+  setTimeout(() => {
+    if (container) {
+      container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' })
+    }
+  }, 50)
+}
+
+const addPalette = () => {
+  localColorPalettes.value.push({ color: '#000000', backgroundColor: '#ffffff' })
+  expandedPaletteIndex.value = localColorPalettes.value.length - 1
+  scrollToBottom(palettesContainer.value)
+}
+
+const addLabel = () => {
+  localLabels.value.push({ name: 'New Label', color: '#cccccc' })
+  scrollToBottom(labelsContainer.value)
+}
+
+const addMilestone = () => {
+  localMilestones.value.push({ name: '', datetime: '', color: '#FF0000' })
+  scrollToBottom(milestonesContainer.value)
+}
 
 const dateInputType = computed(() => granularityToInputType(localGranularity.value))
 
@@ -144,7 +172,7 @@ watch(
               </v-tabs>
             </v-col>
             <v-col cols="9">
-              <v-window v-model="tab" style="min-height: 610px">
+              <v-window v-model="tab" style="min-height: 640px">
                 <v-window-item value="general">
                   <v-row density="compact" class="pt-2">
                     <!-- モード（作成後変更不可） -->
@@ -225,7 +253,7 @@ watch(
                         class="mb-3"
                       />
                     </v-col>
-                    <v-col v-if="props.project" cols="12" class="py-0 mb-1">
+                    <v-col v-if="props.project" cols="12" class="py-0 mt-n2">
                       <v-btn
                         variant="text"
                         prepend-icon="mdi-calendar-arrow-right"
@@ -328,13 +356,13 @@ watch(
                         variant="text"
                         prepend-icon="mdi-plus"
                         color="primary"
-                        @click="localColorPalettes.push({ color: '#000000', backgroundColor: '#ffffff' })"
+                        @click="addPalette"
                       >
                         パレット追加
                       </v-btn>
                     </v-col>
                   </v-row>
-                  <div style="max-height: 460px; overflow-y: auto; overflow-x: hidden" class="pr-2">
+                  <div ref="palettesContainer" style="max-height: 460px; overflow-y: auto; overflow-x: hidden" class="pr-2">
                     <v-row density="compact">
                       <v-col v-for="(palette, i) in localColorPalettes" :key="i" cols="12">
                         <ColorPaletteInput
@@ -360,13 +388,13 @@ watch(
                         variant="text"
                         prepend-icon="mdi-plus"
                         color="primary"
-                        @click="localLabels.push({ name: 'New Label', color: '#cccccc' })"
+                        @click="addLabel"
                       >
                         ラベル追加
                       </v-btn>
                     </v-col>
                   </v-row>
-                  <div style="max-height: 460px; overflow-y: auto; overflow-x: hidden" class="pr-2">
+                  <div ref="labelsContainer" style="max-height: 460px; overflow-y: auto; overflow-x: hidden" class="pr-2">
                     <v-row density="compact">
                       <v-col v-for="(label, i) in localLabels" :key="i" cols="12">
                         <LabelInput
@@ -385,13 +413,13 @@ watch(
                         variant="text"
                         prepend-icon="mdi-plus"
                         color="primary"
-                        @click="localMilestones.push({ name: '', datetime: '', color: '#FF0000' })"
+                        @click="addMilestone"
                       >
                         マイルストーン追加
                       </v-btn>
                     </v-col>
                   </v-row>
-                  <div style="max-height: 460px; overflow-y: auto; overflow-x: hidden" class="pr-2">
+                  <div ref="milestonesContainer" style="max-height: 460px; overflow-y: auto; overflow-x: hidden" class="pr-2">
                     <v-row density="compact">
                       <v-col v-for="(milestone, i) in localMilestones" :key="i" cols="12">
                         <MilestoneInput

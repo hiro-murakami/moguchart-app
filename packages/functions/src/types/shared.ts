@@ -140,7 +140,7 @@ export type ProjectSettings = {
 }
 
 /** チュートリアルのキー一覧 */
-export type TutorialKey = 'duplicateBtn' | 'userSetting'
+export type TutorialKey = 'duplicateBtn' | 'userSetting' | 'displaySetting'
 
 /** ユーザー固有の設定属性 */
 export type UserAttribute = {

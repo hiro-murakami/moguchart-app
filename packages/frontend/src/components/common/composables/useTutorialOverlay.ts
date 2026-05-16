@@ -16,11 +16,27 @@ export function useTutorialOverlay(props: UseTutorialOverlayProps, emit: (event:
   const targetRect = ref<DOMRect | null>(null)
   const activatorNode = ref<HTMLElement | null>(null)
   const dontShowAgain = ref(false)
-  const { isCompleted, complete } = useTutorial()
+  const { isCompleted, complete, registerTutorial, unregisterTutorial, currentActiveTutorial } = useTutorial()
 
   const manualDismissed = ref(false)
-  const isVisible = computed(() => {
+  const isEligible = computed(() => {
     return props.condition && !isCompleted(props.tutorialKey) && !manualDismissed.value
+  })
+
+  watch(
+    isEligible,
+    (eligible) => {
+      if (eligible) {
+        registerTutorial(props.tutorialKey)
+      } else {
+        unregisterTutorial(props.tutorialKey)
+      }
+    },
+    { immediate: true }
+  )
+
+  const isVisible = computed(() => {
+    return isEligible.value && currentActiveTutorial.value === props.tutorialKey
   })
 
   watch(
@@ -110,6 +126,7 @@ export function useTutorialOverlay(props: UseTutorialOverlayProps, emit: (event:
   )
 
   onUnmounted(() => {
+    unregisterTutorial(props.tutorialKey)
     if (rAFId !== null) window.cancelAnimationFrame(rAFId)
     window.removeEventListener('keydown', handleKeydown, true)
   })
@@ -148,36 +165,62 @@ export function useTutorialOverlay(props: UseTutorialOverlayProps, emit: (event:
 
     const { top, left, width, height } = targetRect.value
     const margin = 12
+    const boxWidth = 350
+    const windowWidth = window.innerWidth
+    const windowHeight = window.innerHeight
 
     const styles: Record<string, string | number> = {
       position: 'fixed',
       zIndex: 9999,
-      width: '350px',
+      width: `${boxWidth}px`,
+      maxWidth: `calc(100vw - ${margin * 2}px)`,
+      maxHeight: `calc(100vh - ${margin * 2}px)`,
+      overflowY: 'auto'
     }
 
     const placement = props.placement || 'bottom'
 
+    // 横方向の調整 (top/bottom用)
+    const centerX = left + width / 2
+    let adjustedLeft = centerX - boxWidth / 2
+    if (adjustedLeft < margin) {
+      adjustedLeft = margin
+    } else if (adjustedLeft + boxWidth > windowWidth - margin) {
+      adjustedLeft = windowWidth - margin - boxWidth
+    }
+
+    // 縦方向の調整 (left/right用)
+    // 高さは可変なので推定値（150px）を使用
+    const estimatedHeight = 150
+    const centerY = top + height / 2
+    let adjustedTop = centerY - estimatedHeight / 2
+    if (adjustedTop < margin) {
+      adjustedTop = margin
+    } else if (adjustedTop + estimatedHeight > windowHeight - margin) {
+      adjustedTop = windowHeight - margin - estimatedHeight
+    }
+
     switch (placement) {
       case 'top':
         styles.top = `${top - margin}px`
-        styles.left = `${left + width / 2}px`
-        styles.transform = 'translate(-50%, -100%)'
+        styles.left = `${adjustedLeft}px`
+        styles.transform = 'translate(0, -100%)'
         break
       case 'left':
-        styles.top = `${top + height / 2}px`
+        styles.top = `${adjustedTop}px`
         styles.left = `${left - margin}px`
-        styles.transform = 'translate(-100%, -50%)'
+        styles.transform = 'translate(-100%, 0)'
         break
       case 'right':
-        styles.top = `${top + height / 2}px`
+        styles.top = `${adjustedTop}px`
         styles.left = `${left + width + margin}px`
-        styles.transform = 'translate(0, -50%)'
+        styles.transform = 'none'
         break
       case 'bottom':
       default:
         styles.top = `${top + height + margin}px`
-        styles.left = `${left + width / 2}px`
-        styles.transform = 'translate(-50%, 0)'
+        styles.left = `${adjustedLeft}px`
+        styles.transform = 'none'
         break
     }
 

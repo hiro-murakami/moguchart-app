@@ -47,7 +47,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
 
   const isEdit = computed(() => !!props.project)
   const title = computed(() => {
-    return isEdit.value ? 'プロジェクト編集' : 'プロジェクト追加'
+    return isEdit.value ? 'プロジェクト詳細' : 'プロジェクト追加'
   })
 
   watch(
@@ -79,7 +79,8 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
           localHistoryIntervalMinutes.value = props.project.attribute.historyIntervalMinutes || 0
           localHistoryRetentionDays.value = props.project.attribute.historyRetentionDays || 7
           localGranularity.value = props.project.attribute.granularity || 'daily'
-          localSnapDurationMinutes.value = props.project.attribute.snapDurationMinutes || (localGranularity.value === 'hourly' ? 60 : 1440)
+          localSnapDurationMinutes.value =
+            props.project.attribute.snapDurationMinutes || (localGranularity.value === 'hourly' ? 60 : 1440)
           // await nextTick() // DOMの更新を待つ
           // form.value?.validate()
         } else {
@@ -143,7 +144,9 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
       localHistoryIntervalMinutes.value !== (props.project.attribute.historyIntervalMinutes || 0) ||
       localHistoryRetentionDays.value !== (props.project.attribute.historyRetentionDays || 7) ||
       (localGranularity.value === 'hourly' || localGranularity.value === 'daily'
-        ? localSnapDurationMinutes.value !== (props.project.attribute.snapDurationMinutes || (props.project.attribute.granularity === 'hourly' ? 60 : 1440))
+        ? localSnapDurationMinutes.value !==
+          (props.project.attribute.snapDurationMinutes ||
+            (props.project.attribute.granularity === 'hourly' ? 60 : 1440))
         : false)
     )
   })
@@ -205,11 +208,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
 
     // 入力されたメールアドレスを履歴に追記して永続化
     if (userStore.currentUser) {
-      const inputEmails = [
-        ...localOwners.value,
-        ...localEditors.value,
-        ...localViewers.value,
-      ]
+      const inputEmails = [...localOwners.value, ...localEditors.value, ...localViewers.value]
       if (inputEmails.length > 0) {
         const existingHistory = userStore.currentUser.attribute?.authorityInputHistory ?? []
         const merged = Array.from(new Set([...existingHistory, ...inputEmails]))
