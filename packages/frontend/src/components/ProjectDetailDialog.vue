@@ -1,14 +1,16 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
-import type { Project, ColorPalette, Label, Milestone } from '@functions/types/shared'
+import type { Project, ColorPalette, Label, Milestone, ProjectGranularity } from '@functions/types/shared'
 import inputRules from '@/modules/inputRules'
 import { granularityToInputType } from '@/modules/utils'
 import { useProjectDetailDialog } from './composables/useProjectDetailDialog'
+import dayjs from 'dayjs'
 
 const props = defineProps<{
   modelValue: boolean
   project?: Project | null
   saving?: boolean
+  initialGranularity?: ProjectGranularity
 }>()
 
 const showAuthorityHistoryDialog = ref(false)
@@ -69,6 +71,31 @@ const expandedPaletteIndex = ref<number | null>(null)
 
 const dateInputType = computed(() => granularityToInputType(localGranularity.value))
 
+const dateDurationRules = computed(() => {
+  return [
+    (val: string) => {
+      if (!localStart.value || !localEnd.value) return true
+      const start = dayjs(localStart.value)
+      const end = dayjs(localEnd.value)
+
+      if (localGranularity.value === 'hourly') {
+        if (end.isAfter(start.add(10, 'day'))) {
+          return '期間は10日以内に設定してください'
+        }
+      } else if (localGranularity.value === 'daily') {
+        if (end.isAfter(start.add(24, 'month'))) {
+          return '期間は24ヶ月以内に設定してください'
+        }
+      } else if (localGranularity.value === 'monthly') {
+        if (end.isAfter(start.add(20, 'year'))) {
+          return '期間は20年以内に設定してください'
+        }
+      }
+      return true
+    }
+  ]
+})
+
 watch(
   () => props.modelValue,
   (newValue) => {
@@ -115,50 +142,30 @@ watch(
               <v-window v-model="tab" style="min-height: 500px">
                 <v-window-item value="general">
                   <v-row density="compact" class="pt-2">
-                    <!-- モード（作成時のみ変更可） -->
+                    <!-- モード（作成後変更不可） -->
                     <v-col cols="12" class="mb-4 d-flex">
-                      <template v-if="!props.project">
-                        <div class="text-caption text-medium-emphasis mr-4 d-flex align-center">
-                          モード
-                          <HelpText text="作成後は変更できません" class="ml-1" />
-                        </div>
-                        <v-btn-toggle
-                          v-model="localGranularity"
-                          mandatory
-                          density="compact"
-                          variant="outlined"
-                          color="primary"
-                          rounded="lg"
-                        >
-                          <v-btn value="hourly" prepend-icon="mdi-clock-outline"> 時間単位 </v-btn>
-                          <v-btn value="daily" prepend-icon="mdi-calendar-today"> 日単位 </v-btn>
-                          <v-btn value="monthly" prepend-icon="mdi-calendar-month"> 月単位 </v-btn>
-                        </v-btn-toggle>
-                      </template>
-                      <template v-else>
-                        <div class="text-caption text-medium-emphasis mr-4 d-flex align-center">
-                          モード
-                          <HelpText text="作成時に決定されたため変更できません" class="ml-1" />
-                        </div>
-                        <v-chip
-                          :prepend-icon="
-                            localGranularity === 'monthly'
-                              ? 'mdi-calendar-month'
-                              : localGranularity === 'hourly'
-                                ? 'mdi-clock-outline'
-                                : 'mdi-calendar-today'
-                          "
-                          variant="tonal"
-                        >
-                          {{
-                            localGranularity === 'monthly'
-                              ? '月単位'
-                              : localGranularity === 'hourly'
-                                ? '時間単位'
-                                : '日単位'
-                          }}
-                        </v-chip>
-                      </template>
+                      <div class="text-caption text-medium-emphasis mr-4 d-flex align-center">
+                        モード
+                        <HelpText text="モードは作成後に変更できません" class="ml-1" />
+                      </div>
+                      <v-chip
+                        :prepend-icon="
+                          localGranularity === 'monthly'
+                            ? 'mdi-calendar-month'
+                            : localGranularity === 'hourly'
+                              ? 'mdi-clock-outline'
+                              : 'mdi-calendar-today'
+                        "
+                        variant="tonal"
+                      >
+                        {{
+                          localGranularity === 'monthly'
+                            ? '月単位'
+                            : localGranularity === 'hourly'
+                              ? '時間単位'
+                              : '日単位'
+                        }}
+                      </v-chip>
                     </v-col>
                     <v-col cols="12">
                       <v-text-field
@@ -194,7 +201,8 @@ watch(
                         label-datetime="開始日時"
                         :compare-target="localEnd"
                         compare-rule="before"
-                        hide-details
+                        :custom-rules="dateDurationRules"
+                        hide-details="auto"
                         class="mb-3"
                       />
                     </v-col>
@@ -207,7 +215,8 @@ watch(
                         label-datetime="終了日時"
                         :compare-target="localStart"
                         compare-rule="after"
-                        hide-details
+                        :custom-rules="dateDurationRules"
+                        hide-details="auto"
                         class="mb-3"
                       />
                     </v-col>

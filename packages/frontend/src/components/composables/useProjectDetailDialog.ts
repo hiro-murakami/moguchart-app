@@ -10,6 +10,7 @@ import { useDiscardConfirm } from '../../composables/useConfirm'
 export interface ProjectDetailDialogProps {
   modelValue: boolean
   project?: Project | null
+  initialGranularity?: ProjectGranularity
 }
 
 export type ProjectDetailDialogEmits = {
@@ -96,7 +97,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
           localMilestones.value = []
           localHistoryIntervalMinutes.value = 0
           localHistoryRetentionDays.value = 7
-          localGranularity.value = 'daily'
+          localGranularity.value = props.initialGranularity || 'daily'
           localSnapDurationMinutes.value = 60
           // form.value?.resetValidation()
         }

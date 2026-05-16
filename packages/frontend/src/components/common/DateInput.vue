@@ -14,6 +14,7 @@ const props = defineProps<{
   labelDatetime?: string
   compareTarget?: string
   compareRule?: 'before' | 'after'
+  customRules?: any[]
 }>()
 
 const emit = defineEmits<{
@@ -72,6 +73,9 @@ const rules = computed(() => {
     } else if (props.compareRule === 'after') {
       baseRules.push(inputRules.dateAfter(target))
     }
+  }
+  if (props.customRules) {
+    baseRules.push(...props.customRules)
   }
   return baseRules
 })

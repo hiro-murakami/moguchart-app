@@ -8,7 +8,7 @@ import {
 } from '@/modules/scripts'
 import { useConfirm } from '@/composables/useConfirm'
 import { useSnackbar } from '@/composables/useSnackbar'
-import type { Project } from '@functions/types/shared'
+import type { Project, ProjectGranularity } from '@functions/types/shared'
 import { ref, watch, computed } from 'vue'
 
 import { useProjectStore } from '@/stores/useProjectStore'
@@ -37,6 +37,7 @@ export const useProjectListDialog = (
   const projectToEdit = ref<Project | null>(null)
   const isDuplicateDialogVisible = ref(false)
   const projectToDuplicate = ref<Project | null>(null)
+  const initialGranularity = ref<ProjectGranularity>('daily')
   const confirm = useConfirm()
   const snackbar = useSnackbar()
 
@@ -121,8 +122,9 @@ export const useProjectListDialog = (
     isProjectDetailDialogVisible.value = true
   }
 
-  const newProject = () => {
+  const newProject = (granularity: ProjectGranularity = 'daily') => {
     projectToEdit.value = null
+    initialGranularity.value = granularity
     isProjectDetailDialogVisible.value = true
   }
 
@@ -419,6 +421,7 @@ export const useProjectListDialog = (
     projectToEdit,
     isDuplicateDialogVisible,
     projectToDuplicate,
+    initialGranularity,
     headers,
     fetchProjects,
     selectProject,

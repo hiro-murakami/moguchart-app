@@ -30,6 +30,7 @@ const {
   projectToEdit,
   isDuplicateDialogVisible,
   projectToDuplicate,
+  initialGranularity,
   headers,
   selectProject,
   editProject,
@@ -113,9 +114,38 @@ const handleFileChange = (e: Event) => {
               >
                 バックアップから復元
               </v-btn>
-              <v-btn color="primary" prepend-icon="mdi-plus" class="text-body-medium flex-shrink-0" @click="newProject">
-                新規作成
-              </v-btn>
+              <v-menu>
+                <template v-slot:activator="{ props }">
+                  <v-btn
+                    color="primary"
+                    prepend-icon="mdi-plus"
+                    class="text-body-medium flex-shrink-0"
+                    v-bind="props"
+                  >
+                    新規作成
+                  </v-btn>
+                </template>
+                <v-list density="compact">
+                  <v-list-item @click="newProject('hourly')">
+                    <template v-slot:prepend>
+                      <v-icon icon="mdi-clock-outline" size="small" class="mr-2"></v-icon>
+                    </template>
+                    <v-list-item-title>時間単位</v-list-item-title>
+                  </v-list-item>
+                  <v-list-item @click="newProject('daily')">
+                    <template v-slot:prepend>
+                      <v-icon icon="mdi-calendar-today" size="small" class="mr-2"></v-icon>
+                    </template>
+                    <v-list-item-title>日単位</v-list-item-title>
+                  </v-list-item>
+                  <v-list-item @click="newProject('monthly')">
+                    <template v-slot:prepend>
+                      <v-icon icon="mdi-calendar-month" size="small" class="mr-2"></v-icon>
+                    </template>
+                    <v-list-item-title>月単位</v-list-item-title>
+                  </v-list-item>
+                </v-list>
+              </v-menu>
             </div>
             <v-data-table
               :headers="headers"
@@ -288,6 +318,7 @@ const handleFileChange = (e: Event) => {
   <ProjectDetailDialog
     v-model="isProjectDetailDialogVisible"
     :project="projectToEdit"
+    :initial-granularity="initialGranularity"
     :saving="saving"
     @save="saveProject"
   />
