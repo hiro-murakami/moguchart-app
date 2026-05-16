@@ -47,6 +47,7 @@ declare module 'vue' {
     RouterView: typeof import('vue-router')['RouterView']
     RowEditDialog: typeof import('./src/components/RowEditDialog.vue')['default']
     RowHeaderContextMenu: typeof import('./src/components/RowHeaderContextMenu.vue')['default']
+    SlideScheduleDialog: typeof import('./src/components/SlideScheduleDialog.vue')['default']
     Snackbar: typeof import('./src/components/common/Snackbar.vue')['default']
     SnapDurationInput: typeof import('./src/components/SnapDurationInput.vue')['default']
     SnapshotListDialog: typeof import('./src/components/SnapshotListDialog.vue')['default']

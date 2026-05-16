@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import splashImage from '@/assets/splash2.png'
 import { useGanttChartView } from './composables/useGanttChartView'
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { useTheme } from 'vuetify'
 import ProjectCommentPanel from '@/components/ProjectCommentPanel.vue'
+import SlideScheduleDialog from '@/components/SlideScheduleDialog.vue'
 import { useUserStore } from '@/stores/useUserStore'
 
 const {
@@ -57,6 +58,8 @@ const {
   commentDialogProjectId,
   commentDialogTargetName,
   isSnapshotListDialogVisible,
+  isSlideScheduleDialogVisible,
+  slideScheduleSaving,
   projectId,
 
   // methods
@@ -121,6 +124,7 @@ const {
   dependencyContextMenu,
   handleDependencyClick,
   handleDeleteDependencyFromContextMenu,
+  handleSlideSchedule,
 } = useGanttChartView()
 
 const projectCommentPanelRef = ref<InstanceType<typeof ProjectCommentPanel>>()
@@ -218,6 +222,12 @@ const handleExportPdf = async () => {
   if (currentProject.value) {
     await exportAsPdf(currentProject.value.name)
   }
+}
+
+const handleOpenSlideSchedule = async () => {
+  isProjectDetailDialogVisible.value = false
+  await nextTick()
+  isSlideScheduleDialogVisible.value = true
 }
 </script>
 
@@ -517,8 +527,16 @@ const handleExportPdf = async () => {
       v-model="isProjectDetailDialogVisible"
       :project="currentProject"
       @save="updateProject"
+      @open-slide-schedule="handleOpenSlideSchedule"
     />
-    <ProjectListDialog v-model="isProjectListDialogVisible" @select="setProjectId" @update="fetchProjects" />
+    <SlideScheduleDialog
+      v-if="currentProject"
+      v-model="isSlideScheduleDialogVisible"
+      :project="currentProject"
+      :saving="slideScheduleSaving"
+      @slide="handleSlideSchedule"
+    />
+    <ProjectListDialog v-model="isProjectListDialogVisible" @select="setProjectId" @update="refresh" />
 
     <!-- Collaboration Activity Log -->
     <CollaborationActivityLog

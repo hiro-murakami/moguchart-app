@@ -18,6 +18,7 @@ const showAuthorityHistoryDialog = ref(false)
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
   (e: 'save', project: Partial<Project>): void
+  (e: 'open-slide-schedule'): void
 }>()
 
 const {
@@ -44,6 +45,10 @@ const {
   handleBeforeClose,
   save,
 } = useProjectDetailDialog(props, emit)
+
+const openSlideSchedule = () => {
+  emit('open-slide-schedule')
+}
 
 const historyIntervalOptions = [
   { title: 'なし', value: 0 },
@@ -219,6 +224,17 @@ watch(
                         hide-details="auto"
                         class="mb-3"
                       />
+                    </v-col>
+                    <v-col v-if="props.project" cols="12" class="py-0 mb-1">
+                      <v-btn
+                        variant="text"
+                        prepend-icon="mdi-calendar-arrow-right"
+                        color="primary"
+                        size="small"
+                        @click="openSlideSchedule"
+                      >
+                        期間スライド
+                      </v-btn>
                     </v-col>
                     <!-- hourly および daily モード時のスナップ単位設定 -->
                     <v-col v-if="localGranularity === 'hourly' || localGranularity === 'daily'" cols="12" class="mb-4">

@@ -5,11 +5,15 @@ import {
   restoreProject as restoreProjectScript,
   upsertProject as upsertProjectScript,
   upsertGanttRow,
+  upsertGanttTasks,
+  selectGanttChart,
 } from '@/modules/scripts'
 import { useConfirm } from '@/composables/useConfirm'
 import { useSnackbar } from '@/composables/useSnackbar'
-import type { Project, ProjectGranularity } from '@functions/types/shared'
-import { ref, watch, computed } from 'vue'
+import type { Project, ProjectGranularity, GanttTask, TaskAttribute } from '@functions/types/shared'
+import { ref, watch, computed, nextTick } from 'vue'
+import dayjs from 'dayjs'
+import { toDateTimeString } from '@/modules/utils'
 
 import { useProjectStore } from '@/stores/useProjectStore'
 import { storeToRefs } from 'pinia'
@@ -38,6 +42,8 @@ export const useProjectListDialog = (
   const isDuplicateDialogVisible = ref(false)
   const projectToDuplicate = ref<Project | null>(null)
   const initialGranularity = ref<ProjectGranularity>('daily')
+  const isSlideScheduleDialogVisible = ref(false)
+  const slideScheduleSaving = ref(false)
   const confirm = useConfirm()
   const snackbar = useSnackbar()
 
@@ -70,11 +76,7 @@ export const useProjectListDialog = (
   }
 
   const escapeHtml = (str: string): string => {
-    return str
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
   }
 
   const fetchProjects = async (isFirst: boolean = false) => {
@@ -104,7 +106,7 @@ export const useProjectListDialog = (
     { title: 'プロジェクト名', key: 'project' },
     { title: '説明', key: 'attribute.description' },
     { title: '期間', key: 'period', sortable: false, width: '150px' },
-    { title: 'モード', key: 'granularity', sortable: false, width: '110px' },
+    { title: 'モード', key: 'granularity', sortable: false, width: '80px' },
     { title: '操作', key: 'actions', sortable: false, width: '220px' },
   ]
 
@@ -120,6 +122,100 @@ export const useProjectListDialog = (
   const editProject = (project: Project) => {
     projectToEdit.value = project
     isProjectDetailDialogVisible.value = true
+  }
+
+  const handleOpenSlideSchedule = async () => {
+    isProjectDetailDialogVisible.value = false
+    await nextTick()
+    isSlideScheduleDialogVisible.value = true
+  }
+
+  const handleSlideSchedule = async (options: { newStart: string; clearProgress: boolean }) => {
+    if (!projectToEdit.value) return
+
+    slideScheduleSaving.value = true
+    try {
+      const project = projectToEdit.value
+      const granularity = project.attribute?.granularity || 'daily'
+      const originalStart = dayjs(project.start)
+      const newStart = dayjs(options.newStart)
+      const diffMs = newStart.diff(originalStart, 'millisecond')
+
+      if (diffMs === 0) {
+        isSlideScheduleDialogVisible.value = false
+        return
+      }
+
+      // 1. 全タスクをスライド
+      const rows = await selectGanttChart(project.id)
+      const allTasks: GanttTask[] = []
+      for (const row of rows) {
+        for (const task of row.tasks) {
+          const taskStart = dayjs((task as any).start)
+          const taskEnd = dayjs((task as any).end)
+          const newTaskStart = taskStart.add(diffMs, 'millisecond')
+          const newTaskEnd = taskEnd.add(diffMs, 'millisecond')
+
+          const attr = { ...((task as any).attribute || {}) } as TaskAttribute
+          if (options.clearProgress) {
+            attr.progress = undefined
+          }
+
+          allTasks.push({
+            id: Number(task.id),
+            rowId: Number((task as any).rowId ?? row.id),
+            name: task.name || '',
+            start: toDateTimeString(newTaskStart.toDate()),
+            end: toDateTimeString(newTaskEnd.toDate()),
+            attribute: attr,
+          })
+        }
+      }
+
+      if (allTasks.length > 0) {
+        await upsertGanttTasks(allTasks)
+      }
+
+      // 2. プロジェクト期間とマイルストーンをスライド
+      const isHourly = granularity === 'hourly'
+      const originalEnd = dayjs(project.end)
+      const newEnd = originalEnd.add(diffMs, 'millisecond')
+
+      const newStartStr = newStart.format('YYYY-MM-DD HH:mm:ss')
+      const newEndStr = newEnd.format('YYYY-MM-DD HH:mm:ss')
+
+      const originalMilestones = project.attribute?.milestones || []
+      const slidMilestones = originalMilestones.map((m: any) => {
+        const mDate = dayjs(m.datetime)
+        const newMDate = mDate.add(diffMs, 'millisecond')
+        return {
+          ...m,
+          datetime: isHourly ? newMDate.format('YYYY-MM-DDTHH:mm') : newMDate.format('YYYY-MM-DD'),
+        }
+      })
+
+      const updatedProject = {
+        ...project,
+        start: newStartStr,
+        end: newEndStr,
+        attribute: {
+          ...project.attribute,
+          milestones: slidMilestones.length > 0 ? slidMilestones : undefined,
+        },
+      }
+
+      await projectStore.updateProject(updatedProject)
+      projectToEdit.value = { ...updatedProject }
+      await fetchProjects()
+
+      isSlideScheduleDialogVisible.value = false
+      emit('update') // GanttChartViewにガントデータ再読み込みを通知
+    } catch (e) {
+      console.error(e)
+      snackbar({ message: '期間スライドに失敗しました。', color: 'error' })
+    } finally {
+      slideScheduleSaving.value = false
+    }
   }
 
   const newProject = (granularity: ProjectGranularity = 'daily') => {
@@ -422,6 +518,8 @@ export const useProjectListDialog = (
     isDuplicateDialogVisible,
     projectToDuplicate,
     initialGranularity,
+    isSlideScheduleDialogVisible,
+    slideScheduleSaving,
     headers,
     fetchProjects,
     selectProject,
@@ -435,6 +533,8 @@ export const useProjectListDialog = (
     restoreProjectFromFile,
     archiveProject,
     unarchiveProject,
+    handleOpenSlideSchedule,
+    handleSlideSchedule,
     close,
   }
 }

@@ -3040,6 +3040,116 @@ export const useGanttChartView = () => {
     }
   }
 
+  // --- 期間スライド ---
+  const isSlideScheduleDialogVisible = ref(false)
+  const slideScheduleSaving = ref(false)
+
+  const handleSlideSchedule = async (options: { newStart: string; clearProgress: boolean }) => {
+    if (!currentProject.value || !projectId.value) return
+
+    slideScheduleSaving.value = true
+    setIsLoading(true)
+    try {
+      await maybeAutoSnapshot()
+
+      const granularity = currentProject.value.attribute?.granularity || 'daily'
+      const originalStart = dayjs(currentProject.value.start)
+      const newStart = dayjs(options.newStart)
+      const diffMs = newStart.diff(originalStart, 'millisecond')
+
+      // 差分が0なら何もしない
+      if (diffMs === 0) {
+        isSlideScheduleDialogVisible.value = false
+        return
+      }
+
+      // 1. 全タスクをスライド
+      const allTasks: GanttTask[] = []
+      for (const row of rows.value) {
+        for (const task of row.tasks) {
+          const taskStart = dayjs((task as any).start)
+          const taskEnd = dayjs((task as any).end)
+          const newTaskStart = taskStart.add(diffMs, 'millisecond')
+          const newTaskEnd = taskEnd.add(diffMs, 'millisecond')
+
+          const attr = { ...((task as any).attribute || {}) } as TaskAttribute
+          if (options.clearProgress) {
+            attr.progress = undefined
+          }
+
+          allTasks.push({
+            id: Number(task.id),
+            rowId: Number((task as any).rowId ?? row.id),
+            name: task.name || '',
+            start: toDateTimeString(newTaskStart.toDate()),
+            end: toDateTimeString(newTaskEnd.toDate()),
+            attribute: attr,
+          })
+        }
+      }
+
+      if (allTasks.length > 0) {
+        await upsertGanttTasks(allTasks)
+      }
+
+      // 2. プロジェクトの期間を更新
+      const originalEnd = dayjs(currentProject.value.end)
+      const newEnd = originalEnd.add(diffMs, 'millisecond')
+
+      const isHourly = granularity === 'hourly'
+      const isMonthly = granularity === 'monthly'
+
+      const newStartStr = isHourly
+        ? newStart.format('YYYY-MM-DD HH:mm:ss')
+        : isMonthly
+          ? newStart.format('YYYY-MM-DD')
+          : newStart.format('YYYY-MM-DD')
+      const newEndStr = isHourly
+        ? newEnd.format('YYYY-MM-DD HH:mm:ss')
+        : isMonthly
+          ? newEnd.format('YYYY-MM-DD')
+          : newEnd.format('YYYY-MM-DD')
+
+      // 3. マイルストーンをスライド
+      const originalMilestones = currentProject.value.attribute?.milestones || []
+      const slidMilestones = originalMilestones.map((m) => {
+        const mDate = dayjs(m.datetime)
+        const newMDate = mDate.add(diffMs, 'millisecond')
+        return {
+          ...m,
+          datetime: isHourly
+            ? newMDate.format('YYYY-MM-DDTHH:mm')
+            : newMDate.format('YYYY-MM-DD'),
+        }
+      })
+
+      const updatedProject = {
+        ...currentProject.value,
+        start: newStartStr,
+        end: newEndStr,
+        attribute: {
+          ...currentProject.value.attribute,
+          milestones: slidMilestones.length > 0 ? slidMilestones : undefined,
+        },
+      }
+
+      await projectStore.updateProject(updatedProject)
+      await loadData(projectId.value)
+
+      isSlideScheduleDialogVisible.value = false
+      publishEditEvent('full_reload')
+    } catch (err) {
+      console.error('Failed to slide schedule:', err)
+      await alert({
+        title: 'エラー',
+        message: '期間スライドに失敗しました。',
+      })
+    } finally {
+      slideScheduleSaving.value = false
+      setIsLoading(false)
+    }
+  }
+
   const refresh = async () => {
     if (projectId.value) {
       await loadData(projectId.value)
@@ -3141,6 +3251,8 @@ export const useGanttChartView = () => {
     commentDialogProjectId,
     commentDialogTargetName,
     isSnapshotListDialogVisible,
+    isSlideScheduleDialogVisible,
+    slideScheduleSaving,
 
     // methods
     handleCreateSnapshot,
@@ -3208,5 +3320,6 @@ export const useGanttChartView = () => {
     commentSidebarWidth,
     effectiveCommentSidebarWidth,
     handleDependencyCreate,
+    handleSlideSchedule,
   }
 }

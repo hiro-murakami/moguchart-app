@@ -31,6 +31,8 @@ const {
   isDuplicateDialogVisible,
   projectToDuplicate,
   initialGranularity,
+  isSlideScheduleDialogVisible,
+  slideScheduleSaving,
   headers,
   selectProject,
   editProject,
@@ -43,6 +45,8 @@ const {
   restoreProjectFromFile,
   archiveProject,
   unarchiveProject,
+  handleOpenSlideSchedule,
+  handleSlideSchedule,
   close,
 } = useProjectListDialog(props, emit)
 
@@ -116,12 +120,7 @@ const handleFileChange = (e: Event) => {
               </v-btn>
               <v-menu>
                 <template v-slot:activator="{ props }">
-                  <v-btn
-                    color="primary"
-                    prepend-icon="mdi-plus"
-                    class="text-body-medium flex-shrink-0"
-                    v-bind="props"
-                  >
+                  <v-btn color="primary" prepend-icon="mdi-plus" class="text-body-medium flex-shrink-0" v-bind="props">
                     新規作成
                   </v-btn>
                 </template>
@@ -194,12 +193,24 @@ const handleFileChange = (e: Event) => {
               </template>
               <template #item.granularity="{ item }">
                 <v-chip
-                  :color="item.attribute?.granularity === 'monthly' ? 'indigo' : item.attribute?.granularity === 'hourly' ? 'orange' : 'teal'"
+                  :color="
+                    item.attribute?.granularity === 'monthly'
+                      ? 'indigo'
+                      : item.attribute?.granularity === 'hourly'
+                        ? 'orange'
+                        : 'teal'
+                  "
                   size="small"
                   variant="tonal"
                   class="text-caption"
                 >
-                  {{ item.attribute?.granularity === 'monthly' ? '月単位' : item.attribute?.granularity === 'hourly' ? '時間単位' : '日単位' }}
+                  {{
+                    item.attribute?.granularity === 'monthly'
+                      ? '月単位'
+                      : item.attribute?.granularity === 'hourly'
+                        ? '時間単位'
+                        : '日単位'
+                  }}
                 </v-chip>
               </template>
               <template #item.actions="{ item }: { item: Project }">
@@ -321,6 +332,15 @@ const handleFileChange = (e: Event) => {
     :initial-granularity="initialGranularity"
     :saving="saving"
     @save="saveProject"
+    @open-slide-schedule="handleOpenSlideSchedule"
+  />
+
+  <SlideScheduleDialog
+    v-if="projectToEdit"
+    v-model="isSlideScheduleDialogVisible"
+    :project="projectToEdit"
+    :saving="slideScheduleSaving"
+    @slide="handleSlideSchedule"
   />
 
   <ProjectDuplicateDialog
