@@ -1750,7 +1750,7 @@ export const useGanttChartView = () => {
         deletedTasks.push({
           rowId: row.id,
           taskData: {
-            id: 0, // Undo時は新規作成として復元
+            id: Number(task.id), // Undo時は元のIDで復元
             rowId: Number(row.id),
             name: task.name || '',
             start: toDateTimeString(task.start),
@@ -2670,8 +2670,8 @@ export const useGanttChartView = () => {
           tasks: row.tasks.map((t) => {
             const tAttr = (t as any).attribute as TaskAttribute | undefined
             return {
-              id: 0, // Undo時は新規作成
-              rowId: 0, // 復元後に設定
+              id: Number(t.id), // Undo時は元のIDで復元
+              rowId: Number(row.id), // 復元後に設定
               name: t.name || '',
               start: toDateTimeString(t.start),
               end: toDateTimeString(t.end),
@@ -2692,7 +2692,7 @@ export const useGanttChartView = () => {
           for (const rowData of deletedRowsData) {
             const tasks = rowData.tasks
             const newRowId = (await upsertGanttRow({
-              id: 0,
+              id: rowData.id, // 元のIDで復元
               name: rowData.name,
               order: rowData.order,
               projectId: rowData.projectId,

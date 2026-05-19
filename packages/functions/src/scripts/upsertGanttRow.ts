@@ -12,27 +12,22 @@ const executeUpsert = async (tx: Prisma.TransactionClient, row: GanttRow, email?
     attribute: rawData.attribute as Prisma.InputJsonValue,
   }
 
-  if (id === 0) {
-    // 新規作成
-    const order = await tx.ganttRow.count({
-      where: { projectId: createOrUpdateData.projectId },
-    })
-    const result = await tx.ganttRow.create({
-      data: {
-        ...createOrUpdateData,
-        order,
-        ...getCreateCommonColumns(email),
-      },
-    })
-    return result.id
-  } else {
-    // 更新
-    const result = await tx.ganttRow.update({
-      where: { id },
-      data: { ...createOrUpdateData, ...getUpdateCommonColumns(email) },
-    })
-    return result.id
-  }
+  const orderForCreate =
+    id === 0
+      ? await tx.ganttRow.count({ where: { projectId: createOrUpdateData.projectId } })
+      : rawData.order
+
+  const result = await tx.ganttRow.upsert({
+    where: { id },
+    update: { ...createOrUpdateData, ...getUpdateCommonColumns(email) },
+    create: {
+      ...createOrUpdateData,
+      ...(id !== 0 ? { id } : {}),
+      order: orderForCreate,
+      ...getCreateCommonColumns(email),
+    },
+  })
+  return result.id
 }
 
 const upsertGanttRow: UpsertGanttRow = async (row, email?: string) => {

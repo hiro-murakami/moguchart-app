@@ -18,6 +18,7 @@ const executeUpsert = async (tx: Prisma.TransactionClient, task: GanttTask, emai
     },
     create: {
       ...createData,
+      ...(data.id !== 0 ? { id: data.id } : {}),
       attribute,
       ...getCreateCommonColumns(email),
     },
