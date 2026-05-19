@@ -83,6 +83,7 @@ const {
   handleTaskContextMenu,
   handleEditTaskFromContextMenu,
   handleDeleteTaskFromContextMenu,
+  handleTaskDelete,
   handleBarSelectionChange,
   handleTaskDragStart,
   handleTaskDragEnd,
@@ -374,6 +375,7 @@ const handleOpenSlideSchedule = async () => {
             @task-drop="handleTaskDrop"
             @chart-contextmenu="handleChartContextMenu"
             @row-header-resize="handleRowHeaderResize"
+            @task-delete="handleTaskDelete"
             @dependency-create="handleDependencyCreate"
             @dependency-click="handleDependencyClick"
           />

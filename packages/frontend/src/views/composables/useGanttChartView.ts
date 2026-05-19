@@ -2283,19 +2283,13 @@ export const useGanttChartView = () => {
     startEditingTask(taskId)
   }
 
-  const handleDeleteTaskFromContextMenu = async () => {
-    const taskId = taskContextMenu.value.taskId
-    if (!taskId) return
+  const confirmAndDeleteTasks = async (taskIds: string[]) => {
+    if (taskIds.length === 0) return
 
-    taskContextMenu.value.visible = false
-
-    const isMultiSelect = selectedTaskIds.value.includes(taskId) && selectedTaskIds.value.length > 1
-
-    if (isMultiSelect) {
-      const count = selectedTaskIds.value.length
+    if (taskIds.length > 1) {
       const result = await confirm({
         title: 'タスク削除の確認',
-        message: `選択された<b>${count}件</b>のタスクを削除してもよろしいですか？`,
+        message: `選択された<b>${taskIds.length}件</b>のタスクを削除してもよろしいですか？`,
         confirmText: '削除',
         confirmColor: 'error',
       })
@@ -2303,7 +2297,7 @@ export const useGanttChartView = () => {
       if (result) {
         setIsLoading(true)
         try {
-          await execDeleteTasksWithAnimation(selectedTaskIds.value)
+          await execDeleteTasksWithAnimation(taskIds)
         } catch (err) {
           console.error('Failed to delete tasks:', err)
           alert({
@@ -2315,6 +2309,8 @@ export const useGanttChartView = () => {
         }
       }
     } else {
+      const taskId = taskIds[0]
+      if (!taskId) return
       const row = rows.value.find((r) => r.tasks.some((t) => t.id === taskId))
       const task = row?.tasks.find((t) => t.id === taskId)
       const taskName = task?.name || '選択したタスク'
@@ -2330,6 +2326,27 @@ export const useGanttChartView = () => {
         await deleteTask(taskId)
       }
     }
+  }
+
+  const handleDeleteTaskFromContextMenu = async () => {
+    const taskId = taskContextMenu.value.taskId
+    if (!taskId) return
+
+    taskContextMenu.value.visible = false
+
+    const isMultiSelect = selectedTaskIds.value.includes(taskId) && selectedTaskIds.value.length > 1
+    const taskIdsToDelete = isMultiSelect ? selectedTaskIds.value : [taskId]
+
+    await confirmAndDeleteTasks(taskIdsToDelete)
+  }
+
+  /**
+   * moguchart-core の task-delete イベントハンドラー。
+   * Delete / Backspace キー押下時に発火される。
+   */
+  const handleTaskDelete = async (e: CustomEvent<moguchart.TaskDeleteEventDetail>) => {
+    if (isReadOnly.value) return
+    await confirmAndDeleteTasks(e.detail.taskIds)
   }
 
   // --- コメントダイアログ関連 ---
@@ -3280,6 +3297,7 @@ export const useGanttChartView = () => {
     handleTaskContextMenu,
     handleEditTaskFromContextMenu,
     handleDeleteTaskFromContextMenu,
+    handleTaskDelete,
     handleTaskDragStart,
     handleTaskDragEnd,
     handleTaskDrop,
