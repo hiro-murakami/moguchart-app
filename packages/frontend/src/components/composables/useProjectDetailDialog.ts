@@ -3,19 +3,22 @@ import { upsertUser } from '@/modules/scripts'
 import { useUserStore } from '@/stores/useUserStore'
 import { DEFAULT_COLOR_PALETTES } from '@functions/types/shared'
 import { isEqual, debounce } from 'lodash'
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, nextTick } from 'vue'
 import type { VForm } from 'vuetify/components'
 import { useDiscardConfirm } from '../../composables/useConfirm'
+import dayjs from 'dayjs'
+
 
 export interface ProjectDetailDialogProps {
   modelValue: boolean
   project?: Project | null
   initialGranularity?: ProjectGranularity
+  isDuplicate?: boolean
 }
 
 export type ProjectDetailDialogEmits = {
   (e: 'update:modelValue', value: boolean): void
-  (e: 'save', project: Partial<Project>): void
+  (e: 'save', project: Partial<Project>, options?: { clearProgress?: boolean }): void
 }
 
 export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: ProjectDetailDialogEmits) {
@@ -39,6 +42,13 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
   const localGranularity = ref<ProjectGranularity>('daily')
   const localSnapDurationMinutes = ref<number>(60)
 
+  /** 複製モード時の元プロジェクト期間と単位 */
+  const originalDuration = ref(0)
+  const durationUnit = ref<'month' | 'day' | 'millisecond'>('day')
+
+  /** 複製モード時: 進捗率をクリアするかどうか */
+  const localClearProgress = ref(true)
+
   /** 過去に入力したことのあるメールアドレスを User[] 形式で返す（補完候補用） */
   const authorityHistoryUsers = computed<User[]>(() => {
     const history = userStore.currentUser?.attribute?.authorityInputHistory ?? []
@@ -47,6 +57,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
 
   const isEdit = computed(() => !!props.project)
   const title = computed(() => {
+    if (props.isDuplicate) return 'プロジェクト複製'
     return isEdit.value ? 'プロジェクト詳細' : 'プロジェクト追加'
   })
 
@@ -55,34 +66,85 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
     async (isVisible) => {
       if (isVisible) {
         if (props.project) {
-          // 編集モード
-          localName.value = props.project.name
-          localDescription.value = props.project.attribute.description || ''
-          localStart.value = props.project.start
-          localEnd.value = props.project.end
-          localPublic.value = props.project.public
-          if (props.project.authority) {
-            const { owners, editors, viewers } = props.project.authority
-            localOwners.value = owners || []
-            localEditors.value = editors || []
-            localViewers.value = viewers || []
+          if (props.isDuplicate) {
+            // 複製モード
+            localName.value = `${props.project.name}のコピー`
+            localDescription.value = props.project.attribute.description || ''
+            localStart.value = props.project.start
+            localEnd.value = props.project.end
+            localPublic.value = false
+            if (props.project.authority) {
+              const { owners, editors, viewers } = props.project.authority
+              localOwners.value = owners || []
+              localEditors.value = editors || []
+              localViewers.value = viewers || []
+            } else {
+              localOwners.value = []
+              localEditors.value = []
+              localViewers.value = []
+            }
+            localColorPalettes.value = props.project.attribute.colorPalettes
+              ? props.project.attribute.colorPalettes.map((p) => ({ ...p }))
+              : []
+            localLabels.value = props.project.attribute.labels
+              ? props.project.attribute.labels.map((l) => ({ ...l }))
+              : []
+            localMilestones.value = props.project.attribute.milestones
+              ? props.project.attribute.milestones.map((m) => ({ ...m }))
+              : []
+            localHistoryIntervalMinutes.value = props.project.attribute.historyIntervalMinutes || 0
+            localHistoryRetentionDays.value = props.project.attribute.historyRetentionDays || 7
+            localGranularity.value = props.project.attribute.granularity || 'daily'
+            localSnapDurationMinutes.value =
+              props.project.attribute.snapDurationMinutes || (localGranularity.value === 'hourly' ? 60 : 1440)
+            localClearProgress.value = true
+
+            // 元のプロジェクト期間を記憶
+            const granularity = props.project.attribute.granularity || 'daily'
+            const s = dayjs(props.project.start)
+            const e = dayjs(props.project.end)
+            if (granularity === 'monthly') {
+              durationUnit.value = 'month'
+              originalDuration.value = e.diff(s, 'month')
+            } else if (granularity === 'hourly') {
+              durationUnit.value = 'millisecond'
+              originalDuration.value = e.diff(s, 'millisecond')
+            } else {
+              durationUnit.value = 'day'
+              originalDuration.value = e.diff(s, 'day')
+            }
+          } else {
+            // 編集モード
+            localName.value = props.project.name
+            localDescription.value = props.project.attribute.description || ''
+            localStart.value = props.project.start
+            localEnd.value = props.project.end
+            localPublic.value = props.project.public
+            if (props.project.authority) {
+              const { owners, editors, viewers } = props.project.authority
+              localOwners.value = owners || []
+              localEditors.value = editors || []
+              localViewers.value = viewers || []
+            } else {
+              localOwners.value = []
+              localEditors.value = []
+              localViewers.value = []
+            }
+            localColorPalettes.value = props.project.attribute.colorPalettes
+              ? props.project.attribute.colorPalettes.map((p) => ({ ...p }))
+              : []
+            localLabels.value = props.project.attribute.labels
+              ? props.project.attribute.labels.map((l) => ({ ...l }))
+              : []
+            localMilestones.value = props.project.attribute.milestones
+              ? props.project.attribute.milestones.map((m) => ({ ...m }))
+              : []
+            localHistoryIntervalMinutes.value = props.project.attribute.historyIntervalMinutes || 0
+            localHistoryRetentionDays.value = props.project.attribute.historyRetentionDays || 7
+            localGranularity.value = props.project.attribute.granularity || 'daily'
+            localSnapDurationMinutes.value =
+              props.project.attribute.snapDurationMinutes || (localGranularity.value === 'hourly' ? 60 : 1440)
           }
-          localColorPalettes.value = props.project.attribute.colorPalettes
-            ? props.project.attribute.colorPalettes.map((p) => ({ ...p }))
-            : []
-          localLabels.value = props.project.attribute.labels
-            ? props.project.attribute.labels.map((l) => ({ ...l }))
-            : []
-          localMilestones.value = props.project.attribute.milestones
-            ? props.project.attribute.milestones.map((m) => ({ ...m }))
-            : []
-          localHistoryIntervalMinutes.value = props.project.attribute.historyIntervalMinutes || 0
-          localHistoryRetentionDays.value = props.project.attribute.historyRetentionDays || 7
-          localGranularity.value = props.project.attribute.granularity || 'daily'
-          localSnapDurationMinutes.value =
-            props.project.attribute.snapDurationMinutes || (localGranularity.value === 'hourly' ? 60 : 1440)
-          // await nextTick() // DOMの更新を待つ
-          // form.value?.validate()
         } else {
           // 新規追加モード
           localName.value = ''
@@ -100,13 +162,28 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
           localHistoryRetentionDays.value = 7
           localGranularity.value = props.initialGranularity || 'daily'
           localSnapDurationMinutes.value = localGranularity.value === 'hourly' ? 60 : 1440
-          // form.value?.resetValidation()
         }
-      } else {
-        // form.value?.resetValidation()
       }
     },
   )
+
+  /** 複製モード: 開始日の変更に応じて終了日を自動スライド */
+  watch(localStart, (newStart) => {
+    if (!props.isDuplicate || !newStart) return
+    const s = dayjs(newStart)
+    const newEnd = s.add(originalDuration.value, durationUnit.value)
+
+    const granularity = localGranularity.value || props.project?.attribute?.granularity || 'daily'
+    if (granularity === 'monthly') {
+      localEnd.value = newEnd.format('YYYY-MM')
+    } else if (granularity === 'hourly') {
+      localEnd.value = newEnd.format('YYYY-MM-DDTHH:mm')
+    } else {
+      localEnd.value = newEnd.format('YYYY-MM-DD')
+    }
+    // 終了日更新後にフォームを再バリデーション（dateBefore/dateAfterルールの不整合を解消）
+    nextTick(() => form.value?.validate())
+  })
 
   const hasChanges = computed(() => {
     if (!props.project) {
@@ -202,7 +279,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
         viewers: localViewers.value,
       },
     }
-    if (isEdit.value && props.project) {
+    if (isEdit.value && props.project && !props.isDuplicate) {
       projectData.id = props.project.id
     }
 
@@ -224,7 +301,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
       }
     }
 
-    emit('save', projectData)
+    emit('save', projectData, props.isDuplicate ? { clearProgress: localClearProgress.value } : undefined)
   }
 
   /** 連打防止: 最初のクリックのみ即実行、300ms以内の再クリックは無視 */
@@ -250,6 +327,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
     localSnapDurationMinutes,
     authorityHistoryUsers,
     title,
+    localClearProgress,
     close,
     handleBeforeClose,
     save,

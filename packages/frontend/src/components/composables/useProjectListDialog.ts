@@ -39,8 +39,7 @@ export const useProjectListDialog = (
   const searchQuery = ref('')
   const isProjectDetailDialogVisible = ref(false)
   const projectToEdit = ref<Project | null>(null)
-  const isDuplicateDialogVisible = ref(false)
-  const projectToDuplicate = ref<Project | null>(null)
+  const isDuplicateMode = ref(false)
   const initialGranularity = ref<ProjectGranularity>('daily')
   const isSlideScheduleDialogVisible = ref(false)
   const slideScheduleSaving = ref(false)
@@ -121,6 +120,7 @@ export const useProjectListDialog = (
 
   const editProject = (project: Project) => {
     projectToEdit.value = project
+    isDuplicateMode.value = false
     isProjectDetailDialogVisible.value = true
   }
 
@@ -221,71 +221,72 @@ export const useProjectListDialog = (
   const newProject = (granularity: ProjectGranularity = 'daily') => {
     projectToEdit.value = null
     initialGranularity.value = granularity
+    isDuplicateMode.value = false
     isProjectDetailDialogVisible.value = true
   }
 
-  const saveProject = async (project: Partial<Project>) => {
-    saving.value = true
-    const isNew = projectToEdit.value === null
-    try {
-      const projectId = await projectStore.updateProject(project as Project)
-      isProjectDetailDialogVisible.value = false
-      await fetchProjects() // Storeを最新の状態にする
+  const saveProject = async (project: Partial<Project>, options?: { clearProgress?: boolean }) => {
+    if (isDuplicateMode.value) {
+      duplicateSaving.value = true
+      try {
+        const originalProject = projectToEdit.value
+        if (!originalProject) return
 
-      if (projectId) {
-        // 新規作成時は初期行を3行作成する
-        if (isNew) {
-          const initialRows = [1, 2, 3].map((order) => ({
-            id: 0, // 新規作成なので0
-            projectId,
-            name: `新規行${order}`,
-            order,
-            visible: true,
-            attribute: {},
-            tasks: [],
-          }))
-          await Promise.all(initialRows.map((row) => upsertGanttRow(row)))
+        // 開始日が元と異なる場合、newStartDate を渡してタスク・マイルストーンをスライドさせる
+        const newStartDate =
+          originalProject.start && project.start && project.start.slice(0, 10) !== originalProject.start.slice(0, 10)
+            ? project.start
+            : undefined
+        const projectId = await duplicateProjectScript({
+          originalProjectId: originalProject.id,
+          newProjectData: project as Project,
+          newStartDate,
+          clearProgress: !!options?.clearProgress,
+        })
+
+        isProjectDetailDialogVisible.value = false
+        await fetchProjects() // Storeを最新の状態にする
+
+        if (projectId) {
+          emit('select', projectId)
+          close()
         }
-
-        emit('select', projectId)
-        close()
+      } catch (e) {
+        console.error(e)
+      } finally {
+        duplicateSaving.value = false
       }
-    } catch (e) {
-      console.error(e)
-    } finally {
-      saving.value = false
-    }
-  }
+    } else {
+      saving.value = true
+      const isNew = projectToEdit.value === null
+      try {
+        const projectId = await projectStore.updateProject(project as Project)
+        isProjectDetailDialogVisible.value = false
+        await fetchProjects() // Storeを最新の状態にする
 
-  const saveDuplicateProject = async (project: Partial<Project>, options: { clearProgress: boolean }) => {
-    duplicateSaving.value = true
-    try {
-      const originalProject = projectToDuplicate.value
-      if (!originalProject) return
+        if (projectId) {
+          // 新規作成時は初期行を3行作成する
+          if (isNew) {
+            const initialRows = [1, 2, 3].map((order) => ({
+              id: 0, // 新規作成なので0
+              projectId,
+              name: `新規行${order}`,
+              order,
+              visible: true,
+              attribute: {},
+              tasks: [],
+            }))
+            await Promise.all(initialRows.map((row) => upsertGanttRow(row)))
+          }
 
-      // 開始日が元と異なる場合、newStartDate を渡してタスク・マイルストーンをスライドさせる
-      const newStartDate =
-        originalProject.start && project.start && project.start !== originalProject.start.slice(0, project.start.length)
-          ? project.start
-          : undefined
-      const projectId = await duplicateProjectScript({
-        originalProjectId: originalProject.id,
-        newProjectData: project as Project,
-        newStartDate,
-        clearProgress: options.clearProgress,
-      })
-
-      isDuplicateDialogVisible.value = false
-      await fetchProjects() // Storeを最新の状態にする
-
-      if (projectId) {
-        emit('select', projectId)
-        close()
+          emit('select', projectId)
+          close()
+        }
+      } catch (e) {
+        console.error(e)
+      } finally {
+        saving.value = false
       }
-    } catch (e) {
-      console.error(e)
-    } finally {
-      duplicateSaving.value = false
     }
   }
 
@@ -323,8 +324,9 @@ export const useProjectListDialog = (
   }
 
   const duplicateProject = (project: Project) => {
-    projectToDuplicate.value = project
-    isDuplicateDialogVisible.value = true
+    projectToEdit.value = project
+    isDuplicateMode.value = true
+    isProjectDetailDialogVisible.value = true
   }
 
   const readRestoreData = async (file: File) => {
@@ -515,8 +517,7 @@ export const useProjectListDialog = (
     highlightText,
     isProjectDetailDialogVisible,
     projectToEdit,
-    isDuplicateDialogVisible,
-    projectToDuplicate,
+    isDuplicateMode,
     initialGranularity,
     isSlideScheduleDialogVisible,
     slideScheduleSaving,
@@ -526,7 +527,6 @@ export const useProjectListDialog = (
     editProject,
     newProject,
     saveProject,
-    saveDuplicateProject,
     deleteProject,
     duplicateProject,
     downloadProjectJson,

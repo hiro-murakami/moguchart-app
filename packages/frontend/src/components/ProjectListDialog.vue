@@ -28,8 +28,7 @@ const {
   highlightText,
   isProjectDetailDialogVisible,
   projectToEdit,
-  isDuplicateDialogVisible,
-  projectToDuplicate,
+  isDuplicateMode,
   initialGranularity,
   isSlideScheduleDialogVisible,
   slideScheduleSaving,
@@ -38,7 +37,6 @@ const {
   editProject,
   newProject,
   saveProject,
-  saveDuplicateProject,
   deleteProject,
   duplicateProject,
   downloadProjectJson,
@@ -330,7 +328,8 @@ const handleFileChange = (e: Event) => {
     v-model="isProjectDetailDialogVisible"
     :project="projectToEdit"
     :initial-granularity="initialGranularity"
-    :saving="saving"
+    :saving="saving || duplicateSaving"
+    :is-duplicate="isDuplicateMode"
     @save="saveProject"
     @open-slide-schedule="handleOpenSlideSchedule"
   />
@@ -341,13 +340,6 @@ const handleFileChange = (e: Event) => {
     :project="projectToEdit"
     :saving="slideScheduleSaving"
     @slide="handleSlideSchedule"
-  />
-
-  <ProjectDuplicateDialog
-    v-model="isDuplicateDialogVisible"
-    :project="projectToDuplicate"
-    :saving="duplicateSaving"
-    @save="saveDuplicateProject"
   />
 </template>
 

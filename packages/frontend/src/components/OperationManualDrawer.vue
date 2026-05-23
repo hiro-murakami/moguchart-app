@@ -13,13 +13,21 @@ const emit = defineEmits<{
 
 const contentRef = ref<HTMLElement | null>(null)
 
-// カスタム renderer で h2 見出しに section-N の連番 id を付与
+// ヘッダーテキストからアンカーIDを生成する関数
+function generateAnchorId(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[.・、。，．\/\\#$%^&*()_+={}\[\]|:;"'<>?,~`]+/g, '')
+    .replace(/\s+/g, '-')
+}
+
+// カスタム renderer で h2 見出しにマークダウンのリンクと一致する id を付与
 const renderer = new Renderer()
-let sectionCounter = 0
 renderer.heading = ({ text, depth }: { text: string; depth: number }) => {
   if (depth === 2) {
-    sectionCounter++
-    return `<h${depth} id="section-${sectionCounter}">${text}</h${depth}>\n`
+    const id = generateAnchorId(text)
+    return `<h${depth} id="${id}">${text}</h${depth}>\n`
   }
   return `<h${depth}>${text}</h${depth}>\n`
 }
@@ -57,7 +65,7 @@ function onContentClick(event: MouseEvent) {
 }
 
 function scrollToToc() {
-  const heading = contentRef.value?.querySelector('#section-1')
+  const heading = contentRef.value?.querySelector('#目次')
   if (heading) {
     heading.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }

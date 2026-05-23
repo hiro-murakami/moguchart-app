@@ -11,13 +11,14 @@ const props = defineProps<{
   project?: Project | null
   saving?: boolean
   initialGranularity?: ProjectGranularity
+  isDuplicate?: boolean
 }>()
 
 const showAuthorityHistoryDialog = ref(false)
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
-  (e: 'save', project: Partial<Project>): void
+  (e: 'save', project: Partial<Project>, options?: { clearProgress?: boolean }): void
   (e: 'open-slide-schedule'): void
 }>()
 
@@ -41,6 +42,7 @@ const {
   localSnapDurationMinutes,
   authorityHistoryUsers,
   title,
+  localClearProgress,
   close,
   handleBeforeClose,
   save,
@@ -249,11 +251,23 @@ watch(
                         :compare-target="localStart"
                         compare-rule="after"
                         :custom-rules="dateDurationRules"
-                        hide-details="auto"
+                        :hide-details="isDuplicate ? false : 'auto'"
+                        :hint="isDuplicate ? '開始日の変更に連動して自動調整されます' : undefined"
+                        :persistent-hint="isDuplicate"
+                        :disabled="isDuplicate"
                         class="mb-3"
                       />
                     </v-col>
-                    <v-col v-if="props.project" cols="12" class="py-0 mt-n2">
+                    <v-col v-if="isDuplicate" cols="12" class="py-0">
+                      <v-checkbox
+                        v-model="localClearProgress"
+                        label="進捗率をクリアする"
+                        density="compact"
+                        hide-details
+                        class="mb-3"
+                      />
+                    </v-col>
+                    <v-col v-if="props.project && !isDuplicate" cols="12" class="py-0 mt-n2">
                       <v-btn
                         variant="text"
                         prepend-icon="mdi-calendar-arrow-right"
