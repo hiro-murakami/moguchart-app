@@ -135,7 +135,10 @@ const currentTheme = computed({
           }
         "
         mandatory
-        density="compact"
+        border
+        divided
+        rounded
+        density="comfortable"
         color="primary"
         class="w-100"
       >
@@ -154,7 +157,10 @@ const currentTheme = computed({
           }
         "
         mandatory
-        density="compact"
+        border
+        divided
+        rounded
+        density="comfortable"
         color="primary"
         class="w-100 mb-4"
       >
@@ -163,7 +169,7 @@ const currentTheme = computed({
         <v-btn value="medium" size="medium" class="flex-grow-1">中</v-btn>
         <v-btn value="large" size="medium" class="flex-grow-1">大</v-btn>
       </v-btn-toggle>
-      <div class="text-caption text-medium-emphasis mb-1 mt-4">テーマ</div>
+      <div class="text-caption text-medium-emphasis">テーマ</div>
       <v-radio-group v-model="currentTheme" inline hide-details class="mb-3 d-flex justify-center">
         <v-radio v-for="option in themeOptions" :key="option.value" :value="option.value">
           <template v-slot:label>
