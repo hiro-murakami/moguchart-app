@@ -3,12 +3,17 @@ const fs = require('fs').promises;
 const path = require('path');
 
 // Update these with your specific IDs or pass them as arguments
-const DEFAULT_PROJECT_ID = 'firestore-sample-c7300';
+const DEFAULT_PROJECT_ID = process.env.GCP_PROJECT_ID || '';
 const DEFAULT_SECRET_NAME = 'functions-env';
 
 async function main() {
   const projectId = process.argv[2] || DEFAULT_PROJECT_ID;
   const secretName = process.argv[3] || DEFAULT_SECRET_NAME;
+
+  if (!projectId) {
+    console.error('Error: GCP Project ID is required. Set GCP_PROJECT_ID env var or pass it as the first argument.');
+    process.exit(1);
+  }
 
   console.log(`Fetching secret '${secretName}' from project '${projectId}' (functions)...`);
 
