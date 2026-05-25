@@ -125,6 +125,19 @@ export const useExportData = () => {
   }
 
   /**
+   * Excelシート名として安全な文字列に変換する
+   * Excelのシート名には : \ / ? * [ ] を使用できない
+   */
+  const sanitizeSheetName = (name: string): string => {
+    // 禁止文字を除去
+    const sanitized = name.replace(/[:\\/?*[\]]/g, '').trim()
+    // 空文字になった場合はデフォルト名
+    if (!sanitized) return 'Sheet1'
+    // 31文字制限
+    return sanitized.substring(0, 31)
+  }
+
+  /**
    * Excelとしてエクスポート
    */
   const exportAsExcel = (rows: any[], projectName: string) => {
@@ -150,10 +163,12 @@ export const useExportData = () => {
       ]
       ws['!cols'] = colWidths
 
-      XLSX.utils.book_append_sheet(wb, ws, projectName.substring(0, 31)) // Excelのシート名は31文字制限
+      const sheetName = sanitizeSheetName(projectName)
+      XLSX.utils.book_append_sheet(wb, ws, sheetName)
 
       const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' })
-      const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+      // ArrayBuffer を Uint8Array に変換して確実に Blob が作れるようにする
+      const blob = new Blob([new Uint8Array(wbout)], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
       const filename = `${projectName}_${dayjs().format('YYYYMMDD_HHmmss')}.xlsx`
       downloadBlob(blob, filename)
 
