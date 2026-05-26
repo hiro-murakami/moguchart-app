@@ -503,7 +503,10 @@ export const useGanttChartView = () => {
             // 対象外のタスクは非表示にするのではなく透過率を上げて区別する
             const styleStr = (newTask as any).style || ''
             const separator = styleStr && !styleStr.trim().endsWith(';') ? ';' : ''
-            Object.assign(newTask, { style: `${styleStr}${separator} opacity: 0.2;` })
+            Object.assign(newTask, {
+              style: `${styleStr}${separator} opacity: 0.2;`,
+              _isFilteredOut: true,
+            })
           }
 
           // 他ユーザーが編集中のタスクにハイライトスタイルを適用

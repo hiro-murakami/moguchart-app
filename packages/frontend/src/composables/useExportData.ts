@@ -26,14 +26,21 @@ export const useExportData = () => {
   const buildExportRows = (rows: any[], includeHidden: boolean = true): ExportRow[] => {
     const exportRows: ExportRow[] = []
 
+    // フィルタが適用されているか（いずれかのタスクがフィルタアウトされているか）
+    const isFiltered = rows.some((row) => row.tasks?.some((task: any) => task._isFilteredOut))
+
     for (const row of rows) {
       // 非表示行をスキップするか
       if (!includeHidden && row.visible === false) continue
 
       const rowName = row.name || ''
+      const validTasks = (row.tasks || []).filter((task: any) => !task._isFilteredOut)
 
-      if (!row.tasks || row.tasks.length === 0) {
-        // タスクが無い行も含める
+      if (validTasks.length === 0) {
+        // フィルタ適用中の場合は、タスクが無い（あるいは全てフィルタアウトされた）行は出力しない
+        if (isFiltered) continue
+
+        // フィルタ未適用の場合は、タスクが無い行も含める
         exportRows.push({
           行名: rowName,
           タスク名: '',
@@ -46,7 +53,7 @@ export const useExportData = () => {
         continue
       }
 
-      for (const task of row.tasks) {
+      for (const task of validTasks) {
         const attribute = task.attribute as TaskAttribute | undefined
         const labels = attribute?.labels?.map((l: any) => l.name).join(', ') || ''
         const description = attribute?.description || task.description || ''
