@@ -118,6 +118,7 @@ const {
   exportAsExcel,
   exportAsPng,
   exportAsPdf,
+  exportAsZip,
   commentSidebarOpen,
   commentSidebarWidth,
   effectiveCommentSidebarWidth,
@@ -225,6 +226,12 @@ const handleExportPdf = async () => {
   }
 }
 
+const handleExportZip = async () => {
+  if (currentProject.value) {
+    await exportAsZip(currentProject.value.id, currentProject.value.name)
+  }
+}
+
 const handleOpenSlideSchedule = async () => {
   isProjectDetailDialogVisible.value = false
   await nextTick()
@@ -279,6 +286,7 @@ const handleOpenSlideSchedule = async () => {
             <ExportMenu
               @export-csv="handleExportCsv"
               @export-excel="handleExportExcel"
+              @export-zip="handleExportZip"
               @export-png="handleExportPng"
               @export-pdf="handleExportPdf"
             />

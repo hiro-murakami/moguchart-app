@@ -2,6 +2,7 @@
 defineEmits<{
   exportCsv: []
   exportExcel: []
+  exportZip: []
   exportPng: []
   exportPdf: []
 }>()
@@ -23,6 +24,9 @@ defineEmits<{
       </v-list-item>
       <v-list-item prepend-icon="mdi-file-excel-outline" @click="$emit('exportExcel')">
         <v-list-item-title>Excel でエクスポート</v-list-item-title>
+      </v-list-item>
+      <v-list-item prepend-icon="mdi-folder-zip-outline" @click="$emit('exportZip')">
+        <v-list-item-title>ZIP でエクスポート</v-list-item-title>
       </v-list-item>
       <v-divider />
       <v-list-item prepend-icon="mdi-image-outline" @click="$emit('exportPng')">

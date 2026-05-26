@@ -11,6 +11,7 @@ import {
   createSnapshot,
   loadSnapshot,
   selectComments,
+  downloadProjectZip,
 } from '@/modules/scripts'
 import { db } from '@/firebase'
 import { doc, getDoc, setDoc } from 'firebase/firestore'
@@ -649,6 +650,35 @@ export const useGanttChartView = () => {
       await chart.exportImage('pdf', { filename: projectName, download: true })
     } catch (e) {
       console.error('PDF export failed:', e)
+    }
+  }
+
+  const exportAsZip = async (projectId: string, projectName: string) => {
+    setIsLoading(true)
+    try {
+      const base64Data = await downloadProjectZip(projectId)
+      const binaryString = atob(base64Data)
+      const bytes = new Uint8Array(binaryString.length)
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i)
+      }
+      const blob = new Blob([bytes], { type: 'application/zip' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${projectName}.json.zip`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch (e: any) {
+      console.error(e)
+      alert({
+        title: 'エラー',
+        message: 'ZIPのダウンロードに失敗しました。',
+      })
+    } finally {
+      setIsLoading(false)
     }
   }
   const { setIsLoading } = useLoading()
@@ -3334,6 +3364,7 @@ export const useGanttChartView = () => {
     exportAsExcel,
     exportAsPng,
     exportAsPdf,
+    exportAsZip,
     commentSidebarOpen,
     commentSidebarWidth,
     effectiveCommentSidebarWidth,
