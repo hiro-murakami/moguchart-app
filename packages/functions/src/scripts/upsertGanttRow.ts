@@ -1,6 +1,6 @@
 import { Prisma } from '../generated/prisma/client'
 import type { UpsertGanttRow, GanttRow } from '../types/shared'
-import { getCreateCommonColumns, getUpdateCommonColumns, prisma } from './common/commonFunctions'
+import { checkProjectPermission, getCreateCommonColumns, getUpdateCommonColumns, prisma } from './common/commonFunctions'
 import { fromGanttRow } from './common/converters'
 
 const executeUpsert = async (tx: Prisma.TransactionClient, row: GanttRow, email?: string) => {
@@ -32,7 +32,10 @@ const executeUpsert = async (tx: Prisma.TransactionClient, row: GanttRow, email?
 
 const upsertGanttRow: UpsertGanttRow = async (row, email?: string) => {
   if (Array.isArray(row)) {
-    // 一括更新
+    // 一括更新: 最初の行のprojectIdでチェック
+    if (row.length > 0) {
+      await checkProjectPermission(row[0]!.projectId, email, 'editor')
+    }
     return await prisma.$transaction(async (tx) => {
       const results = []
       for (const r of row) {
@@ -43,6 +46,7 @@ const upsertGanttRow: UpsertGanttRow = async (row, email?: string) => {
   }
 
   // 単一更新
+  await checkProjectPermission(row.projectId, email, 'editor')
   return await executeUpsert(prisma as unknown as Prisma.TransactionClient, row, email)
 }
 

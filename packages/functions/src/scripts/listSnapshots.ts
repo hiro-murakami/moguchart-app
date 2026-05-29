@@ -1,10 +1,13 @@
 import { getStorage } from 'firebase-admin/storage'
 import type { ListSnapshots } from '../types/shared.js'
+import { checkProjectPermission } from './common/commonFunctions.js'
 
-const listSnapshots: ListSnapshots = async (projectId) => {
+const listSnapshots: ListSnapshots = async (projectId, email) => {
   if (!projectId) {
     throw new Error('Project ID is required')
   }
+
+  await checkProjectPermission(projectId, email, 'viewer')
 
   const bucket = getStorage().bucket()
   const prefix = `snapshots/${projectId}/`

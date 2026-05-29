@@ -2,7 +2,7 @@ import * as functions from 'firebase-functions/v2'
 import { FirebaseFunction } from '../../types'
 import { PrismaClient } from '../../generated/prisma/client'
 import { PrismaMariaDb } from '@prisma/adapter-mariadb'
-import { FunctionParam, FunctionResult, VERSION } from '../../types/shared'
+import { FunctionParam, FunctionResult, VERSION, type Role } from '../../types/shared'
 import dayjs from 'dayjs'
 
 dayjs.extend(require('dayjs/plugin/utc'))
@@ -85,3 +85,160 @@ export const getCreateCommonColumns = (email?: string) => ({
   updatedBy: email,
   updatedAt: new Date(),
 })
+
+// ==================== 認可チェック関数群 ====================
+
+/**
+ * プロジェクトに対するアクセス権限をチェックする。
+ * 権限がない場合は例外をスローする。
+ *
+ * @param projectId 対象プロジェクトID
+ * @param email リクエストユーザーの識別子
+ * @param requiredRole 必要なロール ('owner' | 'editor' | 'viewer')
+ *   - owner: owners に含まれている必要がある
+ *   - editor: owners または editors に含まれている必要がある
+ *   - viewer: owners, editors, または viewers に含まれている必要がある
+ *            （公開プロジェクトの場合は誰でも閲覧可能）
+ */
+export const checkProjectPermission = async (
+  projectId: string,
+  email: string | undefined,
+  requiredRole: Role,
+): Promise<void> => {
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    select: { public: true, authority: true },
+  })
+
+  if (!project) {
+    throw new Error('Project not found')
+  }
+
+  // 公開プロジェクトの場合、viewer ロールのみ無条件で許可
+  if (project.public && requiredRole === 'viewer') {
+    return
+  }
+
+  if (!email) {
+    throw new Error('Permission denied')
+  }
+
+  const authority = (project.authority as any) || {}
+  const owners: string[] = authority.owners || []
+  const editors: string[] = authority.editors || []
+  const viewers: string[] = authority.viewers || []
+
+  let hasAccess = false
+  switch (requiredRole) {
+    case 'owner':
+      hasAccess = owners.includes(email)
+      break
+    case 'editor':
+      hasAccess = owners.includes(email) || editors.includes(email)
+      break
+    case 'viewer':
+      hasAccess = owners.includes(email) || editors.includes(email) || viewers.includes(email)
+      break
+  }
+
+  if (!hasAccess) {
+    throw new Error('Permission denied')
+  }
+}
+
+/**
+ * 行IDの配列からプロジェクトIDを取得する。
+ * すべての行が同一プロジェクトに属していることを検証する。
+ */
+export const getProjectIdFromRowIds = async (rowIds: number[]): Promise<string> => {
+  if (rowIds.length === 0) {
+    throw new Error('Row IDs are required')
+  }
+
+  const rows = await prisma.ganttRow.findMany({
+    where: { id: { in: rowIds } },
+    select: { projectId: true },
+  })
+
+  if (rows.length === 0) {
+    throw new Error('Rows not found')
+  }
+
+  const projectIds = new Set(rows.map((r) => r.projectId))
+  if (projectIds.size !== 1) {
+    throw new Error('All rows must belong to the same project')
+  }
+
+  return rows[0]!.projectId
+}
+
+/**
+ * タスクIDの配列からプロジェクトIDを取得する。
+ * すべてのタスクが同一プロジェクトに属していることを検証する。
+ */
+export const getProjectIdFromTaskIds = async (taskIds: number[]): Promise<string> => {
+  if (taskIds.length === 0) {
+    throw new Error('Task IDs are required')
+  }
+
+  const tasks = await prisma.ganttTask.findMany({
+    where: { id: { in: taskIds } },
+    select: { row: { select: { projectId: true } } },
+  })
+
+  if (tasks.length === 0) {
+    throw new Error('Tasks not found')
+  }
+
+  const projectIds = new Set(tasks.map((t) => t.row.projectId))
+  if (projectIds.size !== 1) {
+    throw new Error('All tasks must belong to the same project')
+  }
+
+  return tasks[0]!.row.projectId
+}
+
+/**
+ * コメントIDからプロジェクトIDを取得する。
+ * コメントが紐づくタスク → 行 → プロジェクト、または行 → プロジェクト、
+ * またはプロジェクト直接の紐づきを辿る。
+ */
+export const getProjectIdFromCommentId = async (commentId: number): Promise<string> => {
+  const comment = await prisma.comment.findUnique({
+    where: { id: commentId },
+    select: {
+      projectId: true,
+      rowId: true,
+      taskId: true,
+    },
+  })
+
+  if (!comment) {
+    throw new Error('Comment not found')
+  }
+
+  if (comment.projectId) {
+    return comment.projectId
+  }
+
+  if (comment.rowId) {
+    const row = await prisma.ganttRow.findUnique({
+      where: { id: comment.rowId },
+      select: { projectId: true },
+    })
+    if (!row) throw new Error('Row not found')
+    return row.projectId
+  }
+
+  if (comment.taskId) {
+    const task = await prisma.ganttTask.findUnique({
+      where: { id: comment.taskId },
+      select: { row: { select: { projectId: true } } },
+    })
+    if (!task) throw new Error('Task not found')
+    return task.row.projectId
+  }
+
+  throw new Error('Comment has no associated resource')
+}
+

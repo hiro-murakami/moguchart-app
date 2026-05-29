@@ -1,8 +1,10 @@
 import type { SelectGanttChart } from '../types/shared'
-import { prisma } from './common/commonFunctions'
+import { checkProjectPermission, prisma } from './common/commonFunctions'
 import { toGanttRow } from './common/converters'
 
-const selectGanttChart: SelectGanttChart = async (projectId) => {
+const selectGanttChart: SelectGanttChart = async (projectId, email) => {
+  await checkProjectPermission(projectId, email, 'viewer')
+
   const data = await prisma.ganttRow.findMany({
     where: { projectId },
     include: {

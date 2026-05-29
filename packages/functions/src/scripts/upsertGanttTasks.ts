@@ -1,6 +1,6 @@
 import { Prisma } from '../generated/prisma/client'
 import type { UpsertGanttTasks, GanttTask } from '../types/shared'
-import { getCreateCommonColumns, getUpdateCommonColumns, prisma } from './common/commonFunctions'
+import { checkProjectPermission, getCreateCommonColumns, getUpdateCommonColumns, prisma } from './common/commonFunctions'
 import { fromGanttTask } from './common/converters'
 
 const executeUpsert = async (tx: Prisma.TransactionClient, task: GanttTask, email?: string) => {
@@ -28,6 +28,16 @@ const executeUpsert = async (tx: Prisma.TransactionClient, task: GanttTask, emai
 }
 
 const upsertGanttTasks: UpsertGanttTasks = async (tasks, email?: string) => {
+  if (tasks.length > 0) {
+    // 最初のタスクの rowId からプロジェクトを特定して権限チェック
+    const row = await prisma.ganttRow.findUnique({
+      where: { id: tasks[0]!.rowId },
+      select: { projectId: true },
+    })
+    if (!row) throw new Error('Row not found')
+    await checkProjectPermission(row.projectId, email, 'editor')
+  }
+
   return await prisma.$transaction(async (tx) => {
     const results = []
     for (const task of tasks) {

@@ -8,6 +8,7 @@ import crypto from 'node:crypto'
 dayjs.extend(utc)
 dayjs.extend(timezone)
 import type { CreateSnapshot, ProjectAttribute } from '../types/shared.js'
+import { checkProjectPermission } from './common/commonFunctions.js'
 import getGanttDataJson from './getGanttDataJson.js'
 
 const createSnapshot: CreateSnapshot = async (params, email) => {
@@ -16,6 +17,8 @@ const createSnapshot: CreateSnapshot = async (params, email) => {
   if (!projectId) {
     throw new Error('Project ID is required')
   }
+
+  await checkProjectPermission(projectId, email, 'editor')
 
   // ガントチャート情報の取得（権限チェック含む）
   const ganttData = await getGanttDataJson(projectId, email)

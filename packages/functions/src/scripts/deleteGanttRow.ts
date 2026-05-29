@@ -1,7 +1,10 @@
 import type { DeleteGanttRow } from '../types/shared'
-import { prisma } from './common/commonFunctions'
+import { checkProjectPermission, getProjectIdFromRowIds, prisma } from './common/commonFunctions'
 
-const deleteGanttRow: DeleteGanttRow = async (ids) => {
+const deleteGanttRow: DeleteGanttRow = async (ids, email) => {
+  const projectId = await getProjectIdFromRowIds(ids)
+  await checkProjectPermission(projectId, email, 'editor')
+
   await prisma.ganttRow.deleteMany({
     where: {
       id: {

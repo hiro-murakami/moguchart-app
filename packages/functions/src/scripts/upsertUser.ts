@@ -28,6 +28,11 @@ const cleanupDeletedProjectSettings = async (
 }
 
 const upsertUser: UpsertUser = async (user, email) => {
+  // セキュリティ: 自分自身のデータのみ更新可能
+  if (user.email !== email) {
+    throw new Error('Permission denied: cannot modify other user data')
+  }
+
   // 更新前に削除済みプロジェクトの設定をクリーンアップ
   const attribute = user.attribute as UserAttribute
   if (attribute.projectSettings && Object.keys(attribute.projectSettings).length > 0) {

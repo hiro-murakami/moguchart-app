@@ -1,8 +1,10 @@
 import { getStorage } from 'firebase-admin/storage'
 import type { DeleteProject } from '../types/shared'
-import { prisma } from './common/commonFunctions'
+import { checkProjectPermission, prisma } from './common/commonFunctions'
 
-const deleteProject: DeleteProject = async (id) => {
+const deleteProject: DeleteProject = async (id, email) => {
+  await checkProjectPermission(id, email, 'owner')
+
   // Firebase Storage の関連スナップショットを削除
   const bucket = getStorage().bucket()
   const prefix = `snapshots/${id}/`

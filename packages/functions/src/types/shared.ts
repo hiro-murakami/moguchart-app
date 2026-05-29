@@ -364,9 +364,9 @@ export type GanttRowOrder = {
 /** プロジェクト一覧を取得する関数の型 */
 export type SelectProjects = (_?: any, email?: string) => Promise<Project[]>
 /** ガントチャートデータ（行・タスク）を取得する関数の型 */
-export type SelectGanttChart = (projectId: string) => Promise<GanttRow[]>
+export type SelectGanttChart = (projectId: string, email?: string) => Promise<GanttRow[]>
 /** 指定した行ID一覧でガントチャートの行データ（タスク含む）を取得する関数の型 */
-export type SelectGanttRows = (params: { projectId: string; rowIds: number[] }) => Promise<GanttRow[]>
+export type SelectGanttRows = (params: { projectId: string; rowIds: number[] }, email?: string) => Promise<GanttRow[]>
 /** タスクを作成または更新する関数の型（作成時はタスクIDを返す） */
 export type UpsertGanttTasks = (tasks: GanttTask[], email?: string) => Promise<number[]>
 /** 行を作成または更新する関数の型（作成時は行IDを返す） */

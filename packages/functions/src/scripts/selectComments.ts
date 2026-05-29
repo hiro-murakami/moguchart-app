@@ -1,7 +1,32 @@
 import type { SelectComments } from '../types/shared'
-import { prisma } from './common/commonFunctions'
+import { checkProjectPermission, prisma } from './common/commonFunctions'
 
-const selectComments: SelectComments = async (params) => {
+const selectComments: SelectComments = async (params, email) => {
+  // リソースからプロジェクトIDを特定して権限チェック
+  let projectId: string | undefined
+
+  if (params.projectId != null) {
+    projectId = params.projectId
+  } else if (params.rowId != null) {
+    const row = await prisma.ganttRow.findUnique({
+      where: { id: params.rowId },
+      select: { projectId: true },
+    })
+    if (!row) throw new Error('Row not found')
+    projectId = row.projectId
+  } else if (params.taskId != null) {
+    const task = await prisma.ganttTask.findUnique({
+      where: { id: params.taskId },
+      select: { row: { select: { projectId: true } } },
+    })
+    if (!task) throw new Error('Task not found')
+    projectId = task.row.projectId
+  }
+
+  if (projectId) {
+    await checkProjectPermission(projectId, email, 'viewer')
+  }
+
   const where: { taskId?: number; rowId?: number; projectId?: string } = {}
   if (params.taskId != null) where.taskId = params.taskId
   if (params.rowId != null) where.rowId = params.rowId

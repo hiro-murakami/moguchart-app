@@ -1,6 +1,6 @@
 import { PrismaClient } from '../generated/prisma/client'
 import type { UpsertProject } from '../types/shared'
-import { getCreateCommonColumns, getUpdateCommonColumns, prisma } from './common/commonFunctions'
+import { checkProjectPermission, getCreateCommonColumns, getUpdateCommonColumns, prisma } from './common/commonFunctions'
 
 type PrismaTransactionClient = Omit<PrismaClient, '$connect' | '$disconnect' | '$on' | '$transaction' | '$extends'>
 
@@ -65,6 +65,11 @@ export const _upsertProject = async (
 }
 
 const upsertProject: UpsertProject = async (project, email) => {
+  // 更新時はownerのみ許可
+  if (project.id) {
+    await checkProjectPermission(project.id, email, 'owner')
+  }
+
   const result = await _upsertProject(prisma, project, email)
   return result.id
 }
