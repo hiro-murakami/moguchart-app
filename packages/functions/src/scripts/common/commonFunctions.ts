@@ -26,38 +26,52 @@ export const prisma = new PrismaClient({ adapter })
  */
 export const setupFirebaseFunction = (targetFunctions: FirebaseFunction): Function => {
   // FYI:onCallを使うことで、Authorizationヘッダに認証済みのトークンが設定されていることが自動でチェックできる
-  return functions.https.onCall({ region: 'asia-northeast1', cors: true }, async (data) => {
-    functions.logger.log('request:', data)
+  return functions.https.onCall(
+    {
+      region: 'asia-northeast1',
+      cors: [
+        `https://${process.env.GCP_PROJECT_ID}.web.app`,
+        `https://${process.env.GCP_PROJECT_ID}.firebaseapp.com`,
+        'https://moguchart.jp',
+        // 開発環境用
+        'http://localhost:5173',
+        'http://localhost:4173',
+        'http://localhost:5174',
+        'http://localhost:4174',
+      ],
+    },
+    async (data) => {
+      functions.logger.log('request:', data)
 
-    // 認証チェック
-    // Authorizationヘッダがない、または不正な値が設定されていた場合はエラーとする
-    if (!data.auth) {
-      throw new Error('認証されていません')
-    }
+      // 認証チェック
+      // Authorizationヘッダがない、または不正な値が設定されていた場合はエラーとする
+      if (!data.auth) {
+        throw new Error('認証されていません')
+      }
 
-    // メイン処理を実行する
-    const result: FunctionResult = {
-      status: 'succeeded',
-      version: VERSION,
-    }
+      // メイン処理を実行する
+      const result: FunctionResult = {
+        status: 'succeeded',
+        version: VERSION,
+      }
 
-    const requestData = data.data as FunctionParam
+      const requestData = data.data as FunctionParam
 
-    // 匿名ログインユーザーはemailを持たないため、uidをフォールバック識別子として使用
-    const userIdentifier = data.auth.token.email || data.auth.uid
+      // 匿名ログインユーザーはemailを持たないため、uidをフォールバック識別子として使用
+      const userIdentifier = data.auth.token.email || data.auth.uid
 
-    await targetFunctions[requestData.name](requestData.param, userIdentifier)
-      .then((resultData: any) => {
-        result.data = resultData
-      })
-      .catch((e: Error) => {
-        result.status = 'failed'
-        result.message = e.message
-      })
+      await targetFunctions[requestData.name](requestData.param, userIdentifier)
+        .then((resultData: any) => {
+          result.data = resultData
+        })
+        .catch((e: Error) => {
+          result.status = 'failed'
+          result.message = e.message
+        })
 
-    functions.logger.log('response: ' + JSON.stringify(result))
-    return result
-  })
+      functions.logger.log('response: ' + JSON.stringify(result))
+      return result
+    })
 }
 
 export const toDateString = (value: Date | dayjs.Dayjs, format: string = 'YYYY-MM-DD'): string => {
