@@ -932,9 +932,10 @@ export const useGanttChartView = () => {
 
   // --- データ永続化ロジック ---
 
-  async function loadData(pId: string) {
+  async function loadData(pId: string, options?: { silent?: boolean }) {
     if (!pId) return
-    setIsLoading(true)
+    const silent = options?.silent ?? false
+    if (!silent) setIsLoading(true)
     try {
       const data = await selectGanttChart(pId)
       rows.value = data.map((row: GanttRow) => ({
@@ -949,7 +950,7 @@ export const useGanttChartView = () => {
         message: 'データの読み込みに失敗しました。',
       })
     } finally {
-      setIsLoading(false)
+      if (!silent) setIsLoading(false)
     }
   }
 
@@ -1154,15 +1155,15 @@ export const useGanttChartView = () => {
         description: `タスク一括移動 (${afterDataList.length}件)`,
         undo: async () => {
           await upsertGanttTasks(beforeDataList)
-          await loadData(projectId.value)
+          await loadData(projectId.value, { silent: true })
         },
         redo: async () => {
           await upsertGanttTasks(afterDataList)
-          await loadData(projectId.value)
+          await loadData(projectId.value, { silent: true })
         },
       })
       await upsertGanttTasks(afterDataList)
-      await loadData(projectId.value)
+      await loadData(projectId.value, { silent: true })
       publishEditEvent('task_upsert', {
         rowIds: [...affectedRowIdSet],
         targetName: `${afterDataList.length}件のタスク`,
@@ -1219,11 +1220,11 @@ export const useGanttChartView = () => {
         description: 'タスクコピー',
         undo: async () => {
           await deleteGanttTask([newTaskId])
-          await loadData(projectId.value)
+          await loadData(projectId.value, { silent: true })
         },
         redo: async () => {
           await upsertGanttTasks([{ ...data, id: 0 }])
-          await loadData(projectId.value)
+          await loadData(projectId.value, { silent: true })
         },
       })
     } else if (task && row) {
@@ -1240,18 +1241,18 @@ export const useGanttChartView = () => {
         description: 'タスク移動/リサイズ',
         undo: async () => {
           await upsertGanttTasks([beforeData])
-          await loadData(projectId.value)
+          await loadData(projectId.value, { silent: true })
         },
         redo: async () => {
           await upsertGanttTasks([data])
-          await loadData(projectId.value)
+          await loadData(projectId.value, { silent: true })
         },
       })
       await upsertGanttTasks([data])
     } else {
       await upsertGanttTasks([data])
     }
-    await loadData(projectId.value)
+    await loadData(projectId.value, { silent: true })
     // 行をまたぐ移動の場合、元の行と移動先の行の両方を差分更新対象にする
     const affectedRowIds = [...new Set([Number(e.detail.targetRowId), ...(row ? [Number(row.id)] : [])])]
     publishEditEvent('task_upsert', {
@@ -1293,16 +1294,16 @@ export const useGanttChartView = () => {
       undo: async () => {
         const undoData = { ...data, attribute }
         await upsertGanttTasks([undoData])
-        await loadData(projectId.value)
+        await loadData(projectId.value, { silent: true })
       },
       redo: async () => {
         await upsertGanttTasks([data])
-        await loadData(projectId.value)
+        await loadData(projectId.value, { silent: true })
       },
     })
 
     await upsertGanttTasks([data])
-    await loadData(projectId.value)
+    await loadData(projectId.value, { silent: true })
     publishEditEvent('task_upsert', {
       rowIds: [Number(targetRow.id)],
       targetName: targetTask.name,
@@ -1363,16 +1364,16 @@ export const useGanttChartView = () => {
       undo: async () => {
         const undoData = { ...data, attribute }
         await upsertGanttTasks([undoData])
-        await loadData(projectId.value)
+        await loadData(projectId.value, { silent: true })
       },
       redo: async () => {
         await upsertGanttTasks([data])
-        await loadData(projectId.value)
+        await loadData(projectId.value, { silent: true })
       },
     })
 
     await upsertGanttTasks([data])
-    await loadData(projectId.value)
+    await loadData(projectId.value, { silent: true })
     publishEditEvent('task_upsert', {
       rowIds: [Number(targetRow.id)],
       targetName: targetTask.name,
@@ -1497,14 +1498,14 @@ export const useGanttChartView = () => {
         description: 'タスクドロップ',
         undo: async () => {
           await deleteGanttTask([newTaskId])
-          await loadData(projectId.value)
+          await loadData(projectId.value, { silent: true })
         },
         redo: async () => {
           await upsertGanttTasks([{ ...taskData, id: 0 }])
-          await loadData(projectId.value)
+          await loadData(projectId.value, { silent: true })
         },
       })
-      await loadData(projectId.value)
+      await loadData(projectId.value, { silent: true })
       publishEditEvent('task_upsert', {
         rowIds: [Number(targetRowId)],
         targetName: task.name,
@@ -1703,11 +1704,11 @@ export const useGanttChartView = () => {
         description: 'タスク作成',
         undo: async () => {
           await deleteGanttTask([newTaskId])
-          await loadData(projectId.value)
+          await loadData(projectId.value, { silent: true })
         },
         redo: async () => {
           await upsertGanttTasks([{ ...data, id: 0 }])
-          await loadData(projectId.value)
+          await loadData(projectId.value, { silent: true })
         },
       })
     } else {
@@ -1736,17 +1737,17 @@ export const useGanttChartView = () => {
           description: 'タスク編集',
           undo: async () => {
             await upsertGanttTasks([beforeData])
-            await loadData(projectId.value)
+            await loadData(projectId.value, { silent: true })
           },
           redo: async () => {
             await upsertGanttTasks([data])
-            await loadData(projectId.value)
+            await loadData(projectId.value, { silent: true })
           },
         })
       }
       await upsertGanttTasks([data])
     }
-    await loadData(projectId.value)
+    await loadData(projectId.value, { silent: true })
     publishEditEvent('task_upsert', {
       rowIds: [Number(taskData.rowId)],
       targetName: taskData.name,
@@ -1820,7 +1821,7 @@ export const useGanttChartView = () => {
         description: `タスク削除 (${deletedTasks.length}件)`,
         undo: async () => {
           await upsertGanttTasks(deletedTasks.map((d) => d.taskData))
-          await loadData(projectId.value)
+          await loadData(projectId.value, { silent: true })
         },
         redo: async () => {
           // NOTE: Undo復元後のIDは変わるので、最新のrowsから名前で再検索
@@ -1844,7 +1845,7 @@ export const useGanttChartView = () => {
           if (currentTaskIds.length > 0) {
             await deleteGanttTask(currentTaskIds)
           }
-          await loadData(projectId.value)
+          await loadData(projectId.value, { silent: true })
         },
       })
     }
@@ -1853,7 +1854,7 @@ export const useGanttChartView = () => {
     selectedTaskIds.value = []
     // 削除前に収集したrowId情報を使って通知（loadData後はタスクが消えているため）
     const affectedRowIds = [...new Set(deletedTasks.map((d) => Number(d.rowId)))]
-    await loadData(projectId.value)
+    await loadData(projectId.value, { silent: true })
     const deletedNames = deletedTasks.map((d) => d.taskData.name).filter(Boolean)
     publishEditEvent('task_delete', {
       rowIds: affectedRowIds,
@@ -1890,11 +1891,11 @@ export const useGanttChartView = () => {
         description: '行並び替え',
         undo: async () => {
           await updateGanttRowOrder(beforeOrder)
-          await loadData(projectId.value)
+          await loadData(projectId.value, { silent: true })
         },
         redo: async () => {
           await updateGanttRowOrder(orderedRows)
-          await loadData(projectId.value)
+          await loadData(projectId.value, { silent: true })
         },
       })
     } catch (err) {
@@ -1904,7 +1905,7 @@ export const useGanttChartView = () => {
         message: '行の並び順の更新に失敗しました。',
       })
       // エラーが発生した場合はサーバーの状態に戻す
-      await loadData(projectId.value)
+      await loadData(projectId.value, { silent: true })
     } finally {
       setIsLoading(false)
     }
@@ -1956,7 +1957,7 @@ export const useGanttChartView = () => {
         description: `行追加 (${count}件)`,
         undo: async () => {
           await deleteGanttRow(newRowIds)
-          await loadData(projectId.value)
+          await loadData(projectId.value, { silent: true })
         },
         redo: async () => {
           // 再作成
@@ -1973,11 +1974,11 @@ export const useGanttChartView = () => {
             })) as number
             reNewRowIds.push(id)
           }
-          await loadData(projectId.value)
+          await loadData(projectId.value, { silent: true })
         },
       })
 
-      await loadData(projectId.value)
+      await loadData(projectId.value, { silent: true })
       publishEditEvent('row_upsert', { targetName: newName, isNew: true })
       // 最後に追加した行の名前を編集状態にする
       const lastRowId = newRowIds[newRowIds.length - 1]
@@ -2062,7 +2063,7 @@ export const useGanttChartView = () => {
             attribute: attribute || {},
             tasks: [],
           })
-          await loadData(projectId.value)
+          await loadData(projectId.value, { silent: true })
         },
         redo: async () => {
           await upsertGanttRow({
@@ -2074,12 +2075,12 @@ export const useGanttChartView = () => {
             attribute: attribute || {},
             tasks: [],
           })
-          await loadData(projectId.value)
+          await loadData(projectId.value, { silent: true })
         },
       })
     }
 
-    await loadData(projectId.value)
+    await loadData(projectId.value, { silent: true })
     publishEditEvent('row_upsert', { targetName: name })
   }
 
@@ -2173,7 +2174,7 @@ export const useGanttChartView = () => {
             },
             tasks: [],
           })
-          await loadData(projectId.value)
+          await loadData(projectId.value, { silent: true })
         },
         redo: async () => {
           await upsertGanttRow({
@@ -2189,13 +2190,13 @@ export const useGanttChartView = () => {
             },
             tasks: [],
           })
-          await loadData(projectId.value)
+          await loadData(projectId.value, { silent: true })
         },
       })
     }
 
     isRowEditDialogVisible.value = false
-    await loadData(projectId.value)
+    await loadData(projectId.value, { silent: true })
     publishEditEvent('row_upsert', { targetName: data.name })
   }
 
@@ -2469,7 +2470,7 @@ export const useGanttChartView = () => {
       } else if (commentDialogRowId.value) {
         rowIds.push(commentDialogRowId.value)
       }
-      await loadData(projectId.value)
+      await loadData(projectId.value, { silent: true })
 
       // プロジェクトのcommentCountを最新に更新
       if (commentDialogProjectId.value) {
@@ -2662,15 +2663,15 @@ export const useGanttChartView = () => {
               tasks: [],
             })),
           )
-          await loadData(projectId.value)
+          await loadData(projectId.value, { silent: true })
         },
         redo: async () => {
           await upsertGanttRow(rowUpdateData)
-          await loadData(projectId.value)
+          await loadData(projectId.value, { silent: true })
         },
       })
 
-      await loadData(projectId.value)
+      await loadData(projectId.value, { silent: true })
       closeContextMenu()
       publishEditEvent('row_upsert', { targetName: baseRow.name })
     } catch (err) {
@@ -2738,7 +2739,7 @@ export const useGanttChartView = () => {
               await upsertGanttTasks(tasks.map((t: any) => ({ ...t, rowId: newRowId })))
             }
           }
-          await loadData(projectId.value)
+          await loadData(projectId.value, { silent: true })
         },
         redo: async () => {
           // 再度削除（現在のrowsから該当する行を検索して削除）
@@ -2750,12 +2751,12 @@ export const useGanttChartView = () => {
           if (currentRowIds.length > 0) {
             await deleteGanttRow(currentRowIds)
           }
-          await loadData(projectId.value)
+          await loadData(projectId.value, { silent: true })
         },
       })
     }
 
-    await loadData(projectId.value)
+    await loadData(projectId.value, { silent: true })
     const deletedRowNames = deletedRowsData.map((d: any) => d.name).filter(Boolean)
     publishEditEvent('row_delete', {
       targetName: deletedRowNames.length === 1 ? deletedRowNames[0] : `${deletedRowNames.length}件`,
@@ -2944,15 +2945,15 @@ export const useGanttChartView = () => {
       description: 'タスク貼り付け',
       undo: async () => {
         await deleteGanttTask(newTaskIds)
-        await loadData(projectId.value)
+        await loadData(projectId.value, { silent: true })
       },
       redo: async () => {
         await upsertGanttTasks(upsertDataList.map((d) => ({ ...d, id: 0 })))
-        await loadData(projectId.value)
+        await loadData(projectId.value, { silent: true })
       },
     })
 
-    await loadData(projectId.value)
+    await loadData(projectId.value, { silent: true })
     publishEditEvent('task_upsert', {
       rowIds: [Number(rowId)],
       targetName: tasksData.length === 1 ? (tasksData[0]?.name ?? 'タスク') : `${tasksData.length}件のタスク`,
@@ -3184,7 +3185,7 @@ export const useGanttChartView = () => {
       }
 
       await projectStore.updateProject(updatedProject)
-      await loadData(projectId.value)
+      await loadData(projectId.value, { silent: true })
 
       isSlideScheduleDialogVisible.value = false
       publishEditEvent('full_reload')
