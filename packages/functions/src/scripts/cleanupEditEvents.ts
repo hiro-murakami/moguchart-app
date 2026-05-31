@@ -34,15 +34,14 @@ export const cleanupEditEvents = onSchedule(
     let totalDeleted = 0
 
     try {
-      // 全プロジェクトを取得
-      const projectsSnapshot = await db.collection('projects').listDocuments()
+      // collectionGroup で全プロジェクト配下の editEvents を直接クエリ
+      // ※ 親の projects ドキュメントが存在しない場合でも確実に取得できる
+      const oldEvents = await db
+        .collectionGroup('editEvents')
+        .where('timestamp', '<', cutoff)
+        .get()
 
-      for (const projectRef of projectsSnapshot) {
-        const eventsRef = projectRef.collection('editEvents')
-        const oldEvents = await eventsRef.where('timestamp', '<', cutoff).get()
-
-        if (oldEvents.empty) continue
-
+      if (!oldEvents.empty) {
         const docs = oldEvents.docs
 
         // バッチ削除（500件ずつ）
@@ -53,7 +52,7 @@ export const cleanupEditEvents = onSchedule(
           await batch.commit()
         }
 
-        totalDeleted += docs.length
+        totalDeleted = docs.length
       }
 
       functions.logger.info(`[cleanupEditEvents] Deleted ${totalDeleted} old editEvents`)
