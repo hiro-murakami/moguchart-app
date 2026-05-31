@@ -29,6 +29,7 @@ import getSnapshotDownloadUrl from './scripts/getSnapshotDownloadUrl.js'
 import deleteSnapshot from './scripts/deleteSnapshot.js'
 import { cleanupEditEvents } from './scripts/cleanupEditEvents.js'
 import { cleanupAnonymousData } from './scripts/cleanupAnonymousData.js'
+import { cleanupPresence } from './scripts/cleanupPresence.js'
 import { FirebaseFunction } from './types/index.js'
 
 const functions: FirebaseFunction = {
@@ -67,4 +68,4 @@ export const gantt = {
 }
 
 // スケジュール関数（自動クリーンアップ）
-export { cleanupEditEvents, cleanupAnonymousData }
+export { cleanupEditEvents, cleanupAnonymousData, cleanupPresence }
