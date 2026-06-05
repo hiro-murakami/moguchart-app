@@ -1111,8 +1111,15 @@ export const useGanttChartView = () => {
       const msPerPx = (24 * 60 * 60 * 1000) / pxPerDay.value
       const timeDiff = e.detail.dx * msPerPx
 
-      // 変更がない場合は何もしない
-      if (timeDiff === 0) return
+      // 行移動が発生するかどうかを判定
+      const targetRowId = e.detail.targetRowId
+      const hasRowChange = !!targetRowId && rows.value.some((r) => {
+        const hasTask = r.tasks.some((t) => selectedIds.includes(t.id))
+        return hasTask && String(r.id) !== String(targetRowId)
+      })
+
+      // 水平移動も行移動もない場合は何もしない
+      if (timeDiff === 0 && !hasRowChange) return
 
       // 変更前データ（undo用）と変更後データを構築
       const beforeDataList: { id: number; rowId: number; name: string; start: string; end: string; attribute: any }[] =
@@ -1130,6 +1137,12 @@ export const useGanttChartView = () => {
         const attr = (taskItem as any).attribute as TaskAttribute | undefined
         affectedRowIdSet.add(Number(taskRow.id))
 
+        // 行移動先のrowIdを決定
+        const afterRowId = hasRowChange ? Number(targetRowId) : Number(taskRow.id)
+        if (hasRowChange) {
+          affectedRowIdSet.add(Number(targetRowId))
+        }
+
         beforeDataList.push({
           id: Number(taskItem.id),
           rowId: Number(taskRow.id),
@@ -1141,7 +1154,7 @@ export const useGanttChartView = () => {
 
         afterDataList.push({
           id: Number(taskItem.id),
-          rowId: Number(taskRow.id),
+          rowId: afterRowId,
           name: taskItem.name || '',
           start: toDateTimeString(new Date(taskItem.start.getTime() + timeDiff)),
           end: toDateTimeString(new Date(taskItem.end.getTime() + timeDiff)),
