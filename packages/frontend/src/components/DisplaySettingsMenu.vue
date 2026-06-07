@@ -9,6 +9,7 @@ import themeSystemImg from '@/assets/theme-system.png'
 defineProps<{
   showHiddenRows: boolean
   showCurrentTimeLine: boolean
+  showCriticalPath: boolean
   barShadowLevel: 'none' | 'small' | 'medium' | 'large'
   readonlyMode?: boolean
   canEdit?: boolean
@@ -22,6 +23,7 @@ defineProps<{
 const emit = defineEmits<{
   'update:showHiddenRows': [value: boolean]
   'update:showCurrentTimeLine': [value: boolean]
+  'update:showCriticalPath': [value: boolean]
   'update:barShadowLevel': [value: 'none' | 'small' | 'medium' | 'large']
   'update:readonlyMode': [value: boolean]
   'update:pxPerDay': [value: number]
@@ -96,8 +98,17 @@ const currentTheme = computed({
         color="primary"
         hide-details
         density="compact"
-        class="mb-4"
+        class="mb-2"
         @update:model-value="emit('update:readonlyMode', $event as boolean)"
+      />
+      <v-switch
+        :model-value="showCriticalPath"
+        label="クリティカルパスを表示"
+        color="error"
+        hide-details
+        density="compact"
+        class="mb-4"
+        @update:model-value="emit('update:showCriticalPath', $event as boolean)"
       />
       <div class="text-caption text-medium-emphasis mb-1">表示倍率</div>
       <!-- 日単位模式 -->

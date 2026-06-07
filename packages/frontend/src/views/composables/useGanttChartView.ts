@@ -86,6 +86,7 @@ export const useGanttChartView = () => {
   const showCurrentTimeLine = ref(true)
   const barShadowLevel = ref<'none' | 'small' | 'medium' | 'large'>('medium')
   const readonlyMode = ref(false)
+  const showCriticalPath = ref(false)
   const manualAddRowCount = ref(1)
 
   const isUnassignedTasksOpen = ref(false)
@@ -207,6 +208,7 @@ export const useGanttChartView = () => {
       commentSidebarOpen?: boolean
       commentSidebarWidth?: number
       readonlyMode?: boolean
+      showCriticalPath?: boolean
     }) => {
       if (userStore.user && projectId.value) {
         const currentSettings = userStore.user.attribute.projectSettings?.[projectId.value] || {}
@@ -272,6 +274,11 @@ export const useGanttChartView = () => {
   // 読み取り専用モード変更時に保存
   watch(readonlyMode, (newValue) => {
     saveProjectSettings({ readonlyMode: newValue })
+  })
+
+  // クリティカルパス表示設定変更時に保存
+  watch(showCriticalPath, (newValue) => {
+    saveProjectSettings({ showCriticalPath: newValue })
   })
 
   // バー高さ変更時に保存
@@ -365,6 +372,13 @@ export const useGanttChartView = () => {
           barHeight.value = settings.barHeight
         } else {
           barHeight.value = 38
+        }
+
+        // showCriticalPathの復元
+        if (settings?.showCriticalPath !== undefined) {
+          showCriticalPath.value = settings.showCriticalPath
+        } else {
+          showCriticalPath.value = false
         }
 
         // commentSidebarOpenの復元
@@ -637,6 +651,9 @@ export const useGanttChartView = () => {
           : isHourly
             ? { min: ZOOM_HOURLY.min * 24, max: ZOOM_HOURLY.max * 24 }
             : { min: ZOOM_DAILY.min, max: ZOOM_DAILY.max }),
+      },
+      dependency: {
+        showCriticalPath: showCriticalPath.value,
       },
     }
   })
@@ -3310,6 +3327,7 @@ export const useGanttChartView = () => {
     currentProject,
     showHiddenRows,
     showCurrentTimeLine,
+    showCriticalPath,
     barShadowLevel,
     readonlyMode,
     pxPerDay,

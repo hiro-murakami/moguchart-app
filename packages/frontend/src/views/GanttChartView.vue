@@ -28,6 +28,7 @@ const {
   currentProject,
   showHiddenRows,
   showCurrentTimeLine,
+  showCriticalPath,
   barShadowLevel,
   readonlyMode,
   currentRole,
@@ -343,6 +344,7 @@ const handleOpenSlideSchedule = async () => {
         <DisplaySettingsMenu
           v-model:show-hidden-rows="showHiddenRows"
           v-model:show-current-time-line="showCurrentTimeLine"
+          v-model:show-critical-path="showCriticalPath"
           v-model:bar-shadow-level="barShadowLevel"
           v-model:px-per-day="pxPerDay"
           v-model:px-per-month="pxPerMonth"

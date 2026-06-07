@@ -135,6 +135,8 @@ export type ProjectSettings = {
   readonlyMode?: boolean
   /** ガントバーの影の段階（none/small/medium/large） */
   barShadowLevel?: 'none' | 'small' | 'medium' | 'large'
+  /** クリティカルパスを表示するかどうか */
+  showCriticalPath?: boolean
   /** @deprecated barShadowLevel に移行済み。後方互換のため残存 */
   showBarShadow?: boolean
 }
