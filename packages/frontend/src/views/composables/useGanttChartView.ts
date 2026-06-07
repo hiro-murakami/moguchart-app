@@ -1,5 +1,5 @@
 import dayjs from 'dayjs'
-import { DEFAULT_TASK_COLOR, UNLABELED_VALUE } from '@/modules/constants'
+import { DEFAULT_TASK_COLOR, UNLABELED_VALUE, ZOOM_DAILY, ZOOM_MONTHLY, ZOOM_HOURLY } from '@/modules/constants'
 import {
   deleteGanttRow,
   deleteGanttTask,
@@ -630,8 +630,35 @@ export const useGanttChartView = () => {
           },
         })),
       },
+      zoom: {
+        enabled: true,
+        ...(isMonthly
+          ? { min: ZOOM_MONTHLY.min, max: ZOOM_MONTHLY.max }
+          : isHourly
+            ? { min: ZOOM_HOURLY.min * 24, max: ZOOM_HOURLY.max * 24 }
+            : { min: ZOOM_DAILY.min, max: ZOOM_DAILY.max }),
+      },
     }
   })
+
+  /**
+   * zoom-change イベントハンドラ
+   * ホイールズームで変更された pxPerDay/pxPerMonth を ref に反映し、
+   * DisplaySettingsMenu のスライダーおよびユーザー設定と同期する。
+   */
+  const handleZoomChange = (e: Event) => {
+    const detail = (e as CustomEvent).detail as { pxPerDay: number; pxPerMonth?: number }
+    const granularity = currentProject.value?.attribute?.granularity
+
+    if (granularity === 'monthly' && detail.pxPerMonth !== undefined) {
+      pxPerMonth.value = Math.round(detail.pxPerMonth)
+    } else if (granularity === 'hourly') {
+      // core は pxPerDay で通知するので pxPerHour に逆変換
+      pxPerHour.value = Math.round(detail.pxPerDay / 24)
+    } else {
+      pxPerDay.value = Math.round(detail.pxPerDay)
+    }
+  }
 
   const alert = useAlert()
   const { exportAsCsv, exportAsExcel } = useExportData()
@@ -3387,5 +3414,6 @@ export const useGanttChartView = () => {
     effectiveCommentSidebarWidth,
     handleDependencyCreate,
     handleSlideSchedule,
+    handleZoomChange,
   }
 }

@@ -127,6 +127,7 @@ const {
   handleDependencyClick,
   handleDeleteDependencyFromContextMenu,
   handleSlideSchedule,
+  handleZoomChange,
 } = useGanttChartView()
 
 const projectCommentPanelRef = ref<InstanceType<typeof ProjectCommentPanel>>()
@@ -386,6 +387,7 @@ const handleOpenSlideSchedule = async () => {
             @task-delete="handleTaskDelete"
             @dependency-create="handleDependencyCreate"
             @dependency-click="handleDependencyClick"
+            @zoom-change="handleZoomChange"
           />
         </div>
 

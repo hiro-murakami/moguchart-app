@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useUserStore } from '@/stores/useUserStore'
+import { ZOOM_DAILY, ZOOM_MONTHLY, ZOOM_HOURLY } from '@/modules/constants'
 import type { User } from '@functions/types/shared'
 import themeDarkImg from '@/assets/theme-dark.png'
 import themeLightImg from '@/assets/theme-light.png'
@@ -103,27 +104,27 @@ const currentTheme = computed({
       <ZoomControls
         v-if="granularity !== 'monthly' && granularity !== 'hourly'"
         :model-value="pxPerDay"
-        :min="10"
-        :max="80"
-        :step="5"
+        :min="ZOOM_DAILY.min"
+        :max="ZOOM_DAILY.max"
+        :step="ZOOM_DAILY.step"
         @update:model-value="emit('update:pxPerDay', $event)"
       />
       <!-- 月単位模式 -->
       <ZoomControls
         v-else-if="granularity === 'monthly'"
         :model-value="pxPerMonth"
-        :min="20"
-        :max="80"
-        :step="5"
+        :min="ZOOM_MONTHLY.min"
+        :max="ZOOM_MONTHLY.max"
+        :step="ZOOM_MONTHLY.step"
         @update:model-value="emit('update:pxPerMonth', $event)"
       />
       <!-- 時間単位模式 -->
       <ZoomControls
         v-else
         :model-value="pxPerHour"
-        :min="50"
-        :max="300"
-        :step="50"
+        :min="ZOOM_HOURLY.min"
+        :max="ZOOM_HOURLY.max"
+        :step="ZOOM_HOURLY.step"
         @update:model-value="emit('update:pxPerHour', $event)"
       />
       <div class="text-caption text-medium-emphasis mb-1 mt-3">バーの高さ</div>
