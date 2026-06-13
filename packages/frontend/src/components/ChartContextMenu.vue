@@ -15,6 +15,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
   (e: 'new-task', date: Date, rowId: string): void
+  (e: 'new-marker', date: Date, rowId: string): void
   (e: 'undo'): void
   (e: 'redo'): void
   (e: 'paste'): void
@@ -36,6 +37,12 @@ const handleNewTask = () => {
   }
 }
 
+const handleNewMarker = () => {
+  if (props.date && props.rowId) {
+    emit('new-marker', props.date, props.rowId)
+  }
+}
+
 const handleUndo = () => {
   emit('undo')
 }
@@ -54,6 +61,9 @@ const handlePaste = () => {
     <v-list density="compact" class="py-0">
       <v-list-item @click="handleNewTask" prepend-icon="mdi-plus">
         <v-list-item-title>新規タスク</v-list-item-title>
+      </v-list-item>
+      <v-list-item @click="handleNewMarker" prepend-icon="mdi-map-marker-plus">
+        <v-list-item-title>新規マーカー</v-list-item-title>
       </v-list-item>
       <v-list-item @click="handlePaste" prepend-icon="mdi-content-paste" :disabled="!hasClipboard">
         <v-list-item-title>

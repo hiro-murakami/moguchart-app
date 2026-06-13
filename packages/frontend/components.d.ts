@@ -33,6 +33,8 @@ declare module 'vue' {
     LabelInput: typeof import('./src/components/common/LabelInput.vue')['default']
     LabelSelect: typeof import('./src/components/LabelSelect.vue')['default']
     LoginPrompt: typeof import('./src/components/LoginPrompt.vue')['default']
+    MarkerContextMenu: typeof import('./src/components/MarkerContextMenu.vue')['default']
+    MarkerFormDialog: typeof import('./src/components/MarkerFormDialog.vue')['default']
     MilestoneInput: typeof import('./src/components/common/MilestoneInput.vue')['default']
     OperationManualDrawer: typeof import('./src/components/OperationManualDrawer.vue')['default']
     ProjectCommentButton: typeof import('./src/components/ProjectCommentButton.vue')['default']

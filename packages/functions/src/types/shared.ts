@@ -217,12 +217,41 @@ export type ProjectAttribute = {
   snapDurationMinutes?: number
 }
 
+/** マーカーの種類 */
+export type MarkerTypeValue = 'triangle-up' | 'triangle-down' | 'triangle-left' | 'triangle-right' | 'diamond' | 'square'
+
+/** マーカーのアンカー位置 */
+export type AnchorTypeValue = 'start' | 'end' | 'center'
+
+/** マーカーのフォントサイズ */
+export type MarkerFontSizeValue = 'xs' | 'sm' | 'md' | 'lg' | 'xl'
+
+/** マーカーの属性（行の attribute JSON に格納） */
+export type MarkerAttribute = {
+  /** マーカーの一意なID */
+  id: string
+  /** マーカーの表示名 */
+  name?: string
+  /** マーカーの日時（ISO 8601形式） */
+  date: string
+  /** マーカーのアンカー位置 */
+  anchor?: AnchorTypeValue
+  /** マーカーの種類 */
+  type: MarkerTypeValue
+  /** マーカーの色 (CSS color string) */
+  color?: string
+  /** マーカーのラベルのフォントサイズ ('xs'=極小, 'sm'=小, 'md'=中, 'lg'=大, 'xl'=特大) */
+  fontSize?: MarkerFontSizeValue
+}
+
 /** 行（グループ）の追加属性 */
 export type RowAttribute = {
   /** 行の説明 */
   description?: string
   /** 行に適用するラベル */
   labels?: Label[]
+  /** 行に設定されたマーカー */
+  markers?: MarkerAttribute[]
 }
 
 /** タスクの追加属性 */

@@ -44,6 +44,7 @@ const {
   availableLabels,
   selectedFilterLabelNames,
   filteredRows,
+  displayRows,
   isRowEditDialogVisible,
   editingRowData,
   isProjectDetailDialogVisible,
@@ -61,6 +62,9 @@ const {
   isSnapshotListDialogVisible,
   isSlideScheduleDialogVisible,
   slideScheduleSaving,
+  isMarkerDialogVisible,
+  editingMarker,
+  editingMarkerDefaultDate,
   projectId,
 
   // methods
@@ -91,6 +95,14 @@ const {
   handleTaskDrop,
   handleChartContextMenu,
   handleCreateNewTask,
+  handleCreateNewMarker,
+  handleMarkerDblClick,
+  handleMarkerContextMenu,
+  handleEditMarkerFromContextMenu,
+  handleDeleteMarkerFromContextMenu,
+  markerContextMenu,
+  saveMarker,
+  deleteMarker,
   selectAllLabels,
   clearAllLabels,
   handleEditRowFromContextMenu,
@@ -372,7 +384,7 @@ const handleOpenSlideSchedule = async () => {
         <div style="flex: 1; min-height: 0">
           <gantt-chart
             ref="ganttChartRef"
-            :rows="filteredRows"
+            :rows="displayRows"
             :selected-row-ids="selectedRowIds"
             :option="chartOption"
             @task-update="handleTaskUpdate"
@@ -390,6 +402,8 @@ const handleOpenSlideSchedule = async () => {
             @dependency-create="handleDependencyCreate"
             @dependency-click="handleDependencyClick"
             @zoom-change="handleZoomChange"
+            @marker-dblclick="handleMarkerDblClick"
+            @marker-contextmenu="handleMarkerContextMenu"
           />
         </div>
 
@@ -521,9 +535,21 @@ const handleOpenSlideSchedule = async () => {
       :can-redo="canRedo"
       :has-clipboard="hasClipboardData"
       @new-task="handleCreateNewTask"
+      @new-marker="handleCreateNewMarker"
       @paste="handlePasteTasksFromContextMenu"
       @undo="undo"
       @redo="redo"
+    />
+
+    <!-- Marker Context Menu -->
+    <MarkerContextMenu
+      v-if="markerContextMenu.visible"
+      v-model="markerContextMenu.visible"
+      :x="markerContextMenu.x"
+      :y="markerContextMenu.y"
+      :is-read-only="isReadOnly"
+      @edit="handleEditMarkerFromContextMenu"
+      @delete="handleDeleteMarkerFromContextMenu"
     />
 
     <TaskDetailDialog
@@ -533,6 +559,16 @@ const handleOpenSlideSchedule = async () => {
       :granularity="currentProject?.attribute?.granularity"
       @save="saveTask"
       @delete="deleteTask"
+    />
+
+    <MarkerFormDialog
+      v-if="isMarkerDialogVisible"
+      v-model="isMarkerDialogVisible"
+      :marker="editingMarker"
+      :default-date="editingMarkerDefaultDate"
+      :is-read-only="isReadOnly"
+      @save="saveMarker"
+      @delete="deleteMarker"
     />
 
     <RowEditDialog v-model="isRowEditDialogVisible" :row="editingRowData" @save="saveRow" />

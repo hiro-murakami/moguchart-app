@@ -40,6 +40,7 @@ import type {
   GanttTask,
   TaskAttribute,
   RowAttribute,
+  MarkerAttribute,
   Project,
   EditingRowData,
   EditingTaskData,
@@ -547,6 +548,20 @@ export const useGanttChartView = () => {
       .filter(Boolean) as typeof rows.value
   })
 
+  /** filteredRows に選択中マーカーの情報を付与した表示用行データ */
+  const displayRows = computed(() => {
+    const selRowId = isMarkerDialogVisible.value ? editingMarkerRowId.value : null
+    const selMarkerId = isMarkerDialogVisible.value ? editingMarker.value?.id : null
+    if (!selRowId || !selMarkerId) return filteredRows.value
+
+    return filteredRows.value.map((row) => {
+      if (String(row.id) === selRowId) {
+        return { ...row, selectedMarkerId: selMarkerId }
+      }
+      return row
+    })
+  })
+
   const isReadOnly = computed(() => readonlyMode.value || currentRole.value === 'viewer')
   const isOwner = computed(() => currentRole.value === 'owner')
 
@@ -837,6 +852,18 @@ export const useGanttChartView = () => {
                 : undefined,
           }
         }),
+        // RowAttribute のマーカーを moguchart.GanttMarker[] に変換
+        markers: ((row as any).attribute as RowAttribute | undefined)?.markers?.map(
+          (m: MarkerAttribute): moguchart.GanttMarker => ({
+            id: m.id,
+            name: m.name,
+            date: toLocalDate(m.date),
+            anchor: m.anchor,
+            type: m.type,
+            color: m.color,
+            fontSize: m.fontSize,
+          }),
+        ),
       })
 
       const freshRows = data.map(convertRow)
@@ -986,6 +1013,18 @@ export const useGanttChartView = () => {
         ...row,
         id: row.id.toString(),
         tasks: row.tasks.map(formatGanttTask),
+        // RowAttribute のマーカーを moguchart.GanttMarker[] に変換
+        markers: (row.attribute as RowAttribute | undefined)?.markers?.map(
+          (m: MarkerAttribute): moguchart.GanttMarker => ({
+            id: m.id,
+            name: m.name,
+            date: toLocalDate(m.date),
+            anchor: m.anchor,
+            type: m.type,
+            color: m.color,
+            fontSize: m.fontSize,
+          }),
+        ),
       }))
     } catch (err) {
       console.error('Failed to load data:', err)
@@ -1028,6 +1067,18 @@ export const useGanttChartView = () => {
             }
             return formatGanttTask(task)
           }),
+          // RowAttribute のマーカーを moguchart.GanttMarker[] に変換
+          markers: (row.attribute as RowAttribute | undefined)?.markers?.map(
+            (m: MarkerAttribute): moguchart.GanttMarker => ({
+              id: m.id,
+              name: m.name,
+              date: toLocalDate(m.date),
+              anchor: m.anchor,
+              type: m.type,
+              color: m.color,
+              fontSize: m.fontSize,
+            }),
+          ),
         }
       }) as any
 
@@ -1643,6 +1694,12 @@ export const useGanttChartView = () => {
       updateEditingTasks([])
     }
   })
+
+  // --- マーカーダイアログ関連 ---
+  const isMarkerDialogVisible = ref(false)
+  const editingMarker = ref<MarkerAttribute | null>(null)
+  const editingMarkerRowId = ref<string | undefined>()
+  const editingMarkerDefaultDate = ref<string | undefined>()
 
   const editingTask = ref<EditingTaskData>({
     id: '',
@@ -3116,6 +3173,279 @@ export const useGanttChartView = () => {
     isDialogVisible.value = true
   }
 
+  // --- マーカー操作 ---
+
+  /**
+   * コンテキストメニューの「新規マーカー」からマーカーフォームダイアログを開く
+   */
+  const handleCreateNewMarker = async (date: Date, rowId: string) => {
+    chartContextMenu.value.visible = false
+    await new Promise((resolve) => setTimeout(resolve, 200))
+
+    const isMonthly = currentProject.value?.attribute?.granularity === 'monthly'
+    const isHourly = currentProject.value?.attribute?.granularity === 'hourly'
+
+    editingMarker.value = null
+    editingMarkerRowId.value = rowId
+    editingMarkerDefaultDate.value = isMonthly
+      ? dayjs(date).startOf('month').format('YYYY-MM-DD')
+      : isHourly
+        ? dayjs(date).format('YYYY-MM-DD')
+        : toDateString(date)
+    isMarkerDialogVisible.value = true
+  }
+
+  /**
+   * マーカーダブルクリック時に既存マーカーの編集ダイアログを開く
+   */
+  const handleMarkerDblClick = (e: CustomEvent<moguchart.MarkerDblClickEventDetail>) => {
+    if (isReadOnly.value) return
+    const { marker, rowId } = e.detail
+
+    // moguchart.GanttMarker → MarkerAttribute に変換
+    const markerAttr: MarkerAttribute = {
+      id: marker.id,
+      name: marker.name,
+      date: toDateTimeString(marker.date instanceof Date ? marker.date : new Date(marker.date)).slice(0, 16),
+      anchor: marker.anchor as MarkerAttribute['anchor'],
+      type: marker.type as MarkerAttribute['type'],
+      color: marker.color,
+      fontSize: marker.fontSize,
+    }
+
+    editingMarker.value = markerAttr
+    editingMarkerRowId.value = String(rowId)
+    editingMarkerDefaultDate.value = undefined
+    isMarkerDialogVisible.value = true
+  }
+
+  // --- マーカーコンテキストメニュー関連 ---
+  const markerContextMenu = ref({
+    visible: false,
+    x: 0,
+    y: 0,
+    markerId: null as string | null,
+    rowId: null as string | null,
+  })
+
+  /**
+   * マーカー右クリック時にコンテキストメニューを表示
+   */
+  const handleMarkerContextMenu = (e: CustomEvent<moguchart.MarkerContextMenuEventDetail>) => {
+    const { marker, rowId, event } = e.detail
+    event.preventDefault()
+
+    markerContextMenu.value = {
+      visible: true,
+      x: event.clientX,
+      y: event.clientY,
+      markerId: marker.id,
+      rowId: String(rowId),
+    }
+  }
+
+  /**
+   * マーカーコンテキストメニューの「編集」
+   */
+  const handleEditMarkerFromContextMenu = () => {
+    const { markerId, rowId } = markerContextMenu.value
+    markerContextMenu.value.visible = false
+    if (!markerId || !rowId) return
+
+    const row = rows.value.find((r) => String(r.id) === rowId)
+    if (!row) return
+
+    const rowAttr = (row as any).attribute as RowAttribute | undefined
+    const found = rowAttr?.markers?.find((m) => m.id === markerId)
+    if (!found) return
+
+    // moguchart.GanttMarker → MarkerAttribute に変換（dblclick と同ロジック）
+    editingMarker.value = {
+      ...found,
+      date: found.date.length <= 10 ? found.date : found.date.replace(' ', 'T').slice(0, 16),
+    }
+    editingMarkerRowId.value = rowId
+    editingMarkerDefaultDate.value = undefined
+    isMarkerDialogVisible.value = true
+  }
+
+  /**
+   * マーカーコンテキストメニューの「削除」
+   */
+  const handleDeleteMarkerFromContextMenu = async () => {
+    const { markerId, rowId } = markerContextMenu.value
+    markerContextMenu.value.visible = false
+    if (!markerId || !rowId) return
+
+    const result = await confirm({
+      title: 'マーカーの削除',
+      message: 'このマーカーを削除しますか？',
+      confirmText: '削除',
+      confirmColor: 'error',
+    })
+    if (!result) return
+
+    // deleteMarker が editingMarkerRowId を使うため、事前にセット
+    editingMarkerRowId.value = rowId
+    deleteMarker(markerId)
+  }
+
+  /**
+   * マーカーの保存（新規作成・更新共通）
+   */
+  const saveMarker = async (markerData: MarkerAttribute) => {
+    // ダイアログを先に閉じてから非同期処理を行う（v-if競合防止）
+    isMarkerDialogVisible.value = false
+
+    if (!editingMarkerRowId.value || !projectId.value) return
+
+    const rowIdNum = Number(editingMarkerRowId.value)
+    const row = rows.value.find((r) => Number(r.id) === rowIdNum)
+    if (!row) return
+
+    const rowAttr = (row as any).attribute as RowAttribute | undefined
+    const beforeMarkers = rowAttr?.markers ? [...rowAttr.markers] : []
+
+    // 新規作成の場合はIDを生成
+    const marker: MarkerAttribute = {
+      ...markerData,
+      id: markerData.id || `marker-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    }
+
+    let afterMarkers: MarkerAttribute[]
+    const existingIndex = beforeMarkers.findIndex((m) => m.id === marker.id)
+    if (existingIndex >= 0) {
+      // 既存マーカーの更新
+      afterMarkers = [...beforeMarkers]
+      afterMarkers[existingIndex] = marker
+    } else {
+      // 新規追加
+      afterMarkers = [...beforeMarkers, marker]
+    }
+
+    await maybeAutoSnapshot()
+
+    await upsertGanttRow({
+      id: rowIdNum,
+      name: row.name,
+      order: (row as any).order ?? 0,
+      projectId: projectId.value,
+      visible: row.visible || true,
+      attribute: {
+        ...((row as any).attribute || {}),
+        markers: afterMarkers,
+      },
+      tasks: [],
+    })
+
+    pushAction({
+      description: existingIndex >= 0 ? 'マーカー編集' : 'マーカー作成',
+      undo: async () => {
+        await upsertGanttRow({
+          id: rowIdNum,
+          name: row.name,
+          order: (row as any).order ?? 0,
+          projectId: projectId.value,
+          visible: row.visible || true,
+          attribute: {
+            ...((row as any).attribute || {}),
+            markers: beforeMarkers.length > 0 ? beforeMarkers : undefined,
+          },
+          tasks: [],
+        })
+        await loadData(projectId.value, { silent: true })
+      },
+      redo: async () => {
+        await upsertGanttRow({
+          id: rowIdNum,
+          name: row.name,
+          order: (row as any).order ?? 0,
+          projectId: projectId.value,
+          visible: row.visible || true,
+          attribute: {
+            ...((row as any).attribute || {}),
+            markers: afterMarkers,
+          },
+          tasks: [],
+        })
+        await loadData(projectId.value, { silent: true })
+      },
+    })
+
+    await loadData(projectId.value, { silent: true })
+    publishEditEvent('row_upsert', { targetName: row.name })
+  }
+
+  /**
+   * マーカーの削除
+   */
+  const deleteMarker = async (markerId: string) => {
+    // ダイアログを先に閉じてから非同期処理を行う（v-if競合防止）
+    isMarkerDialogVisible.value = false
+
+    if (!editingMarkerRowId.value || !projectId.value) return
+
+    const rowIdNum = Number(editingMarkerRowId.value)
+    const row = rows.value.find((r) => Number(r.id) === rowIdNum)
+    if (!row) return
+
+    const rowAttr = (row as any).attribute as RowAttribute | undefined
+    const beforeMarkers = rowAttr?.markers ? [...rowAttr.markers] : []
+    const afterMarkers = beforeMarkers.filter((m) => m.id !== markerId)
+
+    await maybeAutoSnapshot()
+
+    await upsertGanttRow({
+      id: rowIdNum,
+      name: row.name,
+      order: (row as any).order ?? 0,
+      projectId: projectId.value,
+      visible: row.visible || true,
+      attribute: {
+        ...((row as any).attribute || {}),
+        markers: afterMarkers.length > 0 ? afterMarkers : undefined,
+      },
+      tasks: [],
+    })
+
+    pushAction({
+      description: 'マーカー削除',
+      undo: async () => {
+        await upsertGanttRow({
+          id: rowIdNum,
+          name: row.name,
+          order: (row as any).order ?? 0,
+          projectId: projectId.value,
+          visible: row.visible || true,
+          attribute: {
+            ...((row as any).attribute || {}),
+            markers: beforeMarkers.length > 0 ? beforeMarkers : undefined,
+          },
+          tasks: [],
+        })
+        await loadData(projectId.value, { silent: true })
+      },
+      redo: async () => {
+        await upsertGanttRow({
+          id: rowIdNum,
+          name: row.name,
+          order: (row as any).order ?? 0,
+          projectId: projectId.value,
+          visible: row.visible || true,
+          attribute: {
+            ...((row as any).attribute || {}),
+            markers: afterMarkers.length > 0 ? afterMarkers : undefined,
+          },
+          tasks: [],
+        })
+        await loadData(projectId.value, { silent: true })
+      },
+    })
+
+    await loadData(projectId.value, { silent: true })
+    publishEditEvent('row_upsert', { targetName: row.name })
+  }
+
   const selectAllLabels = () => {
     selectedFilterLabelNames.value = [...availableLabels.value.map((l) => l.name), UNLABELED_VALUE]
   }
@@ -3344,6 +3674,7 @@ export const useGanttChartView = () => {
     searchText,
     searchIncludeRows,
     filteredRows,
+    displayRows,
     isRowEditDialogVisible,
     editingRowData,
     isProjectDetailDialogVisible,
@@ -3362,6 +3693,10 @@ export const useGanttChartView = () => {
     isSnapshotListDialogVisible,
     isSlideScheduleDialogVisible,
     slideScheduleSaving,
+    isMarkerDialogVisible,
+    editingMarker,
+    editingMarkerRowId,
+    editingMarkerDefaultDate,
 
     // methods
     handleCreateSnapshot,
@@ -3398,6 +3733,14 @@ export const useGanttChartView = () => {
     handleDblClickTaskFromLog,
     handleChartContextMenu,
     handleCreateNewTask,
+    handleCreateNewMarker,
+    handleMarkerDblClick,
+    handleMarkerContextMenu,
+    handleEditMarkerFromContextMenu,
+    handleDeleteMarkerFromContextMenu,
+    markerContextMenu,
+    saveMarker,
+    deleteMarker,
     selectAllLabels,
     clearAllLabels,
     getContrastColor,
