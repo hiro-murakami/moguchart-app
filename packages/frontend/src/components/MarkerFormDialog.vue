@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import type { MarkerTypeValue, AnchorTypeValue, MarkerFontSizeValue, MarkerAttribute } from '@functions/types/shared'
+import { useDiscardConfirm } from '@/composables/useConfirm'
 
 // スタイルプリセット: type + anchor の組み合わせ
 type StylePresetValue = 'left-arrow' | 'right-arrow' | 'down-arrow'
@@ -38,6 +39,30 @@ const stylePreset = ref<StylePresetValue>('down-arrow')
 const color = ref('#ef4444')
 const fontSize = ref<MarkerFontSizeValue | undefined>(undefined)
 const showColorPicker = ref(false)
+
+// 初期値（変更検知用）
+const initialName = ref('')
+const initialDate = ref('')
+const initialStylePreset = ref<StylePresetValue>('down-arrow')
+const initialColor = ref('#ef4444')
+const initialFontSize = ref<MarkerFontSizeValue | undefined>(undefined)
+
+// 破棄確認
+const { confirmAndClose } = useDiscardConfirm()
+
+const hasChanges = computed(() => {
+  return (
+    name.value !== initialName.value ||
+    date.value !== initialDate.value ||
+    stylePreset.value !== initialStylePreset.value ||
+    color.value !== initialColor.value ||
+    fontSize.value !== initialFontSize.value
+  )
+})
+
+const closeDialog = () => emit('update:modelValue', false)
+
+const handleCancel = () => confirmAndClose(hasChanges, closeDialog)
 
 // スタイルプリセットの選択肢
 const stylePresetOptions: StylePreset[] = [
@@ -91,6 +116,12 @@ watch(
         color.value = '#ef4444'
         fontSize.value = 'md'
       }
+      // 初期値を保存
+      initialName.value = name.value
+      initialDate.value = date.value
+      initialStylePreset.value = stylePreset.value
+      initialColor.value = color.value
+      initialFontSize.value = fontSize.value
     }
   },
   { immediate: true },
@@ -119,7 +150,7 @@ const handleDelete = () => {
 </script>
 
 <template>
-  <v-dialog v-model="isOpen" max-width="500">
+  <v-dialog v-model="isOpen" max-width="500" :persistent="hasChanges" no-click-animation>
     <v-card class="pa-2">
       <v-card-title class="d-flex align-center">
         <v-icon class="mr-2" :color="color">mdi-map-marker</v-icon>
@@ -213,7 +244,7 @@ const handleDelete = () => {
 
       <v-card-actions>
         <v-spacer />
-        <v-btn variant="text" @click="isOpen = false">キャンセル</v-btn>
+        <v-btn variant="text" @click="handleCancel">キャンセル</v-btn>
         <v-btn
           v-if="!isReadOnly"
           color="primary"
