@@ -87,9 +87,9 @@ watch(
         name.value = ''
         const defaultD = props.defaultDate || new Date().toISOString().slice(0, 10)
         date.value = defaultD.length <= 10 ? `${defaultD}T00:00` : defaultD.replace(' ', 'T').slice(0, 16)
-        stylePreset.value = 'down-arrow'
+        stylePreset.value = 'left-arrow'
         color.value = '#ef4444'
-        fontSize.value = undefined
+        fontSize.value = 'md'
       }
     }
   },
@@ -97,7 +97,8 @@ watch(
 )
 
 const handleSave = () => {
-  const preset = stylePresetOptions.find((o) => o.value === stylePreset.value) || stylePresetOptions[2]
+  const defaultPreset: StylePreset = { value: 'down-arrow', label: '▼（改行）マーカー名', type: 'triangle-down', anchor: 'center' }
+  const preset = stylePresetOptions.find((o) => o.value === stylePreset.value) ?? defaultPreset
   const marker: MarkerAttribute = {
     id: props.marker?.id || '',
     name: name.value || undefined,
