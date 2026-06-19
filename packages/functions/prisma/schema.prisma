@@ -148,3 +148,23 @@ model Comment {
 
   @@map("Comment")
 }
+
+/// APIキー（外部アプリ向け）
+model ApiKey {
+  /// APIキーID
+  id         String    @id @default(uuid()) @db.Char(36)
+  /// APIキー文字列（mk_ プレフィックス + 32文字のランダム文字列）
+  key        String    @unique @db.VarChar(64)
+  /// キーの名前（ユーザーが識別用に付ける）
+  name       String    @db.VarChar(255)
+  /// 紐づくユーザーのメールアドレス
+  email      String
+  /// スコープ ("read" | "read-write")
+  scope      String    @default("read-write") @db.VarChar(20)
+  /// 有効/無効フラグ
+  active     Boolean   @default(true)
+  /// 最終使用日時
+  lastUsedAt DateTime? @db.Timestamp(3)
+  /// 作成日時
+  createdAt  DateTime  @default(now()) @db.Timestamp(3)
+}
