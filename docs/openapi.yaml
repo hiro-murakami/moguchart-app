@@ -1,0 +1,1723 @@
+openapi: 3.1.0
+info:
+  title: Moguchart REST API
+  version: 1.0.0
+  description: |
+    Moguchartの外部アプリ向けREST API。
+    ガントチャートプロジェクトの管理（プロジェクト・行・タスク・コメント・スナップショット）を提供します。
+
+    ## 認証
+    すべてのエンドポイント（ヘルスチェックを除く）は `X-API-Key` ヘッダーによるAPIキー認証が必要です。
+    APIキーには `read`（読み取り専用）と `read-write`（読み書き）の2つのスコープがあります。
+    書き込み操作には `read-write` スコープが必要です。
+
+    ## レスポンス形式
+    すべてのレスポンスは以下の統一形式で返されます:
+    ```json
+    {
+      "status": "succeeded" | "failed",
+      "message": "（任意）",
+      "data": ...
+    }
+    ```
+  contact:
+    name: Moguchart
+  license:
+    name: MIT
+    identifier: MIT
+
+servers:
+  - url: https://api-{projectId}.cloudfunctions.net/api
+    description: Firebase Cloud Functions (本番)
+    variables:
+      projectId:
+        default: moguchart
+        description: Firebase プロジェクトID
+
+tags:
+  - name: Health
+    description: ヘルスチェック
+  - name: Projects
+    description: プロジェクトの管理
+  - name: Rows
+    description: ガントチャートの行（グループ）管理
+  - name: Tasks
+    description: ガントチャートのタスク管理
+  - name: Comments
+    description: コメント管理（プロジェクト・行・タスク共通）
+  - name: Task Comments
+    description: タスクに紐づくコメント管理
+  - name: Snapshots
+    description: プロジェクトのスナップショット管理
+  - name: User
+    description: ユーザー情報
+  - name: API Keys
+    description: APIキーの管理
+
+paths:
+  # ──────────────────────────────────────────────
+  # Health
+  # ──────────────────────────────────────────────
+  /api/v1/health:
+    get:
+      operationId: getHealth
+      summary: ヘルスチェック
+      description: APIの稼働状態を確認します。認証不要です。
+      tags: [Health]
+      security: []
+      responses:
+        "400":
+          description: リクエスト不正
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "200":
+          description: 正常稼働
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  version:
+                    type: string
+                    example: "1.0.0"
+
+  # ──────────────────────────────────────────────
+  # Projects
+  # ──────────────────────────────────────────────
+  /api/v1/projects:
+    get:
+      operationId: listProjects
+      summary: プロジェクト一覧取得
+      description: 認証ユーザーがアクセス可能なプロジェクトの一覧を返します。
+      tags: [Projects]
+      responses:
+        "200":
+          description: プロジェクト一覧
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse_ProjectList"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+    post:
+      operationId: createProject
+      summary: プロジェクト作成
+      description: 新しいプロジェクトを作成します。`read-write` スコープが必要です。
+      tags: [Projects]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectInput"
+      responses:
+        "201":
+          description: 作成成功（プロジェクトIDを返す）
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse_String"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/v1/projects/{projectId}:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+
+    put:
+      operationId: updateProject
+      summary: プロジェクト更新
+      description: 指定したプロジェクトを更新します。`read-write` スコープが必要です。
+      tags: [Projects]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectInput"
+      responses:
+        "200":
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse_String"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    delete:
+      operationId: deleteProject
+      summary: プロジェクト削除
+      description: 指定したプロジェクトを削除します。`read-write` スコープが必要です。
+      tags: [Projects]
+      responses:
+        "200":
+          description: 削除成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse_Void"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/projects/{projectId}/duplicate:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+
+    post:
+      operationId: duplicateProject
+      summary: プロジェクト複製
+      description: |
+        指定したプロジェクトを複製します。`read-write` スコープが必要です。
+        `newStartDate` を指定すると、元の開始日との差分で全タスク・マイルストーンの日付がスライドされます。
+      tags: [Projects]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                newProjectData:
+                  $ref: "#/components/schemas/ProjectInput"
+                  description: 新しいプロジェクトのデータ
+                newStartDate:
+                  type: string
+                  format: date
+                  description: 新しい開始日（YYYY-MM-DD）。指定時、日付をスライドします。
+                  example: "2026-07-01"
+                clearProgress:
+                  type: boolean
+                  description: trueの場合、全タスクの進捗率をクリアします。
+                  default: false
+      responses:
+        "201":
+          description: 複製成功（新しいプロジェクトIDを返す）
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse_String"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/v1/projects/{projectId}/chart:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+
+    get:
+      operationId: getProjectChart
+      summary: ガントチャートデータ取得
+      description: 指定プロジェクトのガントチャートデータ（行・タスク含む）を返します。
+      tags: [Projects]
+      responses:
+        "200":
+          description: ガントチャートデータ
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse_GanttRowList"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/projects/{projectId}/rows:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+
+    get:
+      operationId: getProjectRows
+      summary: 行データ取得
+      description: 指定プロジェクトの行データを取得します。`rowIds` クエリパラメータで絞り込み可能です。
+      tags: [Projects]
+      parameters:
+        - name: rowIds
+          in: query
+          description: 取得する行IDのカンマ区切りリスト
+          required: false
+          schema:
+            type: string
+            example: "1,2,3"
+      responses:
+        "200":
+          description: 行データ
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse_GanttRowList"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/projects/{projectId}/json:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+
+    get:
+      operationId: getProjectJson
+      summary: JSON形式でフルデータ取得
+      description: プロジェクトのフルデータをJSON形式で返します。エクスポートやバックアップに利用できます。
+      tags: [Projects]
+      responses:
+        "200":
+          description: フルデータ（JSON）
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse_GanttDataJson"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/projects/{projectId}/zip:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+
+    get:
+      operationId: getProjectZip
+      summary: ZIP形式でダウンロード
+      description: プロジェクトデータをZIP圧縮してBase64エンコードした文字列を返します。
+      tags: [Projects]
+      responses:
+        "200":
+          description: ZIP（Base64エンコード）
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse_String"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/projects/{projectId}/restore:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+
+    post:
+      operationId: restoreProject
+      summary: プロジェクト復元
+      description: |
+        JSONまたはZIPデータからプロジェクトを復元します。`read-write` スコープが必要です。
+      tags: [Projects]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: "#/components/schemas/GanttDataJson"
+                - type: object
+                  properties:
+                    zipBase64:
+                      type: string
+                      description: ZIP圧縮されたデータのBase64文字列
+                  required: [zipBase64]
+      responses:
+        "200":
+          description: 復元成功（プロジェクトIDを返す）
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse_String"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  # ──────────────────────────────────────────────
+  # Rows
+  # ──────────────────────────────────────────────
+  /api/v1/rows:
+    post:
+      operationId: createRow
+      summary: 行の作成
+      description: ガントチャートの行を作成します。`read-write` スコープが必要です。
+      tags: [Rows]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GanttRowInput"
+      responses:
+        "201":
+          description: 作成成功（行IDを返す）
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse_NumberOrArray"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+    put:
+      operationId: updateRow
+      summary: 行の更新
+      description: 行を更新します。単体または一括更新が可能です。`read-write` スコープが必要です。
+      tags: [Rows]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: "#/components/schemas/GanttRowInput"
+                - type: array
+                  items:
+                    $ref: "#/components/schemas/GanttRowInput"
+      responses:
+        "200":
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse_NumberOrArray"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+    delete:
+      operationId: deleteRows
+      summary: 行の削除
+      description: 指定した行IDの行を一括削除します。`read-write` スコープが必要です。
+      tags: [Rows]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ids]
+              properties:
+                ids:
+                  type: array
+                  items:
+                    type: integer
+                  description: 削除する行IDの配列
+                  example: [1, 2, 3]
+      responses:
+        "200":
+          description: 削除成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse_Void"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/v1/rows/order:
+    put:
+      operationId: updateRowOrder
+      summary: 行の並び順更新
+      description: 行の表示順序を更新します。`read-write` スコープが必要です。
+      tags: [Rows]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/GanttRowOrder"
+      responses:
+        "200":
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse_Void"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  # ──────────────────────────────────────────────
+  # Tasks
+  # ──────────────────────────────────────────────
+  /api/v1/tasks:
+    post:
+      operationId: createTasks
+      summary: タスクの作成/更新
+      description: タスクを作成または更新します。配列で複数タスクの一括処理が可能です。`read-write` スコープが必要です。
+      tags: [Tasks]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - type: object
+                  properties:
+                    tasks:
+                      type: array
+                      items:
+                        $ref: "#/components/schemas/GanttTaskInput"
+                  required: [tasks]
+                - type: array
+                  items:
+                    $ref: "#/components/schemas/GanttTaskInput"
+                - $ref: "#/components/schemas/GanttTaskInput"
+      responses:
+        "201":
+          description: 作成/更新成功（タスクID配列を返す）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [succeeded]
+                  data:
+                    type: array
+                    items:
+                      type: integer
+                    description: 作成/更新されたタスクID
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+    delete:
+      operationId: deleteTasks
+      summary: タスクの削除
+      description: 指定したタスクIDのタスクを一括削除します。`read-write` スコープが必要です。
+      tags: [Tasks]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ids]
+              properties:
+                ids:
+                  type: array
+                  items:
+                    type: integer
+                  description: 削除するタスクIDの配列
+                  example: [10, 20]
+      responses:
+        "200":
+          description: 削除成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse_Void"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  # ──────────────────────────────────────────────
+  # Comments
+  # ──────────────────────────────────────────────
+  /api/v1/comments:
+    get:
+      operationId: listComments
+      summary: コメント一覧取得
+      description: コメントを検索して取得します。クエリパラメータでフィルタリングが可能です。
+      tags: [Comments]
+      parameters:
+        - name: taskId
+          in: query
+          description: タスクIDで絞り込み
+          schema:
+            type: integer
+        - name: rowId
+          in: query
+          description: 行IDで絞り込み
+          schema:
+            type: integer
+        - name: projectId
+          in: query
+          description: プロジェクトIDで絞り込み
+          schema:
+            type: string
+      responses:
+        "200":
+          description: コメント一覧
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse_CommentList"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+    post:
+      operationId: createComment
+      summary: コメント作成/更新
+      description: コメントを作成または更新します。`read-write` スコープが必要です。
+      tags: [Comments]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommentInput"
+      responses:
+        "201":
+          description: 作成成功（コメントIDを返す）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [succeeded]
+                  data:
+                    type: integer
+                    description: コメントID
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/v1/comments/{commentId}:
+    parameters:
+      - name: commentId
+        in: path
+        required: true
+        description: コメントID
+        schema:
+          type: integer
+
+    delete:
+      operationId: deleteComment
+      summary: コメント削除
+      description: 指定したコメントを削除します。`read-write` スコープが必要です。
+      tags: [Comments]
+      responses:
+        "200":
+          description: 削除成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse_Void"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  # ──────────────────────────────────────────────
+  # Task Comments（comments ルーター内のネストルート）
+  # ──────────────────────────────────────────────
+  /api/v1/comments/tasks/{taskId}/comments:
+    parameters:
+      - name: taskId
+        in: path
+        required: true
+        description: タスクID
+        schema:
+          type: integer
+
+    get:
+      operationId: listTaskComments
+      summary: タスクコメント取得
+      description: 指定タスクに紐づくコメント一覧を取得します。
+      tags: [Task Comments]
+      responses:
+        "200":
+          description: タスクコメント一覧
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse_CommentList"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+    post:
+      operationId: createTaskComment
+      summary: タスクコメント作成/更新
+      description: タスクに紐づくコメントを作成または更新します。`read-write` スコープが必要です。
+      tags: [Task Comments]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommentInput"
+      responses:
+        "201":
+          description: 作成成功（コメントIDを返す）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [succeeded]
+                  data:
+                    type: integer
+                    description: コメントID
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/v1/comments/tasks/comments/{commentId}:
+    parameters:
+      - name: commentId
+        in: path
+        required: true
+        description: タスクコメントID
+        schema:
+          type: integer
+
+    delete:
+      operationId: deleteTaskComment
+      summary: タスクコメント削除
+      description: タスクコメントを削除します。`read-write` スコープが必要です。
+      tags: [Task Comments]
+      responses:
+        "200":
+          description: 削除成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse_Void"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  # ──────────────────────────────────────────────
+  # Snapshots
+  # ──────────────────────────────────────────────
+  /api/v1/projects/{projectId}/snapshots:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+
+    get:
+      operationId: listSnapshots
+      summary: スナップショット一覧
+      description: 指定プロジェクトのスナップショット一覧を取得します。
+      tags: [Snapshots]
+      responses:
+        "200":
+          description: スナップショット一覧
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse_SnapshotList"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+    post:
+      operationId: createSnapshot
+      summary: スナップショット作成
+      description: プロジェクトの現在の状態をスナップショットとして保存します。`read-write` スコープが必要です。
+      tags: [Snapshots]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                displayName:
+                  type: string
+                  description: スナップショットの表示名（省略時はタイムスタンプ）
+                  example: "v1.0 リリース前"
+      responses:
+        "201":
+          description: 作成成功（Storage URLを返す）
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse_String"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/v1/projects/{projectId}/snapshots/{snapshotName}:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+      - $ref: "#/components/parameters/SnapshotName"
+
+    get:
+      operationId: getSnapshot
+      summary: スナップショット取得
+      description: 指定されたスナップショットのデータを取得します。
+      tags: [Snapshots]
+      responses:
+        "200":
+          description: スナップショットデータ
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse_GanttDataJson"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    delete:
+      operationId: deleteSnapshot
+      summary: スナップショット削除
+      description: 指定されたスナップショットを削除します。`read-write` スコープが必要です。
+      tags: [Snapshots]
+      responses:
+        "200":
+          description: 削除成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse_Void"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/projects/{projectId}/snapshots/{snapshotName}/url:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+      - $ref: "#/components/parameters/SnapshotName"
+
+    get:
+      operationId: getSnapshotDownloadUrl
+      summary: スナップショットのダウンロードURL取得
+      description: スナップショットの署名付きダウンロードURLを取得します。
+      tags: [Snapshots]
+      responses:
+        "200":
+          description: ダウンロードURL
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse_String"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # ──────────────────────────────────────────────
+  # User
+  # ──────────────────────────────────────────────
+  /api/v1/user:
+    get:
+      operationId: getUser
+      summary: ユーザー情報取得
+      description: 認証ユーザー自身のユーザー情報を取得します。
+      tags: [User]
+      responses:
+        "200":
+          description: ユーザー情報
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [succeeded]
+                  data:
+                    $ref: "#/components/schemas/User"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+    put:
+      operationId: updateUser
+      summary: ユーザー情報更新
+      description: 認証ユーザー自身のユーザー情報を更新します。`read-write` スコープが必要です。
+      tags: [User]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserInput"
+      responses:
+        "200":
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse_Void"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  # ──────────────────────────────────────────────
+  # API Keys
+  # ──────────────────────────────────────────────
+  /api/v1/api-keys:
+    get:
+      operationId: listApiKeys
+      summary: APIキー一覧取得
+      description: 認証ユーザーのAPIキー一覧を取得します。キーはマスク表示（先頭8文字のみ）されます。
+      tags: [API Keys]
+      responses:
+        "200":
+          description: APIキー一覧
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [succeeded]
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ApiKeyMasked"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+    post:
+      operationId: createApiKey
+      summary: 新しいAPIキー生成
+      description: |
+        新しいAPIキーを生成します。`read-write` スコープが必要です。
+        **注意**: フルキーは作成直後のレスポンスでのみ表示されます。以降はマスクされて表示されるため、必ず保存してください。
+      tags: [API Keys]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                  description: キーの名前（識別用）
+                  example: "CI/CDパイプライン用"
+                scope:
+                  type: string
+                  enum: [read, read-write]
+                  default: read-write
+                  description: キーのスコープ
+      responses:
+        "201":
+          description: 作成成功（フルキーを含む）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [succeeded]
+                  data:
+                    $ref: "#/components/schemas/ApiKeyFull"
+                  message:
+                    type: string
+                    example: "API key created. Save the key now — it will not be shown again."
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/v1/api-keys/{keyId}:
+    parameters:
+      - name: keyId
+        in: path
+        required: true
+        description: APIキーのID
+        schema:
+          type: string
+          format: uuid
+
+    delete:
+      operationId: deleteApiKey
+      summary: APIキー無効化
+      description: 指定したAPIキーを論理削除（無効化）します。自分のキーのみ操作可能です。`read-write` スコープが必要です。
+      tags: [API Keys]
+      responses:
+        "200":
+          description: 無効化成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse_Void"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+# ================================================================
+# Components
+# ================================================================
+components:
+  # ──────────────────────────────────────────────
+  # Security Schemes
+  # ──────────────────────────────────────────────
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: |
+        `mk_` プレフィックス付きのAPIキー。
+        スコープは `read`（読み取り専用）または `read-write`（読み書き）。
+
+  # ──────────────────────────────────────────────
+  # Parameters
+  # ──────────────────────────────────────────────
+  parameters:
+    ProjectId:
+      name: projectId
+      in: path
+      required: true
+      description: プロジェクトID（UUID）
+      schema:
+        type: string
+        format: uuid
+        example: "550e8400-e29b-41d4-a716-446655440000"
+
+    SnapshotName:
+      name: snapshotName
+      in: path
+      required: true
+      description: スナップショット名（タイムスタンプ）
+      schema:
+        type: string
+        example: "2026-06-20T000000"
+
+  # ──────────────────────────────────────────────
+  # Responses
+  # ──────────────────────────────────────────────
+  responses:
+    Unauthorized:
+      description: 認証エラー — APIキーが未指定または無効
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            status: failed
+            message: "API key is required. Set the X-API-Key header."
+
+    Forbidden:
+      description: 権限エラー — read-write スコープが必要
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            status: failed
+            message: "This API key has read-only access. A read-write key is required for this operation."
+
+    NotFound:
+      description: リソースが見つからない
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            status: failed
+            message: "Resource not found"
+
+    BadRequest:
+      description: リクエスト不正
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            status: failed
+            message: "name is required"
+
+  # ──────────────────────────────────────────────
+  # Schemas
+  # ──────────────────────────────────────────────
+  schemas:
+    # --- 共通レスポンス ---
+    ErrorResponse:
+      type: object
+      required: [status, message]
+      properties:
+        status:
+          type: string
+          enum: [failed]
+        message:
+          type: string
+
+    SuccessResponse_Void:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [succeeded]
+
+    SuccessResponse_String:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [succeeded]
+        data:
+          type: string
+
+    SuccessResponse_NumberOrArray:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [succeeded]
+        data:
+          oneOf:
+            - type: integer
+            - type: array
+              items:
+                type: integer
+
+    SuccessResponse_ProjectList:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [succeeded]
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Project"
+
+    SuccessResponse_GanttRowList:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [succeeded]
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/GanttRow"
+
+    SuccessResponse_GanttDataJson:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [succeeded]
+        data:
+          $ref: "#/components/schemas/GanttDataJson"
+
+    SuccessResponse_CommentList:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [succeeded]
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Comment"
+
+    SuccessResponse_SnapshotList:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [succeeded]
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/SnapshotInfo"
+
+    # --- ドメインモデル ---
+    ColorPalette:
+      type: object
+      required: [color, backgroundColor]
+      properties:
+        name:
+          type: string
+          description: パレット名
+        color:
+          type: string
+          description: テキスト色（CSS color）
+          example: "#ffffff"
+        backgroundColor:
+          type: string
+          description: 背景色（CSS color）
+          example: "#42a5f5"
+        pattern:
+          type: object
+          properties:
+            type:
+              type: string
+              description: パターンの種類
+            color:
+              type: string
+              description: パターンの色
+        borderType:
+          type: string
+          enum: [solid_thin, solid_thick, dashed_thin, dashed_thick, dotted_thin, dotted_thick]
+          description: 枠線の種類
+        borderColor:
+          type: string
+          description: 枠線の色
+
+    Label:
+      type: object
+      required: [name, color]
+      properties:
+        name:
+          type: string
+          description: ラベル名
+        color:
+          type: string
+          description: カラーコード
+          example: "#ef5350"
+
+    Authority:
+      type: object
+      description: プロジェクトのアクセス権限
+      properties:
+        owners:
+          type: array
+          items:
+            type: string
+          description: オーナー権限ユーザーのメールアドレス
+        editors:
+          type: array
+          items:
+            type: string
+          description: 編集権限ユーザーのメールアドレス
+        viewers:
+          type: array
+          items:
+            type: string
+          description: 閲覧権限ユーザーのメールアドレス
+
+    ProjectAttribute:
+      type: object
+      description: プロジェクトの追加属性
+      properties:
+        description:
+          type: string
+          description: プロジェクトの説明
+        colorPalettes:
+          type: array
+          items:
+            $ref: "#/components/schemas/ColorPalette"
+          description: 使用可能なカラーパレット一覧
+        labels:
+          type: array
+          items:
+            $ref: "#/components/schemas/Label"
+          description: 使用可能なラベル一覧
+        granularity:
+          type: string
+          enum: [daily, monthly, hourly]
+          description: チャートの表示粒度
+          default: daily
+        snapDurationMinutes:
+          type: integer
+          enum: [6, 15, 30, 60]
+          description: スナップ単位（分）。hourlyモード時に有効。
+        archived:
+          type: boolean
+          description: アーカイブ済みフラグ
+        archivedAt:
+          type: string
+          format: date-time
+          description: アーカイブ日時（ISO 8601）
+        historyIntervalMinutes:
+          type: integer
+          description: 変更履歴の自動保存インターバル（分）。0で無効。
+        historyRetentionDays:
+          type: integer
+          description: 自動履歴の保持期間（日）。0で無期限。
+        milestones:
+          type: array
+          items:
+            type: object
+            required: [name, datetime, color]
+            properties:
+              name:
+                type: string
+              datetime:
+                type: string
+              color:
+                type: string
+          description: マイルストーン一覧
+        newTaskTemplates:
+          type: array
+          items:
+            type: object
+            required: [name, duration, attribute]
+            properties:
+              name:
+                type: string
+              duration:
+                type: number
+              attribute:
+                $ref: "#/components/schemas/TaskAttribute"
+          description: 新規タスクテンプレート一覧
+
+    TaskAttribute:
+      type: object
+      description: タスクの追加属性
+      properties:
+        description:
+          type: string
+          description: タスクの説明
+        colorPalette:
+          $ref: "#/components/schemas/ColorPalette"
+        labels:
+          type: array
+          items:
+            $ref: "#/components/schemas/Label"
+        lock:
+          type: boolean
+          description: ロック状態（移動・リサイズ・削除不可）
+        progress:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: 進捗率（0〜100）
+        dependencies:
+          type: array
+          items:
+            type: string
+          description: 依存タスクのID配列
+
+    RowAttribute:
+      type: object
+      description: 行の追加属性
+      properties:
+        description:
+          type: string
+          description: 行の説明
+        labels:
+          type: array
+          items:
+            $ref: "#/components/schemas/Label"
+        markers:
+          type: array
+          items:
+            type: object
+            required: [id, date, type]
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+              date:
+                type: string
+                description: ISO 8601 形式
+              anchor:
+                type: string
+                enum: [start, end, center]
+              type:
+                type: string
+                enum: [triangle-up, triangle-down, triangle-left, triangle-right, diamond, square]
+              color:
+                type: string
+              fontSize:
+                type: string
+                enum: [xs, sm, md, lg, xl]
+
+    Project:
+      type: object
+      required: [id, name, start, end, attribute, public, authority, role]
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: プロジェクトID
+        name:
+          type: string
+          description: プロジェクト名
+          example: "Webサイトリニューアル"
+        start:
+          type: string
+          format: date
+          description: 開始日（YYYY-MM-DD）
+          example: "2026-06-01"
+        end:
+          type: string
+          format: date
+          description: 終了日（YYYY-MM-DD）
+          example: "2026-12-31"
+        attribute:
+          $ref: "#/components/schemas/ProjectAttribute"
+        public:
+          type: boolean
+          description: 公開フラグ
+        authority:
+          $ref: "#/components/schemas/Authority"
+        role:
+          type: string
+          enum: [owner, editor, viewer]
+          description: 現在のユーザーのロール
+        originalId:
+          type: string
+          description: 複製元プロジェクトのID
+        commentCount:
+          type: integer
+          description: コメント件数
+
+    ProjectInput:
+      type: object
+      required: [name, start, end]
+      properties:
+        name:
+          type: string
+          description: プロジェクト名
+          example: "新プロジェクト"
+        start:
+          type: string
+          format: date
+          description: 開始日（YYYY-MM-DD）
+          example: "2026-07-01"
+        end:
+          type: string
+          format: date
+          description: 終了日（YYYY-MM-DD）
+          example: "2026-12-31"
+        attribute:
+          $ref: "#/components/schemas/ProjectAttribute"
+        public:
+          type: boolean
+          default: false
+        authority:
+          $ref: "#/components/schemas/Authority"
+
+    GanttRow:
+      type: object
+      required: [id, projectId, name, order, visible, attribute, tasks]
+      properties:
+        id:
+          type: integer
+          description: 行ID
+        projectId:
+          type: string
+          description: 所属プロジェクトID
+        name:
+          type: string
+          description: 行名
+          example: "デザインフェーズ"
+        order:
+          type: integer
+          description: 表示順序
+        visible:
+          type: boolean
+          description: 表示/非表示フラグ
+        attribute:
+          $ref: "#/components/schemas/RowAttribute"
+        tasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/GanttTask"
+          description: 行に含まれるタスク一覧
+        commentCount:
+          type: integer
+          description: コメント件数
+
+    GanttRowInput:
+      type: object
+      required: [projectId, name]
+      properties:
+        id:
+          type: integer
+          description: 行ID（更新時に指定）
+        projectId:
+          type: string
+          description: 所属プロジェクトID
+        name:
+          type: string
+          description: 行名
+        order:
+          type: integer
+          description: 表示順序
+        visible:
+          type: boolean
+          default: true
+        attribute:
+          $ref: "#/components/schemas/RowAttribute"
+
+    GanttTask:
+      type: object
+      required: [id, rowId, name, start, end, attribute]
+      properties:
+        id:
+          type: integer
+          description: タスクID
+        rowId:
+          type: integer
+          description: 所属する行のID
+        name:
+          type: string
+          description: タスク名
+          example: "ワイヤーフレーム作成"
+        start:
+          type: string
+          format: date
+          description: 開始日（YYYY-MM-DD）
+          example: "2026-07-01"
+        end:
+          type: string
+          format: date
+          description: 終了日（YYYY-MM-DD）
+          example: "2026-07-15"
+        attribute:
+          $ref: "#/components/schemas/TaskAttribute"
+        commentCount:
+          type: integer
+          description: コメント件数
+
+    GanttTaskInput:
+      type: object
+      required: [rowId, name, start, end]
+      properties:
+        id:
+          type: integer
+          description: タスクID（更新時に指定）
+        rowId:
+          type: integer
+          description: 所属する行のID
+        name:
+          type: string
+          description: タスク名
+        start:
+          type: string
+          format: date
+          description: 開始日（YYYY-MM-DD）
+        end:
+          type: string
+          format: date
+          description: 終了日（YYYY-MM-DD）
+        attribute:
+          $ref: "#/components/schemas/TaskAttribute"
+
+    GanttRowOrder:
+      type: object
+      required: [id, order]
+      properties:
+        id:
+          type: integer
+          description: 行ID
+        order:
+          type: integer
+          description: 表示順序
+
+    GanttDataJson:
+      type: object
+      required: [version, project, rows]
+      properties:
+        version:
+          type: string
+          description: バージョン情報
+          example: "0.6.9"
+        project:
+          type: object
+          description: プロジェクトデータ
+        rows:
+          type: array
+          items:
+            type: object
+          description: 行とタスクのデータ
+
+    Comment:
+      type: object
+      required: [id, content]
+      properties:
+        id:
+          type: integer
+          description: コメントID
+        taskId:
+          type: integer
+          description: タスクID（タスクコメント時）
+        rowId:
+          type: integer
+          description: 行ID（行コメント時）
+        projectId:
+          type: string
+          description: プロジェクトID（プロジェクトコメント時）
+        content:
+          type: string
+          description: コメント内容
+        createdBy:
+          type: string
+          description: 作成者のメールアドレス
+        createdByDisplayName:
+          type: string
+          description: 作成者の表示名
+        createdByPhotoURL:
+          type:
+            - string
+            - "null"
+          description: 作成者のアバター画像URL
+        createdAt:
+          type: string
+          format: date-time
+          description: 作成日時（ISO 8601）
+
+    CommentInput:
+      type: object
+      required: [content]
+      properties:
+        id:
+          type: integer
+          description: コメントID（更新時に指定）
+        taskId:
+          type: integer
+          description: タスクID
+        rowId:
+          type: integer
+          description: 行ID
+        projectId:
+          type: string
+          description: プロジェクトID
+        content:
+          type: string
+          description: コメント内容
+          example: "進捗確認お願いします"
+
+    SnapshotInfo:
+      type: object
+      required: [name, createdAt]
+      properties:
+        name:
+          type: string
+          description: スナップショット名（タイムスタンプ）
+          example: "2026-06-20T000000"
+        createdAt:
+          type: string
+          format: date-time
+          description: 作成日時（ISO 8601）
+        displayName:
+          type: string
+          description: ユーザーが指定した表示名
+
+    User:
+      type: object
+      required: [email, attribute]
+      properties:
+        email:
+          type: string
+          format: email
+          description: メールアドレス
+        displayName:
+          type: string
+          description: 表示名
+        attribute:
+          $ref: "#/components/schemas/UserAttribute"
+
+    UserInput:
+      type: object
+      properties:
+        displayName:
+          type: string
+          description: 表示名
+        attribute:
+          $ref: "#/components/schemas/UserAttribute"
+
+    UserAttribute:
+      type: object
+      description: ユーザー固有の設定
+      properties:
+        theme:
+          type: string
+          enum: [light, dark, system]
+          description: UIテーマ設定
+        lastLoginAt:
+          type: string
+          format: date-time
+          description: 最終ログイン日時
+        photoURL:
+          type:
+            - string
+            - "null"
+          description: プロフィール画像のURL
+
+    ApiKeyMasked:
+      type: object
+      description: マスク済みAPIキー情報
+      required: [id, name, scope, active, createdAt, key]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: "CI/CDパイプライン用"
+        key:
+          type: string
+          description: マスク済みキー（先頭8文字 + ****）
+          example: "mk_AbCdE************************"
+        scope:
+          type: string
+          enum: [read, read-write]
+        active:
+          type: boolean
+        lastUsedAt:
+          type:
+            - string
+            - "null"
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    ApiKeyFull:
+      type: object
+      description: 作成直後のフルAPIキー情報
+      required: [id, key, name, scope, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        key:
+          type: string
+          description: フルAPIキー（この1回のみ表示）
+          example: "mk_AbCdEfGhIjKlMnOpQrStUvWxYz0123"
+        name:
+          type: string
+        scope:
+          type: string
+          enum: [read, read-write]
+        createdAt:
+          type: string
+          format: date-time
+
+# グローバルセキュリティ（ヘルスチェック以外）
+security:
+  - ApiKeyAuth: []
