@@ -28,3 +28,6 @@ pnpm-debug.log*
 firebase-debug.log
 firestore-debug.log
 .firebaserc
+
+# clasp credentials
+.clasprc.json

@@ -6,6 +6,9 @@
     "packages/*"
   ],
   "scripts": {
+    "gas:push": "cd docs/gas-template && npx @google/clasp push --force",
+    "gas:pull": "cd docs/gas-template && npx @google/clasp pull",
+    "gas:open": "cd docs/gas-template && npx @google/clasp open",
     "sync-version": "node scripts/sync-version.mjs",
     "predev": "pnpm run sync-version",
     "dev": "pnpm -r --parallel dev",

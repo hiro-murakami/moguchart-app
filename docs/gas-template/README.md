@@ -90,3 +90,35 @@ Content-Type: application/json
 - APIキーは第三者と共有しないでください
 - `read-write` スコープのキーは、データの変更・削除が可能です
 - 大量のデータを頻繁に取得すると、GAS の実行時間制限（6分）に達する可能性があります
+
+## 🛠️ 開発者向け: clasp でのデプロイ
+
+コードの変更を Google Apps Script プロジェクトに反映するには、[clasp](https://github.com/google/clasp) を使います。
+
+### 初回セットアップ
+
+```bash
+# 1. clasp にログイン（ブラウザで認証）
+npx @google/clasp login
+
+# 2. .clasp.json にデプロイ先の Script ID を設定
+#    Apps Script エディタの URL に含まれる ID を使います
+#    https://script.google.com/home/projects/SCRIPT_ID/edit
+```
+
+[.clasp.json](file:///Users/murakamihiroyuki/work/moguchart-app/docs/gas-template/.clasp.json) の `scriptId` を実際の値に書き換えてください。
+
+### デプロイコマンド
+
+プロジェクトルートから実行できます：
+
+```bash
+# GAS にコードをデプロイ
+pnpm gas:push
+
+# GAS からコードを取得（リモートの変更をローカルに反映）
+pnpm gas:pull
+
+# ブラウザで Apps Script エディタを開く
+pnpm gas:open
+```
