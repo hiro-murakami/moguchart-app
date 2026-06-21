@@ -157,7 +157,28 @@ const restoreProject: RestoreProject = async (data, email) => {
         })
         newProjectId = oldProjectId
 
-        // 既存の行を削除（Cascade でタスクも消えるはずだが、念のため）
+        // 既存データを依存関係の順序で削除
+        // 1. プロジェクトコメントを削除
+        await tx.comment.deleteMany({
+          where: { projectId: newProjectId },
+        })
+        // 2. タスクに紐づくコメントを削除
+        await tx.comment.deleteMany({
+          where: {
+            task: { row: { projectId: newProjectId } },
+          },
+        })
+        // 3. 行に紐づくコメントを削除
+        await tx.comment.deleteMany({
+          where: {
+            row: { projectId: newProjectId },
+          },
+        })
+        // 4. タスクを削除
+        await tx.ganttTask.deleteMany({
+          where: { row: { projectId: newProjectId } },
+        })
+        // 5. 行を削除
         await tx.ganttRow.deleteMany({
           where: { projectId: newProjectId },
         })
@@ -257,7 +278,7 @@ const restoreProject: RestoreProject = async (data, email) => {
     }
 
     return newProjectId
-  })
+  }, { timeout: 60000 }) // 大量データの復元に対応するためタイムアウトを60秒に設定
 
   // トランザクション完了後にスナップショットを復元
   if (zipInstance) {

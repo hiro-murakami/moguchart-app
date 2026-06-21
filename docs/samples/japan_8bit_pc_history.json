@@ -1,867 +1,1415 @@
 {
   "version": "0.6.9",
   "project": {
-    "id": "8bit-pc-history-japan",
+    "id": "a4735be9-62a9-4d83-ba1b-9a73edf24e5f",
     "name": "日本の8bitパソコンの歴史",
-    "start": "1978-01-01",
-    "end": "1995-12-31",
+    "start": "1978-01-01T00:00:00",
+    "end": "1995-12-31T00:00:00",
     "public": true,
-    "authority": { "owners": [], "editors": [], "viewers": [] },
+    "authority": {
+      "owners": [],
+      "editors": [],
+      "viewers": []
+    },
     "attribute": {
       "granularity": "monthly",
       "description": "1978年〜1993年に発売された日本の代表的な8bitパソコンの販売期間をガントチャートで可視化したサンプルプロジェクトです。各シリーズの登場から終息までを俯瞰できます。",
       "colorPalettes": [
-        { "name": "NEC Blue", "color": "#ffffff", "backgroundColor": "#1565c0" },
-        { "name": "NEC Light Blue", "color": "#ffffff", "backgroundColor": "#42a5f5" },
-        { "name": "NEC Indigo", "color": "#ffffff", "backgroundColor": "#3949ab" },
-        { "name": "SHARP Green", "color": "#ffffff", "backgroundColor": "#2e7d32" },
-        { "name": "SHARP Teal", "color": "#ffffff", "backgroundColor": "#00897b" },
-        { "name": "Fujitsu Red", "color": "#ffffff", "backgroundColor": "#c62828" },
-        { "name": "Fujitsu Orange", "color": "#000000", "backgroundColor": "#ef6c00" },
-        { "name": "Toshiba Purple", "color": "#ffffff", "backgroundColor": "#6a1b9a" },
-        { "name": "Epson Cyan", "color": "#ffffff", "backgroundColor": "#00838f" },
-        { "name": "Hitachi Brown", "color": "#ffffff", "backgroundColor": "#5d4037" },
-        { "name": "SORD Yellow", "color": "#000000", "backgroundColor": "#f9a825" },
-        { "name": "Sony Orange", "color": "#000000", "backgroundColor": "#ff8f00" },
-        { "name": "Casio Lime", "color": "#000000", "backgroundColor": "#9e9d24" },
-        { "name": "MSX Pink", "color": "#ffffff", "backgroundColor": "#ad1457" },
-        { "name": "Panasonic Teal", "color": "#ffffff", "backgroundColor": "#00695c" }
+        {
+          "name": "NEC Blue",
+          "color": "#ffffff",
+          "backgroundColor": "#1565c0"
+        },
+        {
+          "name": "NEC Light Blue",
+          "color": "#ffffff",
+          "backgroundColor": "#42a5f5"
+        },
+        {
+          "name": "NEC Indigo",
+          "color": "#ffffff",
+          "backgroundColor": "#3949ab"
+        },
+        {
+          "name": "SHARP Green",
+          "color": "#ffffff",
+          "backgroundColor": "#2e7d32"
+        },
+        {
+          "name": "SHARP Teal",
+          "color": "#ffffff",
+          "backgroundColor": "#00897b"
+        },
+        {
+          "name": "Fujitsu Red",
+          "color": "#ffffff",
+          "backgroundColor": "#c62828"
+        },
+        {
+          "name": "Fujitsu Orange",
+          "color": "#000000",
+          "backgroundColor": "#ef6c00"
+        },
+        {
+          "name": "Toshiba Purple",
+          "color": "#ffffff",
+          "backgroundColor": "#6a1b9a"
+        },
+        {
+          "name": "Epson Cyan",
+          "color": "#ffffff",
+          "backgroundColor": "#00838f"
+        },
+        {
+          "name": "Hitachi Brown",
+          "color": "#ffffff",
+          "backgroundColor": "#5d4037"
+        },
+        {
+          "name": "SORD Yellow",
+          "color": "#000000",
+          "backgroundColor": "#f9a825"
+        },
+        {
+          "name": "Sony Orange",
+          "color": "#000000",
+          "backgroundColor": "#ff8f00"
+        },
+        {
+          "name": "Casio Lime",
+          "color": "#000000",
+          "backgroundColor": "#9e9d24"
+        },
+        {
+          "name": "MSX Pink",
+          "color": "#ffffff",
+          "backgroundColor": "#ad1457"
+        },
+        {
+          "name": "Panasonic Teal",
+          "color": "#ffffff",
+          "backgroundColor": "#00695c"
+        }
       ],
       "labels": [
-        { "name": "NEC", "color": "#1565c0" },
-        { "name": "SHARP", "color": "#2e7d32" },
-        { "name": "富士通", "color": "#c62828" },
-        { "name": "東芝", "color": "#6a1b9a" },
-        { "name": "日立", "color": "#5d4037" },
-        { "name": "セイコーエプソン", "color": "#00838f" },
-        { "name": "SORD", "color": "#f9a825" },
-        { "name": "ソニー", "color": "#ff8f00" },
-        { "name": "カシオ", "color": "#9e9d24" },
-        { "name": "松下/パナソニック", "color": "#00695c" },
-        { "name": "三菱", "color": "#ef6c00" },
-        { "name": "沖電気", "color": "#607d8b" },
-        { "name": "MSX", "color": "#ad1457" },
-        { "name": "ベストセラー", "color": "#e53935" }
+        {
+          "name": "NEC",
+          "color": "#1565c0"
+        },
+        {
+          "name": "SHARP",
+          "color": "#2e7d32"
+        },
+        {
+          "name": "富士通",
+          "color": "#c62828"
+        },
+        {
+          "name": "東芝",
+          "color": "#6a1b9a"
+        },
+        {
+          "name": "日立",
+          "color": "#5d4037"
+        },
+        {
+          "name": "セイコーエプソン",
+          "color": "#00838f"
+        },
+        {
+          "name": "SORD",
+          "color": "#f9a825"
+        },
+        {
+          "name": "ソニー",
+          "color": "#ff8f00"
+        },
+        {
+          "name": "カシオ",
+          "color": "#9e9d24"
+        },
+        {
+          "name": "松下/パナソニック",
+          "color": "#00695c"
+        },
+        {
+          "name": "三菱",
+          "color": "#ef6c00"
+        },
+        {
+          "name": "沖電気",
+          "color": "#607d8b"
+        },
+        {
+          "name": "MSX",
+          "color": "#ad1457"
+        },
+        {
+          "name": "ベストセラー",
+          "color": "#e53935"
+        }
       ],
       "milestones": [
-        { "name": "MZ-80K 発売 (日本初の完成品PC)", "datetime": "1978-12-01T00:00:00+09:00", "color": "#2e7d32" },
-        { "name": "PC-8001 発売 (パソコン御三家の始まり)", "datetime": "1979-05-01T00:00:00+09:00", "color": "#1565c0" },
-        { "name": "MSX規格 発表", "datetime": "1983-06-01T00:00:00+09:00", "color": "#ad1457" },
-        { "name": "ファミコン発売", "datetime": "1983-07-01T00:00:00+09:00", "color": "#e53935" }
+        {
+          "name": "MZ-80K 発売 (日本初の完成品PC)",
+          "datetime": "1978-12-01T00:00:00+09:00",
+          "color": "#2e7d32"
+        },
+        {
+          "name": "PC-8001 発売 (パソコン御三家の始まり)",
+          "datetime": "1979-05-01T00:00:00+09:00",
+          "color": "#1565c0"
+        },
+        {
+          "name": "MSX規格 発表",
+          "datetime": "1983-06-01T00:00:00+09:00",
+          "color": "#ad1457"
+        },
+        {
+          "name": "ファミコン発売",
+          "datetime": "1983-07-01T00:00:00+09:00",
+          "color": "#e53935"
+        }
       ]
     }
   },
   "rows": [
     {
       "id": 1,
-      "projectId": "8bit-pc-history-japan",
+      "projectId": "a4735be9-62a9-4d83-ba1b-9a73edf24e5f",
       "name": "PC-8001 シリーズ",
       "order": 1,
       "visible": true,
       "attribute": {
         "description": "NECのPC-8001シリーズ。1979年発売の初代PC-8001は日本のパソコン市場を開拓した歴史的名機。",
-        "labels": [{ "name": "NEC", "color": "#1565c0" }]
+        "labels": [
+          {
+            "name": "NEC",
+            "color": "#1565c0"
+          }
+        ]
       },
       "tasks": [
         {
           "id": 101,
           "rowId": 1,
           "name": "PC-8001",
-          "start": "1979-05-01",
-          "end": "1983-03-01",
+          "start": "1979-05-01T00:00:00",
+          "end": "1983-03-01T00:00:00",
           "attribute": {
             "description": "1979年5月発売。Z80A 4MHz、RAM 16KB。日本のパソコン市場を切り拓いたベストセラー機。BASICを標準搭載し、ホビーからビジネスまで幅広く普及。",
-            "colorPalette": { "name": "NEC Blue", "color": "#ffffff", "backgroundColor": "#1565c0" }
+            "colorPalette": {
+              "name": "NEC Blue",
+              "color": "#ffffff",
+              "backgroundColor": "#1565c0"
+            }
           }
         },
         {
           "id": 102,
           "rowId": 1,
           "name": "PC-8001mkII",
-          "start": "1983-03-01",
-          "end": "1985-12-01",
+          "start": "1983-03-01T00:00:00",
+          "end": "1985-12-01T00:00:00",
           "attribute": {
             "description": "1983年3月発売。PC-8001の後継機。グラフィック機能を強化し、漢字ROMを搭載。",
-            "colorPalette": { "name": "NEC Light Blue", "color": "#ffffff", "backgroundColor": "#42a5f5" }
+            "colorPalette": {
+              "name": "NEC Light Blue",
+              "color": "#ffffff",
+              "backgroundColor": "#42a5f5"
+            }
           }
         },
         {
           "id": 103,
           "rowId": 1,
           "name": "PC-8001mkIISR",
-          "start": "1985-01-01",
-          "end": "1987-12-01",
+          "start": "1985-01-01T00:00:00",
+          "end": "1987-12-01T00:00:00",
           "attribute": {
             "description": "1985年1月発売。PC-8001シリーズ最終モデル。サウンド機能を強化。",
-            "colorPalette": { "name": "NEC Indigo", "color": "#ffffff", "backgroundColor": "#3949ab" }
+            "colorPalette": {
+              "name": "NEC Indigo",
+              "color": "#ffffff",
+              "backgroundColor": "#3949ab"
+            }
           }
         }
       ]
     },
     {
       "id": 2,
-      "projectId": "8bit-pc-history-japan",
+      "projectId": "a4735be9-62a9-4d83-ba1b-9a73edf24e5f",
       "name": "PC-6001 シリーズ",
       "order": 2,
       "visible": true,
       "attribute": {
         "description": "NECの廉価版ホビーパソコン。愛称「パピコン」。手頃な価格でプログラミング入門機として人気を博した。",
-        "labels": [{ "name": "NEC", "color": "#1565c0" }]
+        "labels": [
+          {
+            "name": "NEC",
+            "color": "#1565c0"
+          }
+        ]
       },
       "tasks": [
         {
           "id": 201,
           "rowId": 2,
           "name": "PC-6001",
-          "start": "1981-11-01",
-          "end": "1983-07-01",
+          "start": "1981-11-01T00:00:00",
+          "end": "1983-07-01T00:00:00",
           "attribute": {
             "description": "1981年11月発売。愛称「パピコン」。89,800円という低価格でホビーユーザーに大人気。音声合成LSI搭載。",
-            "colorPalette": { "name": "NEC Blue", "color": "#ffffff", "backgroundColor": "#1565c0" }
+            "colorPalette": {
+              "name": "NEC Blue",
+              "color": "#ffffff",
+              "backgroundColor": "#1565c0"
+            }
           }
         },
         {
           "id": 202,
           "rowId": 2,
           "name": "PC-6001mkII",
-          "start": "1983-07-01",
-          "end": "1984-11-01",
+          "start": "1983-07-01T00:00:00",
+          "end": "1984-11-01T00:00:00",
           "attribute": {
             "description": "1983年7月発売。グラフィックとサウンドを大幅強化。RAM 64KB。",
-            "colorPalette": { "name": "NEC Light Blue", "color": "#ffffff", "backgroundColor": "#42a5f5" }
+            "colorPalette": {
+              "name": "NEC Light Blue",
+              "color": "#ffffff",
+              "backgroundColor": "#42a5f5"
+            }
           }
         },
         {
           "id": 203,
           "rowId": 2,
           "name": "PC-6601 / PC-6001mkIISR",
-          "start": "1984-11-01",
-          "end": "1986-06-01",
+          "start": "1984-11-01T00:00:00",
+          "end": "1986-06-01T00:00:00",
           "attribute": {
             "description": "1984年11月発売。3.5インチFDD内蔵モデル（PC-6601）やPC-6001mkIISRも登場。",
-            "colorPalette": { "name": "NEC Indigo", "color": "#ffffff", "backgroundColor": "#3949ab" }
+            "colorPalette": {
+              "name": "NEC Indigo",
+              "color": "#ffffff",
+              "backgroundColor": "#3949ab"
+            }
           }
         },
         {
           "id": 204,
           "rowId": 2,
           "name": "PC-6601SR「Mr.PC」",
-          "start": "1986-01-01",
-          "end": "1988-06-01",
+          "start": "1986-01-01T00:00:00",
+          "end": "1988-06-01T00:00:00",
           "attribute": {
             "description": "1986年1月発売。音声合成機能が進化。3.5インチFDD内蔵。愛称「ミスターPC」。PC-6001シリーズの最終モデル。",
-            "colorPalette": { "name": "NEC Blue", "color": "#ffffff", "backgroundColor": "#1565c0" }
+            "colorPalette": {
+              "name": "NEC Blue",
+              "color": "#ffffff",
+              "backgroundColor": "#1565c0"
+            }
           }
         }
       ]
     },
     {
       "id": 3,
-      "projectId": "8bit-pc-history-japan",
+      "projectId": "a4735be9-62a9-4d83-ba1b-9a73edf24e5f",
       "name": "PC-8801 シリーズ",
       "order": 3,
       "visible": true,
       "attribute": {
         "description": "NECの8bitパソコンの主力シリーズ。特にPC-8801mkIISR以降はゲームプラットフォームとして絶大な人気を誇った。",
-        "labels": [{ "name": "NEC", "color": "#1565c0" }]
+        "labels": [
+          {
+            "name": "NEC",
+            "color": "#1565c0"
+          }
+        ]
       },
       "tasks": [
         {
           "id": 301,
           "rowId": 3,
           "name": "PC-8801",
-          "start": "1981-12-01",
-          "end": "1983-11-01",
+          "start": "1981-12-01T00:00:00",
+          "end": "1983-11-01T00:00:00",
           "attribute": {
             "description": "1981年12月発売。Z80A 4MHz、RAM 64KB。ビジネス・ホビー両用の高性能8bitパソコン。",
-            "colorPalette": { "name": "NEC Blue", "color": "#ffffff", "backgroundColor": "#1565c0" }
+            "colorPalette": {
+              "name": "NEC Blue",
+              "color": "#ffffff",
+              "backgroundColor": "#1565c0"
+            }
           }
         },
         {
           "id": 302,
           "rowId": 3,
           "name": "PC-8801mkII",
-          "start": "1983-11-01",
-          "end": "1985-01-01",
+          "start": "1983-11-01T00:00:00",
+          "end": "1985-01-01T00:00:00",
           "attribute": {
             "description": "1983年11月発売。FDD内蔵モデル。5インチ2D FDDを2基搭載。",
-            "colorPalette": { "name": "NEC Light Blue", "color": "#ffffff", "backgroundColor": "#42a5f5" }
+            "colorPalette": {
+              "name": "NEC Light Blue",
+              "color": "#ffffff",
+              "backgroundColor": "#42a5f5"
+            }
           }
         },
         {
           "id": 303,
           "rowId": 3,
           "name": "PC-8801mkIISR〜FR〜MR",
-          "start": "1985-01-01",
-          "end": "1987-11-01",
+          "start": "1985-01-01T00:00:00",
+          "end": "1987-11-01T00:00:00",
           "attribute": {
             "description": "1985年1月にSR発売。FM音源搭載で「ゲームパソコン」としての地位を確立。FR/MRとマイナーチェンジ。",
-            "colorPalette": { "name": "NEC Blue", "color": "#ffffff", "backgroundColor": "#1565c0" },
-            "labels": [{ "name": "ベストセラー", "color": "#e53935" }]
+            "colorPalette": {
+              "name": "NEC Blue",
+              "color": "#ffffff",
+              "backgroundColor": "#1565c0"
+            },
+            "labels": [
+              {
+                "name": "ベストセラー",
+                "color": "#e53935"
+              }
+            ]
           }
         },
         {
           "id": 304,
           "rowId": 3,
           "name": "PC-8801FH〜MH〜FA〜MA",
-          "start": "1987-11-01",
-          "end": "1989-06-01",
+          "start": "1987-11-01T00:00:00",
+          "end": "1989-06-01T00:00:00",
           "attribute": {
             "description": "1987年11月にFH発売。8MHz動作モード追加。MA2までシリーズは続いた。",
-            "colorPalette": { "name": "NEC Indigo", "color": "#ffffff", "backgroundColor": "#3949ab" }
+            "colorPalette": {
+              "name": "NEC Indigo",
+              "color": "#ffffff",
+              "backgroundColor": "#3949ab"
+            }
           }
         },
         {
           "id": 305,
           "rowId": 3,
           "name": "PC-8801MC",
-          "start": "1989-06-01",
-          "end": "1991-12-01",
+          "start": "1989-06-01T00:00:00",
+          "end": "1991-12-01T00:00:00",
           "attribute": {
             "description": "1989年6月発売。CD-ROM対応モデル。PC-88シリーズの最終モデル。",
-            "colorPalette": { "name": "NEC Light Blue", "color": "#ffffff", "backgroundColor": "#42a5f5" }
+            "colorPalette": {
+              "name": "NEC Light Blue",
+              "color": "#ffffff",
+              "backgroundColor": "#42a5f5"
+            }
           }
         }
       ]
     },
     {
       "id": 4,
-      "projectId": "8bit-pc-history-japan",
+      "projectId": "a4735be9-62a9-4d83-ba1b-9a73edf24e5f",
       "name": "MZシリーズ (8bit)",
       "order": 4,
       "visible": true,
       "attribute": {
         "description": "シャープのクリーンコンピュータ。BASICをカセットから読み込む設計思想で、柔軟なソフトウェア環境を実現。",
-        "labels": [{ "name": "SHARP", "color": "#2e7d32" }]
+        "labels": [
+          {
+            "name": "SHARP",
+            "color": "#2e7d32"
+          }
+        ]
       },
       "tasks": [
         {
           "id": 401,
           "rowId": 4,
           "name": "MZ-80K / MZ-80C",
-          "start": "1978-12-01",
-          "end": "1982-06-01",
+          "start": "1978-12-01T00:00:00",
+          "end": "1982-06-01T00:00:00",
           "attribute": {
             "description": "1978年12月にMZ-80K発売。日本初のオールインワン型パソコン。モニタ・カセットレコーダー一体型。",
-            "colorPalette": { "name": "SHARP Green", "color": "#ffffff", "backgroundColor": "#2e7d32" }
+            "colorPalette": {
+              "name": "SHARP Green",
+              "color": "#ffffff",
+              "backgroundColor": "#2e7d32"
+            }
           }
         },
         {
           "id": 402,
           "rowId": 4,
           "name": "MZ-80B / MZ-2000",
-          "start": "1981-04-01",
-          "end": "1984-06-01",
+          "start": "1981-04-01T00:00:00",
+          "end": "1984-06-01T00:00:00",
           "attribute": {
             "description": "1981年4月にMZ-80B発売。ビジネス向け上位モデル。MZ-2000は後継機。",
-            "colorPalette": { "name": "SHARP Teal", "color": "#ffffff", "backgroundColor": "#00897b" }
+            "colorPalette": {
+              "name": "SHARP Teal",
+              "color": "#ffffff",
+              "backgroundColor": "#00897b"
+            }
           }
         },
         {
           "id": 403,
           "rowId": 4,
           "name": "MZ-700",
-          "start": "1982-11-01",
-          "end": "1984-11-01",
+          "start": "1982-11-01T00:00:00",
+          "end": "1984-11-01T00:00:00",
           "attribute": {
             "description": "1982年11月発売。カラー表示対応の低価格モデル。プロッタプリンタ内蔵。",
-            "colorPalette": { "name": "SHARP Green", "color": "#ffffff", "backgroundColor": "#2e7d32" }
+            "colorPalette": {
+              "name": "SHARP Green",
+              "color": "#ffffff",
+              "backgroundColor": "#2e7d32"
+            }
           }
         },
         {
           "id": 404,
           "rowId": 4,
           "name": "MZ-1500",
-          "start": "1984-06-01",
-          "end": "1986-06-01",
+          "start": "1984-06-01T00:00:00",
+          "end": "1986-06-01T00:00:00",
           "attribute": {
             "description": "1984年6月発売。QD（クイックディスク）を搭載した個性的なモデル。PSG音源搭載。",
-            "colorPalette": { "name": "SHARP Teal", "color": "#ffffff", "backgroundColor": "#00897b" }
+            "colorPalette": {
+              "name": "SHARP Teal",
+              "color": "#ffffff",
+              "backgroundColor": "#00897b"
+            }
           }
         },
         {
           "id": 405,
           "rowId": 4,
           "name": "MZ-800",
-          "start": "1985-01-01",
-          "end": "1987-12-01",
+          "start": "1985-01-01T00:00:00",
+          "end": "1987-12-01T00:00:00",
           "attribute": {
             "description": "1985年発売。MZ-700互換。欧州でも販売された。",
-            "colorPalette": { "name": "SHARP Green", "color": "#ffffff", "backgroundColor": "#2e7d32" }
+            "colorPalette": {
+              "name": "SHARP Green",
+              "color": "#ffffff",
+              "backgroundColor": "#2e7d32"
+            }
           }
         },
         {
           "id": 406,
           "rowId": 4,
           "name": "MZ-2500 (SuperMZ)",
-          "start": "1985-06-01",
-          "end": "1988-12-01",
+          "start": "1985-06-01T00:00:00",
+          "end": "1988-12-01T00:00:00",
           "attribute": {
             "description": "1985年6月発売。愛称「SuperMZ」。Z80B 6MHz搭載。MZ-80B/2000系の後継。最大65,536色表示、FM音源搭載。MZシリーズ8bit最終・最高峰モデル。",
-            "colorPalette": { "name": "SHARP Green", "color": "#ffffff", "backgroundColor": "#2e7d32" }
+            "colorPalette": {
+              "name": "SHARP Green",
+              "color": "#ffffff",
+              "backgroundColor": "#2e7d32"
+            }
           }
         }
       ]
     },
     {
       "id": 5,
-      "projectId": "8bit-pc-history-japan",
+      "projectId": "a4735be9-62a9-4d83-ba1b-9a73edf24e5f",
       "name": "X1 シリーズ",
       "order": 5,
       "visible": true,
       "attribute": {
         "description": "シャープのテレビ事業部が開発したパソコン。テレビ機能との融合が特徴。ゲーム分野でPC-88と人気を二分。",
-        "labels": [{ "name": "SHARP", "color": "#2e7d32" }]
+        "labels": [
+          {
+            "name": "SHARP",
+            "color": "#2e7d32"
+          }
+        ]
       },
       "tasks": [
         {
           "id": 501,
           "rowId": 5,
           "name": "X1",
-          "start": "1982-11-01",
-          "end": "1984-02-01",
+          "start": "1982-11-01T00:00:00",
+          "end": "1984-02-01T00:00:00",
           "attribute": {
             "description": "1982年11月発売。「パソコンテレビ」のコンセプト。テレビチューナー内蔵でスーパーインポーズ機能搭載。",
-            "colorPalette": { "name": "SHARP Green", "color": "#ffffff", "backgroundColor": "#2e7d32" }
+            "colorPalette": {
+              "name": "SHARP Green",
+              "color": "#ffffff",
+              "backgroundColor": "#2e7d32"
+            }
           }
         },
         {
           "id": 502,
           "rowId": 5,
           "name": "X1C / X1Ck / X1D",
-          "start": "1984-02-01",
-          "end": "1984-11-01",
+          "start": "1984-02-01T00:00:00",
+          "end": "1984-11-01T00:00:00",
           "attribute": {
             "description": "1984年2月以降に発売。コストダウンモデル（X1C）やFDD搭載モデル（X1D）などバリエーション展開。",
-            "colorPalette": { "name": "SHARP Teal", "color": "#ffffff", "backgroundColor": "#00897b" }
+            "colorPalette": {
+              "name": "SHARP Teal",
+              "color": "#ffffff",
+              "backgroundColor": "#00897b"
+            }
           }
         },
         {
           "id": 503,
           "rowId": 5,
           "name": "X1turbo〜X1turboIII",
-          "start": "1984-11-01",
-          "end": "1986-11-01",
+          "start": "1984-11-01T00:00:00",
+          "end": "1986-11-01T00:00:00",
           "attribute": {
             "description": "1984年11月にX1turbo発売。漢字表示、400ラインの高解像度。turboII、turboIIIとマイナーチェンジ。",
-            "colorPalette": { "name": "SHARP Green", "color": "#ffffff", "backgroundColor": "#2e7d32" },
-            "labels": [{ "name": "ベストセラー", "color": "#e53935" }]
+            "colorPalette": {
+              "name": "SHARP Green",
+              "color": "#ffffff",
+              "backgroundColor": "#2e7d32"
+            },
+            "labels": [
+              {
+                "name": "ベストセラー",
+                "color": "#e53935"
+              }
+            ]
           }
         },
         {
           "id": 504,
           "rowId": 5,
           "name": "X1F / X1G",
-          "start": "1985-11-01",
-          "end": "1987-06-01",
+          "start": "1985-11-01T00:00:00",
+          "end": "1987-06-01T00:00:00",
           "attribute": {
             "description": "1985年11月にX1F発売。初代X1の後継となるコストパフォーマンスモデル。X1F model 10は99,800円。X1Gは1986年発売のさらなる廉価版。",
-            "colorPalette": { "name": "SHARP Teal", "color": "#ffffff", "backgroundColor": "#00897b" }
+            "colorPalette": {
+              "name": "SHARP Teal",
+              "color": "#ffffff",
+              "backgroundColor": "#00897b"
+            }
           }
         },
         {
           "id": 505,
           "rowId": 5,
           "name": "X1turboZ / X1turboZII / ZIII",
-          "start": "1986-11-01",
-          "end": "1989-06-01",
+          "start": "1986-11-01T00:00:00",
+          "end": "1989-06-01T00:00:00",
           "attribute": {
             "description": "1986年11月にX1turboZ発売。FM音源搭載、4096色表示対応。PC-88SRと真っ向勝負したX1シリーズの完成形。",
-            "colorPalette": { "name": "SHARP Green", "color": "#ffffff", "backgroundColor": "#2e7d32" }
+            "colorPalette": {
+              "name": "SHARP Green",
+              "color": "#ffffff",
+              "backgroundColor": "#2e7d32"
+            }
           }
         },
         {
           "id": 506,
           "rowId": 5,
           "name": "X1twin",
-          "start": "1987-12-01",
-          "end": "1990-12-01",
+          "start": "1987-12-01T00:00:00",
+          "end": "1990-12-01T00:00:00",
           "attribute": {
             "description": "1987年12月発売。X1とPCエンジンの合体機。シリーズ最晩期の異色モデル。",
-            "colorPalette": { "name": "SHARP Teal", "color": "#ffffff", "backgroundColor": "#00897b" }
+            "colorPalette": {
+              "name": "SHARP Teal",
+              "color": "#ffffff",
+              "backgroundColor": "#00897b"
+            }
           }
         }
       ]
     },
     {
       "id": 6,
-      "projectId": "8bit-pc-history-japan",
+      "projectId": "a4735be9-62a9-4d83-ba1b-9a73edf24e5f",
       "name": "FM-8 / FM-7 シリーズ",
       "order": 6,
       "visible": true,
       "attribute": {
         "description": "富士通のFMシリーズ。6809 CPUを採用し、高速なグラフィック処理が特徴。「御三家」の一角を担った。",
-        "labels": [{ "name": "富士通", "color": "#c62828" }]
+        "labels": [
+          {
+            "name": "富士通",
+            "color": "#c62828"
+          }
+        ]
       },
       "tasks": [
         {
           "id": 601,
           "rowId": 6,
           "name": "FM-8",
-          "start": "1981-05-01",
-          "end": "1982-11-01",
+          "start": "1981-05-01T00:00:00",
+          "end": "1982-11-01T00:00:00",
           "attribute": {
             "description": "1981年5月発売。6809 CPU搭載。サブCPUによる高速グラフィック処理が革新的だった。",
-            "colorPalette": { "name": "Fujitsu Red", "color": "#ffffff", "backgroundColor": "#c62828" }
+            "colorPalette": {
+              "name": "Fujitsu Red",
+              "color": "#ffffff",
+              "backgroundColor": "#c62828"
+            }
           }
         },
         {
           "id": 602,
           "rowId": 6,
           "name": "FM-7",
-          "start": "1982-11-01",
-          "end": "1984-05-01",
+          "start": "1982-11-01T00:00:00",
+          "end": "1984-05-01T00:00:00",
           "attribute": {
             "description": "1982年11月発売。FM-8の廉価版。126,000円で爆発的にヒット。ゲーム用途でも人気。",
-            "colorPalette": { "name": "Fujitsu Red", "color": "#ffffff", "backgroundColor": "#c62828" },
-            "labels": [{ "name": "ベストセラー", "color": "#e53935" }]
+            "colorPalette": {
+              "name": "Fujitsu Red",
+              "color": "#ffffff",
+              "backgroundColor": "#c62828"
+            },
+            "labels": [
+              {
+                "name": "ベストセラー",
+                "color": "#e53935"
+              }
+            ]
           }
         },
         {
           "id": 603,
           "rowId": 6,
           "name": "FM-NEW7 / FM-77",
-          "start": "1984-05-01",
-          "end": "1985-11-01",
+          "start": "1984-05-01T00:00:00",
+          "end": "1985-11-01T00:00:00",
           "attribute": {
             "description": "1984年5月発売。FM-7の後継。FM-77は上位モデルで3.5インチFDD搭載。",
-            "colorPalette": { "name": "Fujitsu Orange", "color": "#000000", "backgroundColor": "#ef6c00" }
+            "colorPalette": {
+              "name": "Fujitsu Orange",
+              "color": "#000000",
+              "backgroundColor": "#ef6c00"
+            }
           }
         },
         {
           "id": 604,
           "rowId": 6,
           "name": "FM-77AV / AV20 / AV40",
-          "start": "1985-11-01",
-          "end": "1988-12-01",
+          "start": "1985-11-01T00:00:00",
+          "end": "1988-12-01T00:00:00",
           "attribute": {
             "description": "1985年11月にFM-77AV発売。4096色同時表示。AV40EXまで展開。8bit最強クラスのグラフィック。",
-            "colorPalette": { "name": "Fujitsu Red", "color": "#ffffff", "backgroundColor": "#c62828" }
+            "colorPalette": {
+              "name": "Fujitsu Red",
+              "color": "#ffffff",
+              "backgroundColor": "#c62828"
+            }
           }
         },
         {
           "id": 605,
           "rowId": 6,
           "name": "FM-X (MSX)",
-          "start": "1983-11-01",
-          "end": "1985-12-01",
+          "start": "1983-11-01T00:00:00",
+          "end": "1985-12-01T00:00:00",
           "attribute": {
             "description": "1983年11月発売。富士通のMSXパソコン。49,800円。FM-7/NEW7と接続してサブシステムとしても使用可能という独自の設計。",
-            "colorPalette": { "name": "MSX Pink", "color": "#ffffff", "backgroundColor": "#ad1457" },
-            "labels": [{ "name": "MSX", "color": "#ad1457" }]
+            "colorPalette": {
+              "name": "MSX Pink",
+              "color": "#ffffff",
+              "backgroundColor": "#ad1457"
+            },
+            "labels": [
+              {
+                "name": "MSX",
+                "color": "#ad1457"
+              }
+            ]
           }
         }
       ]
     },
     {
       "id": 7,
-      "projectId": "8bit-pc-history-japan",
+      "projectId": "a4735be9-62a9-4d83-ba1b-9a73edf24e5f",
       "name": "PASOPIA シリーズ",
       "order": 7,
       "visible": true,
       "attribute": {
         "description": "東芝のパソコンブランド。PASOPIA 7やPASOPIA miniなど、独自路線を展開。",
-        "labels": [{ "name": "東芝", "color": "#6a1b9a" }]
+        "labels": [
+          {
+            "name": "東芝",
+            "color": "#6a1b9a"
+          }
+        ]
       },
       "tasks": [
         {
           "id": 701,
           "rowId": 7,
           "name": "PASOPIA",
-          "start": "1981-10-01",
-          "end": "1983-05-01",
+          "start": "1981-10-01T00:00:00",
+          "end": "1983-05-01T00:00:00",
           "attribute": {
             "description": "1981年10月発売。Z80A 4MHz、RAM 64KB。T-BASICを搭載。",
-            "colorPalette": { "name": "Toshiba Purple", "color": "#ffffff", "backgroundColor": "#6a1b9a" }
+            "colorPalette": {
+              "name": "Toshiba Purple",
+              "color": "#ffffff",
+              "backgroundColor": "#6a1b9a"
+            }
           }
         },
         {
           "id": 702,
           "rowId": 7,
           "name": "PASOPIA 7 (PA7010/7012/7020)",
-          "start": "1983-05-01",
-          "end": "1985-12-01",
+          "start": "1983-05-01T00:00:00",
+          "end": "1985-12-01T00:00:00",
           "attribute": {
             "description": "1983年5月発売。8色カラー、PSG音源搭載。ホビー向けに人気。",
-            "colorPalette": { "name": "Toshiba Purple", "color": "#ffffff", "backgroundColor": "#6a1b9a" }
+            "colorPalette": {
+              "name": "Toshiba Purple",
+              "color": "#ffffff",
+              "backgroundColor": "#6a1b9a"
+            }
           }
         },
         {
           "id": 703,
           "rowId": 7,
           "name": "PASOPIA IQ (MSX)",
-          "start": "1984-02-01",
-          "end": "1986-12-01",
+          "start": "1984-02-01T00:00:00",
+          "end": "1986-12-01T00:00:00",
           "attribute": {
             "description": "1984年2月発売。MSX規格に準拠した東芝のMSXパソコン。HX-10/20/21など。",
-            "colorPalette": { "name": "MSX Pink", "color": "#ffffff", "backgroundColor": "#ad1457" },
-            "labels": [{ "name": "MSX", "color": "#ad1457" }]
+            "colorPalette": {
+              "name": "MSX Pink",
+              "color": "#ffffff",
+              "backgroundColor": "#ad1457"
+            },
+            "labels": [
+              {
+                "name": "MSX",
+                "color": "#ad1457"
+              }
+            ]
           }
         }
       ]
     },
     {
       "id": 8,
-      "projectId": "8bit-pc-history-japan",
+      "projectId": "a4735be9-62a9-4d83-ba1b-9a73edf24e5f",
       "name": "ベーシックマスター / MB-H シリーズ",
       "order": 8,
       "visible": true,
       "attribute": {
         "description": "日立のパソコン。6800系CPUを採用した独自路線。S1ではFM音源を搭載するなど先進的な機能も。MSX規格のMB-Hシリーズも展開。",
-        "labels": [{ "name": "日立", "color": "#5d4037" }]
+        "labels": [
+          {
+            "name": "日立",
+            "color": "#5d4037"
+          }
+        ]
       },
       "tasks": [
         {
           "id": 801,
           "rowId": 8,
           "name": "ベーシックマスター MB-6880",
-          "start": "1978-09-01",
-          "end": "1980-05-01",
+          "start": "1978-09-01T00:00:00",
+          "end": "1980-05-01T00:00:00",
           "attribute": {
             "description": "1978年9月発売。日本初のホビーパソコンの一つ。6800 CPU搭載。",
-            "colorPalette": { "name": "Hitachi Brown", "color": "#ffffff", "backgroundColor": "#5d4037" }
+            "colorPalette": {
+              "name": "Hitachi Brown",
+              "color": "#ffffff",
+              "backgroundColor": "#5d4037"
+            }
           }
         },
         {
           "id": 802,
           "rowId": 8,
           "name": "ベーシックマスター Level-3",
-          "start": "1980-05-01",
-          "end": "1982-12-01",
+          "start": "1980-05-01T00:00:00",
+          "end": "1982-12-01T00:00:00",
           "attribute": {
             "description": "1980年5月発売。6809 CPU。高解像度グラフィック（640x200）に対応。",
-            "colorPalette": { "name": "Hitachi Brown", "color": "#ffffff", "backgroundColor": "#5d4037" }
+            "colorPalette": {
+              "name": "Hitachi Brown",
+              "color": "#ffffff",
+              "backgroundColor": "#5d4037"
+            }
+          }
+        },
+        {
+          "id": 805,
+          "rowId": 8,
+          "name": "ベーシックマスター Jr.",
+          "start": "1982-12-01T00:00:00",
+          "end": "1985-06-01T00:00:00",
+          "attribute": {
+            "description": "1982年12月発売。HD6301 CPU（6800互換）搭載。89,800円の低価格でホビーユーザーに人気。カラーグラフィック対応。",
+            "colorPalette": {
+              "name": "Hitachi Brown",
+              "color": "#ffffff",
+              "backgroundColor": "#5d4037"
+            }
           }
         },
         {
           "id": 803,
           "rowId": 8,
           "name": "S1",
-          "start": "1983-12-01",
-          "end": "1986-12-01",
+          "start": "1983-12-01T00:00:00",
+          "end": "1986-12-01T00:00:00",
           "attribute": {
             "description": "1983年12月発売。6809E CPU。FM音源搭載、PCGなど先進的な機能を持つ。",
-            "colorPalette": { "name": "Hitachi Brown", "color": "#ffffff", "backgroundColor": "#5d4037" }
+            "colorPalette": {
+              "name": "Hitachi Brown",
+              "color": "#ffffff",
+              "backgroundColor": "#5d4037"
+            }
           }
         },
         {
           "id": 804,
           "rowId": 8,
           "name": "MB-H1 / MB-H2 / MB-H50 (MSX)",
-          "start": "1983-10-01",
-          "end": "1987-06-01",
+          "start": "1983-10-01T00:00:00",
+          "end": "1987-06-01T00:00:00",
           "attribute": {
             "description": "1983年10月にMB-H1発売。日立のMSXパソコン。MB-H2はMSXの改良版、MB-H50はMSX2対応モデル（1986年）。",
-            "colorPalette": { "name": "MSX Pink", "color": "#ffffff", "backgroundColor": "#ad1457" },
-            "labels": [{ "name": "MSX", "color": "#ad1457" }]
+            "colorPalette": {
+              "name": "MSX Pink",
+              "color": "#ffffff",
+              "backgroundColor": "#ad1457"
+            },
+            "labels": [
+              {
+                "name": "MSX",
+                "color": "#ad1457"
+              }
+            ]
           }
         }
       ]
     },
     {
       "id": 9,
-      "projectId": "8bit-pc-history-japan",
+      "projectId": "a4735be9-62a9-4d83-ba1b-9a73edf24e5f",
       "name": "HC-20 / PX-8 / QC-10",
       "order": 9,
       "visible": true,
       "attribute": {
         "description": "エプソンのパソコン。世界初のハンドヘルドコンピュータHC-20など、携帯型に特徴。",
-        "labels": [{ "name": "セイコーエプソン", "color": "#00838f" }]
+        "labels": [
+          {
+            "name": "セイコーエプソン",
+            "color": "#00838f"
+          }
+        ]
       },
       "tasks": [
         {
           "id": 901,
           "rowId": 9,
           "name": "HC-20 (世界初のハンドヘルドPC)",
-          "start": "1981-11-01",
-          "end": "1984-06-01",
+          "start": "1981-11-01T00:00:00",
+          "end": "1984-06-01T00:00:00",
           "attribute": {
             "description": "1981年11月発表（1982年7月発売）。世界初のハンドヘルドコンピュータとしてギネスに認定。",
-            "colorPalette": { "name": "Epson Cyan", "color": "#ffffff", "backgroundColor": "#00838f" }
+            "colorPalette": {
+              "name": "Epson Cyan",
+              "color": "#ffffff",
+              "backgroundColor": "#00838f"
+            }
           }
         },
         {
           "id": 902,
           "rowId": 9,
           "name": "PX-8",
-          "start": "1984-03-01",
-          "end": "1986-12-01",
+          "start": "1984-03-01T00:00:00",
+          "end": "1986-12-01T00:00:00",
           "attribute": {
             "description": "1984年3月発売。A4ノートサイズのラップトップ。CP/M搭載。",
-            "colorPalette": { "name": "Epson Cyan", "color": "#ffffff", "backgroundColor": "#00838f" }
+            "colorPalette": {
+              "name": "Epson Cyan",
+              "color": "#ffffff",
+              "backgroundColor": "#00838f"
+            }
           }
         },
         {
           "id": 903,
           "rowId": 9,
           "name": "QC-10 (QX-10)",
-          "start": "1982-12-01",
-          "end": "1985-12-01",
+          "start": "1982-12-01T00:00:00",
+          "end": "1985-12-01T00:00:00",
           "attribute": {
             "description": "1982年12月発売。ビジネス用デスクトップ。Z80搭載でCP/M対応。",
-            "colorPalette": { "name": "Epson Cyan", "color": "#ffffff", "backgroundColor": "#00838f" }
+            "colorPalette": {
+              "name": "Epson Cyan",
+              "color": "#ffffff",
+              "backgroundColor": "#00838f"
+            }
           }
         }
       ]
     },
     {
       "id": 10,
-      "projectId": "8bit-pc-history-japan",
+      "projectId": "a4735be9-62a9-4d83-ba1b-9a73edf24e5f",
       "name": "m5 / M23 シリーズ",
       "order": 10,
       "visible": true,
       "attribute": {
         "description": "ソード電算機のパソコン。m5はゲーム機的な低価格パソコン。後にタカラから「ゲームパソコン」として販売。",
-        "labels": [{ "name": "SORD", "color": "#f9a825" }]
+        "labels": [
+          {
+            "name": "SORD",
+            "color": "#f9a825"
+          }
+        ]
       },
       "tasks": [
         {
           "id": 1001,
           "rowId": 10,
           "name": "m5",
-          "start": "1982-06-01",
-          "end": "1984-06-01",
+          "start": "1982-06-01T00:00:00",
+          "end": "1984-06-01T00:00:00",
           "attribute": {
             "description": "1982年6月発売。Z80A搭載。49,800円の低価格で、ゲーム機能に特化。タカラから「ゲームパソコン」としても販売。",
-            "colorPalette": { "name": "SORD Yellow", "color": "#000000", "backgroundColor": "#f9a825" }
+            "colorPalette": {
+              "name": "SORD Yellow",
+              "color": "#000000",
+              "backgroundColor": "#f9a825"
+            }
           }
         },
         {
           "id": 1002,
           "rowId": 10,
           "name": "M23 / M68 / IS-11",
-          "start": "1983-06-01",
-          "end": "1986-12-01",
+          "start": "1983-06-01T00:00:00",
+          "end": "1986-12-01T00:00:00",
           "attribute": {
             "description": "M23は1983年発売のビジネスモデル。SORDは後に東芝に吸収合併された。",
-            "colorPalette": { "name": "SORD Yellow", "color": "#000000", "backgroundColor": "#f9a825" }
+            "colorPalette": {
+              "name": "SORD Yellow",
+              "color": "#000000",
+              "backgroundColor": "#f9a825"
+            }
           }
         }
       ]
     },
     {
       "id": 11,
-      "projectId": "8bit-pc-history-japan",
+      "projectId": "a4735be9-62a9-4d83-ba1b-9a73edf24e5f",
       "name": "SMC-777 / HIT BIT (MSX)",
       "order": 11,
       "visible": true,
       "attribute": {
         "description": "ソニーのパソコン。独自規格のSMC-777と、MSX規格のHBシリーズを展開。",
-        "labels": [{ "name": "ソニー", "color": "#ff8f00" }]
+        "labels": [
+          {
+            "name": "ソニー",
+            "color": "#ff8f00"
+          }
+        ]
       },
       "tasks": [
         {
           "id": 1101,
           "rowId": 11,
           "name": "SMC-777 / 70G",
-          "start": "1983-10-01",
-          "end": "1986-06-01",
+          "start": "1983-10-01T00:00:00",
+          "end": "1986-06-01T00:00:00",
           "attribute": {
             "description": "1983年10月発売。Z80A搭載。3.5インチFDDを標準搭載。独自規格のパソコン。",
-            "colorPalette": { "name": "Sony Orange", "color": "#000000", "backgroundColor": "#ff8f00" }
+            "colorPalette": {
+              "name": "Sony Orange",
+              "color": "#000000",
+              "backgroundColor": "#ff8f00"
+            }
           }
         },
         {
           "id": 1102,
           "rowId": 11,
-          "name": "HIT BIT (MSX) HB-55〜F1XD",
-          "start": "1983-10-01",
-          "end": "1988-12-01",
+          "name": "HIT BIT HB-55 / HB-75 (MSX)",
+          "start": "1983-10-01T00:00:00",
+          "end": "1987-02-01T00:00:00",
           "attribute": {
-            "description": "1983年10月発売。MSX規格のパソコン。HIT BITブランドで展開。MSX2のHB-F1XDまで続いた。",
-            "colorPalette": { "name": "MSX Pink", "color": "#ffffff", "backgroundColor": "#ad1457" },
-            "labels": [{ "name": "MSX", "color": "#ad1457" }]
+            "description": "1983年10月にHB-55発売。ソニー初のMSXパソコン。HIT BITブランドで展開。HB-75はRAM 64KBの上位モデル。",
+            "colorPalette": {
+              "name": "MSX Pink",
+              "color": "#ffffff",
+              "backgroundColor": "#ad1457"
+            },
+            "labels": [
+              {
+                "name": "MSX",
+                "color": "#ad1457"
+              }
+            ]
+          }
+        },
+        {
+          "id": 1103,
+          "rowId": 11,
+          "name": "HB-F1 / HB-F5 / HB-F9 (MSX2)",
+          "start": "1987-02-01T00:00:00",
+          "end": "1988-11-01T00:00:00",
+          "attribute": {
+            "description": "1987年2月にHB-F1発売。MSX2規格。HB-F5はFDD搭載モデル、HB-F9Pはスーパーインポーズ対応。HB-F1IIやHB-F1XD（FDD内蔵）も展開。",
+            "colorPalette": {
+              "name": "Sony Orange",
+              "color": "#000000",
+              "backgroundColor": "#ff8f00"
+            },
+            "labels": [
+              {
+                "name": "MSX",
+                "color": "#ad1457"
+              }
+            ]
+          }
+        },
+        {
+          "id": 1104,
+          "rowId": 11,
+          "name": "HB-F1XDJ / HB-F1XV (MSX2+)",
+          "start": "1988-11-01T00:00:00",
+          "end": "1990-12-01T00:00:00",
+          "attribute": {
+            "description": "1988年11月にHB-F1XDJ発売。MSX2+規格。HB-F1XVはFDD内蔵でMSX-JE（日本語入力）対応。ソニーMSXの最終モデル。",
+            "colorPalette": {
+              "name": "MSX Pink",
+              "color": "#ffffff",
+              "backgroundColor": "#ad1457"
+            },
+            "labels": [
+              {
+                "name": "MSX",
+                "color": "#ad1457"
+              }
+            ]
           }
         }
       ]
     },
     {
       "id": 12,
-      "projectId": "8bit-pc-history-japan",
+      "projectId": "a4735be9-62a9-4d83-ba1b-9a73edf24e5f",
       "name": "FP / PV / MX (MSX)",
       "order": 12,
       "visible": true,
       "attribute": {
         "description": "カシオのパソコン。FPシリーズは独自規格、MXシリーズはMSX規格。低価格戦略が特徴。",
-        "labels": [{ "name": "カシオ", "color": "#9e9d24" }]
+        "labels": [
+          {
+            "name": "カシオ",
+            "color": "#9e9d24"
+          }
+        ]
       },
       "tasks": [
         {
           "id": 1201,
           "rowId": 12,
           "name": "FP-1100",
-          "start": "1982-03-01",
-          "end": "1984-12-01",
+          "start": "1982-03-01T00:00:00",
+          "end": "1984-12-01T00:00:00",
           "attribute": {
             "description": "1982年3月発売。Z80A搭載。カシオ初のパソコン。128,000円。",
-            "colorPalette": { "name": "Casio Lime", "color": "#000000", "backgroundColor": "#9e9d24" }
+            "colorPalette": {
+              "name": "Casio Lime",
+              "color": "#000000",
+              "backgroundColor": "#9e9d24"
+            }
           }
         },
         {
           "id": 1202,
           "rowId": 12,
           "name": "PV-7 / PV-16 (MSX)",
-          "start": "1984-10-01",
-          "end": "1987-06-01",
+          "start": "1984-10-01T00:00:00",
+          "end": "1987-06-01T00:00:00",
           "attribute": {
             "description": "1984年10月発売。MSX規格のパソコン。PV-7は29,800円という衝撃的な低価格で話題に。",
-            "colorPalette": { "name": "MSX Pink", "color": "#ffffff", "backgroundColor": "#ad1457" },
-            "labels": [{ "name": "MSX", "color": "#ad1457" }]
+            "colorPalette": {
+              "name": "MSX Pink",
+              "color": "#ffffff",
+              "backgroundColor": "#ad1457"
+            },
+            "labels": [
+              {
+                "name": "MSX",
+                "color": "#ad1457"
+              }
+            ]
           }
         },
         {
           "id": 1203,
           "rowId": 12,
           "name": "MX-10 / MX-101 (MSX)",
-          "start": "1984-06-01",
-          "end": "1986-12-01",
+          "start": "1984-06-01T00:00:00",
+          "end": "1986-12-01T00:00:00",
           "attribute": {
             "description": "1984年6月発売。MSX規格。29,800円の低価格MSXパソコン。",
-            "colorPalette": { "name": "MSX Pink", "color": "#ffffff", "backgroundColor": "#ad1457" },
-            "labels": [{ "name": "MSX", "color": "#ad1457" }]
+            "colorPalette": {
+              "name": "MSX Pink",
+              "color": "#ffffff",
+              "backgroundColor": "#ad1457"
+            },
+            "labels": [
+              {
+                "name": "MSX",
+                "color": "#ad1457"
+              }
+            ]
           }
         }
       ]
     },
     {
       "id": 13,
-      "projectId": "8bit-pc-history-japan",
+      "projectId": "a4735be9-62a9-4d83-ba1b-9a73edf24e5f",
       "name": "JR / CF / FS-A1 シリーズ",
       "order": 13,
       "visible": true,
       "attribute": {
         "description": "松下電器（National）のパソコン。独自規格のJRシリーズでパソコン市場に参入後、MSX規格の推進役として最も多くのモデルを投入。MSX2+, MSXturboRまで展開。",
-        "labels": [{ "name": "松下/パナソニック", "color": "#00695c" }]
+        "labels": [
+          {
+            "name": "松下/パナソニック",
+            "color": "#00695c"
+          }
+        ]
       },
       "tasks": [
         {
           "id": 1300,
           "rowId": 13,
           "name": "JR-100",
-          "start": "1981-11-01",
-          "end": "1983-06-01",
+          "start": "1981-11-01T00:00:00",
+          "end": "1983-06-01T00:00:00",
           "attribute": {
             "description": "1981年11月発売。6802 CPU搭載。54,800円の低価格パソコン。テキスト表示のみだが、入門機として人気。",
-            "colorPalette": { "name": "Panasonic Teal", "color": "#ffffff", "backgroundColor": "#00695c" }
+            "colorPalette": {
+              "name": "Panasonic Teal",
+              "color": "#ffffff",
+              "backgroundColor": "#00695c"
+            }
           }
         },
         {
           "id": 1301,
           "rowId": 13,
           "name": "JR-200",
-          "start": "1983-01-01",
-          "end": "1984-12-01",
+          "start": "1983-01-01T00:00:00",
+          "end": "1984-12-01T00:00:00",
           "attribute": {
             "description": "1983年1月発売。6809 CPU搭載。カラーグラフィック対応、PSG音源搭載。79,800円。JR-100の上位機種。",
-            "colorPalette": { "name": "Panasonic Teal", "color": "#ffffff", "backgroundColor": "#00695c" }
+            "colorPalette": {
+              "name": "Panasonic Teal",
+              "color": "#ffffff",
+              "backgroundColor": "#00695c"
+            }
           }
         },
         {
           "id": 1302,
           "rowId": 13,
           "name": "CF-2000 / CF-2700 (MSX)",
-          "start": "1983-10-01",
-          "end": "1985-06-01",
+          "start": "1983-10-01T00:00:00",
+          "end": "1985-06-01T00:00:00",
           "attribute": {
             "description": "1983年10月発売。MSX規格。松下電器が多数のバリエーションを展開。",
-            "colorPalette": { "name": "Panasonic Teal", "color": "#ffffff", "backgroundColor": "#00695c" },
-            "labels": [{ "name": "MSX", "color": "#ad1457" }]
+            "colorPalette": {
+              "name": "Panasonic Teal",
+              "color": "#ffffff",
+              "backgroundColor": "#00695c"
+            },
+            "labels": [
+              {
+                "name": "MSX",
+                "color": "#ad1457"
+              }
+            ]
           }
         },
         {
           "id": 1303,
           "rowId": 13,
           "name": "FS-A1 シリーズ (MSX2)",
-          "start": "1986-09-01",
-          "end": "1988-10-01",
+          "start": "1986-09-01T00:00:00",
+          "end": "1988-10-01T00:00:00",
           "attribute": {
             "description": "1986年9月発売。MSX2規格。FS-A1は29,800円という驚異的な低価格でMSX2を普及させた。",
-            "colorPalette": { "name": "MSX Pink", "color": "#ffffff", "backgroundColor": "#ad1457" },
-            "labels": [{ "name": "MSX", "color": "#ad1457" }, { "name": "ベストセラー", "color": "#e53935" }]
+            "colorPalette": {
+              "name": "MSX Pink",
+              "color": "#ffffff",
+              "backgroundColor": "#ad1457"
+            },
+            "labels": [
+              {
+                "name": "MSX",
+                "color": "#ad1457"
+              },
+              {
+                "name": "ベストセラー",
+                "color": "#e53935"
+              }
+            ]
           }
         },
         {
           "id": 1304,
           "rowId": 13,
           "name": "FS-A1WX / WSX (MSX2+)",
-          "start": "1988-10-01",
-          "end": "1990-06-01",
+          "start": "1988-10-01T00:00:00",
+          "end": "1990-06-01T00:00:00",
           "attribute": {
             "description": "1988年10月発売。MSX2+規格。自然画表示機能を強化。",
-            "colorPalette": { "name": "MSX Pink", "color": "#ffffff", "backgroundColor": "#ad1457" },
-            "labels": [{ "name": "MSX", "color": "#ad1457" }]
+            "colorPalette": {
+              "name": "MSX Pink",
+              "color": "#ffffff",
+              "backgroundColor": "#ad1457"
+            },
+            "labels": [
+              {
+                "name": "MSX",
+                "color": "#ad1457"
+              }
+            ]
           }
         },
         {
           "id": 1305,
           "rowId": 13,
           "name": "FS-A1ST / GT (MSXturboR)",
-          "start": "1990-06-01",
-          "end": "1993-12-01",
+          "start": "1990-06-01T00:00:00",
+          "end": "1993-12-01T00:00:00",
           "attribute": {
             "description": "1990年6月にA1ST発売。R800 CPU搭載で高速化。MSX規格の最終進化形。A1GTが最後のMSXパソコン（1991年）。",
-            "colorPalette": { "name": "MSX Pink", "color": "#ffffff", "backgroundColor": "#ad1457" },
-            "labels": [{ "name": "MSX", "color": "#ad1457" }]
+            "colorPalette": {
+              "name": "MSX Pink",
+              "color": "#ffffff",
+              "backgroundColor": "#ad1457"
+            },
+            "labels": [
+              {
+                "name": "MSX",
+                "color": "#ad1457"
+              }
+            ]
           }
         }
       ]
     },
     {
       "id": 14,
-      "projectId": "8bit-pc-history-japan",
+      "projectId": "a4735be9-62a9-4d83-ba1b-9a73edf24e5f",
       "name": "MULTI 8 / ML (MSX)",
       "order": 14,
       "visible": true,
       "attribute": {
         "description": "三菱電機のパソコン。マルチプランニングシステムを特徴とした独自路線。",
-        "labels": [{ "name": "三菱", "color": "#ef6c00" }]
+        "labels": [
+          {
+            "name": "三菱",
+            "color": "#ef6c00"
+          }
+        ]
       },
       "tasks": [
         {
           "id": 1401,
           "rowId": 14,
           "name": "MULTI 8",
-          "start": "1982-09-01",
-          "end": "1985-06-01",
+          "start": "1982-09-01T00:00:00",
+          "end": "1985-06-01T00:00:00",
           "attribute": {
             "description": "1982年9月発売。Z80A搭載。独自のVDP搭載で高いグラフィック能力。",
-            "colorPalette": { "name": "Fujitsu Orange", "color": "#000000", "backgroundColor": "#ef6c00" }
+            "colorPalette": {
+              "name": "Fujitsu Orange",
+              "color": "#000000",
+              "backgroundColor": "#ef6c00"
+            }
           }
         },
         {
           "id": 1402,
           "rowId": 14,
           "name": "ML-G3 (MSX)",
-          "start": "1983-11-01",
-          "end": "1986-12-01",
+          "start": "1983-11-01T00:00:00",
+          "end": "1986-12-01T00:00:00",
           "attribute": {
             "description": "1983年11月発売。三菱のMSXパソコン。MLシリーズとして展開。",
-            "colorPalette": { "name": "MSX Pink", "color": "#ffffff", "backgroundColor": "#ad1457" },
-            "labels": [{ "name": "MSX", "color": "#ad1457" }]
+            "colorPalette": {
+              "name": "MSX Pink",
+              "color": "#ffffff",
+              "backgroundColor": "#ad1457"
+            },
+            "labels": [
+              {
+                "name": "MSX",
+                "color": "#ad1457"
+              }
+            ]
           }
         }
       ]
     },
     {
       "id": 15,
-      "projectId": "8bit-pc-history-japan",
+      "projectId": "a4735be9-62a9-4d83-ba1b-9a73edf24e5f",
       "name": "if800 シリーズ",
       "order": 15,
       "visible": true,
       "attribute": {
         "description": "沖電気工業のパソコン。主にビジネス用途で展開。Z80搭載の8bitモデル。",
-        "labels": [{ "name": "沖電気", "color": "#607d8b" }]
+        "labels": [
+          {
+            "name": "沖電気",
+            "color": "#607d8b"
+          }
+        ]
       },
       "tasks": [
         {
           "id": 1501,
           "rowId": 15,
           "name": "if800 model 30 / 40",
-          "start": "1981-03-01",
-          "end": "1984-06-01",
+          "start": "1981-03-01T00:00:00",
+          "end": "1984-06-01T00:00:00",
           "attribute": {
             "description": "1981年3月発売。ビジネス用パソコン。CP/M対応。",
-            "colorPalette": { "name": "SHARP Teal", "color": "#ffffff", "backgroundColor": "#00897b" }
+            "colorPalette": {
+              "name": "SHARP Teal",
+              "color": "#ffffff",
+              "backgroundColor": "#00897b"
+            }
           }
         }
       ]
