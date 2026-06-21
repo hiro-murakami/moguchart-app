@@ -611,6 +611,89 @@ export const rowHeaderContent = (row: moguchart.GanttRow) => {
   return container
 }
 
+export const rowHeaderTooltip = (row: moguchart.GanttRow) => {
+  const rowWithAttr = row as any
+  const description = rowWithAttr.attribute?.description as string | undefined
+  const labels = rowWithAttr.attribute?.labels as { name: string; color: string }[] | undefined
+  const commentCount = rowWithAttr.commentCount as number | undefined
+  const taskCount = row.tasks?.length ?? 0
+
+  // 説明もラベルもコメントもタスクもない場合はツールチップ不要
+  if (!description && (!labels || labels.length === 0) && !commentCount && taskCount === 0) {
+    return null
+  }
+
+  const colors = getTooltipColors()
+
+  const container = document.createElement('div')
+  container.style.display = 'flex'
+  container.style.flexDirection = 'column'
+  container.style.gap = '6px'
+  container.style.maxWidth = '320px'
+
+  // 行名
+  const nameDiv = document.createElement('div')
+  nameDiv.style.fontWeight = 'bold'
+  nameDiv.style.fontSize = '14px'
+  nameDiv.style.color = colors.textStrong
+  nameDiv.textContent = row.name || ''
+  container.appendChild(nameDiv)
+
+  // ラベル
+  if (labels && labels.length > 0) {
+    const labelsContainer = document.createElement('div')
+    labelsContainer.style.display = 'flex'
+    labelsContainer.style.flexWrap = 'wrap'
+    labelsContainer.style.gap = '4px'
+
+    labels.forEach((l) => {
+      const labelSpan = document.createElement('span')
+      labelSpan.style.backgroundColor = l.color
+      labelSpan.style.color = getContrastColor(l.color)
+      labelSpan.style.padding = '2px 6px'
+      labelSpan.style.borderRadius = '4px'
+      labelSpan.style.fontSize = '10px'
+      labelSpan.style.fontWeight = 'bold'
+      labelSpan.textContent = l.name
+      labelsContainer.appendChild(labelSpan)
+    })
+    container.appendChild(labelsContainer)
+  }
+
+  // 説明
+  if (description) {
+    const descDiv = document.createElement('div')
+    descDiv.style.fontSize = '12px'
+    descDiv.style.whiteSpace = 'pre-wrap'
+    descDiv.style.color = colors.text
+    descDiv.style.borderTop = `1px solid ${colors.divider}`
+    descDiv.style.paddingTop = '5px'
+    // 150文字で制限
+    descDiv.textContent = description.length > 150 ? description.slice(0, 150) + '...' : description
+    container.appendChild(descDiv)
+  }
+
+  // タスク数 & コメント数
+  const metaItems: string[] = []
+  if (taskCount > 0) {
+    metaItems.push(`📋 タスク ${taskCount}件`)
+  }
+  if (commentCount && commentCount > 0) {
+    metaItems.push(`💬 コメント ${commentCount}件`)
+  }
+  if (metaItems.length > 0) {
+    const metaDiv = document.createElement('div')
+    metaDiv.style.fontSize = '11px'
+    metaDiv.style.color = colors.textMuted
+    metaDiv.style.borderTop = `1px solid ${colors.divider}`
+    metaDiv.style.paddingTop = '4px'
+    metaDiv.textContent = metaItems.join('  ·  ')
+    container.appendChild(metaDiv)
+  }
+
+  return container
+}
+
 /** ラベルフィルターのコーナーセルを生成するファクトリ関数のオプション */
 export interface CornerContentOptions {
   /** 利用可能なラベルの一覧 */

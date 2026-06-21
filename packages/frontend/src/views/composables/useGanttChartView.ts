@@ -28,6 +28,7 @@ import {
   barContent,
   tooltip,
   rowHeaderContent,
+  rowHeaderTooltip,
   preloadCommentsCache,
   preloadRowCommentsCache,
   createCornerContent,
@@ -651,6 +652,7 @@ export const useGanttChartView = () => {
         barContent,
         tooltip: (task: moguchart.GanttTask) => tooltip(task, isHourly),
         rowHeaderContent,
+        rowHeaderTooltip,
         cornerContent: createCornerContent(() => ({
           availableLabels: availableLabels.value,
           selectedLabels: selectedRowFilterLabelNames.value,
