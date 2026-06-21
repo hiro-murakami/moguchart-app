@@ -10,6 +10,7 @@ moguchart の REST API を使って、ガントチャートのデータを Googl
 | `MoguchartApi.gs` | REST API クライアント |
 | `SheetFunctions.gs` | スプレッドシートへのデータ書き込み |
 | `Menu.gs` | カスタムメニューとエントリポイント |
+| `.clasp.json.example` | clasp 設定テンプレート（コピーして `scriptId` を設定） |
 
 ## 🚀 セットアップ手順
 
@@ -101,12 +102,16 @@ Content-Type: application/json
 # 1. clasp にログイン（ブラウザで認証）
 npx @google/clasp login
 
-# 2. .clasp.json にデプロイ先の Script ID を設定
+# 2. テンプレートから .clasp.json を作成
+cp docs/gas-template/.clasp.json.example docs/gas-template/.clasp.json
+
+# 3. .clasp.json の scriptId を実際の値に書き換え
 #    Apps Script エディタの URL に含まれる ID を使います
 #    https://script.google.com/home/projects/SCRIPT_ID/edit
 ```
 
-[.clasp.json](file:///Users/murakamihiroyuki/work/moguchart-app/docs/gas-template/.clasp.json) の `scriptId` を実際の値に書き換えてください。
+> **📝 注意**: `.clasp.json` には `scriptId` が含まれるため、git 管理対象外（`.gitignore`）です。
+> テンプレートの [.clasp.json.example](.clasp.json.example) をコピーして、自分の Script ID を設定してください。
 
 ### デプロイコマンド
 
