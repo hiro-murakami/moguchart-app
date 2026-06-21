@@ -22,6 +22,7 @@
     "setup:env": "pnpm -r run setup:env"
   },
   "devDependencies": {
+    "@google/clasp": "^3.3.0",
     "npm-run-all2": "^8.0.4",
     "prettier": "^3.8.0"
   }
