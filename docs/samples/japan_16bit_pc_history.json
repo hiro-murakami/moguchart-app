@@ -1,0 +1,1129 @@
+{
+  "version": "0.6.9",
+  "project": {
+    "id": "a30a5815-275b-4c3d-b57a-92371d3efd5b",
+    "name": "日本の16bitパソコンの歴史",
+    "start": "1982-01-01T00:00:00",
+    "end": "2003-12-31T00:00:00",
+    "public": true,
+    "authority": {
+      "owners": [],
+      "editors": [],
+      "viewers": []
+    },
+    "attribute": {
+      "granularity": "monthly",
+      "description": "1982年〜2003年に発売された日本の代表的な16bitパソコンの販売期間をガントチャートで可視化したサンプルプロジェクトです。各シリーズの登場から終息までを俯瞰できます。",
+      "colorPalettes": [
+        {
+          "name": "NEC Blue",
+          "color": "#ffffff",
+          "backgroundColor": "#1565c0"
+        },
+        {
+          "name": "NEC Light Blue",
+          "color": "#ffffff",
+          "backgroundColor": "#42a5f5"
+        },
+        {
+          "name": "NEC Indigo",
+          "color": "#ffffff",
+          "backgroundColor": "#3949ab"
+        },
+        {
+          "name": "NEC Navy",
+          "color": "#ffffff",
+          "backgroundColor": "#0d47a1"
+        },
+        {
+          "name": "SHARP Green",
+          "color": "#ffffff",
+          "backgroundColor": "#2e7d32"
+        },
+        {
+          "name": "SHARP Teal",
+          "color": "#ffffff",
+          "backgroundColor": "#00897b"
+        },
+        {
+          "name": "SHARP Light Green",
+          "color": "#000000",
+          "backgroundColor": "#66bb6a"
+        },
+        {
+          "name": "Fujitsu Red",
+          "color": "#ffffff",
+          "backgroundColor": "#c62828"
+        },
+        {
+          "name": "Fujitsu Orange",
+          "color": "#000000",
+          "backgroundColor": "#ef6c00"
+        },
+        {
+          "name": "Fujitsu Coral",
+          "color": "#ffffff",
+          "backgroundColor": "#e65100"
+        },
+        {
+          "name": "Toshiba Purple",
+          "color": "#ffffff",
+          "backgroundColor": "#6a1b9a"
+        },
+        {
+          "name": "Toshiba Light Purple",
+          "color": "#ffffff",
+          "backgroundColor": "#9c27b0"
+        },
+        {
+          "name": "Mitsubishi Orange",
+          "color": "#000000",
+          "backgroundColor": "#ef6c00"
+        },
+        {
+          "name": "Mitsubishi Amber",
+          "color": "#000000",
+          "backgroundColor": "#ff8f00"
+        },
+        {
+          "name": "Epson Cyan",
+          "color": "#ffffff",
+          "backgroundColor": "#00838f"
+        },
+        {
+          "name": "Epson Light Cyan",
+          "color": "#000000",
+          "backgroundColor": "#4dd0e1"
+        },
+        {
+          "name": "Panasonic Teal",
+          "color": "#ffffff",
+          "backgroundColor": "#00695c"
+        },
+        {
+          "name": "Hitachi Brown",
+          "color": "#ffffff",
+          "backgroundColor": "#5d4037"
+        }
+      ],
+      "labels": [
+        {
+          "name": "NEC",
+          "color": "#1565c0"
+        },
+        {
+          "name": "SHARP",
+          "color": "#2e7d32"
+        },
+        {
+          "name": "富士通",
+          "color": "#c62828"
+        },
+        {
+          "name": "東芝",
+          "color": "#6a1b9a"
+        },
+        {
+          "name": "三菱",
+          "color": "#ef6c00"
+        },
+        {
+          "name": "セイコーエプソン",
+          "color": "#00838f"
+        },
+        {
+          "name": "松下/パナソニック",
+          "color": "#00695c"
+        },
+        {
+          "name": "日立",
+          "color": "#5d4037"
+        },
+        {
+          "name": "ベストセラー",
+          "color": "#e53935"
+        },
+        {
+          "name": "国民機",
+          "color": "#ff6f00"
+        }
+      ],
+      "milestones": [
+        {
+          "name": "PC-9801 発売 (国産16bit時代の幕開け)",
+          "datetime": "1982-10-01T00:00:00+09:00",
+          "color": "#1565c0"
+        },
+        {
+          "name": "PC-9801VM 発売 (事実上の標準機に)",
+          "datetime": "1985-07-01T00:00:00+09:00",
+          "color": "#0d47a1"
+        },
+        {
+          "name": "X68000 発売 (ホビー16bitの金字塔)",
+          "datetime": "1987-03-01T00:00:00+09:00",
+          "color": "#2e7d32"
+        },
+        {
+          "name": "FM TOWNS 発売 (世界初CD-ROM標準搭載PC)",
+          "datetime": "1989-02-01T00:00:00+09:00",
+          "color": "#c62828"
+        },
+        {
+          "name": "DOS/V登場 (IBM PC/AT互換機の日本語化)",
+          "datetime": "1990-10-01T00:00:00+09:00",
+          "color": "#607d8b"
+        },
+        {
+          "name": "Windows 95 発売",
+          "datetime": "1995-11-01T00:00:00+09:00",
+          "color": "#0288d1"
+        },
+        {
+          "name": "NEC PC-98NX 発表 (PC-9800シリーズ終焉へ)",
+          "datetime": "1997-10-01T00:00:00+09:00",
+          "color": "#1565c0"
+        }
+      ]
+    }
+  },
+  "rows": [
+    {
+      "id": 1,
+      "projectId": "a30a5815-275b-4c3d-b57a-92371d3efd5b",
+      "name": "PC-9801 シリーズ (初代〜VM)",
+      "order": 1,
+      "visible": true,
+      "attribute": {
+        "description": "NECのPC-9801シリーズ前期。16bitパソコンの日本標準となり、ビジネス・ゲーム双方で圧倒的なシェアを獲得した「国民機」。",
+        "labels": [
+          {
+            "name": "NEC",
+            "color": "#1565c0"
+          }
+        ]
+      },
+      "tasks": [
+        {
+          "id": 101,
+          "rowId": 1,
+          "name": "PC-9801",
+          "start": "1982-10-01T00:00:00",
+          "end": "1983-11-01T00:00:00",
+          "attribute": {
+            "description": "1982年10月発売。μPD8086 8MHz、RAM 128KB。日本初の本格的16bitパソコン。298,000円。GDCによる高速グラフィック処理が特徴。",
+            "colorPalette": {
+              "name": "NEC Blue",
+              "color": "#ffffff",
+              "backgroundColor": "#1565c0"
+            }
+          }
+        },
+        {
+          "id": 102,
+          "rowId": 1,
+          "name": "PC-9801E / F / M",
+          "start": "1983-11-01T00:00:00",
+          "end": "1985-07-01T00:00:00",
+          "attribute": {
+            "description": "1983年11月にPC-9801E発売。廉価版のE、FDD内蔵のF、高速版のMなどバリエーション展開。PC-98の基盤を確立。",
+            "colorPalette": {
+              "name": "NEC Light Blue",
+              "color": "#ffffff",
+              "backgroundColor": "#42a5f5"
+            }
+          }
+        },
+        {
+          "id": 103,
+          "rowId": 1,
+          "name": "PC-9801VM / VM2 / VM21",
+          "start": "1985-07-01T00:00:00",
+          "end": "1988-06-01T00:00:00",
+          "attribute": {
+            "description": "1985年7月にVM発売。V30 CPU 10MHz搭載。EGCによる高速グラフィック。事実上の「標準機」として絶大なシェアを確立。多くのソフトがVM以降対応で開発された。",
+            "colorPalette": {
+              "name": "NEC Blue",
+              "color": "#ffffff",
+              "backgroundColor": "#1565c0"
+            },
+            "labels": [
+              {
+                "name": "ベストセラー",
+                "color": "#e53935"
+              },
+              {
+                "name": "国民機",
+                "color": "#ff6f00"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "projectId": "a30a5815-275b-4c3d-b57a-92371d3efd5b",
+      "name": "PC-9801 シリーズ (VX〜RA〜DA)",
+      "order": 2,
+      "visible": true,
+      "attribute": {
+        "description": "PC-9801シリーズ中期。80286/80386搭載で性能が大幅に向上。ゲームプラットフォームとしても全盛期を迎えた。",
+        "labels": [
+          {
+            "name": "NEC",
+            "color": "#1565c0"
+          }
+        ]
+      },
+      "tasks": [
+        {
+          "id": 201,
+          "rowId": 2,
+          "name": "PC-9801VX / UX / CV",
+          "start": "1986-10-01T00:00:00",
+          "end": "1988-07-01T00:00:00",
+          "attribute": {
+            "description": "1986年10月にVX発売。80286搭載。VXは高性能モデル、UXは小型モデル、CVは廉価モデル。",
+            "colorPalette": {
+              "name": "NEC Blue",
+              "color": "#ffffff",
+              "backgroundColor": "#1565c0"
+            },
+            "labels": [
+              {
+                "name": "ベストセラー",
+                "color": "#e53935"
+              }
+            ]
+          }
+        },
+        {
+          "id": 202,
+          "rowId": 2,
+          "name": "PC-9801RA / RS / RX / EX",
+          "start": "1988-07-01T00:00:00",
+          "end": "1990-05-01T00:00:00",
+          "attribute": {
+            "description": "1988年7月にRA発売。80386 20MHz搭載。386世代の幕開け。RS/RXは80386SX、EXは廉価版。",
+            "colorPalette": {
+              "name": "NEC Indigo",
+              "color": "#ffffff",
+              "backgroundColor": "#3949ab"
+            }
+          }
+        },
+        {
+          "id": 203,
+          "rowId": 2,
+          "name": "PC-9801DA / DS / DX / ES",
+          "start": "1990-05-01T00:00:00",
+          "end": "1992-01-01T00:00:00",
+          "attribute": {
+            "description": "1990年5月にDA発売。i386DX 20MHz搭載。H98シリーズも同時期に展開。デスクトップ型の成熟期。",
+            "colorPalette": {
+              "name": "NEC Light Blue",
+              "color": "#ffffff",
+              "backgroundColor": "#42a5f5"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "projectId": "a30a5815-275b-4c3d-b57a-92371d3efd5b",
+      "name": "PC-9801 シリーズ (FA〜末期)",
+      "order": 3,
+      "visible": true,
+      "attribute": {
+        "description": "PC-9801シリーズ後期。i486/Pentium世代へ移行するもDOS/V互換機の台頭で苦戦。1997年のPC-98NX発表で事実上終焉。",
+        "labels": [
+          {
+            "name": "NEC",
+            "color": "#1565c0"
+          }
+        ]
+      },
+      "tasks": [
+        {
+          "id": 301,
+          "rowId": 3,
+          "name": "PC-9801FA / FS / FX / BX",
+          "start": "1992-01-01T00:00:00",
+          "end": "1993-07-01T00:00:00",
+          "attribute": {
+            "description": "1992年1月にFA発売。i486SX/DX搭載。486世代への移行モデル。BXシリーズは廉価版。",
+            "colorPalette": {
+              "name": "NEC Blue",
+              "color": "#ffffff",
+              "backgroundColor": "#1565c0"
+            }
+          }
+        },
+        {
+          "id": 302,
+          "rowId": 3,
+          "name": "PC-9821 Ap/As/Ae / Bf/Bs/Be",
+          "start": "1993-07-01T00:00:00",
+          "end": "1995-06-01T00:00:00",
+          "attribute": {
+            "description": "1993年7月にAp/As/Ae発売。PC-9821シリーズとして256色/65536色表示対応。Windows時代への対応を強化。",
+            "colorPalette": {
+              "name": "NEC Indigo",
+              "color": "#ffffff",
+              "backgroundColor": "#3949ab"
+            }
+          }
+        },
+        {
+          "id": 303,
+          "rowId": 3,
+          "name": "PC-9821 Xa/Xt/Xp / V シリーズ",
+          "start": "1995-06-01T00:00:00",
+          "end": "1997-10-01T00:00:00",
+          "attribute": {
+            "description": "1995年6月にXa発売。Pentium搭載。Windows 95対応モデル。Vシリーズは汎用モニタ対応でAT互換機に接近。",
+            "colorPalette": {
+              "name": "NEC Light Blue",
+              "color": "#ffffff",
+              "backgroundColor": "#42a5f5"
+            }
+          }
+        },
+        {
+          "id": 304,
+          "rowId": 3,
+          "name": "PC-9821 Ra / Rv / CEREB",
+          "start": "1997-10-01T00:00:00",
+          "end": "2003-09-01T00:00:00",
+          "attribute": {
+            "description": "1997年10月以降のPC-98末期モデル。PC-98NX発表後も業務用途で細々と継続。2003年9月に出荷終了。",
+            "colorPalette": {
+              "name": "NEC Navy",
+              "color": "#ffffff",
+              "backgroundColor": "#0d47a1"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "projectId": "a30a5815-275b-4c3d-b57a-92371d3efd5b",
+      "name": "PC-9801 ノート (N/NS/NA/NX)",
+      "order": 4,
+      "visible": true,
+      "attribute": {
+        "description": "NECのPC-9801ノートパソコンシリーズ。98ノートはビジネスモバイルの代名詞となった。",
+        "labels": [
+          {
+            "name": "NEC",
+            "color": "#1565c0"
+          }
+        ]
+      },
+      "tasks": [
+        {
+          "id": 401,
+          "rowId": 4,
+          "name": "PC-9801N / NS / NL",
+          "start": "1989-11-01T00:00:00",
+          "end": "1991-12-01T00:00:00",
+          "attribute": {
+            "description": "1989年11月にPC-9801N発売。日本初の98ノート。V30HL搭載。重量2.9kg。NS（カラー液晶）やNL（廉価版）も展開。",
+            "colorPalette": {
+              "name": "NEC Blue",
+              "color": "#ffffff",
+              "backgroundColor": "#1565c0"
+            },
+            "labels": [
+              {
+                "name": "ベストセラー",
+                "color": "#e53935"
+              }
+            ]
+          }
+        },
+        {
+          "id": 402,
+          "rowId": 4,
+          "name": "PC-9801NA / NX / NC",
+          "start": "1991-12-01T00:00:00",
+          "end": "1993-11-01T00:00:00",
+          "attribute": {
+            "description": "1991年以降のノート。NA（i486SX搭載）、NX（カラー液晶）など性能向上。",
+            "colorPalette": {
+              "name": "NEC Light Blue",
+              "color": "#ffffff",
+              "backgroundColor": "#42a5f5"
+            }
+          }
+        },
+        {
+          "id": 403,
+          "rowId": 4,
+          "name": "PC-9821 Nr / Na / Nb / Ls / La",
+          "start": "1993-11-01T00:00:00",
+          "end": "1997-10-01T00:00:00",
+          "attribute": {
+            "description": "PC-9821世代のノート。Nr/Na/Nb（A4ノート）、La/Ls（B5サブノート）。Pentium搭載で高性能化。",
+            "colorPalette": {
+              "name": "NEC Indigo",
+              "color": "#ffffff",
+              "backgroundColor": "#3949ab"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "projectId": "a30a5815-275b-4c3d-b57a-92371d3efd5b",
+      "name": "PC-100 / PC-98LT / HA",
+      "order": 5,
+      "visible": true,
+      "attribute": {
+        "description": "NECの16bit派生モデル。PC-100はGUI先駆、PC-98LTはラップトップの先駆けだった。",
+        "labels": [
+          {
+            "name": "NEC",
+            "color": "#1565c0"
+          }
+        ]
+      },
+      "tasks": [
+        {
+          "id": 501,
+          "rowId": 5,
+          "name": "PC-100",
+          "start": "1983-10-01T00:00:00",
+          "end": "1985-06-01T00:00:00",
+          "attribute": {
+            "description": "1983年10月発売。8086 8MHz搭載。縦置きディスプレイとマウスを標準装備し、GUIを先取りした異色のマシン。西和彦が企画に関与。商業的には不振。",
+            "colorPalette": {
+              "name": "NEC Light Blue",
+              "color": "#ffffff",
+              "backgroundColor": "#42a5f5"
+            }
+          }
+        },
+        {
+          "id": 502,
+          "rowId": 5,
+          "name": "PC-98LT / PC-98HA (Handy98)",
+          "start": "1986-10-01T00:00:00",
+          "end": "1991-06-01T00:00:00",
+          "attribute": {
+            "description": "PC-98LTは1986年10月発売のラップトップ型。V50搭載。PC-98HAは1990年発売のハンドヘルド型。",
+            "colorPalette": {
+              "name": "NEC Indigo",
+              "color": "#ffffff",
+              "backgroundColor": "#3949ab"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "projectId": "a30a5815-275b-4c3d-b57a-92371d3efd5b",
+      "name": "X68000 シリーズ",
+      "order": 6,
+      "visible": true,
+      "attribute": {
+        "description": "シャープの68000系パソコン。「パーソナルワークステーション」を標榜し、ゲームとCGで圧倒的な性能を発揮した伝説的マシン。",
+        "labels": [
+          {
+            "name": "SHARP",
+            "color": "#2e7d32"
+          }
+        ]
+      },
+      "tasks": [
+        {
+          "id": 601,
+          "rowId": 6,
+          "name": "X68000 (初代)",
+          "start": "1987-03-01T00:00:00",
+          "end": "1988-04-01T00:00:00",
+          "attribute": {
+            "description": "1987年3月発売。MC68000 10MHz、RAM 1MB、HDD無し。マンハッタンシェイプの斬新なツインタワーデザイン。スプライト・BG・PCMなどゲーム機並みの描画機能。369,000円。",
+            "colorPalette": {
+              "name": "SHARP Green",
+              "color": "#ffffff",
+              "backgroundColor": "#2e7d32"
+            },
+            "labels": [
+              {
+                "name": "ベストセラー",
+                "color": "#e53935"
+              }
+            ]
+          }
+        },
+        {
+          "id": 602,
+          "rowId": 6,
+          "name": "X68000 ACE / EXPERT / PRO",
+          "start": "1988-04-01T00:00:00",
+          "end": "1990-03-01T00:00:00",
+          "attribute": {
+            "description": "1988年にACE発売。SASI-HDD内蔵。EXPERT（RAM 2MB）やPRO（HDD内蔵上位版）も。安定した人気を維持。",
+            "colorPalette": {
+              "name": "SHARP Teal",
+              "color": "#ffffff",
+              "backgroundColor": "#00897b"
+            }
+          }
+        },
+        {
+          "id": 603,
+          "rowId": 6,
+          "name": "X68000 EXPERT II / PRO II / XVI",
+          "start": "1990-03-01T00:00:00",
+          "end": "1991-12-01T00:00:00",
+          "attribute": {
+            "description": "1990年にEXPERT II発売。XVI（1991年）はCPU 16MHz化。SCSI標準搭載でHDD環境が標準に。",
+            "colorPalette": {
+              "name": "SHARP Green",
+              "color": "#ffffff",
+              "backgroundColor": "#2e7d32"
+            }
+          }
+        },
+        {
+          "id": 604,
+          "rowId": 6,
+          "name": "X68000 Compact / XVI Compact",
+          "start": "1992-01-01T00:00:00",
+          "end": "1993-12-01T00:00:00",
+          "attribute": {
+            "description": "1992年発売。横置き省スペースデザインに変更。XVI Compactは16MHz版。",
+            "colorPalette": {
+              "name": "SHARP Teal",
+              "color": "#ffffff",
+              "backgroundColor": "#00897b"
+            }
+          }
+        },
+        {
+          "id": 605,
+          "rowId": 6,
+          "name": "X68030 / X68030 Compact",
+          "start": "1993-03-01T00:00:00",
+          "end": "1995-12-01T00:00:00",
+          "attribute": {
+            "description": "1993年3月発売。MC68EC030 25MHz搭載で大幅高速化。X68000シリーズの最終進化形。Compact版も同時発売。",
+            "colorPalette": {
+              "name": "SHARP Green",
+              "color": "#ffffff",
+              "backgroundColor": "#2e7d32"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "projectId": "a30a5815-275b-4c3d-b57a-92371d3efd5b",
+      "name": "MZ-2861 / MZ-6500",
+      "order": 7,
+      "visible": true,
+      "attribute": {
+        "description": "シャープの16bitビジネスパソコン。MZ-5500/MZ-6500はインテル系16bitモデルで、MZ-2861はZ80と80286のデュアルCPU搭載。",
+        "labels": [
+          {
+            "name": "SHARP",
+            "color": "#2e7d32"
+          }
+        ]
+      },
+      "tasks": [
+        {
+          "id": 701,
+          "rowId": 7,
+          "name": "MZ-5500",
+          "start": "1983-05-01T00:00:00",
+          "end": "1985-03-01T00:00:00",
+          "attribute": {
+            "description": "1983年5月発売。8088搭載のビジネス向け16bitパソコン。CP/M-86対応。シャープ初の16bitモデル。",
+            "colorPalette": {
+              "name": "SHARP Teal",
+              "color": "#ffffff",
+              "backgroundColor": "#00897b"
+            }
+          }
+        },
+        {
+          "id": 702,
+          "rowId": 7,
+          "name": "MZ-6500 / 6550",
+          "start": "1985-03-01T00:00:00",
+          "end": "1987-12-01T00:00:00",
+          "attribute": {
+            "description": "1985年3月発売。80286搭載のビジネス向けハイエンドモデル。",
+            "colorPalette": {
+              "name": "SHARP Green",
+              "color": "#ffffff",
+              "backgroundColor": "#2e7d32"
+            }
+          }
+        },
+        {
+          "id": 703,
+          "rowId": 7,
+          "name": "MZ-2861",
+          "start": "1987-06-01T00:00:00",
+          "end": "1990-06-01T00:00:00",
+          "attribute": {
+            "description": "1987年6月発売。Z80とi80286のデュアルCPU搭載。MZ-2500（8bit）の資産をそのまま活用できるCP/M-86/MS-DOS対応のビジネスマシン。",
+            "colorPalette": {
+              "name": "SHARP Teal",
+              "color": "#ffffff",
+              "backgroundColor": "#00897b"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "projectId": "a30a5815-275b-4c3d-b57a-92371d3efd5b",
+      "name": "FM-16β / FM R シリーズ",
+      "order": 8,
+      "visible": true,
+      "attribute": {
+        "description": "富士通の16bitビジネスパソコン。FM-16βで16bitに参入し、FM Rシリーズでビジネス市場を開拓。",
+        "labels": [
+          {
+            "name": "富士通",
+            "color": "#c62828"
+          }
+        ]
+      },
+      "tasks": [
+        {
+          "id": 801,
+          "rowId": 8,
+          "name": "FM-16β",
+          "start": "1985-01-01T00:00:00",
+          "end": "1987-12-01T00:00:00",
+          "attribute": {
+            "description": "1985年1月発売。80186搭載。富士通初の本格16bitパソコン。FM-7シリーズとは別系統でビジネス向け。MS-DOS対応。",
+            "colorPalette": {
+              "name": "Fujitsu Red",
+              "color": "#ffffff",
+              "backgroundColor": "#c62828"
+            }
+          }
+        },
+        {
+          "id": 802,
+          "rowId": 8,
+          "name": "FM R-50 / R-60 / R-70",
+          "start": "1987-05-01T00:00:00",
+          "end": "1993-12-01T00:00:00",
+          "attribute": {
+            "description": "1987年5月にFM R-50発売。80286/386搭載。PC-9801互換を意識したビジネスパソコン。OASYS文書処理対応。FMRシリーズとして長期展開。",
+            "colorPalette": {
+              "name": "Fujitsu Orange",
+              "color": "#000000",
+              "backgroundColor": "#ef6c00"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "projectId": "a30a5815-275b-4c3d-b57a-92371d3efd5b",
+      "name": "FM TOWNS シリーズ",
+      "order": 9,
+      "visible": true,
+      "attribute": {
+        "description": "富士通のマルチメディアパソコン。世界初のCD-ROMドライブ標準搭載パソコンとして登場。ゲームやマルチメディアに強みを発揮。",
+        "labels": [
+          {
+            "name": "富士通",
+            "color": "#c62828"
+          }
+        ]
+      },
+      "tasks": [
+        {
+          "id": 901,
+          "rowId": 9,
+          "name": "FM TOWNS (初代) / FM TOWNS 2",
+          "start": "1989-02-01T00:00:00",
+          "end": "1991-02-01T00:00:00",
+          "attribute": {
+            "description": "1989年2月発売。i386SX 16MHz搭載。世界初のCD-ROMドライブ標準搭載パソコン。スプライト機能・PCM音源搭載でゲームにも強い。「ぶっとびー」のCMで話題に。",
+            "colorPalette": {
+              "name": "Fujitsu Red",
+              "color": "#ffffff",
+              "backgroundColor": "#c62828"
+            },
+            "labels": [
+              {
+                "name": "ベストセラー",
+                "color": "#e53935"
+              }
+            ]
+          }
+        },
+        {
+          "id": 902,
+          "rowId": 9,
+          "name": "FM TOWNS II (UX/CX/HB/HR)",
+          "start": "1991-02-01T00:00:00",
+          "end": "1993-02-01T00:00:00",
+          "attribute": {
+            "description": "1991年にTOWNS II登場。i386SX/DX搭載。UX（一体型）やHR（i486搭載ハイエンド）など多彩なラインナップ。",
+            "colorPalette": {
+              "name": "Fujitsu Orange",
+              "color": "#000000",
+              "backgroundColor": "#ef6c00"
+            }
+          }
+        },
+        {
+          "id": 903,
+          "rowId": 9,
+          "name": "FM TOWNS マーティー",
+          "start": "1993-02-01T00:00:00",
+          "end": "1995-06-01T00:00:00",
+          "attribute": {
+            "description": "1993年2月発売。TOWNS互換のゲーム機/パソコン。テレビに接続して使用。コントローラー付属。TOWNS用ソフトがそのまま動作。98,000円。",
+            "colorPalette": {
+              "name": "Fujitsu Coral",
+              "color": "#ffffff",
+              "backgroundColor": "#e65100"
+            }
+          }
+        },
+        {
+          "id": 904,
+          "rowId": 9,
+          "name": "FM TOWNS II (EA/HA/HB/HC/Fresh)",
+          "start": "1993-02-01T00:00:00",
+          "end": "1995-12-01T00:00:00",
+          "attribute": {
+            "description": "1993年以降の後期TOWNS。i486搭載。FreshシリーズでWindows対応を強化。Freshは1995年まで販売。",
+            "colorPalette": {
+              "name": "Fujitsu Red",
+              "color": "#ffffff",
+              "backgroundColor": "#c62828"
+            }
+          }
+        },
+        {
+          "id": 905,
+          "rowId": 9,
+          "name": "FMV-TOWNS (Fresh GT/GS)",
+          "start": "1995-02-01T00:00:00",
+          "end": "1997-06-01T00:00:00",
+          "attribute": {
+            "description": "1995年以降のFMV-TOWNSシリーズ。FMVブランドに統合されTOWNS互換を維持しつつAT互換機に移行。最終的にTOWNSアーキテクチャは終息。",
+            "colorPalette": {
+              "name": "Fujitsu Orange",
+              "color": "#000000",
+              "backgroundColor": "#ef6c00"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "projectId": "a30a5815-275b-4c3d-b57a-92371d3efd5b",
+      "name": "J-3100 シリーズ",
+      "order": 10,
+      "visible": true,
+      "attribute": {
+        "description": "東芝のIBM PC/AT互換機シリーズ。ラップトップ型で世界市場を開拓し「ラップトップの東芝」の名声を確立。日本語独自仕様も含む。",
+        "labels": [
+          {
+            "name": "東芝",
+            "color": "#6a1b9a"
+          }
+        ]
+      },
+      "tasks": [
+        {
+          "id": 1001,
+          "rowId": 10,
+          "name": "T1100 / J-3100",
+          "start": "1985-04-01T00:00:00",
+          "end": "1988-06-01T00:00:00",
+          "attribute": {
+            "description": "1985年4月にT1100（海外版）発売。世界初のラップトップPC。J-3100は日本語版で1986年発売。80C86搭載。IBM PC/AT互換で日本語表示に独自仕様を採用。",
+            "colorPalette": {
+              "name": "Toshiba Purple",
+              "color": "#ffffff",
+              "backgroundColor": "#6a1b9a"
+            }
+          }
+        },
+        {
+          "id": 1002,
+          "rowId": 10,
+          "name": "J-3100SS / SL / GL / GX",
+          "start": "1988-06-01T00:00:00",
+          "end": "1992-06-01T00:00:00",
+          "attribute": {
+            "description": "1989年にJ-3100SS発売。A4サイズラップトップ。80C286/386SX搭載。DynaBookブランドの原型。SL/GL/GXと多彩な展開。",
+            "colorPalette": {
+              "name": "Toshiba Light Purple",
+              "color": "#ffffff",
+              "backgroundColor": "#9c27b0"
+            },
+            "labels": [
+              {
+                "name": "ベストセラー",
+                "color": "#e53935"
+              }
+            ]
+          }
+        },
+        {
+          "id": 1003,
+          "rowId": 10,
+          "name": "J-3100 後期 / DynaBook移行",
+          "start": "1992-06-01T00:00:00",
+          "end": "1995-12-01T00:00:00",
+          "attribute": {
+            "description": "1992年以降、DynaBookブランドに統合されていく過渡期。i486搭載モデルも登場。独自日本語仕様からDOS/V対応へ移行。",
+            "colorPalette": {
+              "name": "Toshiba Purple",
+              "color": "#ffffff",
+              "backgroundColor": "#6a1b9a"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "projectId": "a30a5815-275b-4c3d-b57a-92371d3efd5b",
+      "name": "MULTI 16 / Apricot シリーズ",
+      "order": 11,
+      "visible": true,
+      "attribute": {
+        "description": "三菱電機の16bitパソコン。MULTI 16はビジネス向け独自仕様機。Apricotは英国ACT社との提携モデル。",
+        "labels": [
+          {
+            "name": "三菱",
+            "color": "#ef6c00"
+          }
+        ]
+      },
+      "tasks": [
+        {
+          "id": 1101,
+          "rowId": 11,
+          "name": "MULTI 16",
+          "start": "1982-11-01T00:00:00",
+          "end": "1985-12-01T00:00:00",
+          "attribute": {
+            "description": "1982年11月発売。8088搭載。PC-9801とほぼ同時期に登場した三菱の16bitパソコン。MS-DOS対応だがPC-98との互換性はなし。",
+            "colorPalette": {
+              "name": "Mitsubishi Orange",
+              "color": "#000000",
+              "backgroundColor": "#ef6c00"
+            }
+          }
+        },
+        {
+          "id": 1102,
+          "rowId": 11,
+          "name": "MULTI 16 II",
+          "start": "1984-06-01T00:00:00",
+          "end": "1987-06-01T00:00:00",
+          "attribute": {
+            "description": "1984年6月発売。8086搭載でMULTI 16の強化版。ビジネス用途向けに展開。",
+            "colorPalette": {
+              "name": "Mitsubishi Amber",
+              "color": "#000000",
+              "backgroundColor": "#ff8f00"
+            }
+          }
+        },
+        {
+          "id": 1103,
+          "rowId": 11,
+          "name": "Apricot シリーズ",
+          "start": "1987-06-01T00:00:00",
+          "end": "1995-12-01T00:00:00",
+          "attribute": {
+            "description": "1987年以降。英国ACT社のApricotブランドで展開。80286/386搭載。独自仕様からAT互換機路線へ移行。",
+            "colorPalette": {
+              "name": "Mitsubishi Orange",
+              "color": "#000000",
+              "backgroundColor": "#ef6c00"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "projectId": "a30a5815-275b-4c3d-b57a-92371d3efd5b",
+      "name": "PC-286/386 (エプソン98互換機)",
+      "order": 12,
+      "visible": true,
+      "attribute": {
+        "description": "エプソンのPC-9801互換機シリーズ。純正PC-98より安価で同等の互換性を実現し、NECと法廷闘争にもなった。",
+        "labels": [
+          {
+            "name": "セイコーエプソン",
+            "color": "#00838f"
+          }
+        ]
+      },
+      "tasks": [
+        {
+          "id": 1201,
+          "rowId": 12,
+          "name": "PC-286 シリーズ",
+          "start": "1987-06-01T00:00:00",
+          "end": "1990-06-01T00:00:00",
+          "attribute": {
+            "description": "1987年6月発売。80286搭載のPC-9801互換機。PC-286V/VS/VG/VEなど多数のモデル展開。NEC純正より安価で人気。",
+            "colorPalette": {
+              "name": "Epson Cyan",
+              "color": "#ffffff",
+              "backgroundColor": "#00838f"
+            }
+          }
+        },
+        {
+          "id": 1202,
+          "rowId": 12,
+          "name": "PC-386 シリーズ",
+          "start": "1989-05-01T00:00:00",
+          "end": "1992-12-01T00:00:00",
+          "attribute": {
+            "description": "1989年5月にPC-386M発売。i386搭載のPC-98互換機。386GS、386Pなどノート型も。互換性の高さで法人市場に浸透。",
+            "colorPalette": {
+              "name": "Epson Light Cyan",
+              "color": "#000000",
+              "backgroundColor": "#4dd0e1"
+            }
+          }
+        },
+        {
+          "id": 1203,
+          "rowId": 12,
+          "name": "PC-486 / PC-586 シリーズ",
+          "start": "1992-05-01T00:00:00",
+          "end": "1996-06-01T00:00:00",
+          "attribute": {
+            "description": "1992年5月にPC-486GR発売。i486/Pentium搭載の98互換機。PC-486シリーズはWindows 3.1時代に多数展開。PC-586はPentium搭載モデル。1996年頃に終息。",
+            "colorPalette": {
+              "name": "Epson Cyan",
+              "color": "#ffffff",
+              "backgroundColor": "#00838f"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "projectId": "a30a5815-275b-4c3d-b57a-92371d3efd5b",
+      "name": "Panacom M シリーズ",
+      "order": 13,
+      "visible": true,
+      "attribute": {
+        "description": "松下電器の16bitビジネスパソコン。独自規格でMS-DOSに対応。OASYS互換のワープロ機能も搭載。",
+        "labels": [
+          {
+            "name": "松下/パナソニック",
+            "color": "#00695c"
+          }
+        ]
+      },
+      "tasks": [
+        {
+          "id": 1301,
+          "rowId": 13,
+          "name": "Panacom M500 / M700",
+          "start": "1987-03-01T00:00:00",
+          "end": "1990-12-01T00:00:00",
+          "attribute": {
+            "description": "1987年発売。80286搭載のビジネス向け16bitパソコン。MS-DOS対応。独自仕様だがソフト資産が限られた。",
+            "colorPalette": {
+              "name": "Panasonic Teal",
+              "color": "#ffffff",
+              "backgroundColor": "#00695c"
+            }
+          }
+        },
+        {
+          "id": 1302,
+          "rowId": 13,
+          "name": "Panacom M シリーズ後期",
+          "start": "1990-12-01T00:00:00",
+          "end": "1993-12-01T00:00:00",
+          "attribute": {
+            "description": "1990年以降。i386/i486搭載モデル。次第にAT互換機路線へ移行。",
+            "colorPalette": {
+              "name": "Panasonic Teal",
+              "color": "#ffffff",
+              "backgroundColor": "#00695c"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "projectId": "a30a5815-275b-4c3d-b57a-92371d3efd5b",
+      "name": "FLORA / 2020 / B32 (日立)",
+      "order": 14,
+      "visible": true,
+      "attribute": {
+        "description": "日立の16bitパソコン。B16/B32シリーズでビジネス市場に参入し、後にFLORAブランドへ発展。",
+        "labels": [
+          {
+            "name": "日立",
+            "color": "#5d4037"
+          }
+        ]
+      },
+      "tasks": [
+        {
+          "id": 1401,
+          "rowId": 14,
+          "name": "B16 / B16EX",
+          "start": "1983-10-01T00:00:00",
+          "end": "1987-06-01T00:00:00",
+          "attribute": {
+            "description": "1983年10月発売。8088搭載。ビジネス向け16bitパソコン。MS-DOS対応。",
+            "colorPalette": {
+              "name": "Hitachi Brown",
+              "color": "#ffffff",
+              "backgroundColor": "#5d4037"
+            }
+          }
+        },
+        {
+          "id": 1402,
+          "rowId": 14,
+          "name": "B32 / 2020",
+          "start": "1987-06-01T00:00:00",
+          "end": "1993-12-01T00:00:00",
+          "attribute": {
+            "description": "1987年以降。80286/386搭載のビジネス向け上位機種。2020シリーズは日立独自仕様のビジネスパソコン。後にFLORAブランドへ統合。",
+            "colorPalette": {
+              "name": "Hitachi Brown",
+              "color": "#ffffff",
+              "backgroundColor": "#5d4037"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

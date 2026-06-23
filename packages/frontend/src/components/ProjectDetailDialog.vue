@@ -122,8 +122,8 @@ const dateDurationRules = computed(() => {
           return '期間は24ヶ月以内に設定してください'
         }
       } else if (localGranularity.value === 'monthly') {
-        if (end.isAfter(start.add(20, 'year'))) {
-          return '期間は20年以内に設定してください'
+        if (end.isAfter(start.add(30, 'year'))) {
+          return '期間は30年以内に設定してください'
         }
       }
       return true
