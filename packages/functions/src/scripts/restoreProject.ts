@@ -72,6 +72,11 @@ const restoreSnapshots = async (zip: AdmZip, projectId: string) => {
   }
 }
 
+// UUID v4 形式かどうかを判定するヘルパー
+const isUUID = (value: string): boolean => {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)
+}
+
 const restoreProject: RestoreProject = async (data, email) => {
   let projectData: any
   let zipInstance: AdmZip | undefined
@@ -110,11 +115,16 @@ const restoreProject: RestoreProject = async (data, email) => {
       viewers: [],
     }
 
-    // 既存プロジェクトのチェック
+    // oldProjectIdがUUID形式でない場合は新しいUUIDを採番
+    const isValidUUID = isUUID(oldProjectId)
+
+    // 既存プロジェクトのチェック（UUID形式の場合のみ）
     let newProjectId: string
-    const existingProject = await tx.project.findUnique({
-      where: { id: oldProjectId },
-    })
+    const existingProject = isValidUUID
+      ? await tx.project.findUnique({
+          where: { id: oldProjectId },
+        })
+      : null // UUID形式でない場合は既存チェックをスキップ
 
     if (existingProject) {
       if (newId) {
@@ -147,7 +157,28 @@ const restoreProject: RestoreProject = async (data, email) => {
         })
         newProjectId = oldProjectId
 
-        // 既存の行を削除（Cascade でタスクも消えるはずだが、念のため）
+        // 既存データを依存関係の順序で削除
+        // 1. プロジェクトコメントを削除
+        await tx.comment.deleteMany({
+          where: { projectId: newProjectId },
+        })
+        // 2. タスクに紐づくコメントを削除
+        await tx.comment.deleteMany({
+          where: {
+            task: { row: { projectId: newProjectId } },
+          },
+        })
+        // 3. 行に紐づくコメントを削除
+        await tx.comment.deleteMany({
+          where: {
+            row: { projectId: newProjectId },
+          },
+        })
+        // 4. タスクを削除
+        await tx.ganttTask.deleteMany({
+          where: { row: { projectId: newProjectId } },
+        })
+        // 5. 行を削除
         await tx.ganttRow.deleteMany({
           where: { projectId: newProjectId },
         })
@@ -155,10 +186,12 @@ const restoreProject: RestoreProject = async (data, email) => {
         throw new Error('PROJECT_EXISTS')
       }
     } else {
-      // 新規作成（IDを指定して作成）
+      // 新規作成
+      // UUID形式の場合は元のIDを使用、そうでない場合は新しいUUIDを採番
+      const projectId = isValidUUID ? oldProjectId : crypto.randomUUID()
       const newProject = await tx.project.create({
         data: {
-          id: oldProjectId, // 元のIDを使用
+          id: projectId,
           name: projectData.name,
           start: new Date(projectData.start),
           end: new Date(projectData.end),
@@ -245,7 +278,7 @@ const restoreProject: RestoreProject = async (data, email) => {
     }
 
     return newProjectId
-  })
+  }, { timeout: 60000 }) // 大量データの復元に対応するためタイムアウトを60秒に設定
 
   // トランザクション完了後にスナップショットを復元
   if (zipInstance) {

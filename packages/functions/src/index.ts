@@ -32,6 +32,9 @@ import { cleanupAnonymousData } from './scripts/cleanupAnonymousData.js'
 import { cleanupPresence } from './scripts/cleanupPresence.js'
 import { FirebaseFunction } from './types/index.js'
 
+// REST API（外部アプリ向け）
+import { api } from './api/index.js'
+
 const functions: FirebaseFunction = {
   selectProjects,
   selectGanttChart,
@@ -67,5 +70,9 @@ export const gantt = {
   functions: setupFirebaseFunction(functions),
 }
 
+// REST API（外部アプリ向け）
+export { api }
+
 // スケジュール関数（自動クリーンアップ）
 export { cleanupEditEvents, cleanupAnonymousData, cleanupPresence }
+
