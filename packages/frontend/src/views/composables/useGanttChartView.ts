@@ -413,8 +413,42 @@ export const useGanttChartView = () => {
   const selectedTaskIds = ref<string[]>([])
 
   const availableLabels = computed(() => {
-    return currentProject.value?.attribute?.labels || []
+    const labelMap = new Map<string, string>() // name -> color
+    rows.value.forEach((row) => {
+      if (row.tasks) {
+        row.tasks.forEach((task) => {
+          const attribute = (task as any).attribute as TaskAttribute | undefined
+          const labels = attribute?.labels
+          if (labels && Array.isArray(labels)) {
+            labels.forEach((l: any) => {
+              if (l && l.name) {
+                labelMap.set(l.name, l.color || '#9e9e9e')
+              }
+            })
+          }
+        })
+      }
+    })
+    return Array.from(labelMap.entries()).map(([name, color]) => ({ name, color }))
   })
+
+
+  const availableRowLabels = computed(() => {
+    const labelMap = new Map<string, string>() // name -> color
+    rows.value.forEach((row) => {
+      const rowAttr = (row as any).attribute as RowAttribute | undefined
+      const labels = rowAttr?.labels
+      if (labels && Array.isArray(labels)) {
+        labels.forEach((l: any) => {
+          if (l && l.name) {
+            labelMap.set(l.name, l.color || '#9e9e9e')
+          }
+        })
+      }
+    })
+    return Array.from(labelMap.entries()).map(([name, color]) => ({ name, color }))
+  })
+
 
   /**
    * 他ユーザー編集中のタスクにハイライトスタイルを付与するヘルパー
@@ -663,7 +697,7 @@ export const useGanttChartView = () => {
         rowHeaderContent,
         rowHeaderTooltip,
         cornerContent: createCornerContent(() => ({
-          availableLabels: availableLabels.value,
+          availableLabels: availableRowLabels.value,
           selectedLabels: selectedRowFilterLabelNames.value,
           onSelectionChange: (labels: string[]) => {
             selectedRowFilterLabelNames.value = labels
