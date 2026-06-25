@@ -1,4 +1,4 @@
-import { ref, computed, nextTick, watch, onUnmounted, getCurrentInstance } from 'vue'
+import { ref, computed, nextTick, watch, onUnmounted, getCurrentInstance, inject, type Ref } from 'vue'
 import { useTheme } from 'vuetify'
 import { useTutorial } from '@/composables/useTutorial'
 import type { TutorialKey } from '@functions/types/shared'
@@ -13,6 +13,9 @@ export function useTutorialOverlay(props: UseTutorialOverlayProps, emit: (event:
   const theme = useTheme()
   const isDark = computed(() => theme.current.value.dark)
 
+  /** 公開閲覧モードではチュートリアルを表示しない */
+  const isPublicViewMode = inject<Ref<boolean>>('isPublicViewMode', ref(false))
+
   const targetRect = ref<DOMRect | null>(null)
   const activatorNode = ref<HTMLElement | null>(null)
   const dontShowAgain = ref(false)
@@ -20,7 +23,7 @@ export function useTutorialOverlay(props: UseTutorialOverlayProps, emit: (event:
 
   const manualDismissed = ref(false)
   const isEligible = computed(() => {
-    return props.condition && !isCompleted(props.tutorialKey) && !manualDismissed.value
+    return props.condition && !isCompleted(props.tutorialKey) && !manualDismissed.value && !isPublicViewMode.value
   })
 
   watch(
