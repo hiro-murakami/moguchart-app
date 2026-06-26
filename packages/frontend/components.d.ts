@@ -13,6 +13,7 @@ declare module 'vue' {
   export interface GlobalComponents {
     AddRowDialog: typeof import('./src/components/AddRowDialog.vue')['default']
     AlertDialog: typeof import('./src/components/common/AlertDialog.vue')['default']
+    ApiKeyManageDialog: typeof import('./src/components/ApiKeyManageDialog.vue')['default']
     AppUserMenu: typeof import('./src/components/AppUserMenu.vue')['default']
     AuthorityHistoryDialog: typeof import('./src/components/AuthorityHistoryDialog.vue')['default']
     ChartContextMenu: typeof import('./src/components/ChartContextMenu.vue')['default']

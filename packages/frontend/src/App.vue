@@ -20,6 +20,7 @@ const showUserDetail = ref(false)
 const showManual = ref(false)
 const showAuthorityHistory = ref(false)
 const showReleaseNotes = ref(false)
+const showApiKeyManage = ref(false)
 
 /** 未ログインで公開プロジェクトを閲覧中かどうか */
 const isPublicViewMode = ref(false)
@@ -145,6 +146,7 @@ const shouldShowLoginPrompt = computed(() => {
           v-model:show-user-detail="showUserDetail"
           v-model:show-authority-history="showAuthorityHistory"
           v-model:show-release-notes="showReleaseNotes"
+          v-model:show-api-key-manage="showApiKeyManage"
         />
       </v-app-bar>
       <v-main>
@@ -154,6 +156,7 @@ const shouldShowLoginPrompt = computed(() => {
         <AuthorityHistoryDialog v-model="showAuthorityHistory" />
         <OperationManualDrawer v-model="showManual" />
         <ReleaseNotesDialog v-model="showReleaseNotes" />
+        <ApiKeyManageDialog v-model="showApiKeyManage" />
       </v-main>
       <v-overlay v-model="isLoading" class="align-center justify-center" persistent>
         <v-progress-circular indeterminate size="64" />
