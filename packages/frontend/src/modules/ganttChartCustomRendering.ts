@@ -21,6 +21,37 @@ const getTooltipColors = () => {
   return { bg, text, textMuted, textStrong, border, divider }
 }
 
+/** ツールチップの表示位置を画面内に収まるよう調整する */
+const adjustTooltipPosition = (tooltipEl: HTMLElement, anchorRect: DOMRect) => {
+  const margin = 6
+  // まず一旦デフォルト位置（アンカーの下側）で配置
+  let left = anchorRect.left
+  let top = anchorRect.bottom + 4
+
+  // DOM追加後に実際のサイズを取得
+  const elRect = tooltipEl.getBoundingClientRect()
+
+  // 右端はみ出し
+  if (left + elRect.width > window.innerWidth - margin) {
+    left = window.innerWidth - elRect.width - margin
+  }
+  // 左端はみ出し
+  if (left < margin) {
+    left = margin
+  }
+  // 下端はみ出し: アンカーの上側に表示
+  if (top + elRect.height > window.innerHeight - margin) {
+    top = anchorRect.top - elRect.height - 4
+  }
+  // 上端はみ出し
+  if (top < margin) {
+    top = margin
+  }
+
+  tooltipEl.style.left = `${left}px`
+  tooltipEl.style.top = `${top}px`
+}
+
 /**
  * スナップショットモードなどAPI不要の場面で、コメントデータをキャッシュに事前ロードする。
  * fetchedAt を Infinity にすることでキャッシュ有効期限が切れないようにする。
@@ -261,13 +292,17 @@ export const barContent = (task: moguchart.GanttTask) => {
         selectTaskComments(taskId)
           .then((comments) => {
             commentsCache.set(taskId, { data: comments, fetchedAt: Date.now() })
-            if (tooltipEl) renderComments(tooltipEl, comments, commentCount)
+            if (tooltipEl) {
+              renderComments(tooltipEl, comments, commentCount)
+              adjustTooltipPosition(tooltipEl, rect)
+            }
           })
           .catch(() => {
             if (tooltipEl) tooltipEl.textContent = 'コメントの読み込みに失敗しました'
           })
       }
       document.body.appendChild(tooltipEl)
+      adjustTooltipPosition(tooltipEl, rect)
     }
 
     const removeTooltip = () => {
@@ -556,13 +591,17 @@ export const rowHeaderContent = (row: moguchart.GanttRow) => {
         selectComments({ rowId })
           .then((comments) => {
             rowCommentsCache.set(rowId, { data: comments, fetchedAt: Date.now() })
-            if (tooltipEl) renderComments(tooltipEl, comments, commentCount)
+            if (tooltipEl) {
+              renderComments(tooltipEl, comments, commentCount)
+              adjustTooltipPosition(tooltipEl, rect)
+            }
           })
           .catch(() => {
             if (tooltipEl) tooltipEl.textContent = 'コメントの読み込みに失敗しました'
           })
       }
       document.body.appendChild(tooltipEl)
+      adjustTooltipPosition(tooltipEl, rect)
     }
 
     const removeTooltip = () => {

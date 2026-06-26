@@ -53,8 +53,9 @@ import * as holiday_jp from '@holiday-jp/holiday_jp'
 import * as moguchart from '@mogura/moguchart-core'
 import { debounce } from 'lodash'
 import { storeToRefs } from 'pinia'
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, inject, nextTick, ref, watch, type Ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { fetchPublicGanttChart } from '@/modules/publicApi'
 
 const getBorderStyle = (type?: string, color?: string) => {
   if (!type || type === 'none') return ''
@@ -68,6 +69,10 @@ export const useGanttChartView = () => {
   const route = useRoute()
   const router = useRouter()
   const userStore = useUserStore()
+  /** App.vue から inject: 未ログインで公開プロジェクトを閲覧中かどうか */
+  const isPublicViewMode = inject<Ref<boolean>>('isPublicViewMode', ref(false))
+  /** App.vue から inject: 公開閲覧モード用テーマオーバーライド */
+  const publicThemeOverride = inject<Ref<'light' | 'dark' | 'system' | null>>('publicThemeOverride', ref(null))
 
   // --- 設定値 ---
   const selectedFilterLabelNames = ref<string[]>([])
@@ -171,7 +176,7 @@ export const useGanttChartView = () => {
   )
   const currentProject = computed(() => (isSnapshotMode.value ? snapshotProject.value : storeProject.value))
   const currentRole = computed(() => (isSnapshotMode.value ? 'viewer' : storeRole.value))
-  const { currentTheme } = storeToRefs(userStore)
+
 
   // プロジェクトの変更に応じてブラウザのタブタイトルと期間を更新
   watch(
@@ -212,6 +217,8 @@ export const useGanttChartView = () => {
       readonlyMode?: boolean
       showCriticalPath?: boolean
     }) => {
+      // 公開閲覧モードではユーザー設定を保存しない
+      if (isPublicViewMode.value) return
       if (userStore.user && projectId.value) {
         const currentSettings = userStore.user.attribute.projectSettings?.[projectId.value] || {}
         const newSettings = { ...currentSettings, ...settings }
@@ -406,8 +413,42 @@ export const useGanttChartView = () => {
   const selectedTaskIds = ref<string[]>([])
 
   const availableLabels = computed(() => {
-    return currentProject.value?.attribute?.labels || []
+    const labelMap = new Map<string, string>() // name -> color
+    rows.value.forEach((row) => {
+      if (row.tasks) {
+        row.tasks.forEach((task) => {
+          const attribute = (task as any).attribute as TaskAttribute | undefined
+          const labels = attribute?.labels
+          if (labels && Array.isArray(labels)) {
+            labels.forEach((l: any) => {
+              if (l && l.name) {
+                labelMap.set(l.name, l.color || '#9e9e9e')
+              }
+            })
+          }
+        })
+      }
+    })
+    return Array.from(labelMap.entries()).map(([name, color]) => ({ name, color }))
   })
+
+
+  const availableRowLabels = computed(() => {
+    const labelMap = new Map<string, string>() // name -> color
+    rows.value.forEach((row) => {
+      const rowAttr = (row as any).attribute as RowAttribute | undefined
+      const labels = rowAttr?.labels
+      if (labels && Array.isArray(labels)) {
+        labels.forEach((l: any) => {
+          if (l && l.name) {
+            labelMap.set(l.name, l.color || '#9e9e9e')
+          }
+        })
+      }
+    })
+    return Array.from(labelMap.entries()).map(([name, color]) => ({ name, color }))
+  })
+
 
   /**
    * 他ユーザー編集中のタスクにハイライトスタイルを付与するヘルパー
@@ -563,8 +604,8 @@ export const useGanttChartView = () => {
     })
   })
 
-  const isReadOnly = computed(() => readonlyMode.value || currentRole.value === 'viewer')
-  const isOwner = computed(() => currentRole.value === 'owner')
+  const isReadOnly = computed(() => readonlyMode.value || currentRole.value === 'viewer' || isPublicViewMode.value)
+  const isOwner = computed(() => currentRole.value === 'owner' && !isPublicViewMode.value)
 
   const chartOption = computed<moguchart.GanttChartOption>(() => {
     // プロジェクトのマイルストーンを GanttChartMilestone に変換
@@ -632,7 +673,9 @@ export const useGanttChartView = () => {
       snapDuration: currentProject.value?.attribute?.snapDurationMinutes ?? (isHourly ? 60 : 1440),
       readOnly: isReadOnly.value,
       showHiddenRows: showHiddenRows.value,
-      theme: currentTheme.value,
+      theme: isPublicViewMode.value
+        ? (publicThemeOverride.value || 'system') as 'light' | 'dark' | 'system'
+        : userStore.currentTheme,
       // 時間単位表示では曜日・祝日の背景色を無効化する
       ...(isHourly
         ? {
@@ -654,7 +697,7 @@ export const useGanttChartView = () => {
         rowHeaderContent,
         rowHeaderTooltip,
         cornerContent: createCornerContent(() => ({
-          availableLabels: availableLabels.value,
+          availableLabels: availableRowLabels.value,
           selectedLabels: selectedRowFilterLabelNames.value,
           onSelectionChange: (labels: string[]) => {
             selectedRowFilterLabelNames.value = labels
@@ -1010,7 +1053,17 @@ export const useGanttChartView = () => {
     const silent = options?.silent ?? false
     if (!silent) setIsLoading(true)
     try {
-      const data = await selectGanttChart(pId)
+      // 公開閲覧モードでは REST API 経由でデータを取得（認証不要）
+      let data: GanttRow[]
+      if (isPublicViewMode.value) {
+        const publicData = await fetchPublicGanttChart(pId)
+        if (!publicData) {
+          throw new Error('Public project data not available')
+        }
+        data = publicData
+      } else {
+        data = await selectGanttChart(pId)
+      }
       rows.value = data.map((row: GanttRow) => ({
         ...row,
         id: row.id.toString(),
@@ -1128,17 +1181,19 @@ export const useGanttChartView = () => {
       router.push(`/${newProjectId}`)
     }
 
-    // コラボレーション: プロジェクト切替時にプレゼンスを更新
-    if (oldProjectId) {
-      await leaveProject()
-    }
-    if (newProjectId && userStore.user) {
-      await joinProject(
-        newProjectId,
-        userStore.user.email,
-        userStore.user.displayName,
-        userStore.firebaseUser?.photoURL || undefined,
-      )
+    // コラボレーション: プロジェクト切替時にプレゼンスを更新（公開閲覧モードでは不要）
+    if (!isPublicViewMode.value) {
+      if (oldProjectId) {
+        await leaveProject()
+      }
+      if (newProjectId && userStore.user) {
+        await joinProject(
+          newProjectId,
+          userStore.user.email,
+          userStore.user.displayName,
+          userStore.firebaseUser?.photoURL || undefined,
+        )
+      }
     }
   })
 
@@ -1171,8 +1226,9 @@ export const useGanttChartView = () => {
           // 匿名ログイン後の案内ダイアログ表示中は抑制する
           isProjectListDialogVisible.value = true
         }
-      } else {
+      } else if (!isPublicViewMode.value) {
         // ユーザーがログアウトした場合、データをクリアする
+        // ただし公開閲覧モードではクリアしない
         await leaveProject()
         rows.value = []
         clearProjectStore()
@@ -1180,6 +1236,21 @@ export const useGanttChartView = () => {
     },
     { immediate: true }, // コンポーネントのマウント時に即時実行する
   )
+
+  // 公開閲覧モードに切り替わったらガントデータを読み込む
+  watch(isPublicViewMode, async (isPublic) => {
+    if (isPublic && projectId.value) {
+      // すでに App.vue でプロジェクト情報はストアに設定済み
+      // ここではガントチャートデータを読み込む
+      const project = storeProject.value
+      if (project) {
+        chartStartStr.value = project.start
+        chartEndStr.value = project.end
+      }
+      clearHistory()
+      await loadData(projectId.value)
+    }
+  }, { immediate: true })
 
   // 匿名ログイン後の案内ダイアログが閉じられたらプロジェクト一覧を表示する
   watch(

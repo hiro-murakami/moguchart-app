@@ -52,5 +52,20 @@ export const useProjectStore = defineStore('project', {
       this.projects = []
       this.currentProjectId = ''
     },
+
+    /**
+     * 公開プロジェクトを直接ストアに設定する。
+     * 未ログイン時に公開API経由で取得したプロジェクトを表示するために使用。
+     */
+    setPublicProject(project: Project) {
+      // すでに同じIDのプロジェクトがなければ追加
+      const index = this.projects.findIndex((p) => p.id === project.id)
+      if (index !== -1) {
+        this.projects[index] = project
+      } else {
+        this.projects.push(project)
+      }
+      this.currentProjectId = project.id
+    },
   },
 })

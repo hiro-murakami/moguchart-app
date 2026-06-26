@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, inject, ref, type Ref } from 'vue'
 import { useUserStore } from '@/stores/useUserStore'
 import { ZOOM_DAILY, ZOOM_MONTHLY, ZOOM_HOURLY } from '@/modules/constants'
 import type { User } from '@functions/types/shared'
@@ -34,6 +34,9 @@ const emit = defineEmits<{
 
 const userStore = useUserStore()
 const user = computed(() => userStore.user)
+const isPublicViewMode = inject<Ref<boolean>>('isPublicViewMode', ref(false))
+/** App.vue から provide された公開閲覧モード用テーマオーバーライド */
+const publicThemeOverride = inject<Ref<'light' | 'dark' | 'system' | null>>('publicThemeOverride', ref(null))
 
 const themeOptions = [
   { title: 'ライト', value: 'light', image: themeLightImg },
@@ -42,8 +45,17 @@ const themeOptions = [
 ]
 
 const currentTheme = computed({
-  get: () => user.value?.attribute?.theme || 'system',
+  get: () => {
+    if (isPublicViewMode.value) return publicThemeOverride.value || 'system'
+    return user.value?.attribute?.theme || 'system'
+  },
   set: async (val: 'light' | 'dark' | 'system') => {
+    if (isPublicViewMode.value) {
+      // 公開閲覧モード: App.vue の publicThemeOverride を更新
+      // → effectiveTheme → <v-app :theme> に反映される
+      publicThemeOverride.value = val
+      return
+    }
     if (!user.value) return
     const updatedUser: User = {
       ...user.value,

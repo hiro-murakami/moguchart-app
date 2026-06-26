@@ -9,6 +9,7 @@ import commentsRouter from './routes/comments.js'
 import snapshotsRouter from './routes/snapshots.js'
 import userRouter from './routes/user.js'
 import apiKeysRouter from './routes/apiKeys.js'
+import publicRouter from './routes/public.js'
 
 const app = express()
 
@@ -19,6 +20,9 @@ app.use(express.json({ limit: '10mb' }))
 app.get('/api/v1/health', (_req, res) => {
   res.json({ status: 'ok', version: '1.0.0' })
 })
+
+// 公開プロジェクト用エンドポイント（認証不要）
+app.use('/api/v1/public', publicRouter)
 
 // APIキー認証（以降のすべてのルートに適用）
 app.use('/api/v1', apiKeyAuth)
