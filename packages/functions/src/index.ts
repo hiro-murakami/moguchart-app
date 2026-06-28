@@ -30,6 +30,7 @@ import deleteSnapshot from './scripts/deleteSnapshot.js'
 import { cleanupEditEvents } from './scripts/cleanupEditEvents.js'
 import { cleanupAnonymousData } from './scripts/cleanupAnonymousData.js'
 import { cleanupPresence } from './scripts/cleanupPresence.js'
+import { cleanupRateLimits } from './scripts/cleanupRateLimits.js'
 import { FirebaseFunction } from './types/index.js'
 
 // REST API（外部アプリ向け）
@@ -74,5 +75,5 @@ export const gantt = {
 export { api }
 
 // スケジュール関数（自動クリーンアップ）
-export { cleanupEditEvents, cleanupAnonymousData, cleanupPresence }
+export { cleanupEditEvents, cleanupAnonymousData, cleanupPresence, cleanupRateLimits }
 

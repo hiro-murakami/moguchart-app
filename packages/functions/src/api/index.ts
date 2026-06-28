@@ -1,6 +1,7 @@
 import * as functions from 'firebase-functions/v2'
 import express from 'express'
 import { apiKeyAuth } from './middleware/apiKeyAuth.js'
+import { createRateLimiter } from './middleware/rateLimit.js'
 import { errorHandler } from './middleware/errorHandler.js'
 import projectsRouter from './routes/projects.js'
 import rowsRouter from './routes/rows.js'
@@ -26,6 +27,9 @@ app.use('/api/v1/public', publicRouter)
 
 // APIキー認証（以降のすべてのルートに適用）
 app.use('/api/v1', apiKeyAuth)
+
+// レートリミット（認証済みリクエストに適用: 60 req/min）
+app.use('/api/v1', createRateLimiter())
 
 // ルートの登録
 app.use('/api/v1/projects', projectsRouter)
