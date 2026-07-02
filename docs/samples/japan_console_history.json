@@ -1,0 +1,1534 @@
+{
+  "version": "0.6.9",
+  "project": {
+    "id": "b7c3e8a1-5f2d-4e6a-8b9c-1d3f5a7e9c2b",
+    "name": "日本の家庭用ゲーム機の歴史",
+    "start": "1975-01-01T00:00:00",
+    "end": "2025-12-31T00:00:00",
+    "public": true,
+    "authority": {
+      "owners": [],
+      "editors": [],
+      "viewers": []
+    },
+    "attribute": {
+      "granularity": "monthly",
+      "description": "1975年の日本初の家庭用ゲーム機『テレビテニス』から現行世代まで、日本の主要な家庭用ゲーム機の販売期間をガントチャートで可視化したサンプルプロジェクトです。各メーカーのハード展開を俯瞰できます。",
+      "colorPalettes": [
+        {
+          "name": "Nintendo Red",
+          "color": "#ffffff",
+          "backgroundColor": "#e60012"
+        },
+        {
+          "name": "Nintendo Crimson",
+          "color": "#ffffff",
+          "backgroundColor": "#c62828"
+        },
+        {
+          "name": "Nintendo Gold",
+          "color": "#000000",
+          "backgroundColor": "#fbc02d"
+        },
+        {
+          "name": "Nintendo Light Red",
+          "color": "#ffffff",
+          "backgroundColor": "#ef5350"
+        },
+        {
+          "name": "SEGA Blue",
+          "color": "#ffffff",
+          "backgroundColor": "#0060a8"
+        },
+        {
+          "name": "SEGA Navy",
+          "color": "#ffffff",
+          "backgroundColor": "#1a237e"
+        },
+        {
+          "name": "SEGA Light Blue",
+          "color": "#ffffff",
+          "backgroundColor": "#1e88e5"
+        },
+        {
+          "name": "Sony Blue",
+          "color": "#ffffff",
+          "backgroundColor": "#003087"
+        },
+        {
+          "name": "Sony Dark Blue",
+          "color": "#ffffff",
+          "backgroundColor": "#1a237e"
+        },
+        {
+          "name": "Sony Indigo",
+          "color": "#ffffff",
+          "backgroundColor": "#283593"
+        },
+        {
+          "name": "Sony Deep Blue",
+          "color": "#ffffff",
+          "backgroundColor": "#0d47a1"
+        },
+        {
+          "name": "NEC Orange",
+          "color": "#000000",
+          "backgroundColor": "#ef6c00"
+        },
+        {
+          "name": "NEC Amber",
+          "color": "#000000",
+          "backgroundColor": "#ff8f00"
+        },
+        {
+          "name": "Microsoft Green",
+          "color": "#ffffff",
+          "backgroundColor": "#107c10"
+        },
+        {
+          "name": "Microsoft Dark Green",
+          "color": "#ffffff",
+          "backgroundColor": "#1b5e20"
+        },
+        {
+          "name": "SNK Purple",
+          "color": "#ffffff",
+          "backgroundColor": "#6a1b9a"
+        },
+        {
+          "name": "Bandai Teal",
+          "color": "#ffffff",
+          "backgroundColor": "#00838f"
+        },
+        {
+          "name": "Epoch Brown",
+          "color": "#ffffff",
+          "backgroundColor": "#795548"
+        },
+        {
+          "name": "Atari Gray",
+          "color": "#ffffff",
+          "backgroundColor": "#546e7a"
+        },
+        {
+          "name": "Epoch Dark Brown",
+          "color": "#ffffff",
+          "backgroundColor": "#5d4037"
+        }
+      ],
+      "labels": [
+        {
+          "name": "任天堂",
+          "color": "#e60012"
+        },
+        {
+          "name": "セガ",
+          "color": "#0060a8"
+        },
+        {
+          "name": "ソニー",
+          "color": "#003087"
+        },
+        {
+          "name": "NEC",
+          "color": "#ef6c00"
+        },
+        {
+          "name": "マイクロソフト",
+          "color": "#107c10"
+        },
+        {
+          "name": "SNK",
+          "color": "#6a1b9a"
+        },
+        {
+          "name": "バンダイ",
+          "color": "#00838f"
+        },
+        {
+          "name": "エポック社",
+          "color": "#795548"
+        },
+        {
+          "name": "据置型",
+          "color": "#1565c0"
+        },
+        {
+          "name": "携帯型",
+          "color": "#2e7d32"
+        },
+        {
+          "name": "ハイブリッド",
+          "color": "#ff6f00"
+        },
+        {
+          "name": "大ヒット",
+          "color": "#e53935"
+        },
+        {
+          "name": "第1世代",
+          "color": "#a1887f"
+        },
+        {
+          "name": "第2世代",
+          "color": "#8d6e63"
+        },
+        {
+          "name": "第3世代",
+          "color": "#78909c"
+        },
+        {
+          "name": "第4世代",
+          "color": "#5c6bc0"
+        },
+        {
+          "name": "第5世代",
+          "color": "#26a69a"
+        },
+        {
+          "name": "第6世代",
+          "color": "#ab47bc"
+        },
+        {
+          "name": "第7世代",
+          "color": "#ef5350"
+        },
+        {
+          "name": "第8世代",
+          "color": "#42a5f5"
+        },
+        {
+          "name": "第9世代",
+          "color": "#66bb6a"
+        }
+      ],
+      "milestones": [
+        {
+          "name": "テレビテニス発売（日本初の家庭用ゲーム機）",
+          "datetime": "1975-09-12T00:00:00+09:00",
+          "color": "#795548"
+        },
+        {
+          "name": "カセットビジョン発売",
+          "datetime": "1981-07-30T00:00:00+09:00",
+          "color": "#795548"
+        },
+        {
+          "name": "ファミリーコンピュータ発売",
+          "datetime": "1983-07-15T00:00:00+09:00",
+          "color": "#e60012"
+        },
+        {
+          "name": "ゲームボーイ発売",
+          "datetime": "1989-04-21T00:00:00+09:00",
+          "color": "#2e7d32"
+        },
+        {
+          "name": "スーパーファミコン発売",
+          "datetime": "1990-11-21T00:00:00+09:00",
+          "color": "#e60012"
+        },
+        {
+          "name": "PlayStation発売",
+          "datetime": "1994-12-03T00:00:00+09:00",
+          "color": "#003087"
+        },
+        {
+          "name": "PlayStation 2 発売 (歴代最多販売台数)",
+          "datetime": "2000-03-04T00:00:00+09:00",
+          "color": "#003087"
+        },
+        {
+          "name": "ニンテンドーDS発売",
+          "datetime": "2004-12-02T00:00:00+09:00",
+          "color": "#e60012"
+        },
+        {
+          "name": "Wii 発売",
+          "datetime": "2006-12-02T00:00:00+09:00",
+          "color": "#e60012"
+        },
+        {
+          "name": "Nintendo Switch 発売",
+          "datetime": "2017-03-03T00:00:00+09:00",
+          "color": "#e60012"
+        },
+        {
+          "name": "PlayStation 5 / Xbox Series X 発売",
+          "datetime": "2020-11-12T00:00:00+09:00",
+          "color": "#003087"
+        }
+      ]
+    }
+  },
+  "rows": [
+    {
+      "id": 1,
+      "projectId": "b7c3e8a1-5f2d-4e6a-8b9c-1d3f5a7e9c2b",
+      "name": "任天堂 据置機",
+      "order": 1,
+      "visible": true,
+      "attribute": {
+        "description": "任天堂の据置型ゲーム機。1977年のカラーテレビゲームを皮切りに、ファミコンで世界のゲーム産業を牽引し続けた。",
+        "labels": [
+          {
+            "name": "任天堂",
+            "color": "#e60012"
+          },
+          {
+            "name": "据置型",
+            "color": "#1565c0"
+          }
+        ]
+      },
+      "tasks": [
+        {
+          "id": 100,
+          "rowId": 1,
+          "name": "カラーテレビゲーム",
+          "start": "1977-07-01T00:00:00",
+          "end": "1980-12-01T00:00:00",
+          "attribute": {
+            "description": "1977年7月1日発売。任天堂初の家庭用ゲーム機。三菱電機と共同開発。「6」（9,800円）と「15」（15,000円）の2モデルを同時発売。レーシング112（1978年）、ブロック崩し（1979年）も展開。シリーズ累計約300万台。",
+            "colorPalette": {
+              "name": "Nintendo Gold",
+              "color": "#000000",
+              "backgroundColor": "#fbc02d"
+            },
+            "labels": [
+              {
+                "name": "第1世代",
+                "color": "#a1887f"
+              }
+            ]
+          }
+        },
+        {
+          "id": 101,
+          "rowId": 1,
+          "name": "ファミリーコンピュータ",
+          "start": "1983-07-15T00:00:00",
+          "end": "1995-09-01T00:00:00",
+          "attribute": {
+            "description": "1983年7月15日発売。CPU: リコー製カスタム（6502ベース）1.79MHz。14,800円。全世界で6,191万台を販売し、家庭用ゲーム機市場を確立した歴史的名機。",
+            "colorPalette": {
+              "name": "Nintendo Red",
+              "color": "#ffffff",
+              "backgroundColor": "#e60012"
+            },
+            "labels": [
+              {
+                "name": "大ヒット",
+                "color": "#e53935"
+              },
+              {
+                "name": "第3世代",
+                "color": "#78909c"
+              }
+            ]
+          }
+        },
+        {
+          "id": 102,
+          "rowId": 1,
+          "name": "スーパーファミコン",
+          "start": "1990-11-21T00:00:00",
+          "end": "2003-09-01T00:00:00",
+          "attribute": {
+            "description": "1990年11月21日発売。CPU: 65C816（16bit）3.58MHz。25,000円。全世界4,910万台。回転・拡大縮小機能、PCM音源で圧倒的な表現力を実現。",
+            "colorPalette": {
+              "name": "Nintendo Crimson",
+              "color": "#ffffff",
+              "backgroundColor": "#c62828"
+            },
+            "labels": [
+              {
+                "name": "大ヒット",
+                "color": "#e53935"
+              },
+              {
+                "name": "第4世代",
+                "color": "#5c6bc0"
+              }
+            ]
+          }
+        },
+        {
+          "id": 103,
+          "rowId": 1,
+          "name": "NINTENDO 64",
+          "start": "1996-06-23T00:00:00",
+          "end": "2002-04-01T00:00:00",
+          "attribute": {
+            "description": "1996年6月23日発売。CPU: VR4300（64bit MIPS）93.75MHz。25,000円。全世界3,293万台。3Dスティック搭載コントローラーで3Dゲームの操作性を革新。",
+            "colorPalette": {
+              "name": "Nintendo Red",
+              "color": "#ffffff",
+              "backgroundColor": "#e60012"
+            },
+            "labels": [
+              {
+                "name": "第5世代",
+                "color": "#26a69a"
+              }
+            ]
+          }
+        },
+        {
+          "id": 104,
+          "rowId": 1,
+          "name": "ニンテンドーゲームキューブ",
+          "start": "2001-09-14T00:00:00",
+          "end": "2007-06-01T00:00:00",
+          "attribute": {
+            "description": "2001年9月14日発売。CPU: PowerPC「Gekko」485MHz。25,000円。全世界2,174万台。8cm光ディスク採用。",
+            "colorPalette": {
+              "name": "Nintendo Crimson",
+              "color": "#ffffff",
+              "backgroundColor": "#c62828"
+            },
+            "labels": [
+              {
+                "name": "第6世代",
+                "color": "#ab47bc"
+              }
+            ]
+          }
+        },
+        {
+          "id": 105,
+          "rowId": 1,
+          "name": "Wii",
+          "start": "2006-12-02T00:00:00",
+          "end": "2017-10-01T00:00:00",
+          "attribute": {
+            "description": "2006年12月2日発売。CPU: PowerPC「Broadway」729MHz。25,000円。全世界1億163万台。Wiiリモコンによる体感操作で非ゲーマー層を開拓。",
+            "colorPalette": {
+              "name": "Nintendo Red",
+              "color": "#ffffff",
+              "backgroundColor": "#e60012"
+            },
+            "labels": [
+              {
+                "name": "大ヒット",
+                "color": "#e53935"
+              },
+              {
+                "name": "第7世代",
+                "color": "#ef5350"
+              }
+            ]
+          }
+        },
+        {
+          "id": 106,
+          "rowId": 1,
+          "name": "Wii U",
+          "start": "2012-12-08T00:00:00",
+          "end": "2017-01-31T00:00:00",
+          "attribute": {
+            "description": "2012年12月8日発売。CPU: PowerPCベース「Espresso」1.24GHz。26,250円〜。全世界1,356万台。液晶付きゲームパッドが特徴だが商業的には不振。",
+            "colorPalette": {
+              "name": "Nintendo Light Red",
+              "color": "#ffffff",
+              "backgroundColor": "#ef5350"
+            },
+            "labels": [
+              {
+                "name": "第8世代",
+                "color": "#42a5f5"
+              }
+            ]
+          }
+        },
+        {
+          "id": 107,
+          "rowId": 1,
+          "name": "Nintendo Switch",
+          "start": "2017-03-03T00:00:00",
+          "end": "2025-12-31T00:00:00",
+          "attribute": {
+            "description": "2017年3月3日発売。CPU: NVIDIA Tegra X1カスタム。29,980円。全世界1億4,600万台超（2024年時点）。据置・携帯のハイブリッド設計で大ヒット。有機ELモデルやLiteも展開。",
+            "colorPalette": {
+              "name": "Nintendo Red",
+              "color": "#ffffff",
+              "backgroundColor": "#e60012"
+            },
+            "labels": [
+              {
+                "name": "大ヒット",
+                "color": "#e53935"
+              },
+              {
+                "name": "ハイブリッド",
+                "color": "#ff6f00"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "projectId": "b7c3e8a1-5f2d-4e6a-8b9c-1d3f5a7e9c2b",
+      "name": "任天堂 携帯機",
+      "order": 2,
+      "visible": true,
+      "attribute": {
+        "description": "任天堂の携帯型ゲーム機。ゲームボーイからニンテンドー3DSまで、携帯ゲーム機市場を支配し続けた。",
+        "labels": [
+          {
+            "name": "任天堂",
+            "color": "#e60012"
+          },
+          {
+            "name": "携帯型",
+            "color": "#2e7d32"
+          }
+        ]
+      },
+      "tasks": [
+        {
+          "id": 201,
+          "rowId": 2,
+          "name": "ゲームボーイ",
+          "start": "1989-04-21T00:00:00",
+          "end": "2003-03-01T00:00:00",
+          "attribute": {
+            "description": "1989年4月21日発売。CPU: カスタムZ80 4.19MHz。12,500円。全世界1億1,869万台（カラー含む）。モノクロ液晶ながら圧倒的な電池持ちとソフトラインナップで携帯ゲーム機市場を創出。",
+            "colorPalette": {
+              "name": "Nintendo Gold",
+              "color": "#000000",
+              "backgroundColor": "#fbc02d"
+            },
+            "labels": [
+              {
+                "name": "大ヒット",
+                "color": "#e53935"
+              },
+              {
+                "name": "第4世代",
+                "color": "#5c6bc0"
+              }
+            ]
+          }
+        },
+        {
+          "id": 202,
+          "rowId": 2,
+          "name": "バーチャルボーイ",
+          "start": "1995-07-21T00:00:00",
+          "end": "1996-03-01T00:00:00",
+          "attribute": {
+            "description": "1995年7月21日発売。32bit RISC CPU。15,000円。全世界77万台。赤色LEDによる3D立体視ゲーム機だが、短命に終わった任天堂の異色ハード。",
+            "colorPalette": {
+              "name": "Nintendo Crimson",
+              "color": "#ffffff",
+              "backgroundColor": "#c62828"
+            }
+          }
+        },
+        {
+          "id": 203,
+          "rowId": 2,
+          "name": "ゲームボーイアドバンス",
+          "start": "2001-03-21T00:00:00",
+          "end": "2008-06-01T00:00:00",
+          "attribute": {
+            "description": "2001年3月21日発売。CPU: ARM7TDMI 16.78MHz。9,800円。全世界8,151万台。32bitの携帯機でSFC級のゲームが楽しめた。SPやミクロも展開。",
+            "colorPalette": {
+              "name": "Nintendo Gold",
+              "color": "#000000",
+              "backgroundColor": "#fbc02d"
+            },
+            "labels": [
+              {
+                "name": "大ヒット",
+                "color": "#e53935"
+              },
+              {
+                "name": "第6世代",
+                "color": "#ab47bc"
+              }
+            ]
+          }
+        },
+        {
+          "id": 204,
+          "rowId": 2,
+          "name": "ニンテンドーDS",
+          "start": "2004-12-02T00:00:00",
+          "end": "2014-03-01T00:00:00",
+          "attribute": {
+            "description": "2004年12月2日発売。CPU: ARM9（67MHz）+ ARM7（33MHz）。15,000円。全世界1億5,402万台。2画面＋タッチスクリーンで新しい遊びを創出。DSi/DSi LLなども展開。",
+            "colorPalette": {
+              "name": "Nintendo Red",
+              "color": "#ffffff",
+              "backgroundColor": "#e60012"
+            },
+            "labels": [
+              {
+                "name": "大ヒット",
+                "color": "#e53935"
+              },
+              {
+                "name": "第7世代",
+                "color": "#ef5350"
+              }
+            ]
+          }
+        },
+        {
+          "id": 205,
+          "rowId": 2,
+          "name": "ニンテンドー3DS",
+          "start": "2011-02-26T00:00:00",
+          "end": "2023-03-28T00:00:00",
+          "attribute": {
+            "description": "2011年2月26日発売。CPU: ARM11 MPCore（2コア）268MHz。25,000円（後に15,000円に値下げ）。全世界7,594万台。裸眼立体視が特徴。2DS/New 3DSなども展開。",
+            "colorPalette": {
+              "name": "Nintendo Crimson",
+              "color": "#ffffff",
+              "backgroundColor": "#c62828"
+            },
+            "labels": [
+              {
+                "name": "第8世代",
+                "color": "#42a5f5"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "projectId": "b7c3e8a1-5f2d-4e6a-8b9c-1d3f5a7e9c2b",
+      "name": "セガ 据置機",
+      "order": 3,
+      "visible": true,
+      "attribute": {
+        "description": "セガの据置型ゲーム機。常に先進的な技術を投入し、任天堂と激しいハード戦争を繰り広げた。ドリームキャストを最後にハード事業から撤退。",
+        "labels": [
+          {
+            "name": "セガ",
+            "color": "#0060a8"
+          },
+          {
+            "name": "据置型",
+            "color": "#1565c0"
+          }
+        ]
+      },
+      "tasks": [
+        {
+          "id": 301,
+          "rowId": 3,
+          "name": "SG-1000 / SG-1000 II",
+          "start": "1983-07-15T00:00:00",
+          "end": "1986-10-01T00:00:00",
+          "attribute": {
+            "description": "1983年7月15日発売（ファミコンと同日）。CPU: Z80A 3.58MHz。15,000円。セガ初の家庭用ゲーム機。SG-1000 IIは1984年発売。",
+            "colorPalette": {
+              "name": "SEGA Blue",
+              "color": "#ffffff",
+              "backgroundColor": "#0060a8"
+            },
+            "labels": [
+              {
+                "name": "第3世代",
+                "color": "#78909c"
+              }
+            ]
+          }
+        },
+        {
+          "id": 302,
+          "rowId": 3,
+          "name": "セガ・マークIII / マスターシステム",
+          "start": "1985-10-20T00:00:00",
+          "end": "1990-06-01T00:00:00",
+          "attribute": {
+            "description": "1985年10月20日発売。CPU: Z80A 3.58MHz。15,000円。ファミコンに対抗。海外ではマスターシステムとして展開し、欧州・ブラジルで人気を博した。",
+            "colorPalette": {
+              "name": "SEGA Navy",
+              "color": "#ffffff",
+              "backgroundColor": "#1a237e"
+            },
+            "labels": [
+              {
+                "name": "第3世代",
+                "color": "#78909c"
+              }
+            ]
+          }
+        },
+        {
+          "id": 303,
+          "rowId": 3,
+          "name": "メガドライブ",
+          "start": "1988-10-29T00:00:00",
+          "end": "1997-03-01T00:00:00",
+          "attribute": {
+            "description": "1988年10月29日発売。CPU: MC68000 7.67MHz + Z80 3.58MHz。21,000円。全世界3,075万台。北米ではGenesisとして任天堂を凌ぐ人気。「セガサターンはいいぞ」の前身。",
+            "colorPalette": {
+              "name": "SEGA Blue",
+              "color": "#ffffff",
+              "backgroundColor": "#0060a8"
+            },
+            "labels": [
+              {
+                "name": "大ヒット",
+                "color": "#e53935"
+              },
+              {
+                "name": "第4世代",
+                "color": "#5c6bc0"
+              }
+            ]
+          }
+        },
+        {
+          "id": 304,
+          "rowId": 3,
+          "name": "セガサターン",
+          "start": "1994-11-22T00:00:00",
+          "end": "2000-12-01T00:00:00",
+          "attribute": {
+            "description": "1994年11月22日発売。CPU: SH-2×2基 28.6MHz。44,800円。全世界926万台。2D格闘ゲームに強く、日本では高い人気を誇った。「セガなんてダッセーよな！」のCMも話題に。",
+            "colorPalette": {
+              "name": "SEGA Navy",
+              "color": "#ffffff",
+              "backgroundColor": "#1a237e"
+            },
+            "labels": [
+              {
+                "name": "第5世代",
+                "color": "#26a69a"
+              }
+            ]
+          }
+        },
+        {
+          "id": 305,
+          "rowId": 3,
+          "name": "ドリームキャスト",
+          "start": "1998-11-27T00:00:00",
+          "end": "2007-03-01T00:00:00",
+          "attribute": {
+            "description": "1998年11月27日発売。CPU: SH-4 200MHz。29,800円。全世界1,060万台。世界初のインターネット対応据置機。ビジュアルメモリやGD-ROMなど先進的だったがPS2に敗北し、セガ最後のハードに。",
+            "colorPalette": {
+              "name": "SEGA Light Blue",
+              "color": "#ffffff",
+              "backgroundColor": "#1e88e5"
+            },
+            "labels": [
+              {
+                "name": "第6世代",
+                "color": "#ab47bc"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "projectId": "b7c3e8a1-5f2d-4e6a-8b9c-1d3f5a7e9c2b",
+      "name": "セガ 携帯機",
+      "order": 4,
+      "visible": true,
+      "attribute": {
+        "description": "セガの携帯型ゲーム機。ゲームギアはカラー液晶搭載でゲームボーイに対抗した。",
+        "labels": [
+          {
+            "name": "セガ",
+            "color": "#0060a8"
+          },
+          {
+            "name": "携帯型",
+            "color": "#2e7d32"
+          }
+        ]
+      },
+      "tasks": [
+        {
+          "id": 401,
+          "rowId": 4,
+          "name": "ゲームギア",
+          "start": "1990-10-06T00:00:00",
+          "end": "1997-04-01T00:00:00",
+          "attribute": {
+            "description": "1990年10月6日発売。CPU: Z80A 3.58MHz。19,800円。全世界1,048万台。バックライト付きカラー液晶を搭載した携帯ゲーム機。TVチューナー対応。マスターシステムと互換性あり。",
+            "colorPalette": {
+              "name": "SEGA Blue",
+              "color": "#ffffff",
+              "backgroundColor": "#0060a8"
+            },
+            "labels": [
+              {
+                "name": "第4世代",
+                "color": "#5c6bc0"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "projectId": "b7c3e8a1-5f2d-4e6a-8b9c-1d3f5a7e9c2b",
+      "name": "ソニー 据置機",
+      "order": 5,
+      "visible": true,
+      "attribute": {
+        "description": "ソニーのPlayStationシリーズ。1994年の参入以来、据置型ゲーム機市場のリーダーとして君臨。PS2は歴代最多販売台数を記録。",
+        "labels": [
+          {
+            "name": "ソニー",
+            "color": "#003087"
+          },
+          {
+            "name": "据置型",
+            "color": "#1565c0"
+          }
+        ]
+      },
+      "tasks": [
+        {
+          "id": 501,
+          "rowId": 5,
+          "name": "PlayStation",
+          "start": "1994-12-03T00:00:00",
+          "end": "2006-03-01T00:00:00",
+          "attribute": {
+            "description": "1994年12月3日発売。CPU: R3000A 33.8MHz。39,800円。全世界1億249万台。CD-ROM採用でソフト価格を抑え、サードパーティの支持を集めてゲーム市場の覇権を握った。",
+            "colorPalette": {
+              "name": "Sony Blue",
+              "color": "#ffffff",
+              "backgroundColor": "#003087"
+            },
+            "labels": [
+              {
+                "name": "大ヒット",
+                "color": "#e53935"
+              },
+              {
+                "name": "第5世代",
+                "color": "#26a69a"
+              }
+            ]
+          }
+        },
+        {
+          "id": 502,
+          "rowId": 5,
+          "name": "PlayStation 2",
+          "start": "2000-03-04T00:00:00",
+          "end": "2013-01-01T00:00:00",
+          "attribute": {
+            "description": "2000年3月4日発売。CPU: Emotion Engine 294.912MHz。39,800円。全世界1億5,768万台（歴代最多）。DVD再生機能とPS1互換性で爆発的普及。ゲーム史上最も成功したハード。",
+            "colorPalette": {
+              "name": "Sony Dark Blue",
+              "color": "#ffffff",
+              "backgroundColor": "#1a237e"
+            },
+            "labels": [
+              {
+                "name": "大ヒット",
+                "color": "#e53935"
+              },
+              {
+                "name": "第6世代",
+                "color": "#ab47bc"
+              }
+            ]
+          }
+        },
+        {
+          "id": 503,
+          "rowId": 5,
+          "name": "PlayStation 3",
+          "start": "2006-11-11T00:00:00",
+          "end": "2017-05-29T00:00:00",
+          "attribute": {
+            "description": "2006年11月11日発売。CPU: Cell Broadband Engine 3.2GHz。オープン価格（実質49,980円〜）。全世界8,740万台。Blu-ray搭載、PlayStation Networkでオンライン対応強化。",
+            "colorPalette": {
+              "name": "Sony Blue",
+              "color": "#ffffff",
+              "backgroundColor": "#003087"
+            },
+            "labels": [
+              {
+                "name": "第7世代",
+                "color": "#ef5350"
+              }
+            ]
+          }
+        },
+        {
+          "id": 504,
+          "rowId": 5,
+          "name": "PlayStation 4",
+          "start": "2014-02-22T00:00:00",
+          "end": "2024-12-31T00:00:00",
+          "attribute": {
+            "description": "2014年2月22日発売（日本）。CPU: AMD Jaguar 8コア 1.6GHz。39,980円。全世界1億1,700万台超。シェア機能やPS Plusで現代型ゲーム体験を確立。Proモデルも展開。",
+            "colorPalette": {
+              "name": "Sony Indigo",
+              "color": "#ffffff",
+              "backgroundColor": "#283593"
+            },
+            "labels": [
+              {
+                "name": "大ヒット",
+                "color": "#e53935"
+              },
+              {
+                "name": "第8世代",
+                "color": "#42a5f5"
+              }
+            ]
+          }
+        },
+        {
+          "id": 505,
+          "rowId": 5,
+          "name": "PlayStation 5",
+          "start": "2020-11-12T00:00:00",
+          "end": "2025-12-31T00:00:00",
+          "attribute": {
+            "description": "2020年11月12日発売。CPU: AMD Zen 2 8コア 3.5GHz、SSD搭載。49,980円〜。超高速ロード、DualSenseコントローラーのハプティクフィードバック、3Dオーディオ。PS5 Pro（2024年）も展開。",
+            "colorPalette": {
+              "name": "Sony Deep Blue",
+              "color": "#ffffff",
+              "backgroundColor": "#0d47a1"
+            },
+            "labels": [
+              {
+                "name": "第9世代",
+                "color": "#66bb6a"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "projectId": "b7c3e8a1-5f2d-4e6a-8b9c-1d3f5a7e9c2b",
+      "name": "ソニー 携帯機",
+      "order": 6,
+      "visible": true,
+      "attribute": {
+        "description": "ソニーの携帯型ゲーム機。PSPは据置機クオリティの携帯ゲームを実現し、PS Vitaはタッチ操作を導入した。",
+        "labels": [
+          {
+            "name": "ソニー",
+            "color": "#003087"
+          },
+          {
+            "name": "携帯型",
+            "color": "#2e7d32"
+          }
+        ]
+      },
+      "tasks": [
+        {
+          "id": 601,
+          "rowId": 6,
+          "name": "PlayStation Portable (PSP)",
+          "start": "2004-12-12T00:00:00",
+          "end": "2014-06-01T00:00:00",
+          "attribute": {
+            "description": "2004年12月12日発売。CPU: MIPS R4000ベース 333MHz。19,800円〜。全世界8,200万台。UMDディスク採用。動画・音楽再生にも対応したマルチメディアデバイス。PSP goも展開。",
+            "colorPalette": {
+              "name": "Sony Blue",
+              "color": "#ffffff",
+              "backgroundColor": "#003087"
+            },
+            "labels": [
+              {
+                "name": "大ヒット",
+                "color": "#e53935"
+              },
+              {
+                "name": "第7世代",
+                "color": "#ef5350"
+              }
+            ]
+          }
+        },
+        {
+          "id": 602,
+          "rowId": 6,
+          "name": "PlayStation Vita",
+          "start": "2011-12-17T00:00:00",
+          "end": "2019-03-01T00:00:00",
+          "attribute": {
+            "description": "2011年12月17日発売。CPU: ARM Cortex-A9 4コア。24,980円〜。全世界約1,500万台。有機EL（初期型）＋前面・背面タッチパネル。リモートプレイ対応。スマホ市場の台頭で苦戦。",
+            "colorPalette": {
+              "name": "Sony Indigo",
+              "color": "#ffffff",
+              "backgroundColor": "#283593"
+            },
+            "labels": [
+              {
+                "name": "第8世代",
+                "color": "#42a5f5"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "projectId": "b7c3e8a1-5f2d-4e6a-8b9c-1d3f5a7e9c2b",
+      "name": "NEC 据置機",
+      "order": 7,
+      "visible": true,
+      "attribute": {
+        "description": "NECホームエレクトロニクスのゲーム機。ハドソンと共同開発したPCエンジンは、ファミコンとスーファミの間の時期に高性能機として人気を博した。",
+        "labels": [
+          {
+            "name": "NEC",
+            "color": "#ef6c00"
+          },
+          {
+            "name": "据置型",
+            "color": "#1565c0"
+          }
+        ]
+      },
+      "tasks": [
+        {
+          "id": 701,
+          "rowId": 7,
+          "name": "PCエンジン",
+          "start": "1987-10-30T00:00:00",
+          "end": "1994-12-01T00:00:00",
+          "attribute": {
+            "description": "1987年10月30日発売。CPU: HuC6280（65C02ベース）7.16MHz。24,800円。全世界約1,000万台。HuCARD採用。世界初のCD-ROM対応ゲーム機（CD-ROM²）を実現。",
+            "colorPalette": {
+              "name": "NEC Orange",
+              "color": "#000000",
+              "backgroundColor": "#ef6c00"
+            },
+            "labels": [
+              {
+                "name": "第4世代",
+                "color": "#5c6bc0"
+              }
+            ]
+          }
+        },
+        {
+          "id": 702,
+          "rowId": 7,
+          "name": "PCエンジン GT / LT",
+          "start": "1990-12-01T00:00:00",
+          "end": "1994-06-01T00:00:00",
+          "attribute": {
+            "description": "1990年12月にGT発売。44,800円。PCエンジンの携帯版。カラーTFT液晶搭載。LTは4インチ液晶搭載の据置寄りモデル。TVチューナーにも対応。",
+            "colorPalette": {
+              "name": "NEC Amber",
+              "color": "#000000",
+              "backgroundColor": "#ff8f00"
+            },
+            "labels": [
+              {
+                "name": "携帯型",
+                "color": "#2e7d32"
+              }
+            ]
+          }
+        },
+        {
+          "id": 703,
+          "rowId": 7,
+          "name": "PCエンジン Duo / DuoR / DuoRX",
+          "start": "1991-09-21T00:00:00",
+          "end": "1995-06-01T00:00:00",
+          "attribute": {
+            "description": "1991年9月21日にDuo発売。59,800円。PCエンジン本体とCD-ROM²を一体化。DuoR（1993年）、DuoRX（1994年）とコストダウン版を展開。",
+            "colorPalette": {
+              "name": "NEC Orange",
+              "color": "#000000",
+              "backgroundColor": "#ef6c00"
+            }
+          }
+        },
+        {
+          "id": 704,
+          "rowId": 7,
+          "name": "PC-FX",
+          "start": "1994-12-23T00:00:00",
+          "end": "1998-03-01T00:00:00",
+          "attribute": {
+            "description": "1994年12月23日発売。CPU: NEC V810 21.5MHz。49,800円。全世界約11万台。動画再生に特化したが3D性能に乏しく、PS/SSとの競争に敗北。NECのゲーム機事業は終了。",
+            "colorPalette": {
+              "name": "NEC Amber",
+              "color": "#000000",
+              "backgroundColor": "#ff8f00"
+            },
+            "labels": [
+              {
+                "name": "第5世代",
+                "color": "#26a69a"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "projectId": "b7c3e8a1-5f2d-4e6a-8b9c-1d3f5a7e9c2b",
+      "name": "マイクロソフト Xbox",
+      "order": 8,
+      "visible": true,
+      "attribute": {
+        "description": "マイクロソフトのXboxシリーズ。2002年に日本市場に参入。オンラインサービスXbox Liveで先駆的な役割を果たした。",
+        "labels": [
+          {
+            "name": "マイクロソフト",
+            "color": "#107c10"
+          },
+          {
+            "name": "据置型",
+            "color": "#1565c0"
+          }
+        ]
+      },
+      "tasks": [
+        {
+          "id": 801,
+          "rowId": 8,
+          "name": "Xbox",
+          "start": "2002-02-22T00:00:00",
+          "end": "2007-03-01T00:00:00",
+          "attribute": {
+            "description": "2002年2月22日発売（日本）。CPU: Intel Celeron（カスタム）733MHz。34,800円。全世界2,400万台。HDD内蔵、イーサネット標準装備。日本では苦戦。",
+            "colorPalette": {
+              "name": "Microsoft Green",
+              "color": "#ffffff",
+              "backgroundColor": "#107c10"
+            },
+            "labels": [
+              {
+                "name": "第6世代",
+                "color": "#ab47bc"
+              }
+            ]
+          }
+        },
+        {
+          "id": 802,
+          "rowId": 8,
+          "name": "Xbox 360",
+          "start": "2005-12-10T00:00:00",
+          "end": "2016-04-01T00:00:00",
+          "attribute": {
+            "description": "2005年12月10日発売（日本）。CPU: PowerPC Xenon 3コア 3.2GHz。39,795円。全世界8,400万台。Xbox Live Arcadeやアチーブメントシステムを確立。日本では限定的な人気。",
+            "colorPalette": {
+              "name": "Microsoft Dark Green",
+              "color": "#ffffff",
+              "backgroundColor": "#1b5e20"
+            },
+            "labels": [
+              {
+                "name": "第7世代",
+                "color": "#ef5350"
+              }
+            ]
+          }
+        },
+        {
+          "id": 803,
+          "rowId": 8,
+          "name": "Xbox One",
+          "start": "2014-09-04T00:00:00",
+          "end": "2020-11-01T00:00:00",
+          "attribute": {
+            "description": "2014年9月4日発売（日本）。CPU: AMD Jaguar 8コア 1.75GHz。39,980円〜。全世界約5,000万台。Game Pass、後方互換性を推進。OneS、OneXとマイナーチェンジ。",
+            "colorPalette": {
+              "name": "Microsoft Green",
+              "color": "#ffffff",
+              "backgroundColor": "#107c10"
+            },
+            "labels": [
+              {
+                "name": "第8世代",
+                "color": "#42a5f5"
+              }
+            ]
+          }
+        },
+        {
+          "id": 804,
+          "rowId": 8,
+          "name": "Xbox Series X|S",
+          "start": "2020-11-10T00:00:00",
+          "end": "2025-12-31T00:00:00",
+          "attribute": {
+            "description": "2020年11月10日発売。CPU: AMD Zen 2 8コア 3.8GHz。49,980円（Series X）/ 29,980円（Series S）。Xbox Game Passとの統合、クラウドゲーミング対応。",
+            "colorPalette": {
+              "name": "Microsoft Dark Green",
+              "color": "#ffffff",
+              "backgroundColor": "#1b5e20"
+            },
+            "labels": [
+              {
+                "name": "第9世代",
+                "color": "#66bb6a"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "projectId": "b7c3e8a1-5f2d-4e6a-8b9c-1d3f5a7e9c2b",
+      "name": "SNK ネオジオ",
+      "order": 9,
+      "visible": true,
+      "attribute": {
+        "description": "SNK（旧:新日本企画）のネオジオシリーズ。業務用と同一基板で「100メガショック」を謳い、アーケードゲームの完全移植を実現した高級路線ハード。",
+        "labels": [
+          {
+            "name": "SNK",
+            "color": "#6a1b9a"
+          }
+        ]
+      },
+      "tasks": [
+        {
+          "id": 901,
+          "rowId": 9,
+          "name": "ネオジオ (AES)",
+          "start": "1990-04-26T00:00:00",
+          "end": "2004-07-01T00:00:00",
+          "attribute": {
+            "description": "1990年4月26日発売。CPU: MC68000 12MHz + Z80A 4MHz。58,000円。アーケードと同一スペックの家庭用機。ソフト1本2〜3万円という高価格路線。格闘ゲームファンに絶大な支持。",
+            "colorPalette": {
+              "name": "SNK Purple",
+              "color": "#ffffff",
+              "backgroundColor": "#6a1b9a"
+            },
+            "labels": [
+              {
+                "name": "第4世代",
+                "color": "#5c6bc0"
+              }
+            ]
+          }
+        },
+        {
+          "id": 902,
+          "rowId": 9,
+          "name": "ネオジオCD",
+          "start": "1994-09-09T00:00:00",
+          "end": "1999-06-01T00:00:00",
+          "attribute": {
+            "description": "1994年9月9日発売。49,800円。ネオジオのCD-ROM版。ソフト価格が大幅に下がったが、読み込み時間の長さが課題。CDZで改善を図った。",
+            "colorPalette": {
+              "name": "SNK Purple",
+              "color": "#ffffff",
+              "backgroundColor": "#6a1b9a"
+            },
+            "labels": [
+              {
+                "name": "第5世代",
+                "color": "#26a69a"
+              }
+            ]
+          }
+        },
+        {
+          "id": 903,
+          "rowId": 9,
+          "name": "ネオジオポケット / カラー",
+          "start": "1998-10-28T00:00:00",
+          "end": "2001-06-01T00:00:00",
+          "attribute": {
+            "description": "1998年10月28日にモノクロ版発売。7,800円。1999年3月にカラー版発売。8,900円。小型の携帯ゲーム機。マイクロスイッチ式スティックが好評だが、ゲームボーイに敗北。",
+            "colorPalette": {
+              "name": "SNK Purple",
+              "color": "#ffffff",
+              "backgroundColor": "#6a1b9a"
+            },
+            "labels": [
+              {
+                "name": "携帯型",
+                "color": "#2e7d32"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "projectId": "b7c3e8a1-5f2d-4e6a-8b9c-1d3f5a7e9c2b",
+      "name": "バンダイ / その他",
+      "order": 10,
+      "visible": true,
+      "attribute": {
+        "description": "バンダイやその他メーカーのゲーム機。1977年のテレビジャックから始まり、ワンダースワン、３ＤＯ、ピピンアットマークなど個性的なハードが登場した。",
+        "labels": [
+          {
+            "name": "バンダイ",
+            "color": "#00838f"
+          }
+        ]
+      },
+      "tasks": [
+        {
+          "id": 1004,
+          "rowId": 10,
+          "name": "テレビジャック (バンダイ)",
+          "start": "1977-07-01T00:00:00",
+          "end": "1979-12-01T00:00:00",
+          "attribute": {
+            "description": "1977年7月発売。バンダイ初のテレビゲーム機。TV JACK 1000（9,800円）から3000（38,000円）まで多モデル展開。ボールゲーム内蔵型。1978年にはカセット交換式の「アドオン5000」も発売。",
+            "colorPalette": {
+              "name": "Bandai Teal",
+              "color": "#ffffff",
+              "backgroundColor": "#00838f"
+            },
+            "labels": [
+              {
+                "name": "第1世代",
+                "color": "#a1887f"
+              }
+            ]
+          }
+        },
+        {
+          "id": 1005,
+          "rowId": 10,
+          "name": "アルカディア (バンダイ)",
+          "start": "1983-03-25T00:00:00",
+          "end": "1984-06-01T00:00:00",
+          "attribute": {
+            "description": "1983年3月25日発売。19,800円（後に9,800円に値下げ）。米エマーソン社「Arcadia 2001」のバンダイ版。カセット交換式。約5万台生産。ファミコンの登場により短命に終わった。",
+            "colorPalette": {
+              "name": "Bandai Teal",
+              "color": "#ffffff",
+              "backgroundColor": "#00838f"
+            },
+            "labels": [
+              {
+                "name": "第2世代",
+                "color": "#8d6e63"
+              }
+            ]
+          }
+        },
+        {
+          "id": 1006,
+          "rowId": 10,
+          "name": "光速船 (Vectrex)",
+          "start": "1983-07-01T00:00:00",
+          "end": "1984-12-01T00:00:00",
+          "attribute": {
+            "description": "1983年7月発売。54,800円。米GCE社「Vectrex」のバンダイ版。ベクタースキャン方式のCRTモニター内蔵という唯一無二の家庭用ゲーム機。モノクロ画面にカラーオーバーレイを装着。「マインストーム」を本体内蔵。高価格のためファミコンに敗北。",
+            "colorPalette": {
+              "name": "Bandai Teal",
+              "color": "#ffffff",
+              "backgroundColor": "#00838f"
+            },
+            "labels": [
+              {
+                "name": "第2世代",
+                "color": "#8d6e63"
+              }
+            ]
+          }
+        },
+        {
+          "id": 1001,
+          "rowId": 10,
+          "name": "ワンダースワン / カラー / クリスタル",
+          "start": "1999-03-04T00:00:00",
+          "end": "2003-06-01T00:00:00",
+          "attribute": {
+            "description": "1999年3月4日発売。横井軍平が設計に関与。4,800円。全世界約350万台。2000年にカラー版、2002年にクリスタル版。ファイナルファンタジーの移植で話題に。",
+            "colorPalette": {
+              "name": "Bandai Teal",
+              "color": "#ffffff",
+              "backgroundColor": "#00838f"
+            },
+            "labels": [
+              {
+                "name": "携帯型",
+                "color": "#2e7d32"
+              }
+            ]
+          }
+        },
+        {
+          "id": 1002,
+          "rowId": 10,
+          "name": "3DO REAL (松下)",
+          "start": "1994-03-20T00:00:00",
+          "end": "1996-12-01T00:00:00",
+          "attribute": {
+            "description": "1994年3月20日発売。CPU: ARM60 12.5MHz。54,800円。3DO Company規格のゲーム機。松下電器がFZ-1として発売。先進的だったが高価格で普及せず。",
+            "colorPalette": {
+              "name": "Epoch Brown",
+              "color": "#ffffff",
+              "backgroundColor": "#795548"
+            },
+            "labels": [
+              {
+                "name": "第5世代",
+                "color": "#26a69a"
+              }
+            ]
+          }
+        },
+        {
+          "id": 1003,
+          "rowId": 10,
+          "name": "ピピンアットマーク (バンダイ×Apple)",
+          "start": "1996-03-28T00:00:00",
+          "end": "1997-03-01T00:00:00",
+          "attribute": {
+            "description": "1996年3月28日発売。CPU: PowerPC 603e 66MHz。49,800円。全世界約4.2万台。インターネット対応を謳ったが時代に早すぎ、史上最大級の商業的失敗に。",
+            "colorPalette": {
+              "name": "Bandai Teal",
+              "color": "#ffffff",
+              "backgroundColor": "#00838f"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "projectId": "b7c3e8a1-5f2d-4e6a-8b9c-1d3f5a7e9c2b",
+      "name": "エポック社 / 先駆者たち",
+      "order": 11,
+      "visible": true,
+      "attribute": {
+        "description": "日本のゲーム機史の黎明期を開拓したメーカーたち。1975年のテレビテニス（日本初）からカセットビジョンまで、エポック社はファミコン以前の国産ゲーム機市場を牽引した。",
+        "labels": [
+          {
+            "name": "エポック社",
+            "color": "#795548"
+          }
+        ]
+      },
+      "tasks": [
+        {
+          "id": 1104,
+          "rowId": 11,
+          "name": "テレビテニス",
+          "start": "1975-09-12T00:00:00",
+          "end": "1977-12-01T00:00:00",
+          "attribute": {
+            "description": "1975年9月12日発売。日本初の家庭用テレビゲーム機。エポック社がマグナボックス社と技術提携して開発。19,500円。約1万台販売。UHF電波によるワイヤレス方式でテレビに映像を出力。「見るテレビから使うテレビへ」のキャッチコピーで話題に。",
+            "colorPalette": {
+              "name": "Epoch Dark Brown",
+              "color": "#ffffff",
+              "backgroundColor": "#5d4037"
+            },
+            "labels": [
+              {
+                "name": "第1世代",
+                "color": "#a1887f"
+              }
+            ]
+          }
+        },
+        {
+          "id": 1105,
+          "rowId": 11,
+          "name": "システム10",
+          "start": "1977-08-01T00:00:00",
+          "end": "1980-12-01T00:00:00",
+          "attribute": {
+            "description": "1977年8月発売。エポック社のテレビテニス後継機。9,800円（本体のみ）/ 15,000円（光線銃・ACアダプタ付き）。約20万台販売。テニス、サッカー、射的など複数のゲームを搭載。光線銃対応が特徴。",
+            "colorPalette": {
+              "name": "Epoch Brown",
+              "color": "#ffffff",
+              "backgroundColor": "#795548"
+            },
+            "labels": [
+              {
+                "name": "第1世代",
+                "color": "#a1887f"
+              }
+            ]
+          }
+        },
+        {
+          "id": 1101,
+          "rowId": 11,
+          "name": "カセットビジョン",
+          "start": "1981-07-30T00:00:00",
+          "end": "1984-06-01T00:00:00",
+          "attribute": {
+            "description": "1981年7月30日発売。13,500円。ファミコン以前に最も成功した国産ゲーム機。約45万台を販売。「きこりの与作」が大人気。",
+            "colorPalette": {
+              "name": "Epoch Brown",
+              "color": "#ffffff",
+              "backgroundColor": "#795548"
+            },
+            "labels": [
+              {
+                "name": "第2世代",
+                "color": "#8d6e63"
+              }
+            ]
+          }
+        },
+        {
+          "id": 1102,
+          "rowId": 11,
+          "name": "スーパーカセットビジョン",
+          "start": "1984-07-17T00:00:00",
+          "end": "1988-06-01T00:00:00",
+          "attribute": {
+            "description": "1984年7月17日発売。CPU: NEC μPD7801G 4MHz。14,800円。グラフィック・サウンド面でファミコンに対抗するも、ソフト数で大差をつけられた。",
+            "colorPalette": {
+              "name": "Epoch Brown",
+              "color": "#ffffff",
+              "backgroundColor": "#795548"
+            },
+            "labels": [
+              {
+                "name": "第3世代",
+                "color": "#78909c"
+              }
+            ]
+          }
+        },
+        {
+          "id": 1103,
+          "rowId": 11,
+          "name": "Atari 2800 (日本版2600)",
+          "start": "1983-10-01T00:00:00",
+          "end": "1984-12-01T00:00:00",
+          "attribute": {
+            "description": "1983年10月発売。24,800円。Atari 2600の日本仕様版。ファミコンの登場時期と重なり、日本市場では全く普及せず。アタリショックの余波。",
+            "colorPalette": {
+              "name": "Atari Gray",
+              "color": "#ffffff",
+              "backgroundColor": "#546e7a"
+            },
+            "labels": [
+              {
+                "name": "第2世代",
+                "color": "#8d6e63"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
