@@ -73,7 +73,7 @@ const handleFileChange = (e: Event) => {
     max-width="1400px"
     min-height="700px"
   >
-    <v-card>
+    <v-card v-draggable-dialog>
       <v-card-title class="d-flex justify-space-between align-center pt-6 px-6 pb-4">
         <span>プロジェクト一覧</span>
         <v-btn icon="mdi-close" variant="text" @click="close"></v-btn>

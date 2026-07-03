@@ -23,7 +23,7 @@ const renderedHtml = computed(() => {
     max-width="680"
     scrollable
   >
-    <v-card>
+    <v-card v-draggable-dialog>
       <v-card-title class="d-flex align-center pa-4">
         <v-icon icon="mdi-note-text-outline" class="mr-2" />
         <span>リリースノート</span>

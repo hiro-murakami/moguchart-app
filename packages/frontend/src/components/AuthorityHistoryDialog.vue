@@ -18,7 +18,7 @@ const { localText, emailCount, hasChanges, close, handleBeforeClose, save } = us
 
 <template>
   <v-dialog :model-value="modelValue" @update:model-value="handleBeforeClose" max-width="600px">
-    <v-card>
+    <v-card v-draggable-dialog>
       <v-card-title class="pa-8 pb-0">メールアドレス履歴</v-card-title>
       <v-card-subtitle class="px-8 pt-2 pb-0" style="white-space: normal">
         権限設定で使用するメールアドレスの補完候補を管理します。<br />

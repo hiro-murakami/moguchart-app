@@ -60,7 +60,7 @@ const scopeColor = (scope: string): string => {
 
 <template>
   <v-dialog :model-value="modelValue" @update:model-value="close" max-width="850px" scrollable>
-    <v-card>
+    <v-card v-draggable-dialog>
       <v-card-title class="d-flex align-center pa-6 pb-2">
         <v-icon icon="mdi-key-variant" class="mr-2" />
         APIキー管理
@@ -237,7 +237,7 @@ const scopeColor = (scope: string): string => {
 
   <!-- 無効化確認ダイアログ -->
   <v-dialog :model-value="!!confirmRevokeId" @update:model-value="confirmRevokeId = null" max-width="400px">
-    <v-card>
+    <v-card v-draggable-dialog>
       <v-card-title class="pa-6 pb-2">APIキーの無効化</v-card-title>
       <v-card-text class="pa-6 pt-2">
         このAPIキーを無効化しますか？この操作は元に戻せません。

@@ -46,7 +46,7 @@ defineExpose({ open })
 
 <template>
   <v-dialog v-model="isOpen" max-width="600">
-    <v-card>
+    <v-card v-draggable-dialog>
       <v-card-title class="pt-6">{{ state.title }}</v-card-title>
       <v-card-text>
         <div v-if="state.message">{{ state.message }}</div>

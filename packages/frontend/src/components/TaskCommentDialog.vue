@@ -97,7 +97,7 @@ watch(
 
 <template>
   <v-dialog :model-value="modelValue" @update:model-value="emit('update:modelValue', $event)" max-width="520px">
-    <v-card>
+    <v-card v-draggable-dialog>
       <v-card-title class="d-flex align-center pa-6 pb-2">
         <v-icon icon="mdi-comment-text-outline" class="mr-2" />
         {{ taskName }} のコメント

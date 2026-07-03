@@ -25,8 +25,13 @@ if (/Mac|iPhone|iPad|iPod/.test(navigator.userAgent)) {
   document.documentElement.classList.add('is-mac')
 }
 
+// Directives
+import { draggableDialog } from '@/directives/draggableDialog'
+
 const app = createApp(App)
 
 registerPlugins(app)
+
+app.directive('draggable-dialog', draggableDialog)
 
 app.mount('#app')

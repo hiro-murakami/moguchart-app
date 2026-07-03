@@ -144,7 +144,7 @@ watch(
 
 <template>
   <v-dialog :model-value="modelValue" @update:model-value="handleBeforeClose" max-width="850px">
-    <v-card>
+    <v-card v-draggable-dialog>
       <v-card-title class="pa-8 pb-0">{{ title }}</v-card-title>
       <v-card-text class="px-8 py-4">
         <v-form ref="form" v-model="formValid">

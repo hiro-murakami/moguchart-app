@@ -36,7 +36,7 @@ watch(
 
 <template>
   <v-dialog :model-value="modelValue" @update:model-value="handleBeforeClose" max-width="500px">
-    <v-card v-if="user">
+    <v-card v-if="user" v-draggable-dialog>
       <v-card-title class="pa-8 pb-0">ユーザー設定</v-card-title>
       <v-card-text class="pa-8">
         <v-form ref="formRef" v-model="formValid" @submit.prevent>

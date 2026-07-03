@@ -31,7 +31,7 @@ const {
 
 <template>
   <v-dialog :model-value="modelValue" @update:model-value="emit('update:modelValue', $event)" max-width="800px">
-    <v-card>
+    <v-card v-draggable-dialog>
       <v-card-title class="d-flex justify-space-between align-center pt-6 px-6 pb-4">
         <span>スナップショット一覧</span>
         <v-btn icon="mdi-close" variant="text" @click="close"></v-btn>

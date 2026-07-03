@@ -66,7 +66,7 @@ const save = () => {
 
 <template>
   <v-dialog v-model="isVisible" max-width="600px">
-    <v-card>
+    <v-card v-draggable-dialog>
       <v-card-title class="pa-8 pb-0">行の編集</v-card-title>
       <v-card-text class="pa-8">
         <v-form ref="formRef" v-model="formValid" @submit.prevent>

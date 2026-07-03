@@ -39,7 +39,7 @@ const dateInputType = computed(() => granularityToInputType(props.project?.attri
     "
     max-width="600px"
   >
-    <v-card>
+    <v-card v-draggable-dialog>
       <v-card-title class="pa-6 pb-2">
         <v-icon start>mdi-calendar-arrow-right</v-icon>
         期間スライド

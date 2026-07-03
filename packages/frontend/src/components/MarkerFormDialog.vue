@@ -151,7 +151,7 @@ const handleDelete = () => {
 
 <template>
   <v-dialog v-model="isOpen" max-width="500" :persistent="hasChanges" no-click-animation>
-    <v-card class="pa-2">
+    <v-card class="pa-2" v-draggable-dialog>
       <v-card-title class="d-flex align-center">
         <v-icon class="mr-2" :color="color">mdi-map-marker</v-icon>
         {{ isEditing ? 'マーカーの編集' : '新規マーカー' }}
