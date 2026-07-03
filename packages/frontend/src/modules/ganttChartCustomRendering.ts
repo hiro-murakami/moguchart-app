@@ -166,6 +166,116 @@ const highlightText = (text: string, keywords: string[], parent: HTMLElement) =>
   })
 }
 
+/** オリジナルサイズの画像をライトボックスで表示する（複数画像ナビゲーション対応） */
+const openImageLightbox = (srcs: string[], initialIndex = 0) => {
+  // 既存のライトボックスがあれば閉じる
+  document.querySelectorAll('[data-moguchart-lightbox]').forEach((el) => el.remove())
+
+  let currentIndex = initialIndex
+
+  const overlay = document.createElement('div')
+  overlay.setAttribute('data-moguchart-lightbox', 'true')
+  overlay.style.position = 'fixed'
+  overlay.style.top = '0'
+  overlay.style.left = '0'
+  overlay.style.width = '100vw'
+  overlay.style.height = '100vh'
+  overlay.style.zIndex = '10000'
+  overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.8)'
+  overlay.style.display = 'flex'
+  overlay.style.alignItems = 'center'
+  overlay.style.justifyContent = 'center'
+  overlay.style.overflow = 'auto'
+  overlay.style.cursor = 'zoom-out'
+  overlay.style.opacity = '0'
+  overlay.style.transition = 'opacity 0.2s ease'
+
+  const img = document.createElement('img')
+  img.src = srcs[currentIndex]!
+  img.style.display = 'block'
+  img.style.margin = 'auto'
+  img.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.5)'
+  img.style.borderRadius = '4px'
+  img.draggable = false
+  img.style.cursor = 'default'
+  img.addEventListener('click', (e) => e.stopPropagation())
+  overlay.appendChild(img)
+
+  // カウンター表示（複数画像時のみ）
+  let counterEl: HTMLElement | null = null
+  if (srcs.length > 1) {
+    counterEl = document.createElement('div')
+    counterEl.style.cssText =
+      'position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); color: white; font-size: 14px; font-weight: bold; text-shadow: 0 1px 4px rgba(0,0,0,0.8); pointer-events: none;'
+    counterEl.textContent = `${currentIndex + 1} / ${srcs.length}`
+    overlay.appendChild(counterEl)
+  }
+
+  const updateImage = () => {
+    img.src = srcs[currentIndex]!
+    if (counterEl) counterEl.textContent = `${currentIndex + 1} / ${srcs.length}`
+  }
+
+  // ナビゲーションボタン（複数画像時のみ）
+  if (srcs.length > 1) {
+    const btnStyle =
+      'position: fixed; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.15); border: none; color: white; font-size: 28px; width: 44px; height: 44px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); transition: background 0.15s;'
+
+    const prevBtn = document.createElement('button')
+    prevBtn.style.cssText = btnStyle + 'left: 16px;'
+    prevBtn.textContent = '‹'
+    prevBtn.addEventListener('mouseenter', () => (prevBtn.style.background = 'rgba(255,255,255,0.3)'))
+    prevBtn.addEventListener('mouseleave', () => (prevBtn.style.background = 'rgba(255,255,255,0.15)'))
+    prevBtn.addEventListener('click', (e) => {
+      e.stopPropagation()
+      currentIndex = (currentIndex - 1 + srcs.length) % srcs.length
+      updateImage()
+    })
+    overlay.appendChild(prevBtn)
+
+    const nextBtn = document.createElement('button')
+    nextBtn.style.cssText = btnStyle + 'right: 16px;'
+    nextBtn.textContent = '›'
+    nextBtn.addEventListener('mouseenter', () => (nextBtn.style.background = 'rgba(255,255,255,0.3)'))
+    nextBtn.addEventListener('mouseleave', () => (nextBtn.style.background = 'rgba(255,255,255,0.15)'))
+    nextBtn.addEventListener('click', (e) => {
+      e.stopPropagation()
+      currentIndex = (currentIndex + 1) % srcs.length
+      updateImage()
+    })
+    overlay.appendChild(nextBtn)
+  }
+
+  const closeLightbox = () => {
+    overlay.style.opacity = '0'
+    setTimeout(() => overlay.remove(), 200)
+    document.removeEventListener('keydown', onKeyDown)
+  }
+
+  const onKeyDown = (e: KeyboardEvent) => {
+    if (e.key === 'Escape') closeLightbox()
+    if (srcs.length > 1) {
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        currentIndex = (currentIndex - 1 + srcs.length) % srcs.length
+        updateImage()
+      }
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        currentIndex = (currentIndex + 1) % srcs.length
+        updateImage()
+      }
+    }
+  }
+
+  overlay.addEventListener('click', closeLightbox)
+  document.addEventListener('keydown', onKeyDown)
+
+  document.body.appendChild(overlay)
+  // フェードイン
+  requestAnimationFrame(() => {
+    overlay.style.opacity = '1'
+  })
+}
+
 export const barContent = (task: moguchart.GanttTask) => {
   const taskWithAttr = task as any
   const labels = taskWithAttr.attribute?.labels as { name: string; color: string }[] | undefined
@@ -180,6 +290,7 @@ export const barContent = (task: moguchart.GanttTask) => {
   container.style.justifyContent = 'flex-start'
   container.style.alignItems = 'flex-start'
   container.style.height = '100%'
+  container.style.boxSizing = 'border-box'
   container.style.whiteSpace = 'nowrap'
   container.style.overflow = 'hidden'
   container.style.padding = '2px 8px'
@@ -330,6 +441,151 @@ export const barContent = (task: moguchart.GanttTask) => {
     headerContainer.appendChild(badge)
   }
 
+  // 画像サムネイル
+  const imageUrls = (taskWithAttr.attribute?.imageUrls as string[] | undefined)?.filter(Boolean)
+  if (imageUrls && imageUrls.length > 0) {
+    const thumbWrapper = document.createElement('span')
+    thumbWrapper.style.position = 'absolute'
+    thumbWrapper.style.right = '4px'
+    thumbWrapper.style.top = '0'
+    thumbWrapper.style.height = '100%'
+    thumbWrapper.style.boxSizing = 'border-box'
+    thumbWrapper.style.aspectRatio = '1'
+    thumbWrapper.style.display = 'flex'
+    thumbWrapper.style.alignItems = 'center'
+    thumbWrapper.style.justifyContent = 'center'
+    thumbWrapper.style.borderRadius = '3px'
+    thumbWrapper.style.overflow = 'hidden'
+    thumbWrapper.style.backgroundColor = 'rgba(255, 255, 255, 0.2)'
+    thumbWrapper.style.pointerEvents = 'auto'
+    thumbWrapper.style.cursor = 'default'
+    thumbWrapper.style.border = '1px solid rgba(255, 255, 255, 0.3)'
+
+    const thumbImg = document.createElement('img')
+    thumbImg.src = imageUrls[0]!
+    thumbImg.style.width = '100%'
+    thumbImg.style.height = '100%'
+    thumbImg.style.objectFit = 'cover'
+    thumbImg.style.display = 'block'
+    thumbImg.draggable = false
+    thumbWrapper.appendChild(thumbImg)
+
+    // 複数画像の場合、枚数バッジを表示
+    if (imageUrls.length > 1) {
+      const countBadge = document.createElement('span')
+      countBadge.style.cssText =
+        'position: absolute; bottom: -1px; right: -1px; background: rgba(0,0,0,0.7); color: white; font-size: 8px; font-weight: bold; padding: 0 3px; border-radius: 3px 0 3px 0; line-height: 14px;'
+      countBadge.textContent = `${imageUrls.length}`
+      thumbWrapper.appendChild(countBadge)
+    }
+
+    let popupEl: HTMLElement | null = null
+    let popupHideTimeout: ReturnType<typeof setTimeout> | null = null
+
+    const showImagePopup = () => {
+      if (popupHideTimeout) {
+        clearTimeout(popupHideTimeout)
+        popupHideTimeout = null
+      }
+      if (popupEl) return
+
+      // 再レンダリングで孤立した既存ポップアップを削除
+      document.querySelectorAll('[data-moguchart-image-popup]').forEach((el) => el.remove())
+
+      // ガントバーのツールチップを非表示にする（タイマーもキャンセル）
+      thumbWrapper.dispatchEvent(new CustomEvent('bar-mouseleave', { bubbles: true, composed: true }))
+
+      const colors = getTooltipColors()
+      popupEl = document.createElement('div')
+      popupEl.setAttribute('data-moguchart-image-popup', 'true')
+      popupEl.style.position = 'fixed'
+      popupEl.style.zIndex = '9999'
+      popupEl.style.backgroundColor = colors.bg
+      popupEl.style.border = `1px solid ${colors.border}`
+      popupEl.style.borderRadius = '8px'
+      popupEl.style.padding = '6px'
+      popupEl.style.boxShadow = '0 8px 24px rgba(0,0,0,0.25)'
+      popupEl.style.pointerEvents = 'auto'
+      popupEl.style.cursor = 'zoom-in'
+      popupEl.style.maxWidth = '400px'
+      popupEl.style.maxHeight = '320px'
+      popupEl.style.overflowY = imageUrls.length > 1 ? 'auto' : 'hidden'
+      popupEl.style.display = 'flex'
+      popupEl.style.flexDirection = 'column'
+      popupEl.style.gap = '4px'
+
+      imageUrls.forEach((url, idx) => {
+        const popupImg = document.createElement('img')
+        popupImg.src = url
+        popupImg.style.maxWidth = '388px'
+        popupImg.style.maxHeight = imageUrls.length === 1 ? '296px' : '200px'
+        popupImg.style.objectFit = 'contain'
+        popupImg.style.display = 'block'
+        popupImg.style.borderRadius = '4px'
+        popupImg.style.cursor = 'zoom-in'
+        popupImg.draggable = false
+
+        // クリックでオリジナルサイズのライトボックスを表示
+        popupImg.addEventListener('click', (e) => {
+          e.stopPropagation()
+          removeImagePopup()
+          openImageLightbox(imageUrls, idx)
+        })
+        popupEl!.appendChild(popupImg)
+      })
+
+      // ポップアップにマウスが乗っている間は消えないようにする
+      popupEl.addEventListener('mouseenter', () => {
+        if (popupHideTimeout) {
+          clearTimeout(popupHideTimeout)
+          popupHideTimeout = null
+        }
+      })
+      popupEl.addEventListener('mouseleave', () => {
+        popupHideTimeout = setTimeout(removeImagePopup, 100)
+      })
+
+      document.body.appendChild(popupEl)
+
+      const rect = thumbWrapper.getBoundingClientRect()
+      adjustTooltipPosition(popupEl, rect)
+    }
+
+    const removeImagePopup = () => {
+      if (popupHideTimeout) {
+        clearTimeout(popupHideTimeout)
+        popupHideTimeout = null
+      }
+      if (popupEl) {
+        popupEl.remove()
+        popupEl = null
+      }
+    }
+
+    const hideImagePopup = () => {
+      popupHideTimeout = setTimeout(removeImagePopup, 100)
+    }
+
+    thumbWrapper.addEventListener('mouseenter', showImagePopup)
+    thumbWrapper.addEventListener('mouseleave', hideImagePopup)
+    thumbWrapper.addEventListener('mousedown', (e) => {
+      // ライトボックスが開くときの mousedown ではポップアップを消さない
+      e.stopPropagation()
+    })
+    document.addEventListener('mousedown', (e) => {
+      if (
+        popupEl &&
+        e.target !== thumbWrapper &&
+        !thumbWrapper.contains(e.target as Node) &&
+        e.target !== popupEl &&
+        !popupEl.contains(e.target as Node)
+      )
+        removeImagePopup()
+    })
+
+    container.appendChild(thumbWrapper)
+  }
+
   container.appendChild(headerContainer)
 
   if (description) {
@@ -468,6 +724,39 @@ export const tooltip = (task: moguchart.GanttTask, isHourly?: boolean) => {
     progressDiv.appendChild(barBg)
 
     container.appendChild(progressDiv)
+  }
+
+  // 画像プレビュー
+  const tooltipImageUrls = ((task as any).attribute?.imageUrls as string[] | undefined)?.filter(Boolean)
+  if (tooltipImageUrls && tooltipImageUrls.length > 0) {
+    const imgDiv = document.createElement('div')
+    imgDiv.style.marginTop = '4px'
+    imgDiv.style.paddingTop = '4px'
+    imgDiv.style.borderTop = '1px solid rgba(128, 128, 128, 0.3)'
+    imgDiv.style.display = 'flex'
+    imgDiv.style.flexDirection = 'column'
+    imgDiv.style.gap = '4px'
+
+    // 最初の1枚だけプレビュー表示
+    const imgEl = document.createElement('img')
+    imgEl.src = tooltipImageUrls[0]!
+    imgEl.style.maxWidth = '280px'
+    imgEl.style.maxHeight = '160px'
+    imgEl.style.objectFit = 'contain'
+    imgEl.style.borderRadius = '4px'
+    imgEl.style.display = 'block'
+    imgEl.draggable = false
+    imgDiv.appendChild(imgEl)
+
+    if (tooltipImageUrls.length > 1) {
+      const moreDiv = document.createElement('div')
+      moreDiv.style.fontSize = '10px'
+      moreDiv.style.opacity = '0.6'
+      moreDiv.style.textAlign = 'center'
+      moreDiv.textContent = `🖼️ 他 ${tooltipImageUrls.length - 1} 枚の画像`
+      imgDiv.appendChild(moreDiv)
+    }
+    container.appendChild(imgDiv)
   }
 
   return container

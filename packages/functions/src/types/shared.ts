@@ -268,6 +268,8 @@ export type TaskAttribute = {
   progress?: number
   /** 依存タスクのID配列 */
   dependencies?: string[]
+  /** タスクバーに表示する画像のURL配列 */
+  imageUrls?: string[]
 }
 
 /** フロントエンドの編集用：行データ */
@@ -294,6 +296,8 @@ export interface EditingTaskData {
   progress?: number
   /** 依存タスクのID配列 */
   dependencies?: string[]
+  /** タスクバーに表示する画像のURL配列 */
+  imageUrls?: string[]
 }
 
 /** 簡易的な行情報（ドロップダウン選択用など） */
