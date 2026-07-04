@@ -56,6 +56,7 @@ import { storeToRefs } from 'pinia'
 import { computed, inject, nextTick, ref, watch, type Ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { fetchPublicGanttChart } from '@/modules/publicApi'
+import { preloadImages } from '@/modules/imageCache'
 
 const getBorderStyle = (type?: string, color?: string) => {
   if (!type || type === 'none') return ''
@@ -1081,6 +1082,16 @@ export const useGanttChartView = () => {
           }),
         ),
       }))
+
+      // 全タスクの画像URLをプリロードしてキャッシュを温める
+      const allImageUrls: string[] = []
+      for (const row of rows.value) {
+        for (const task of row.tasks) {
+          const urls = (task as any).attribute?.imageUrls as string[] | undefined
+          if (urls) allImageUrls.push(...urls.filter(Boolean))
+        }
+      }
+      if (allImageUrls.length > 0) preloadImages(allImageUrls)
     } catch (err) {
       console.error('Failed to load data:', err)
       alert({
@@ -1143,6 +1154,16 @@ export const useGanttChartView = () => {
       if (rowCommentEntries.length > 0) {
         preloadRowCommentsCache(rowCommentEntries)
       }
+
+      // 全タスクの画像URLをプリロードしてキャッシュを温める
+      const allImageUrls: string[] = []
+      for (const row of rows.value) {
+        for (const task of row.tasks) {
+          const urls = (task as any).attribute?.imageUrls as string[] | undefined
+          if (urls) allImageUrls.push(...urls.filter(Boolean))
+        }
+      }
+      if (allImageUrls.length > 0) preloadImages(allImageUrls)
 
       // プロジェクトコメントの処理
       const snapshotProjectComments = data.project.comments as any[] | undefined

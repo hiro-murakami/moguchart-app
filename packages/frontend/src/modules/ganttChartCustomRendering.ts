@@ -4,6 +4,7 @@ import * as moguchart from '@mogura/moguchart-core'
 import { selectTaskComments, selectComments } from '@/modules/scripts'
 import type { Comment } from '@functions/types/shared'
 import { UNLABELED_VALUE } from '@/modules/constants'
+import { getCachedImageUrl, setImageSrc } from '@/modules/imageCache'
 
 const commentsCache = new Map<number, { data: Comment[]; fetchedAt: number }>()
 const rowCommentsCache = new Map<number, { data: Comment[]; fetchedAt: number }>()
@@ -191,9 +192,12 @@ const openImageLightbox = (srcs: string[], initialIndex = 0) => {
   overlay.style.transition = 'opacity 0.2s ease'
 
   const img = document.createElement('img')
-  img.src = srcs[currentIndex]!
+  img.src = getCachedImageUrl(srcs[currentIndex]!)
   img.style.display = 'block'
   img.style.margin = 'auto'
+  img.style.maxWidth = 'calc(100vw - 120px)'
+  img.style.maxHeight = 'calc(100vh - 80px)'
+  img.style.objectFit = 'contain'
   img.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.5)'
   img.style.borderRadius = '4px'
   img.draggable = false
@@ -212,7 +216,7 @@ const openImageLightbox = (srcs: string[], initialIndex = 0) => {
   }
 
   const updateImage = () => {
-    img.src = srcs[currentIndex]!
+    img.src = getCachedImageUrl(srcs[currentIndex]!)
     if (counterEl) counterEl.textContent = `${currentIndex + 1} / ${srcs.length}`
   }
 
@@ -462,7 +466,7 @@ export const barContent = (task: moguchart.GanttTask) => {
     thumbWrapper.style.border = '1px solid rgba(255, 255, 255, 0.3)'
 
     const thumbImg = document.createElement('img')
-    thumbImg.src = imageUrls[0]!
+    setImageSrc(thumbImg, imageUrls[0]!)
     thumbImg.style.width = '100%'
     thumbImg.style.height = '100%'
     thumbImg.style.objectFit = 'cover'
@@ -516,7 +520,7 @@ export const barContent = (task: moguchart.GanttTask) => {
 
       imageUrls.forEach((url, idx) => {
         const popupImg = document.createElement('img')
-        popupImg.src = url
+        setImageSrc(popupImg, url)
         popupImg.style.maxWidth = '388px'
         popupImg.style.maxHeight = imageUrls.length === 1 ? '296px' : '200px'
         popupImg.style.objectFit = 'contain'
@@ -739,7 +743,7 @@ export const tooltip = (task: moguchart.GanttTask, isHourly?: boolean) => {
 
     // 最初の1枚だけプレビュー表示
     const imgEl = document.createElement('img')
-    imgEl.src = tooltipImageUrls[0]!
+    setImageSrc(imgEl, tooltipImageUrls[0]!)
     imgEl.style.maxWidth = '280px'
     imgEl.style.maxHeight = '160px'
     imgEl.style.objectFit = 'contain'

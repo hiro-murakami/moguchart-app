@@ -58,7 +58,6 @@ declare module 'vue' {
     TaskContextMenu: typeof import('./src/components/TaskContextMenu.vue')['default']
     TaskDetailDialog: typeof import('./src/components/TaskDetailDialog.vue')['default']
     TaskFormDialog: typeof import('./src/components/TaskFormDialog.vue')['default']
-    TaskImageDialog: typeof import('./src/components/TaskImageDialog.vue')['default']
     TaskTemplateDialog: typeof import('./src/components/TaskTemplateDialog.vue')['default']
     TemplateContextMenu: typeof import('./src/components/TemplateContextMenu.vue')['default']
     TooltipBtn: typeof import('./src/components/common/TooltipBtn.vue')['default']
