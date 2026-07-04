@@ -1803,6 +1803,7 @@ export const useGanttChartView = () => {
         lock: taskWithAttr.attribute?.lock,
         progress: taskWithAttr.attribute?.progress,
         dependencies: taskWithAttr.attribute?.dependencies ? [...taskWithAttr.attribute.dependencies] : undefined,
+        imageUrls: taskWithAttr.attribute?.imageUrls ? [...taskWithAttr.attribute.imageUrls] : undefined,
       }
       isDialogVisible.value = true
       // 他ユーザーにこのタスクを編集中であることを通知
@@ -1873,6 +1874,7 @@ export const useGanttChartView = () => {
         lock: taskData.lock || undefined,
         progress: taskData.progress != null ? taskData.progress : undefined,
         dependencies: taskData.dependencies && taskData.dependencies.length > 0 ? taskData.dependencies : undefined,
+        imageUrls: taskData.imageUrls && taskData.imageUrls.length > 0 ? taskData.imageUrls : undefined,
       },
     }
 
@@ -2502,6 +2504,54 @@ export const useGanttChartView = () => {
     taskContextMenu.value.visible = false
     await new Promise((resolve) => setTimeout(resolve, 200))
     startEditingTask(taskId)
+  }
+
+  // --- 画像ダイアログ関連 ---
+  const isImageDialogVisible = ref(false)
+  const imageDialogTaskId = ref<string | null>(null)
+  const imageDialogImageUrls = ref<string[]>([])
+
+  const handleImageFromContextMenu = async () => {
+    const taskId = taskContextMenu.value.taskId
+    if (!taskId) return
+
+    const row = rows.value.find((r) => r.tasks.some((t) => t.id === taskId))
+    const task = row?.tasks.find((t) => t.id === taskId)
+    const taskAttr = (task as any)?.attribute as TaskAttribute | undefined
+
+    taskContextMenu.value.visible = false
+    await new Promise((resolve) => setTimeout(resolve, 200))
+
+    imageDialogTaskId.value = taskId
+    imageDialogImageUrls.value = taskAttr?.imageUrls ? [...taskAttr.imageUrls] : []
+    isImageDialogVisible.value = true
+  }
+
+  const handleSaveTaskImages = async (imageUrls: string[]) => {
+    const taskId = imageDialogTaskId.value
+    if (!taskId) return
+
+    const row = rows.value.find((r) => r.tasks.some((t) => t.id === taskId))
+    const task = row?.tasks.find((t) => t.id === taskId)
+    if (!row || !task) return
+
+    const taskWithAttr = task as unknown as { attribute?: TaskAttribute }
+    const existingAttr = taskWithAttr.attribute || ({} as TaskAttribute)
+
+    const data = {
+      id: Number(taskId),
+      rowId: Number(row.id),
+      name: task.name || '',
+      start: toDateTimeString(task.start),
+      end: toDateTimeString(task.end),
+      attribute: {
+        ...existingAttr,
+        imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
+      },
+    }
+
+    await upsertGanttTasks([data])
+    await loadData(projectId.value, { silent: true })
   }
 
   const confirmAndDeleteTasks = async (taskIds: string[]) => {
@@ -3849,5 +3899,10 @@ export const useGanttChartView = () => {
     handleDependencyCreate,
     handleSlideSchedule,
     handleZoomChange,
+    isImageDialogVisible,
+    imageDialogTaskId,
+    imageDialogImageUrls,
+    handleImageFromContextMenu,
+    handleSaveTaskImages,
   }
 }

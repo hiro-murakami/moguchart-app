@@ -5,6 +5,7 @@ import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { useTheme } from 'vuetify'
 import ProjectCommentPanel from '@/components/ProjectCommentPanel.vue'
 import SlideScheduleDialog from '@/components/SlideScheduleDialog.vue'
+import ImageManageDialog from '@/components/ImageManageDialog.vue'
 import { useUserStore } from '@/stores/useUserStore'
 
 const {
@@ -141,6 +142,11 @@ const {
   handleDeleteDependencyFromContextMenu,
   handleSlideSchedule,
   handleZoomChange,
+  isImageDialogVisible,
+  imageDialogTaskId,
+  imageDialogImageUrls,
+  handleImageFromContextMenu,
+  handleSaveTaskImages,
 } = useGanttChartView()
 
 const projectCommentPanelRef = ref<InstanceType<typeof ProjectCommentPanel>>()
@@ -496,8 +502,16 @@ const handleOpenSlideSchedule = async () => {
       :disabled-delete="hasLockedTaskInContextMenu"
       @edit="handleEditTaskFromContextMenu"
       @comment="handleAddCommentFromContextMenu"
+      @image="handleImageFromContextMenu"
       @copy="handleCopyTasksFromContextMenu"
       @delete="handleDeleteTaskFromContextMenu"
+    />
+
+    <ImageManageDialog
+      v-if="isImageDialogVisible"
+      v-model="isImageDialogVisible"
+      :current-image-urls="imageDialogImageUrls"
+      @save="handleSaveTaskImages"
     />
 
     <!-- Dependency Context Menu -->

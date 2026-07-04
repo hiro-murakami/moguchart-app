@@ -15,6 +15,7 @@ const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
   (e: 'edit'): void
   (e: 'comment'): void
+  (e: 'image'): void
   (e: 'delete'): void
   (e: 'copy'): void
 }>()
@@ -57,6 +58,7 @@ const copyTitle = computed(() => {
       <v-list density="compact">
         <v-list-item v-if="!isReadOnly" prepend-icon="mdi-pencil" title="編集" @click="emit('edit')" />
         <v-list-item prepend-icon="mdi-comment-text-outline" title="コメント" @click="emit('comment')" />
+        <v-list-item v-if="!isReadOnly" prepend-icon="mdi-image" title="画像" @click="emit('image')" />
         <v-list-item prepend-icon="mdi-content-copy" @click="emit('copy')">
           <v-list-item-title>
             {{ copyTitle }}
