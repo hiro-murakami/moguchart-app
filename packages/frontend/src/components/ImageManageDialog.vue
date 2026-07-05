@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { ref as storageRef, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage'
+import { ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage'
 import { storage } from '@/firebase'
+import { deleteImagesFromStorage } from '@/modules/storageUtils'
 
 const props = defineProps<{
   modelValue: boolean
@@ -21,10 +22,13 @@ const isVisible = computed({
 // 画像リスト（作業用コピー）
 const imageUrls = ref<string[]>([])
 const uploading = ref(false)
+const compressing = ref(false)
 const uploadProgress = ref(0)
 const errorMessage = ref('')
+const infoMessage = ref('')
 const fileInputRef = ref<HTMLInputElement | null>(null)
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
+const MAX_IMAGE_DIMENSION = 1920 // リサイズ時の最大幅/高さ
 const pendingDeletions = ref<string[]>([])
 const newlyUploaded = ref<string[]>([])
 
@@ -36,6 +40,7 @@ watch(
       pendingDeletions.value = []
       newlyUploaded.value = []
       errorMessage.value = ''
+      infoMessage.value = ''
     }
   },
   { immediate: true },
@@ -45,10 +50,85 @@ const generateUUID = (): string => {
   return crypto.randomUUID()
 }
 
-const getExtension = (file: File): string => {
-  const name = file.name
-  const idx = name.lastIndexOf('.')
-  return idx >= 0 ? name.substring(idx) : '.png'
+/**
+ * 画像ファイルを Canvas でリサイズ・圧縮して Blob を返す。
+ * 最大 MAX_IMAGE_DIMENSION px に収め、JPEG 品質を段階的に下げて
+ * MAX_FILE_SIZE 以下になるまで調整する。
+ */
+const compressImage = (file: File): Promise<Blob> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    const url = URL.createObjectURL(file)
+
+    img.onload = () => {
+      URL.revokeObjectURL(url)
+
+      let { width, height } = img
+
+      // 最大サイズに収まるようリサイズ
+      if (width > MAX_IMAGE_DIMENSION || height > MAX_IMAGE_DIMENSION) {
+        const ratio = Math.min(MAX_IMAGE_DIMENSION / width, MAX_IMAGE_DIMENSION / height)
+        width = Math.round(width * ratio)
+        height = Math.round(height * ratio)
+      }
+
+      const canvas = document.createElement('canvas')
+      canvas.width = width
+      canvas.height = height
+      const ctx = canvas.getContext('2d')
+      if (!ctx) {
+        reject(new Error('Canvas context の取得に失敗しました'))
+        return
+      }
+      ctx.drawImage(img, 0, 0, width, height)
+
+      // 品質を段階的に下げて MAX_FILE_SIZE 以下にする
+      const qualities = [0.85, 0.7, 0.5, 0.3]
+      const tryCompress = (index: number) => {
+        const quality = qualities[index] ?? 0.3
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              reject(new Error('画像の圧縮に失敗しました'))
+              return
+            }
+            if (blob.size <= MAX_FILE_SIZE || index >= qualities.length - 1) {
+              resolve(blob)
+            } else {
+              tryCompress(index + 1)
+            }
+          },
+          'image/jpeg',
+          quality,
+        )
+      }
+      tryCompress(0)
+    }
+
+    img.onerror = () => {
+      URL.revokeObjectURL(url)
+      reject(new Error('画像の読み込みに失敗しました'))
+    }
+
+    img.src = url
+  })
+}
+
+/**
+ * ファイルサイズが大きい場合は圧縮し、そうでなければそのまま返す。
+ * 戻り値は [アップロード用データ, 拡張子, 圧縮したかどうか]
+ */
+const prepareFile = async (file: File): Promise<[Blob | File, string, boolean]> => {
+  if (file.size <= MAX_FILE_SIZE) {
+    const name = file.name
+    const idx = name.lastIndexOf('.')
+    const ext = idx >= 0 ? name.substring(idx) : '.png'
+    return [file, ext, false]
+  }
+
+  // サイズオーバー → 圧縮
+  const compressed = await compressImage(file)
+  return [compressed, '.jpg', true]
 }
 
 const handleFileSelect = async (event: Event) => {
@@ -57,14 +137,13 @@ const handleFileSelect = async (event: Event) => {
   if (!files || files.length === 0) return
 
   errorMessage.value = ''
+  infoMessage.value = ''
 
-  // サイズチェック
-  for (const file of files) {
-    if (file.size > MAX_FILE_SIZE) {
-      errorMessage.value = `「${file.name}」のファイルサイズが5MBを超えています`
-      input.value = ''
-      return
-    }
+  // 圧縮が必要なファイルがあるかチェック
+  const needsCompression = Array.from(files).some((f) => f.size > MAX_FILE_SIZE)
+  if (needsCompression) {
+    compressing.value = true
+    infoMessage.value = '画像サイズが大きいため、自動で圧縮しています…'
   }
 
   uploading.value = true
@@ -73,15 +152,21 @@ const handleFileSelect = async (event: Event) => {
   try {
     const totalFiles = files.length
     let completedFiles = 0
+    let compressedCount = 0
 
     for (const file of files) {
+      // ファイルの準備（必要に応じて圧縮）
+      const [data, ext, wasCompressed] = await prepareFile(file)
+      if (wasCompressed) compressedCount++
+
+      compressing.value = false
+
       const uuid = generateUUID()
-      const ext = getExtension(file)
       const path = `images/${uuid}${ext}`
       const fileRef = storageRef(storage, path)
 
       await new Promise<void>((resolve, reject) => {
-        const uploadTask = uploadBytesResumable(fileRef, file)
+        const uploadTask = uploadBytesResumable(fileRef, data)
         uploadTask.on(
           'state_changed',
           (snapshot) => {
@@ -103,11 +188,16 @@ const handleFileSelect = async (event: Event) => {
         )
       })
     }
+
+    if (compressedCount > 0) {
+      infoMessage.value = `${compressedCount}件の画像を自動圧縮してアップロードしました`
+    }
   } catch (err) {
     console.error('画像アップロードエラー:', err)
     errorMessage.value = '画像のアップロードに失敗しました'
   } finally {
     uploading.value = false
+    compressing.value = false
     uploadProgress.value = 0
     input.value = ''
   }
@@ -122,22 +212,9 @@ const removeImage = (index: number) => {
   imageUrls.value.splice(index, 1)
 }
 
-const deleteFromStorage = async (url: string) => {
-  try {
-    const pathMatch = url.match(/\/o\/(.+?)\?/)
-    if (pathMatch?.[1]) {
-      const decodedPath = decodeURIComponent(pathMatch[1])
-      const fileRef = storageRef(storage, decodedPath)
-      await deleteObject(fileRef)
-    }
-  } catch (err) {
-    console.warn('Storage削除エラー（無視して続行）:', err)
-  }
-}
-
 const handleSave = async () => {
   // 削除予定の画像を Storage から一括削除
-  await Promise.all(pendingDeletions.value.map(deleteFromStorage))
+  await deleteImagesFromStorage(pendingDeletions.value)
   pendingDeletions.value = []
   newlyUploaded.value = []
 
@@ -147,7 +224,7 @@ const handleSave = async () => {
 
 const handleCancel = async () => {
   // 新規アップロードした画像を Storage から削除（元に戻す）
-  await Promise.all(newlyUploaded.value.map(deleteFromStorage))
+  await deleteImagesFromStorage(newlyUploaded.value)
   newlyUploaded.value = []
   pendingDeletions.value = []
   isVisible.value = false
@@ -171,6 +248,17 @@ const triggerFileInput = () => {
         <v-alert v-if="errorMessage" type="error" density="compact" class="mb-3" closable @click:close="errorMessage = ''">
           {{ errorMessage }}
         </v-alert>
+
+        <!-- 情報メッセージ（圧縮通知） -->
+        <v-alert v-if="infoMessage" type="info" density="compact" class="mb-3" closable @click:close="infoMessage = ''">
+          {{ infoMessage }}
+        </v-alert>
+
+        <!-- 圧縮中のインジケーター -->
+        <div v-if="compressing" class="d-flex align-center mb-3">
+          <v-progress-circular indeterminate size="20" width="2" color="primary" class="mr-2" />
+          <span class="text-body-2 text-medium-emphasis">画像を圧縮中…</span>
+        </div>
 
         <!-- アップロード中のプログレス -->
         <v-progress-linear v-if="uploading" :model-value="uploadProgress" color="primary" class="mb-3" rounded height="6" />

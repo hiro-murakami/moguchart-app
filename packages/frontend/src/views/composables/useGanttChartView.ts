@@ -57,6 +57,7 @@ import { computed, inject, nextTick, ref, watch, type Ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { fetchPublicGanttChart } from '@/modules/publicApi'
 import { preloadImages } from '@/modules/imageCache'
+import { deleteImagesFromStorage } from '@/modules/storageUtils'
 
 const getBorderStyle = (type?: string, color?: string) => {
   if (!type || type === 'none') return ''
@@ -2025,6 +2026,14 @@ export const useGanttChartView = () => {
     // 3. API削除
     await deleteGanttTask(unlocked.map(Number))
 
+    // 3.5. 削除されたタスクに紐付く画像を Storage から削除
+    const imageUrlsToDelete = deletedTasks
+      .flatMap((d) => (d.taskData.attribute?.imageUrls as string[] | undefined) ?? [])
+      .filter(Boolean)
+    if (imageUrlsToDelete.length > 0) {
+      deleteImagesFromStorage(imageUrlsToDelete) // 非同期で実行（メイン処理をブロックしない）
+    }
+
     // 4. Undo/Redo記録
     if (deletedTasks.length > 0) {
       pushAction({
@@ -2975,6 +2984,18 @@ export const useGanttChartView = () => {
       .filter(Boolean) as any[]
 
     await deleteGanttRow(rowIds.map(Number))
+
+    // 行に含まれるタスクの画像を Storage から削除
+    const imageUrlsToDelete = deletedRowsData
+      .flatMap((rd: any) =>
+        (rd.tasks as any[]).flatMap(
+          (t: any) => (t.attribute?.imageUrls as string[] | undefined) ?? [],
+        ),
+      )
+      .filter(Boolean)
+    if (imageUrlsToDelete.length > 0) {
+      deleteImagesFromStorage(imageUrlsToDelete) // 非同期で実行
+    }
 
     if (deletedRowsData.length > 0) {
       pushAction({
