@@ -1,0 +1,28 @@
+[
+  {
+    "origin": [
+      "https://firestore-sample-c7300.web.app",
+      "https://firestore-sample-c7300.firebaseapp.com",
+      "https://moguchart.jp",
+      "http://localhost:5173",
+      "http://localhost:4173",
+      "http://localhost:5174",
+      "http://localhost:4174"
+    ],
+    "method": ["GET", "HEAD", "PUT", "POST", "DELETE"],
+    "maxAgeSeconds": 3600,
+    "responseHeader": [
+      "Content-Type",
+      "Authorization",
+      "Content-Length",
+      "x-goog-resumable",
+      "x-goog-upload-protocol",
+      "x-goog-upload-command",
+      "x-goog-upload-header-content-length",
+      "x-goog-upload-header-content-type",
+      "x-firebase-gmpid",
+      "x-firebase-storage-version",
+      "x-firebase-appcheck"
+    ]
+  }
+]
