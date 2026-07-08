@@ -1,7 +1,7 @@
 {
   "version": "0.6.9",
   "project": {
-    "id": "fdee523b-a2f4-4931-9643-ab1e7b65d1a3",
+    "id": "a4735be9-62a9-4d83-ba1b-9a73edf24e5f",
     "name": "日本の8bitパソコンの歴史",
     "start": "1978-01-01T00:00:00",
     "end": "1993-12-31T00:00:00",
@@ -176,7 +176,7 @@
   "rows": [
     {
       "id": 1,
-      "projectId": "fdee523b-a2f4-4931-9643-ab1e7b65d1a3",
+      "projectId": "a4735be9-62a9-4d83-ba1b-9a73edf24e5f",
       "name": "PC-8001 シリーズ",
       "order": 1,
       "visible": true,
@@ -239,7 +239,7 @@
     },
     {
       "id": 2,
-      "projectId": "fdee523b-a2f4-4931-9643-ab1e7b65d1a3",
+      "projectId": "a4735be9-62a9-4d83-ba1b-9a73edf24e5f",
       "name": "PC-6001 シリーズ",
       "order": 2,
       "visible": true,
@@ -317,7 +317,7 @@
     },
     {
       "id": 3,
-      "projectId": "fdee523b-a2f4-4931-9643-ab1e7b65d1a3",
+      "projectId": "a4735be9-62a9-4d83-ba1b-9a73edf24e5f",
       "name": "PC-8801 シリーズ",
       "order": 3,
       "visible": true,
@@ -416,7 +416,7 @@
     },
     {
       "id": 4,
-      "projectId": "fdee523b-a2f4-4931-9643-ab1e7b65d1a3",
+      "projectId": "a4735be9-62a9-4d83-ba1b-9a73edf24e5f",
       "name": "MZシリーズ (8bit)",
       "order": 4,
       "visible": true,
@@ -524,7 +524,7 @@
     },
     {
       "id": 5,
-      "projectId": "fdee523b-a2f4-4931-9643-ab1e7b65d1a3",
+      "projectId": "a4735be9-62a9-4d83-ba1b-9a73edf24e5f",
       "name": "X1 シリーズ",
       "order": 5,
       "visible": true,
@@ -638,7 +638,7 @@
     },
     {
       "id": 6,
-      "projectId": "fdee523b-a2f4-4931-9643-ab1e7b65d1a3",
+      "projectId": "a4735be9-62a9-4d83-ba1b-9a73edf24e5f",
       "name": "FM-8 / FM-7 シリーズ",
       "order": 6,
       "visible": true,
@@ -743,7 +743,7 @@
     },
     {
       "id": 7,
-      "projectId": "fdee523b-a2f4-4931-9643-ab1e7b65d1a3",
+      "projectId": "a4735be9-62a9-4d83-ba1b-9a73edf24e5f",
       "name": "PASOPIA シリーズ",
       "order": 7,
       "visible": true,
@@ -812,7 +812,7 @@
     },
     {
       "id": 8,
-      "projectId": "fdee523b-a2f4-4931-9643-ab1e7b65d1a3",
+      "projectId": "a4735be9-62a9-4d83-ba1b-9a73edf24e5f",
       "name": "ベーシックマスター / MB-H シリーズ",
       "order": 8,
       "visible": true,
@@ -911,7 +911,7 @@
     },
     {
       "id": 9,
-      "projectId": "fdee523b-a2f4-4931-9643-ab1e7b65d1a3",
+      "projectId": "a4735be9-62a9-4d83-ba1b-9a73edf24e5f",
       "name": "HC-20 / PX-8 / QC-10",
       "order": 9,
       "visible": true,
@@ -974,7 +974,7 @@
     },
     {
       "id": 10,
-      "projectId": "fdee523b-a2f4-4931-9643-ab1e7b65d1a3",
+      "projectId": "a4735be9-62a9-4d83-ba1b-9a73edf24e5f",
       "name": "m5 / M23 シリーズ",
       "order": 10,
       "visible": true,
@@ -1022,12 +1022,12 @@
     },
     {
       "id": 11,
-      "projectId": "fdee523b-a2f4-4931-9643-ab1e7b65d1a3",
-      "name": "SMC-777 / HIT BIT (MSX)",
+      "projectId": "a4735be9-62a9-4d83-ba1b-9a73edf24e5f",
+      "name": "SMC-70 / SMC-777 / HIT BIT (MSX)",
       "order": 11,
       "visible": true,
       "attribute": {
-        "description": "ソニーのパソコン。独自規格のSMC-777と、MSX規格のHBシリーズを展開。",
+        "description": "ソニーのパソコン。SMC-70はソニー初のパソコンで3.5インチFDDを世界初搭載。独自規格のSMC-777、MSX規格のHBシリーズを展開。",
         "labels": [
           {
             "name": "ソニー",
@@ -1036,6 +1036,21 @@
         ]
       },
       "tasks": [
+        {
+          "id": 1100,
+          "rowId": 11,
+          "name": "SMC-70",
+          "start": "1982-10-01T00:00:00",
+          "end": "1984-03-01T00:00:00",
+          "attribute": {
+            "description": "1982年10月発売。Z80A 4MHz、RAM 64KB。ソニー初のパソコン。世界で初めて3.5インチFDDを標準搭載した画期的なマシン。CP/M対応。SMC-70Gはグラフィック強化版。",
+            "colorPalette": {
+              "name": "Sony Orange",
+              "color": "#000000",
+              "backgroundColor": "#ff8f00"
+            }
+          }
+        },
         {
           "id": 1101,
           "rowId": 11,
@@ -1118,7 +1133,7 @@
     },
     {
       "id": 12,
-      "projectId": "fdee523b-a2f4-4931-9643-ab1e7b65d1a3",
+      "projectId": "a4735be9-62a9-4d83-ba1b-9a73edf24e5f",
       "name": "FP / PV / MX (MSX)",
       "order": 12,
       "visible": true,
@@ -1193,7 +1208,7 @@
     },
     {
       "id": 13,
-      "projectId": "fdee523b-a2f4-4931-9643-ab1e7b65d1a3",
+      "projectId": "a4735be9-62a9-4d83-ba1b-9a73edf24e5f",
       "name": "JR / CF / FS-A1 シリーズ",
       "order": 13,
       "visible": true,
@@ -1329,7 +1344,7 @@
     },
     {
       "id": 14,
-      "projectId": "fdee523b-a2f4-4931-9643-ab1e7b65d1a3",
+      "projectId": "a4735be9-62a9-4d83-ba1b-9a73edf24e5f",
       "name": "MULTI 8 / ML (MSX)",
       "order": 14,
       "visible": true,
@@ -1383,7 +1398,7 @@
     },
     {
       "id": 15,
-      "projectId": "fdee523b-a2f4-4931-9643-ab1e7b65d1a3",
+      "projectId": "a4735be9-62a9-4d83-ba1b-9a73edf24e5f",
       "name": "if800 シリーズ",
       "order": 15,
       "visible": true,
