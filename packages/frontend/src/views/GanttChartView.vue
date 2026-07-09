@@ -180,6 +180,17 @@ const canComment = computed(() => {
   )
 })
 
+/**
+ * 編集権限を持つアクティブユーザーのみ（owners + editors）
+ * 閲覧権限のみのユーザーはアバター表示から除外する
+ */
+const editableActiveUsers = computed(() => {
+  if (!currentProject.value) return []
+  const auth = currentProject.value.authority
+  const editableEmails = new Set([...(auth.owners ?? []), ...(auth.editors ?? [])])
+  return activeUsers.value.filter((user) => editableEmails.has(user.email))
+})
+
 // キーボードショートカット
 const handleKeyDown = (e: KeyboardEvent) => {
   // テキスト入力系の要素にフォーカスがある場合はブラウザ標準の動作を優先する
@@ -316,8 +327,8 @@ const handleOpenSlideSchedule = async () => {
           </div>
         </div>
         <v-spacer />
-        <div v-if="activeUsers.length > 0" class="d-flex align-center mr-4" style="gap: -4px">
-          <v-tooltip v-for="user in activeUsers" :key="user.email" :text="user.displayName" location="bottom">
+        <div v-if="editableActiveUsers.length > 0" class="d-flex align-center mr-4" style="gap: -4px">
+          <v-tooltip v-for="user in editableActiveUsers" :key="user.email" :text="user.displayName" location="bottom">
             <template v-slot:activator="{ props }">
               <UserAvatar
                 v-bind="props"
