@@ -529,7 +529,6 @@ export const barContent = (task: moguchart.GanttTask) => {
         popupImg.style.cursor = 'zoom-in'
         popupImg.draggable = false
 
-        // クリックでオリジナルサイズのライトボックスを表示
         popupImg.addEventListener('click', (e) => {
           e.stopPropagation()
           removeImagePopup()
@@ -538,7 +537,6 @@ export const barContent = (task: moguchart.GanttTask) => {
         popupEl!.appendChild(popupImg)
       })
 
-      // ポップアップにマウスが乗っている間は消えないようにする
       popupEl.addEventListener('mouseenter', () => {
         if (popupHideTimeout) {
           clearTimeout(popupHideTimeout)
@@ -766,11 +764,12 @@ export const tooltip = (task: moguchart.GanttTask, isHourly?: boolean) => {
   return container
 }
 
-export const rowHeaderContent = (row: moguchart.GanttRow) => {
+export const rowHeaderContent = (row: moguchart.GanttRow, barHeight: number = 38) => {
   const rowWithAttr = row as any
   const description = rowWithAttr.attribute?.description as string | undefined
   const commentCount = rowWithAttr.commentCount as number | undefined
   const labels = rowWithAttr.attribute?.labels as { name: string; color: string }[] | undefined
+  const rowImageUrls = (rowWithAttr.attribute?.imageUrls as string[] | undefined)?.filter(Boolean)
 
   const container = document.createElement('div')
   container.style.display = 'flex'
@@ -780,6 +779,7 @@ export const rowHeaderContent = (row: moguchart.GanttRow) => {
   container.style.padding = '4px 8px'
   container.style.overflow = 'hidden'
   container.style.width = '100%'
+  container.style.boxSizing = 'border-box'
   container.style.position = 'relative'
   container.style.zIndex = '1'
   container.style.pointerEvents = 'none'
@@ -924,6 +924,148 @@ export const rowHeaderContent = (row: moguchart.GanttRow) => {
 
   container.appendChild(nameRow)
 
+  // 行画像サムネイル（タスクバーと同じスタイルで右端に配置）
+  if (rowImageUrls && rowImageUrls.length > 0) {
+    const thumbSize = `${barHeight}px`
+    const thumbWrapper = document.createElement('span')
+    thumbWrapper.style.position = 'absolute'
+    thumbWrapper.style.right = '8px'
+    thumbWrapper.style.top = '4px'
+    thumbWrapper.style.width = thumbSize
+    thumbWrapper.style.height = thumbSize
+    thumbWrapper.style.boxSizing = 'border-box'
+    thumbWrapper.style.display = 'flex'
+    thumbWrapper.style.alignItems = 'center'
+    thumbWrapper.style.justifyContent = 'center'
+    thumbWrapper.style.borderRadius = '3px'
+    thumbWrapper.style.overflow = 'hidden'
+    thumbWrapper.style.backgroundColor = 'rgba(var(--v-theme-on-surface), 0.08)'
+    thumbWrapper.style.pointerEvents = 'auto'
+    thumbWrapper.style.cursor = 'default'
+    thumbWrapper.style.border = '1px solid rgba(var(--v-theme-on-surface), 0.15)'
+
+    const thumbImg = document.createElement('img')
+    setImageSrc(thumbImg, rowImageUrls[0]!)
+    thumbImg.style.width = '100%'
+    thumbImg.style.height = '100%'
+    thumbImg.style.objectFit = 'cover'
+    thumbImg.style.display = 'block'
+    thumbImg.draggable = false
+    thumbWrapper.appendChild(thumbImg)
+
+    // 複数画像の場合、枚数バッジを表示
+    if (rowImageUrls.length > 1) {
+      const countBadge = document.createElement('span')
+      countBadge.style.cssText =
+        'position: absolute; bottom: -1px; right: -1px; background: rgba(0,0,0,0.7); color: white; font-size: 8px; font-weight: bold; padding: 0 3px; border-radius: 3px 0 3px 0; line-height: 14px;'
+      countBadge.textContent = `${rowImageUrls.length}`
+      thumbWrapper.appendChild(countBadge)
+    }
+
+    let popupEl: HTMLElement | null = null
+    let popupHideTimeout: ReturnType<typeof setTimeout> | null = null
+
+    const showImagePopup = () => {
+      if (popupHideTimeout) {
+        clearTimeout(popupHideTimeout)
+        popupHideTimeout = null
+      }
+      if (popupEl) return
+
+      // 行ヘッダーのツールチップを非表示にする（タイマーもキャンセル）
+      thumbWrapper.dispatchEvent(new CustomEvent('row-header-mouseleave', { bubbles: true, composed: true }))
+
+      // 既存のポップアップを削除
+      document.querySelectorAll('[data-moguchart-row-image-popup]').forEach((el) => el.remove())
+
+      const colors = getTooltipColors()
+      popupEl = document.createElement('div')
+      popupEl.setAttribute('data-moguchart-row-image-popup', 'true')
+      popupEl.style.position = 'fixed'
+      popupEl.style.zIndex = '9999'
+      popupEl.style.backgroundColor = colors.bg
+      popupEl.style.border = `1px solid ${colors.border}`
+      popupEl.style.borderRadius = '8px'
+      popupEl.style.padding = '6px'
+      popupEl.style.boxShadow = '0 8px 24px rgba(0,0,0,0.25)'
+      popupEl.style.pointerEvents = 'auto'
+      popupEl.style.cursor = 'zoom-in'
+      popupEl.style.maxWidth = '400px'
+      popupEl.style.maxHeight = '320px'
+      popupEl.style.overflowY = rowImageUrls.length > 1 ? 'auto' : 'hidden'
+      popupEl.style.display = 'flex'
+      popupEl.style.flexDirection = 'column'
+      popupEl.style.gap = '4px'
+
+      rowImageUrls.forEach((url, idx) => {
+        const popupImg = document.createElement('img')
+        setImageSrc(popupImg, url)
+        popupImg.style.maxWidth = '388px'
+        popupImg.style.maxHeight = rowImageUrls.length === 1 ? '296px' : '200px'
+        popupImg.style.objectFit = 'contain'
+        popupImg.style.display = 'block'
+        popupImg.style.borderRadius = '4px'
+        popupImg.style.cursor = 'zoom-in'
+        popupImg.draggable = false
+
+        popupImg.addEventListener('click', (e) => {
+          e.stopPropagation()
+          removeImagePopup()
+          openImageLightbox(rowImageUrls, idx)
+        })
+        popupEl!.appendChild(popupImg)
+      })
+
+      popupEl.addEventListener('mouseenter', () => {
+        if (popupHideTimeout) {
+          clearTimeout(popupHideTimeout)
+          popupHideTimeout = null
+        }
+      })
+      popupEl.addEventListener('mouseleave', () => {
+        popupHideTimeout = setTimeout(removeImagePopup, 100)
+      })
+
+      document.body.appendChild(popupEl)
+
+      const rect = thumbWrapper.getBoundingClientRect()
+      adjustTooltipPosition(popupEl, rect)
+    }
+
+    const removeImagePopup = () => {
+      if (popupHideTimeout) {
+        clearTimeout(popupHideTimeout)
+        popupHideTimeout = null
+      }
+      if (popupEl) {
+        popupEl.remove()
+        popupEl = null
+      }
+    }
+
+    const hideImagePopup = () => {
+      popupHideTimeout = setTimeout(removeImagePopup, 100)
+    }
+
+    thumbWrapper.addEventListener('mouseenter', showImagePopup)
+    thumbWrapper.addEventListener('mouseleave', hideImagePopup)
+    thumbWrapper.addEventListener('mousedown', (e) => {
+      e.stopPropagation()
+    })
+    document.addEventListener('mousedown', (e) => {
+      if (
+        popupEl &&
+        e.target !== thumbWrapper &&
+        !thumbWrapper.contains(e.target as Node) &&
+        e.target !== popupEl &&
+        !popupEl.contains(e.target as Node)
+      )
+        removeImagePopup()
+    })
+
+    container.appendChild(thumbWrapper)
+  }
+
   if (description) {
     const descDiv = document.createElement('div')
     descDiv.style.fontSize = '11px'
@@ -949,9 +1091,11 @@ export const rowHeaderTooltip = (row: moguchart.GanttRow) => {
   const labels = rowWithAttr.attribute?.labels as { name: string; color: string }[] | undefined
   const commentCount = rowWithAttr.commentCount as number | undefined
   const taskCount = row.tasks?.length ?? 0
+  const rowImageUrls = (rowWithAttr.attribute?.imageUrls as string[] | undefined)?.filter(Boolean)
+  const imageCount = rowImageUrls?.length ?? 0
 
-  // 説明もラベルもコメントもタスクもない場合はツールチップ不要
-  if (!description && (!labels || labels.length === 0) && !commentCount && taskCount === 0) {
+  // 説明もラベルもコメントもタスクも画像もない場合はツールチップ不要
+  if (!description && (!labels || labels.length === 0) && !commentCount && taskCount === 0 && imageCount === 0) {
     return null
   }
 
@@ -1005,6 +1149,38 @@ export const rowHeaderTooltip = (row: moguchart.GanttRow) => {
     container.appendChild(descDiv)
   }
 
+  // 画像プレビュー
+  if (rowImageUrls && rowImageUrls.length > 0) {
+    const imgDiv = document.createElement('div')
+    imgDiv.style.marginTop = '4px'
+    imgDiv.style.paddingTop = '4px'
+    imgDiv.style.borderTop = `1px solid ${colors.divider}`
+    imgDiv.style.display = 'flex'
+    imgDiv.style.flexDirection = 'column'
+    imgDiv.style.gap = '4px'
+
+    // 最初の1枚だけプレビュー表示
+    const imgEl = document.createElement('img')
+    setImageSrc(imgEl, rowImageUrls[0]!)
+    imgEl.style.maxWidth = '280px'
+    imgEl.style.maxHeight = '160px'
+    imgEl.style.objectFit = 'contain'
+    imgEl.style.borderRadius = '4px'
+    imgEl.style.display = 'block'
+    imgEl.draggable = false
+    imgDiv.appendChild(imgEl)
+
+    if (rowImageUrls.length > 1) {
+      const moreDiv = document.createElement('div')
+      moreDiv.style.fontSize = '10px'
+      moreDiv.style.opacity = '0.6'
+      moreDiv.style.textAlign = 'center'
+      moreDiv.textContent = `🖼️ 他 ${rowImageUrls.length - 1} 枚の画像`
+      imgDiv.appendChild(moreDiv)
+    }
+    container.appendChild(imgDiv)
+  }
+
   // タスク数 & コメント数
   const metaItems: string[] = []
   if (taskCount > 0) {
@@ -1012,6 +1188,9 @@ export const rowHeaderTooltip = (row: moguchart.GanttRow) => {
   }
   if (commentCount && commentCount > 0) {
     metaItems.push(`💬 コメント ${commentCount}件`)
+  }
+  if (imageCount > 0) {
+    metaItems.push(`🖼️ 画像 ${imageCount}枚`)
   }
   if (metaItems.length > 0) {
     const metaDiv = document.createElement('div')

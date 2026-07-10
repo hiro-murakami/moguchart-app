@@ -252,6 +252,8 @@ export type RowAttribute = {
   labels?: Label[]
   /** 行に設定されたマーカー */
   markers?: MarkerAttribute[]
+  /** 行ヘッダーに表示する画像のURL配列 */
+  imageUrls?: string[]
 }
 
 /** タスクの追加属性 */
@@ -278,6 +280,7 @@ export interface EditingRowData {
   name: string
   description?: string
   labels?: Label[]
+  imageUrls?: string[]
 }
 
 /** フロントエンドの編集用：タスクデータ */

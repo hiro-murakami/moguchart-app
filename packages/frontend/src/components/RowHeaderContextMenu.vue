@@ -19,6 +19,7 @@ const emit = defineEmits<{
   (e: 'delete-row'): void
   (e: 'toggle-visibility'): void
   (e: 'add-comment'): void
+  (e: 'image'): void
 }>()
 
 const isVisible = computed({
@@ -92,6 +93,7 @@ const visibilityLabel = computed(() => {
         />
         <v-divider />
         <v-list-item prepend-icon="mdi-comment-text-outline" title="行にコメント" :disabled="isMultiSelected" @click="emit('add-comment')" />
+        <v-list-item prepend-icon="mdi-image" title="画像" :disabled="isMultiSelected" @click="emit('image')" />
         <v-divider />
         <v-list-item prepend-icon="mdi-delete" :title="deleteLabel" base-color="red" @click="emit('delete-row')" />
       </v-list>

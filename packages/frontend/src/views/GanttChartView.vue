@@ -147,6 +147,8 @@ const {
   imageDialogImageUrls,
   handleImageFromContextMenu,
   handleSaveTaskImages,
+  handleImageFromRowContextMenu,
+  handleSaveImages,
 } = useGanttChartView()
 
 const projectCommentPanelRef = ref<InstanceType<typeof ProjectCommentPanel>>()
@@ -499,6 +501,7 @@ const handleOpenSlideSchedule = async () => {
       @delete-row="handleDeleteRowFromContextMenu"
       @toggle-visibility="toggleRowVisibility"
       @add-comment="handleAddCommentToRow"
+      @image="handleImageFromRowContextMenu"
     />
 
     <!-- Task Context Menu -->
@@ -522,7 +525,7 @@ const handleOpenSlideSchedule = async () => {
       v-if="isImageDialogVisible"
       v-model="isImageDialogVisible"
       :current-image-urls="imageDialogImageUrls"
-      @save="handleSaveTaskImages"
+      @save="handleSaveImages"
     />
 
     <!-- Dependency Context Menu -->

@@ -696,7 +696,7 @@ export const useGanttChartView = () => {
       customRendering: {
         barContent,
         tooltip: (task: moguchart.GanttTask) => tooltip(task, isHourly),
-        rowHeaderContent,
+        rowHeaderContent: (row: moguchart.GanttRow) => rowHeaderContent(row, barHeight.value),
         rowHeaderTooltip,
         cornerContent: createCornerContent(() => ({
           availableLabels: availableRowLabels.value,
@@ -1084,9 +1084,11 @@ export const useGanttChartView = () => {
         ),
       }))
 
-      // 全タスクの画像URLをプリロードしてキャッシュを温める
+      // 全タスクおよび行の画像URLをプリロードしてキャッシュを温める
       const allImageUrls: string[] = []
       for (const row of rows.value) {
+        const rowUrls = (row as any).attribute?.imageUrls as string[] | undefined
+        if (rowUrls) allImageUrls.push(...rowUrls.filter(Boolean))
         for (const task of row.tasks) {
           const urls = (task as any).attribute?.imageUrls as string[] | undefined
           if (urls) allImageUrls.push(...urls.filter(Boolean))
@@ -1156,9 +1158,11 @@ export const useGanttChartView = () => {
         preloadRowCommentsCache(rowCommentEntries)
       }
 
-      // 全タスクの画像URLをプリロードしてキャッシュを温める
+      // 全タスクおよび行の画像URLをプリロードしてキャッシュを温める
       const allImageUrls: string[] = []
       for (const row of rows.value) {
+        const rowUrls = (row as any).attribute?.imageUrls as string[] | undefined
+        if (rowUrls) allImageUrls.push(...rowUrls.filter(Boolean))
         for (const task of row.tasks) {
           const urls = (task as any).attribute?.imageUrls as string[] | undefined
           if (urls) allImageUrls.push(...urls.filter(Boolean))
@@ -2539,6 +2543,7 @@ export const useGanttChartView = () => {
   // --- 画像ダイアログ関連 ---
   const isImageDialogVisible = ref(false)
   const imageDialogTaskId = ref<string | null>(null)
+  const imageDialogTargetType = ref<'task' | 'row'>('task')
   const imageDialogImageUrls = ref<string[]>([])
 
   const handleImageFromContextMenu = async () => {
@@ -2553,7 +2558,26 @@ export const useGanttChartView = () => {
     await new Promise((resolve) => setTimeout(resolve, 200))
 
     imageDialogTaskId.value = taskId
+    imageDialogTargetType.value = 'task'
     imageDialogImageUrls.value = taskAttr?.imageUrls ? [...taskAttr.imageUrls] : []
+    isImageDialogVisible.value = true
+  }
+
+  const handleImageFromRowContextMenu = async () => {
+    const rowId = contextMenu.value.rowId
+    if (rowId === null) return
+
+    const row = rows.value.find((r) => Number(r.id) === rowId)
+    if (!row) return
+
+    const rowAttr = (row as any).attribute as RowAttribute | undefined
+
+    contextMenu.value.visible = false
+    await new Promise((resolve) => setTimeout(resolve, 200))
+
+    imageDialogTaskId.value = String(rowId)
+    imageDialogTargetType.value = 'row'
+    imageDialogImageUrls.value = rowAttr?.imageUrls ? [...rowAttr.imageUrls] : []
     isImageDialogVisible.value = true
   }
 
@@ -2582,6 +2606,40 @@ export const useGanttChartView = () => {
 
     await upsertGanttTasks([data])
     await loadData(projectId.value, { silent: true })
+  }
+
+  const handleSaveRowImages = async (imageUrls: string[]) => {
+    const rowId = imageDialogTaskId.value
+    if (!rowId) return
+
+    const row = rows.value.find((r) => String(r.id) === rowId)
+    if (!row) return
+
+    const rowAttr = (row as any).attribute as RowAttribute | undefined
+
+    await upsertGanttRow({
+      id: Number(rowId),
+      name: row.name,
+      order: (row as any).order ?? 0,
+      projectId: projectId.value,
+      visible: row.visible || true,
+      attribute: {
+        ...((row as any).attribute || {}),
+        imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
+      },
+      tasks: [],
+    })
+
+    await loadData(projectId.value, { silent: true })
+    publishEditEvent('row_upsert', { targetName: row.name })
+  }
+
+  const handleSaveImages = async (imageUrls: string[]) => {
+    if (imageDialogTargetType.value === 'row') {
+      await handleSaveRowImages(imageUrls)
+    } else {
+      await handleSaveTaskImages(imageUrls)
+    }
   }
 
   const confirmAndDeleteTasks = async (taskIds: string[]) => {
@@ -2985,13 +3043,14 @@ export const useGanttChartView = () => {
 
     await deleteGanttRow(rowIds.map(Number))
 
-    // 行に含まれるタスクの画像を Storage から削除
+    // 行に含まれるタスクの画像と行自体の画像を Storage から削除
     const imageUrlsToDelete = deletedRowsData
-      .flatMap((rd: any) =>
-        (rd.tasks as any[]).flatMap(
+      .flatMap((rd: any) => [
+        ...((rd.attribute?.imageUrls as string[] | undefined) ?? []),
+        ...(rd.tasks as any[]).flatMap(
           (t: any) => (t.attribute?.imageUrls as string[] | undefined) ?? [],
         ),
-      )
+      ])
       .filter(Boolean)
     if (imageUrlsToDelete.length > 0) {
       deleteImagesFromStorage(imageUrlsToDelete) // 非同期で実行
@@ -3946,5 +4005,7 @@ export const useGanttChartView = () => {
     imageDialogImageUrls,
     handleImageFromContextMenu,
     handleSaveTaskImages,
+    handleImageFromRowContextMenu,
+    handleSaveImages,
   }
 }
