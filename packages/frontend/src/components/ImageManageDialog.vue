@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import { ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage'
 import { storage } from '@/firebase'
 import { deleteImagesFromStorage } from '@/modules/storageUtils'
@@ -31,6 +31,7 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
 const MAX_IMAGE_DIMENSION = 1920 // リサイズ時の最大幅/高さ
 const pendingDeletions = ref<string[]>([])
 const newlyUploaded = ref<string[]>([])
+const pasteZoneRef = ref<HTMLDivElement | null>(null)
 
 watch(
   () => props.modelValue,
@@ -41,6 +42,10 @@ watch(
       newlyUploaded.value = []
       errorMessage.value = ''
       infoMessage.value = ''
+      // ダイアログ描画後にペーストゾーンへフォーカス
+      nextTick(() => {
+        pasteZoneRef.value?.focus()
+      })
     }
   },
   { immediate: true },
@@ -131,16 +136,18 @@ const prepareFile = async (file: File): Promise<[Blob | File, string, boolean]> 
   return [compressed, '.jpg', true]
 }
 
-const handleFileSelect = async (event: Event) => {
-  const input = event.target as HTMLInputElement
-  const files = input.files
-  if (!files || files.length === 0) return
+/**
+ * File[] を受け取り、圧縮→アップロードを実行する共通関数。
+ * handleFileSelect / handlePaste の両方から利用する。
+ */
+const uploadFiles = async (files: File[]) => {
+  if (files.length === 0) return
 
   errorMessage.value = ''
   infoMessage.value = ''
 
   // 圧縮が必要なファイルがあるかチェック
-  const needsCompression = Array.from(files).some((f) => f.size > MAX_FILE_SIZE)
+  const needsCompression = files.some((f) => f.size > MAX_FILE_SIZE)
   if (needsCompression) {
     compressing.value = true
     infoMessage.value = '画像サイズが大きいため、自動で圧縮しています…'
@@ -199,8 +206,40 @@ const handleFileSelect = async (event: Event) => {
     uploading.value = false
     compressing.value = false
     uploadProgress.value = 0
-    input.value = ''
   }
+}
+
+const handleFileSelect = async (event: Event) => {
+  const input = event.target as HTMLInputElement
+  const files = input.files
+  if (!files || files.length === 0) return
+
+  await uploadFiles(Array.from(files))
+  input.value = ''
+}
+
+/**
+ * クリップボードから貼り付けられた画像を処理する。
+ * スクリーンショットや他アプリからのコピー画像に対応。
+ * function 宣言にすることで巻き上げ(hoisting)され、watch({ immediate: true }) から安全に参照できる。
+ */
+async function handlePaste(event: ClipboardEvent) {
+  const items = event.clipboardData?.items
+  if (!items) return
+
+  const imageFiles: File[] = []
+  for (const item of items) {
+    if (item.type.startsWith('image/')) {
+      const file = item.getAsFile()
+      if (file) imageFiles.push(file)
+    }
+  }
+
+  if (imageFiles.length === 0) return
+
+  // テキストのペーストを妨げないよう、画像がある場合のみ preventDefault
+  event.preventDefault()
+  await uploadFiles(imageFiles)
 }
 
 const removeImage = (index: number) => {
@@ -237,13 +276,20 @@ const triggerFileInput = () => {
 
 <template>
   <v-dialog v-model="isVisible" max-width="600" persistent @keydown.esc="handleCancel">
-    <v-card v-draggable-dialog>
+    <v-card v-draggable-dialog @click="pasteZoneRef?.focus()">
       <v-card-title class="d-flex align-center pa-8 pb-0">
         <v-icon class="mr-2">mdi-image-multiple</v-icon>
         画像管理
       </v-card-title>
 
       <v-card-text class="pa-8">
+        <!-- ペーストを受け取るための不可視の編集可能要素 -->
+        <div
+          ref="pasteZoneRef"
+          contenteditable="true"
+          class="paste-zone"
+          @paste.prevent="handlePaste"
+        />
         <!-- エラーメッセージ -->
         <v-alert v-if="errorMessage" type="error" density="compact" class="mb-3" closable @click:close="errorMessage = ''">
           {{ errorMessage }}
@@ -292,6 +338,12 @@ const triggerFileInput = () => {
         <v-btn block variant="outlined" color="primary" prepend-icon="mdi-plus" :disabled="uploading" @click="triggerFileInput">
           画像を追加
         </v-btn>
+
+        <!-- クリップボード貼り付けのヒント -->
+        <p class="text-caption text-medium-emphasis text-center mt-2">
+          <v-icon size="14" class="mr-1">mdi-clipboard-outline</v-icon>
+          Ctrl+V（⌘+V）でクリップボードから画像を貼り付けできます
+        </p>
       </v-card-text>
 
       <v-card-actions class="pa-8 pt-0">
@@ -335,5 +387,18 @@ const triggerFileInput = () => {
 
 .image-item:hover .delete-btn {
   opacity: 1;
+}
+
+.paste-zone {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.paste-zone:focus {
+  pointer-events: auto;
 }
 </style>
