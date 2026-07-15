@@ -525,6 +525,7 @@ const handleOpenSlideSchedule = async () => {
       v-if="isImageDialogVisible"
       v-model="isImageDialogVisible"
       :current-image-urls="imageDialogImageUrls"
+      :project-id="projectId"
       @save="handleSaveImages"
     />
 

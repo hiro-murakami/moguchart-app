@@ -7,6 +7,7 @@ import { deleteImagesFromStorage } from '@/modules/storageUtils'
 const props = defineProps<{
   modelValue: boolean
   currentImageUrls: string[]
+  projectId: string
 }>()
 
 const emit = defineEmits<{
@@ -169,7 +170,7 @@ const uploadFiles = async (files: File[]) => {
       compressing.value = false
 
       const uuid = generateUUID()
-      const path = `images/${uuid}${ext}`
+      const path = `images/${props.projectId}/${uuid}${ext}`
       const fileRef = storageRef(storage, path)
 
       await new Promise<void>((resolve, reject) => {
