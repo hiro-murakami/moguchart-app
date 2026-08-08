@@ -2,6 +2,7 @@
   "name": "moguchart-monorepo",
   "version": "0.8.1",
   "private": true,
+  "packageManager": "pnpm@10.34.5",
   "workspaces": [
     "packages/*"
   ],
