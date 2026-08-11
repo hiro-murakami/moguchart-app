@@ -26,5 +26,16 @@
     "@google/clasp": "^3.3.0",
     "npm-run-all2": "^8.0.4",
     "prettier": "^3.8.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@firebase/util",
+      "@parcel/watcher",
+      "@prisma/client",
+      "@prisma/engines",
+      "esbuild",
+      "prisma",
+      "protobufjs"
+    ]
   }
 }

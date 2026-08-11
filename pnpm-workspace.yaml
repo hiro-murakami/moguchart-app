@@ -1,8 +1,15 @@
 packages:
   - packages/*
-
 allowBuilds:
+  '@firebase/util': true
+  '@parcel/watcher': true
+  '@prisma/engines': true
+  prisma: true
+  protobufjs: true
+
+onlyBuiltDependencies:
   - '@firebase/util'
+  - '@parcel/watcher'
   - '@prisma/client'
   - '@prisma/engines'
   - esbuild
