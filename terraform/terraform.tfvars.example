@@ -1,0 +1,5 @@
+# 設定例: 実際の値を設定して `terraform.tfvars` という名前でコピーして使用してください
+project_id  = "firestore-sample-c7300"
+region      = "asia-northeast1"
+location_id = "asia-northeast1"
+environment = "dev"
