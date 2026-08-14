@@ -27,7 +27,7 @@ const compressing = ref(false)
 const uploadProgress = ref(0)
 const errorMessage = ref('')
 const infoMessage = ref('')
-const fileInputRef = ref<HTMLInputElement | null>(null)
+const selectedFiles = ref<File[]>([])
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
 const MAX_IMAGE_DIMENSION = 1920 // リサイズ時の最大幅/高さ
 const pendingDeletions = ref<string[]>([])
@@ -41,6 +41,7 @@ watch(
       imageUrls.value = [...props.currentImageUrls]
       pendingDeletions.value = []
       newlyUploaded.value = []
+      selectedFiles.value = []
       errorMessage.value = ''
       infoMessage.value = ''
       // ダイアログ描画後にペーストゾーンへフォーカス
@@ -51,6 +52,13 @@ watch(
   },
   { immediate: true },
 )
+
+// v-file-upload でファイルが選択されたら自動アップロード
+watch(selectedFiles, async (files) => {
+  if (!files || files.length === 0) return
+  await uploadFiles([...files])
+  selectedFiles.value = []
+})
 
 const generateUUID = (): string => {
   return crypto.randomUUID()
@@ -210,15 +218,6 @@ const uploadFiles = async (files: File[]) => {
   }
 }
 
-const handleFileSelect = async (event: Event) => {
-  const input = event.target as HTMLInputElement
-  const files = input.files
-  if (!files || files.length === 0) return
-
-  await uploadFiles(Array.from(files))
-  input.value = ''
-}
-
 /**
  * クリップボードから貼り付けられた画像を処理する。
  * スクリーンショットや他アプリからのコピー画像に対応。
@@ -269,15 +268,11 @@ const handleCancel = async () => {
   pendingDeletions.value = []
   isVisible.value = false
 }
-
-const triggerFileInput = () => {
-  fileInputRef.value?.click()
-}
 </script>
 
 <template>
   <v-dialog v-model="isVisible" max-width="600" persistent @keydown.esc="handleCancel">
-    <v-card v-draggable-dialog @click="pasteZoneRef?.focus()">
+    <v-card v-draggable-dialog :ripple="false" @click="pasteZoneRef?.focus()">
       <v-card-title class="d-flex align-center pa-8 pb-0">
         <v-icon class="mr-2">mdi-image-multiple</v-icon>
         画像管理
@@ -332,18 +327,24 @@ const triggerFileInput = () => {
           <p class="text-grey mt-2">画像はまだ登録されていません</p>
         </div>
 
-        <!-- ファイル選択（非表示） -->
-        <input ref="fileInputRef" type="file" accept="image/*" multiple hidden @change="handleFileSelect" />
-
-        <!-- 追加ボタン -->
-        <v-btn block variant="outlined" color="primary" prepend-icon="mdi-plus" :disabled="uploading" @click="triggerFileInput">
-          画像を追加
-        </v-btn>
+        <!-- ファイルアップロード -->
+        <v-file-upload
+          v-model="selectedFiles"
+          density="compact"
+          multiple
+          filter-by-type="image/*"
+          title="ここにドラッグ＆ドロップ"
+          browse-text="ファイルを選択"
+          divider-text="または"
+          icon="mdi-cloud-upload-outline"
+          :disabled="uploading"
+          hide-details
+        />
 
         <!-- クリップボード貼り付けのヒント -->
         <p class="text-caption text-medium-emphasis text-center mt-2">
           <v-icon size="14" class="mr-1">mdi-clipboard-outline</v-icon>
-          Ctrl+V（⌘+V）でクリップボードから画像を貼り付けできます
+          Ctrl+V（⌘+V）でクリップボードから画像を貼り付けもできます
         </p>
       </v-card-text>
 
