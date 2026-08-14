@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { useDiscardConfirm } from '@/composables/useConfirm'
-import inputRules from '@/modules/inputRules'
 import type { ColorPalette, Label, NewTaskTemplate } from '@functions/types/shared'
 import { isEqual } from 'lodash'
 import { computed, ref, watch } from 'vue'
@@ -81,18 +80,19 @@ const onUpdateDescription = (val: string) => {
     @close="close"
   >
     <template #extra-fields>
-      <v-col cols="12">
-        <v-text-field
-          v-model.number="localTemplate.duration"
+      <v-col cols="3">
+        <v-number-input
+          v-model="localTemplate.duration"
           label="期間（日）"
-          type="number"
-          min="1"
+          :min="1"
+          :step="1"
           density="compact"
           variant="outlined"
-          hide-details="auto"
-          :rules="[inputRules.required, inputRules.minNumber(1)]"
+          control-variant="stacked"
+          hide-details
+          suffix="日"
           class="mb-3"
-        ></v-text-field>
+        />
       </v-col>
     </template>
   </TaskFormDialog>

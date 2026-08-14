@@ -37,15 +37,16 @@ const handleKeyEnter = () => {
 
     <v-card min-width="200">
       <v-card-text class="pa-4">
-        <v-text-field
-          v-model.number="rowCount"
-          type="number"
+        <v-number-input
+          v-model="rowCount"
           label="追加する行数"
+          :min="1"
+          :max="10"
+          :step="1"
           density="compact"
-          hide-details="auto"
           variant="outlined"
-          min="1"
-          max="10"
+          control-variant="split"
+          hide-details
           :rules="rowCountRules"
           autofocus
           autocomplete="off"

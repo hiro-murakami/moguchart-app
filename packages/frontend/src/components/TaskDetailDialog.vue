@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { useDiscardConfirm } from '@/composables/useConfirm'
-import inputRules from '@/modules/inputRules'
 import { granularityToInputType } from '@/modules/utils'
 import type { ColorPalette, EditingTaskData, Label, SimpleRowData, ProjectGranularity } from '@functions/types/shared'
 import { isEqual, cloneDeep } from 'lodash'
@@ -135,20 +134,21 @@ const inputType = computed(() => granularityToInputType(props.granularity))
         />
       </v-col>
       <v-col cols="4">
-        <v-text-field
-          v-model.number="localTask.progress"
+        <v-number-input
+          v-model="localTask.progress"
           label="進捗率"
-          type="number"
           :min="0"
           :max="100"
+          :step="5"
           density="compact"
           variant="outlined"
+          control-variant="stacked"
           hide-details
           suffix="%"
           class="mb-3"
           clearable
           autocomplete="off"
-        ></v-text-field>
+        />
       </v-col>
       <v-col cols="12">
         <v-switch
