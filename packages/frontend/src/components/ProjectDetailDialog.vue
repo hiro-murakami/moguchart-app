@@ -75,6 +75,7 @@ const historyRetentionOptions = [
 
 const tab = ref<'general' | 'permissions' | 'colorPalettes' | 'labels' | 'milestones'>('general')
 const expandedPaletteIndex = ref<number | null>(null)
+const expandedMilestoneIndex = ref<number | null>(null)
 const palettesContainer = ref<HTMLElement | null>(null)
 const labelsContainer = ref<HTMLElement | null>(null)
 const milestonesContainer = ref<HTMLElement | null>(null)
@@ -101,6 +102,7 @@ const addLabel = () => {
 
 const addMilestone = () => {
   localMilestones.value.push({ name: '', datetime: '', color: '#FF0000' })
+  expandedMilestoneIndex.value = localMilestones.value.length - 1
   scrollToBottom(milestonesContainer.value)
 }
 
@@ -137,13 +139,14 @@ watch(
     if (newValue) {
       tab.value = 'general'
       expandedPaletteIndex.value = null
+      expandedMilestoneIndex.value = null
     }
   },
 )
 </script>
 
 <template>
-  <v-dialog :model-value="modelValue" @update:model-value="handleBeforeClose" max-width="850px">
+  <v-dialog :model-value="modelValue" @update:model-value="handleBeforeClose" max-width="950px">
     <v-card v-draggable-dialog>
       <v-card-title class="pa-8 pb-0">{{ title }}</v-card-title>
       <v-card-text class="px-8 py-4">
@@ -438,8 +441,15 @@ watch(
                       <v-col v-for="(milestone, i) in localMilestones" :key="i" cols="12">
                         <MilestoneInput
                           :model-value="milestone"
+                          :expanded="expandedMilestoneIndex === i"
+                          @update:expanded="(val: boolean) => (expandedMilestoneIndex = val ? i : null)"
                           @update:model-value="(val: Milestone) => (localMilestones[i] = val)"
-                          @delete="localMilestones.splice(i, 1)"
+                          @delete="
+                            () => {
+                              localMilestones.splice(i, 1)
+                              if (expandedMilestoneIndex === i) expandedMilestoneIndex = null
+                            }
+                          "
                         />
                       </v-col>
                     </v-row>
