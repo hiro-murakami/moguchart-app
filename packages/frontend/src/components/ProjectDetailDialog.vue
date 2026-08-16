@@ -75,6 +75,7 @@ const historyRetentionOptions = [
 
 const tab = ref<'general' | 'permissions' | 'colorPalettes' | 'labels' | 'milestones'>('general')
 const expandedPaletteIndex = ref<number | null>(null)
+const expandedLabelIndex = ref<number | null>(null)
 const expandedMilestoneIndex = ref<number | null>(null)
 const palettesContainer = ref<HTMLElement | null>(null)
 const labelsContainer = ref<HTMLElement | null>(null)
@@ -97,6 +98,7 @@ const addPalette = () => {
 
 const addLabel = () => {
   localLabels.value.push({ name: 'New Label', color: '#cccccc' })
+  expandedLabelIndex.value = localLabels.value.length - 1
   scrollToBottom(labelsContainer.value)
 }
 
@@ -139,6 +141,7 @@ watch(
     if (newValue) {
       tab.value = 'general'
       expandedPaletteIndex.value = null
+      expandedLabelIndex.value = null
       expandedMilestoneIndex.value = null
     }
   },
@@ -416,8 +419,15 @@ watch(
                       <v-col v-for="(label, i) in localLabels" :key="i" cols="12">
                         <LabelInput
                           :model-value="label"
+                          :expanded="expandedLabelIndex === i"
+                          @update:expanded="(val: boolean) => (expandedLabelIndex = val ? i : null)"
                           @update:model-value="(val: Label) => (localLabels[i] = val)"
-                          @delete="localLabels.splice(i, 1)"
+                          @delete="
+                            () => {
+                              localLabels.splice(i, 1)
+                              if (expandedLabelIndex === i) expandedLabelIndex = null
+                            }
+                          "
                         />
                       </v-col>
                     </v-row>

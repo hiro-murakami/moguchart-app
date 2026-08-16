@@ -1,17 +1,34 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import inputRules from '@/modules/inputRules'
 import type { Label } from '@functions/types/shared'
-import { getContrastColor } from '../../modules/utils'
+import { getContrastColor } from '@/modules/utils'
 
-const props = defineProps<{
-  modelValue: Label
-}>()
+const props = withDefaults(
+  defineProps<{
+    modelValue: Label
+    expanded?: boolean
+  }>(),
+  {
+    expanded: undefined,
+  },
+)
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: Label): void
   (e: 'delete'): void
+  (e: 'update:expanded', value: boolean): void
 }>()
+
+const internalExpanded = ref(false)
+
+const isExpanded = computed({
+  get: () => props.expanded ?? internalExpanded.value,
+  set: (val) => {
+    internalExpanded.value = val
+    emit('update:expanded', val)
+  },
+})
 
 const name = computed({
   get: () => props.modelValue.name,
@@ -25,33 +42,52 @@ const color = computed({
 </script>
 
 <template>
-  <v-card variant="outlined" class="pa-2" style="border-color: rgba(var(--v-border-color), 0.38)">
-    <div class="d-flex align-center">
-      <div class="mr-4 d-flex align-center justify-start" style="width: 30%">
-        <TooltipBtn
-          icon="mdi-delete"
-          variant="text"
-          color="error"
-          size="small"
-          tooltip="削除"
-          location="top"
-          @click="emit('delete')"
-        />
-        <v-chip
-          :color="color || '#cccccc'"
-          variant="flat"
-          label
-          size="small"
-          class="font-weight-bold"
-          :style="{ color: getContrastColor(color || '#cccccc') }"
-        >
-          {{ name || 'Label' }}
-        </v-chip>
+  <v-card variant="outlined" class="label-input" style="border-color: rgba(var(--v-border-color), 0.38)">
+    <!-- ヘッダー行: 削除ボタン + プレビュー + トグル -->
+    <div class="d-flex align-center pa-2" style="cursor: pointer" @click="isExpanded = !isExpanded">
+      <TooltipBtn
+        icon="mdi-delete"
+        variant="text"
+        color="error"
+        size="small"
+        tooltip="削除"
+        location="top"
+        @click.stop="emit('delete')"
+      />
+
+      <div
+        class="flex-grow-1 mx-2"
+        :style="`
+          height: 32px;
+          border-radius: 4px;
+          background-color: ${color || '#cccccc'};
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: ${getContrastColor(color || '#cccccc')};
+          font-weight: bold;
+          font-size: 0.85rem;
+        `"
+      >
+        <span class="text-truncate px-2">
+          {{ name || 'ラベル名' }}
+        </span>
       </div>
 
-      <div class="flex-grow-1">
-        <v-row density="compact">
-          <v-col cols="8">
+      <v-btn
+        :icon="isExpanded ? 'mdi-chevron-up' : 'mdi-chevron-down'"
+        variant="text"
+        size="x-small"
+        @click.stop="isExpanded = !isExpanded"
+      />
+    </div>
+
+    <!-- 展開時: 設定エリア -->
+    <v-expand-transition>
+      <div v-show="isExpanded" class="px-2 pb-2">
+        <v-divider class="mb-2" />
+        <v-row density="comfortable">
+          <v-col>
             <v-text-field
               v-model="name"
               label="ラベル名"
@@ -59,14 +95,24 @@ const color = computed({
               variant="outlined"
               hide-details="auto"
               :rules="[inputRules.required, inputRules.within(48)]"
-              class="small-input"
+              autocomplete="off"
             />
           </v-col>
-          <v-col cols="4">
-            <ColorInput v-model="color" label="色" min-width="100px" class="small-input" />
+          <v-col cols="3">
+            <v-color-input
+              v-model="color"
+              color-pip
+              label="色"
+              variant="outlined"
+              pip-variant="flat"
+              density="compact"
+              hide-details="auto"
+              pip-location="prepend-inner"
+              show-swatches
+            />
           </v-col>
         </v-row>
       </div>
-    </div>
+    </v-expand-transition>
   </v-card>
 </template>

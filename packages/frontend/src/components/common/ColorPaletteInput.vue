@@ -179,8 +179,8 @@ const getBorderStyle = (type?: string, color?: string) => {
     <v-expand-transition>
       <div v-show="isExpanded" class="px-2 pb-2">
         <v-divider class="mb-2" />
-        <v-row density="compact">
-          <v-col cols="auto">
+        <v-row density="comfortable">
+          <v-col cols="6">
             <v-text-field
               v-model="name"
               label="パレット名"
@@ -191,14 +191,33 @@ const getBorderStyle = (type?: string, color?: string) => {
               autocomplete="off"
             />
           </v-col>
-          <v-col cols="auto">
-            <ColorInput v-model="color" label="文字色" min-width="120px" />
+          <v-col cols="3">
+            <v-color-input
+              v-model="color"
+              color-pip
+              label="文字色"
+              variant="outlined"
+              pip-variant="flat"
+              density="compact"
+              hide-details="auto"
+              pip-location="prepend-inner"
+              show-swatches
+            />
           </v-col>
-          <v-col cols="auto">
-            <ColorInput v-model="backgroundColor" label="背景色" min-width="120px" />
+          <v-col cols="3">
+            <v-color-input
+              v-model="backgroundColor"
+              color-pip
+              label="背景色"
+              variant="outlined"
+              pip-variant="flat"
+              density="compact"
+              hide-details="auto"
+              pip-location="prepend-inner"
+              show-swatches
+            />
           </v-col>
-
-          <v-col cols="auto">
+          <v-col cols="3">
             <v-select
               v-model="patternType"
               :items="patternOptions"
@@ -208,7 +227,6 @@ const getBorderStyle = (type?: string, color?: string) => {
               hide-details
               density="compact"
               variant="outlined"
-              min-width="131px"
             >
               <template #selection="{ item }">
                 <div class="d-flex align-center" v-if="item.type !== 'none'">
@@ -231,11 +249,21 @@ const getBorderStyle = (type?: string, color?: string) => {
             </v-select>
           </v-col>
 
-          <v-col cols="auto" v-if="patternType !== 'none'">
-            <ColorInput v-model="patternColor" label="パターン色" min-width="100px" />
+          <v-col cols="3" v-if="patternType !== 'none'">
+            <v-color-input
+              v-model="patternColor"
+              color-pip
+              label="パターン色"
+              variant="outlined"
+              pip-variant="flat"
+              density="compact"
+              hide-details="auto"
+              pip-location="prepend-inner"
+              show-swatches
+            />
           </v-col>
 
-          <v-col cols="auto">
+          <v-col cols="3">
             <v-select
               v-model="borderType"
               :items="borderOptions"
@@ -245,7 +273,6 @@ const getBorderStyle = (type?: string, color?: string) => {
               hide-details
               density="compact"
               variant="outlined"
-              min-width="131px"
             >
               <template #selection="{ item }">
                 <div class="d-flex align-center" v-if="item.type !== 'none'">
@@ -268,8 +295,18 @@ const getBorderStyle = (type?: string, color?: string) => {
             </v-select>
           </v-col>
 
-          <v-col cols="auto" v-if="borderType !== 'none'">
-            <ColorInput v-model="borderColor" label="枠線色" min-width="100px" />
+          <v-col cols="3" v-if="borderType !== 'none'">
+            <v-color-input
+              v-model="borderColor"
+              color-pip
+              label="枠線色"
+              variant="outlined"
+              pip-variant="flat"
+              density="compact"
+              hide-details="auto"
+              pip-location="prepend-inner"
+              show-swatches
+            />
           </v-col>
         </v-row>
       </div>

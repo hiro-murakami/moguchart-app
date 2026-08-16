@@ -99,8 +99,8 @@ const formattedDatetime = computed(() => {
     <v-expand-transition>
       <div v-show="isExpanded" class="px-2 pb-2">
         <v-divider class="mb-2" />
-        <v-row density="compact">
-          <v-col cols="12" sm="5">
+        <v-row density="comfortable">
+          <v-col>
             <v-text-field
               v-model="name"
               label="マイルストーン名"
@@ -111,16 +111,20 @@ const formattedDatetime = computed(() => {
               autocomplete="off"
             />
           </v-col>
-          <v-col cols="12" sm="5">
-            <DateInput
-              v-model="datetime"
-              type="datetime-local"
-              label-datetime="日時"
-              hide-details="auto"
-            />
+          <v-col cols="5">
+            <DateInput v-model="datetime" type="datetime-local" label-datetime="日時" hide-details="auto" />
           </v-col>
-          <v-col cols="12" sm="2">
-            <ColorInput v-model="color" label="色" min-width="100px" />
+          <v-col cols="3">
+            <v-color-input
+              v-model="color"
+              color-pip
+              label="色"
+              variant="outlined"
+              density="compact"
+              hide-details="auto"
+              pip-location="prepend-inner"
+              show-swatches
+            />
           </v-col>
         </v-row>
       </div>
