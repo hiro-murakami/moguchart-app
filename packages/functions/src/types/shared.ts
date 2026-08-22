@@ -220,7 +220,7 @@ export type ProjectAttribute = {
    */
   disableRowReorder?: boolean
   /**
-   * タスクの別行への移動を禁止するかどうか（trueの場合、ドラッグ＆ドロップによるタスクの行間移動を無効化）
+   * タスクの移動を横方向に限定するかどうか（trueの場合、ドラッグ＆ドロップによるタスクの行間移動を無効化）
    */
   disableCrossRowMove?: boolean
 }

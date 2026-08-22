@@ -352,7 +352,7 @@ watch(
                     <v-col cols="12" class="mb-2">
                       <v-checkbox v-model="localDisableCrossRowMove" density="compact" hide-details>
                         <template v-slot:label>
-                          <span class="mr-2">タスクの別行への移動を禁止する</span>
+                          <span class="mr-2">タスクの移動を横方向に限定する</span>
                           <HelpText text="ONにするとタスクを別の行へドラッグ移動できなくなります" />
                         </template>
                       </v-checkbox>
