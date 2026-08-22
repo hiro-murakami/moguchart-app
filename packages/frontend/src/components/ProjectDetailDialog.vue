@@ -40,6 +40,8 @@ const {
   localHistoryRetentionDays,
   localGranularity,
   localSnapDurationMinutes,
+  localDisableRowReorder,
+  localDisableCrossRowMove,
   authorityHistoryUsers,
   title,
   localClearProgress,
@@ -73,7 +75,7 @@ const historyRetentionOptions = [
   { title: '90日', value: 90 },
 ]
 
-const tab = ref<'general' | 'permissions' | 'colorPalettes' | 'labels' | 'milestones'>('general')
+const tab = ref<'general' | 'permissions' | 'editOptions' | 'colorPalettes' | 'labels' | 'milestones'>('general')
 const expandedPaletteIndex = ref<number | null>(null)
 const expandedLabelIndex = ref<number | null>(null)
 const expandedMilestoneIndex = ref<number | null>(null)
@@ -160,6 +162,10 @@ watch(
                 <v-tab value="general">
                   <v-icon start> mdi-account </v-icon>
                   一般
+                </v-tab>
+                <v-tab value="editOptions">
+                  <v-icon start> mdi-cog </v-icon>
+                  編集オプション
                 </v-tab>
                 <v-tab value="permissions">
                   <v-icon start> mdi-lock </v-icon>
@@ -285,10 +291,10 @@ watch(
                       </v-btn>
                     </v-col>
                     <!-- hourly および daily モード時のスナップ単位設定 -->
-                    <v-col v-if="localGranularity === 'hourly' || localGranularity === 'daily'" cols="12" class="mb-4">
+                    <v-col v-if="localGranularity === 'hourly' || localGranularity === 'daily'" cols="12" class="mb-2">
                       <SnapDurationInput v-model="localSnapDurationMinutes" :granularity="localGranularity" />
                     </v-col>
-                    <v-col cols="12" class="mb-4">
+                    <v-col cols="12" class="mb-2">
                       <v-checkbox v-model="localPublic" density="compact" hide-details>
                         <template v-slot:label>
                           一般公開
@@ -369,20 +375,39 @@ watch(
                   </v-row>
                   <AuthorityHistoryDialog v-model="showAuthorityHistoryDialog" />
                 </v-window-item>
+                <v-window-item value="editOptions">
+                  <v-row density="compact" class="pt-2">
+                    <v-col cols="12" class="mb-2">
+                      <v-checkbox v-model="localDisableRowReorder" density="compact" hide-details>
+                        <template v-slot:label>
+                          行の入れ替えを禁止する
+                          <HelpText text="ONにするとドラッグ＆ドロップによる行の並び替えができなくなります" />
+                        </template>
+                      </v-checkbox>
+                    </v-col>
+                    <v-col cols="12" class="mb-2">
+                      <v-checkbox v-model="localDisableCrossRowMove" density="compact" hide-details>
+                        <template v-slot:label>
+                          タスクの別行への移動を禁止する
+                          <HelpText text="ONにするとタスクを別の行へドラッグ移動できなくなります" />
+                        </template>
+                      </v-checkbox>
+                    </v-col>
+                  </v-row>
+                </v-window-item>
                 <v-window-item value="colorPalettes">
                   <v-row density="compact">
                     <v-col cols="12">
-                      <v-btn
-                        variant="text"
-                        prepend-icon="mdi-plus"
-                        color="primary"
-                        @click="addPalette"
-                      >
+                      <v-btn variant="text" prepend-icon="mdi-plus" color="primary" @click="addPalette">
                         パレット追加
                       </v-btn>
                     </v-col>
                   </v-row>
-                  <div ref="palettesContainer" style="max-height: 460px; overflow-y: auto; overflow-x: hidden" class="pr-2">
+                  <div
+                    ref="palettesContainer"
+                    style="max-height: 460px; overflow-y: auto; overflow-x: hidden"
+                    class="pr-2"
+                  >
                     <v-row density="compact">
                       <v-col v-for="(palette, i) in localColorPalettes" :key="i" cols="12">
                         <ColorPaletteInput
@@ -404,17 +429,16 @@ watch(
                 <v-window-item value="labels">
                   <v-row density="compact">
                     <v-col cols="12">
-                      <v-btn
-                        variant="text"
-                        prepend-icon="mdi-plus"
-                        color="primary"
-                        @click="addLabel"
-                      >
+                      <v-btn variant="text" prepend-icon="mdi-plus" color="primary" @click="addLabel">
                         ラベル追加
                       </v-btn>
                     </v-col>
                   </v-row>
-                  <div ref="labelsContainer" style="max-height: 460px; overflow-y: auto; overflow-x: hidden" class="pr-2">
+                  <div
+                    ref="labelsContainer"
+                    style="max-height: 460px; overflow-y: auto; overflow-x: hidden"
+                    class="pr-2"
+                  >
                     <v-row density="compact">
                       <v-col v-for="(label, i) in localLabels" :key="i" cols="12">
                         <LabelInput
@@ -436,17 +460,16 @@ watch(
                 <v-window-item value="milestones">
                   <v-row density="compact">
                     <v-col cols="12">
-                      <v-btn
-                        variant="text"
-                        prepend-icon="mdi-plus"
-                        color="primary"
-                        @click="addMilestone"
-                      >
+                      <v-btn variant="text" prepend-icon="mdi-plus" color="primary" @click="addMilestone">
                         マイルストーン追加
                       </v-btn>
                     </v-col>
                   </v-row>
-                  <div ref="milestonesContainer" style="max-height: 460px; overflow-y: auto; overflow-x: hidden" class="pr-2">
+                  <div
+                    ref="milestonesContainer"
+                    style="max-height: 460px; overflow-y: auto; overflow-x: hidden"
+                    class="pr-2"
+                  >
                     <v-row density="compact">
                       <v-col v-for="(milestone, i) in localMilestones" :key="i" cols="12">
                         <MilestoneInput

@@ -215,6 +215,14 @@ export type ProjectAttribute = {
    * 60: 60分（デフォルト） / 30: 30分 / 15: 15分 / 6: 6分
    */
   snapDurationMinutes?: number
+  /**
+   * 行の入れ替えを禁止するかどうか（trueの場合、ドラッグ＆ドロップによる行の並び替えを無効化）
+   */
+  disableRowReorder?: boolean
+  /**
+   * タスクの別行への移動を禁止するかどうか（trueの場合、ドラッグ＆ドロップによるタスクの行間移動を無効化）
+   */
+  disableCrossRowMove?: boolean
 }
 
 /** マーカーの種類 */

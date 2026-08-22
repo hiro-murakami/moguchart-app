@@ -671,7 +671,8 @@ export const useGanttChartView = () => {
         maxWidth: 400,
         width: rowHeaderWidth.value,
       },
-      enableRowReordering: true,
+      enableRowReordering: !currentProject.value?.attribute?.disableRowReorder,
+      enableCrossRowMove: !currentProject.value?.attribute?.disableCrossRowMove,
       snapDuration: currentProject.value?.attribute?.snapDurationMinutes ?? (isHourly ? 60 : 1440),
       readOnly: isReadOnly.value,
       showHiddenRows: showHiddenRows.value,
@@ -1293,7 +1294,7 @@ export const useGanttChartView = () => {
   )
 
   const handleTaskUpdate = async (e: CustomEvent<moguchart.TaskUpdateEventDetail>) => {
-    if (e.detail.isDragging) {
+    if (e.detail.isDragging || e.detail.isCancel || e.detail.isOutside) {
       return
     }
 
@@ -1301,13 +1302,14 @@ export const useGanttChartView = () => {
 
     // 複数タスク一括移動の処理
     const selectedIds = e.detail.selectedTaskIds
+    const isDisableCrossRowMove = !!currentProject.value?.attribute?.disableCrossRowMove
     if (selectedIds && selectedIds.length >= 2 && e.detail.dx !== undefined) {
       const msPerPx = (24 * 60 * 60 * 1000) / pxPerDay.value
       const timeDiff = e.detail.dx * msPerPx
 
       // 行移動が発生するかどうかを判定
       const targetRowId = e.detail.targetRowId
-      const hasRowChange = !!targetRowId && rows.value.some((r) => {
+      const hasRowChange = !isDisableCrossRowMove && !!targetRowId && rows.value.some((r) => {
         const hasTask = r.tasks.some((t) => selectedIds.includes(t.id))
         return hasTask && String(r.id) !== String(targetRowId)
       })
@@ -1392,6 +1394,9 @@ export const useGanttChartView = () => {
     // コピー時はdata.idが0なので、元タスクのIDで検索する
     const sourceTaskIdStr = String(e.detail.id)
     const row = rows.value.find((r) => r.tasks.some((t) => t.id === sourceTaskIdStr))
+    if (isDisableCrossRowMove && row) {
+      data.rowId = Number(row.id)
+    }
     const task = row?.tasks.find((t) => t.id === sourceTaskIdStr)
     if (task) {
       const attribute = (task as any).attribute as TaskAttribute | undefined
@@ -2091,6 +2096,7 @@ export const useGanttChartView = () => {
   }
 
   const handleRowReordered = async (e: CustomEvent<moguchart.RowReorderEventDetail>) => {
+    if (currentProject.value?.attribute?.disableRowReorder) return
     await maybeAutoSnapshot()
 
     setIsLoading(true)

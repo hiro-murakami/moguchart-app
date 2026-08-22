@@ -41,6 +41,8 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
   const localHistoryRetentionDays = ref<number>(0)
   const localGranularity = ref<ProjectGranularity>('daily')
   const localSnapDurationMinutes = ref<number>(60)
+  const localDisableRowReorder = ref(false)
+  const localDisableCrossRowMove = ref(false)
 
   /** 複製モード時の元プロジェクト期間と単位 */
   const originalDuration = ref(0)
@@ -97,6 +99,8 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
             localGranularity.value = props.project.attribute.granularity || 'daily'
             localSnapDurationMinutes.value =
               props.project.attribute.snapDurationMinutes || (localGranularity.value === 'hourly' ? 60 : 1440)
+            localDisableRowReorder.value = !!props.project.attribute.disableRowReorder
+            localDisableCrossRowMove.value = !!props.project.attribute.disableCrossRowMove
             localClearProgress.value = true
 
             // 元のプロジェクト期間を記憶
@@ -144,6 +148,8 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
             localGranularity.value = props.project.attribute.granularity || 'daily'
             localSnapDurationMinutes.value =
               props.project.attribute.snapDurationMinutes || (localGranularity.value === 'hourly' ? 60 : 1440)
+            localDisableRowReorder.value = !!props.project.attribute.disableRowReorder
+            localDisableCrossRowMove.value = !!props.project.attribute.disableCrossRowMove
           }
         } else {
           // 新規追加モード
@@ -162,6 +168,8 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
           localHistoryRetentionDays.value = 7
           localGranularity.value = props.initialGranularity || 'daily'
           localSnapDurationMinutes.value = localGranularity.value === 'hourly' ? 60 : 1440
+          localDisableRowReorder.value = false
+          localDisableCrossRowMove.value = false
         }
       }
     },
@@ -194,6 +202,8 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
         localStart.value !== '' ||
         localEnd.value !== '' ||
         localPublic.value !== false ||
+        localDisableRowReorder.value !== false ||
+        localDisableCrossRowMove.value !== false ||
         localOwners.value.length > 0 ||
         localEditors.value.length > 0 ||
         localViewers.value.length > 0 ||
@@ -220,6 +230,8 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
       !isEqual(localMilestones.value, originalMilestones) ||
       localHistoryIntervalMinutes.value !== (props.project.attribute.historyIntervalMinutes || 0) ||
       localHistoryRetentionDays.value !== (props.project.attribute.historyRetentionDays || 7) ||
+      localDisableRowReorder.value !== !!props.project.attribute.disableRowReorder ||
+      localDisableCrossRowMove.value !== !!props.project.attribute.disableCrossRowMove ||
       (localGranularity.value === 'hourly' || localGranularity.value === 'daily'
         ? localSnapDurationMinutes.value !==
           (props.project.attribute.snapDurationMinutes ||
@@ -266,6 +278,8 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
         milestones: localMilestones.value.length > 0 ? localMilestones.value : undefined,
         historyIntervalMinutes: localHistoryIntervalMinutes.value || undefined,
         historyRetentionDays: localHistoryRetentionDays.value || undefined,
+        disableRowReorder: localDisableRowReorder.value ? true : undefined,
+        disableCrossRowMove: localDisableCrossRowMove.value ? true : undefined,
         // granularity は新規作成時のみ設定（編集時は既存値を保持）
         ...(!isEdit.value ? { granularity: localGranularity.value } : {}),
         // snapDurationMinutes は hourly および daily モード時のみ保存
@@ -325,6 +339,8 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
     localHistoryRetentionDays,
     localGranularity,
     localSnapDurationMinutes,
+    localDisableRowReorder,
+    localDisableCrossRowMove,
     authorityHistoryUsers,
     title,
     localClearProgress,
