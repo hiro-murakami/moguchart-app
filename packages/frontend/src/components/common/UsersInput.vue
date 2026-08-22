@@ -26,10 +26,7 @@ const suggestionItems = computed(() =>
 )
 
 /** 内部ルール + 外部から渡されたルールをマージ */
-const mergedRules = computed(() => [
-  inputRules.areMailAddresses,
-  ...(props.rules ?? []),
-])
+const mergedRules = computed(() => [inputRules.areMailAddresses, ...(props.rules ?? [])])
 
 /**
  * v-combobox の update:model-value で受け取る値を正規化する。
@@ -38,9 +35,7 @@ const mergedRules = computed(() => [
  * すべて string（メールアドレス）に統一する。
  */
 function handleUpdate(rawValues: (string | { title: string; value: string })[]) {
-  const normalized = rawValues
-    .map((v) => (typeof v === 'string' ? v : v?.value ?? ''))
-    .filter((v) => v !== '')
+  const normalized = rawValues.map((v) => (typeof v === 'string' ? v : (v?.value ?? ''))).filter((v) => v !== '')
   emit('update:modelValue', normalized)
 }
 </script>
@@ -61,7 +56,7 @@ function handleUpdate(rawValues: (string | { title: string; value: string })[]) 
       density="compact"
       variant="outlined"
       hide-details="auto"
-      class="mb-3"
+      class="mb-3 mr-2"
       :rules="mergedRules"
       autocomplete="off"
     />

@@ -186,14 +186,14 @@ watch(
               </v-tabs>
             </v-col>
             <v-col cols="9">
-              <v-window v-model="tab" style="min-height: 640px">
+              <v-window v-model="tab" style="min-height: 600px">
                 <v-window-item value="general">
                   <v-row density="compact" class="pt-2">
                     <!-- モード（作成後変更不可） -->
                     <v-col cols="12" class="mb-4 d-flex">
                       <div class="text-caption text-medium-emphasis mr-4 d-flex align-center">
-                        モード
-                        <HelpText text="モードは作成後に変更できません" class="ml-1" />
+                        <span class="mr-2">モード</span>
+                        <HelpText text="モードは作成後に変更できません" />
                       </div>
                       <v-chip
                         :prepend-icon="
@@ -294,15 +294,15 @@ watch(
                     <v-col v-if="localGranularity === 'hourly' || localGranularity === 'daily'" cols="12" class="mb-2">
                       <SnapDurationInput v-model="localSnapDurationMinutes" :granularity="localGranularity" />
                     </v-col>
-                    <v-col cols="12" class="mb-2">
+                    <v-col cols="12" class="mb-4">
                       <v-checkbox v-model="localPublic" density="compact" hide-details>
                         <template v-slot:label>
-                          一般公開
+                          <span class="mr-2">一般公開</span>
                           <HelpText text="ONにすると全てのユーザーが参照できるようになります" />
                         </template>
                       </v-checkbox>
                     </v-col>
-                    <v-col cols="6">
+                    <v-col cols="4">
                       <v-select
                         v-model="localHistoryIntervalMinutes"
                         :items="historyIntervalOptions"
@@ -310,7 +310,7 @@ watch(
                         density="compact"
                         variant="outlined"
                         hide-details="auto"
-                        class="mb-3"
+                        class="mb-3 mr-3"
                       >
                         <template v-slot:append>
                           <HelpText
@@ -319,8 +319,7 @@ watch(
                         </template>
                       </v-select>
                     </v-col>
-                    <v-spacer />
-                    <v-col cols="6">
+                    <v-col cols="5">
                       <v-select
                         v-model="localHistoryRetentionDays"
                         :items="historyRetentionOptions"
@@ -329,7 +328,7 @@ watch(
                         variant="outlined"
                         hide-details="auto"
                         :disabled="!localHistoryIntervalMinutes"
-                        class="mb-3"
+                        class="mb-3 mr-3"
                       >
                         <template v-slot:append>
                           <HelpText
@@ -337,6 +336,26 @@ watch(
                           />
                         </template>
                       </v-select>
+                    </v-col>
+                  </v-row>
+                </v-window-item>
+                <v-window-item value="editOptions">
+                  <v-row density="compact" class="pt-2">
+                    <v-col cols="12" class="mb-2">
+                      <v-checkbox v-model="localDisableRowReorder" density="compact" hide-details>
+                        <template v-slot:label>
+                          <span class="mr-2">行の入れ替えを禁止する</span>
+                          <HelpText text="ONにするとドラッグ＆ドロップによる行の並び替えができなくなります" />
+                        </template>
+                      </v-checkbox>
+                    </v-col>
+                    <v-col cols="12" class="mb-2">
+                      <v-checkbox v-model="localDisableCrossRowMove" density="compact" hide-details>
+                        <template v-slot:label>
+                          <span class="mr-2">タスクの別行への移動を禁止する</span>
+                          <HelpText text="ONにするとタスクを別の行へドラッグ移動できなくなります" />
+                        </template>
+                      </v-checkbox>
                     </v-col>
                   </v-row>
                 </v-window-item>
@@ -375,26 +394,6 @@ watch(
                   </v-row>
                   <AuthorityHistoryDialog v-model="showAuthorityHistoryDialog" />
                 </v-window-item>
-                <v-window-item value="editOptions">
-                  <v-row density="compact" class="pt-2">
-                    <v-col cols="12" class="mb-2">
-                      <v-checkbox v-model="localDisableRowReorder" density="compact" hide-details>
-                        <template v-slot:label>
-                          行の入れ替えを禁止する
-                          <HelpText text="ONにするとドラッグ＆ドロップによる行の並び替えができなくなります" />
-                        </template>
-                      </v-checkbox>
-                    </v-col>
-                    <v-col cols="12" class="mb-2">
-                      <v-checkbox v-model="localDisableCrossRowMove" density="compact" hide-details>
-                        <template v-slot:label>
-                          タスクの別行への移動を禁止する
-                          <HelpText text="ONにするとタスクを別の行へドラッグ移動できなくなります" />
-                        </template>
-                      </v-checkbox>
-                    </v-col>
-                  </v-row>
-                </v-window-item>
                 <v-window-item value="colorPalettes">
                   <v-row density="compact">
                     <v-col cols="12">
@@ -405,7 +404,7 @@ watch(
                   </v-row>
                   <div
                     ref="palettesContainer"
-                    style="max-height: 460px; overflow-y: auto; overflow-x: hidden"
+                    style="max-height: 560px; overflow-y: auto; overflow-x: hidden"
                     class="pr-2"
                   >
                     <v-row density="compact">
@@ -436,7 +435,7 @@ watch(
                   </v-row>
                   <div
                     ref="labelsContainer"
-                    style="max-height: 460px; overflow-y: auto; overflow-x: hidden"
+                    style="max-height: 560px; overflow-y: auto; overflow-x: hidden"
                     class="pr-2"
                   >
                     <v-row density="compact">
@@ -467,7 +466,7 @@ watch(
                   </v-row>
                   <div
                     ref="milestonesContainer"
-                    style="max-height: 460px; overflow-y: auto; overflow-x: hidden"
+                    style="max-height: 560px; overflow-y: auto; overflow-x: hidden"
                     class="pr-2"
                   >
                     <v-row density="compact">

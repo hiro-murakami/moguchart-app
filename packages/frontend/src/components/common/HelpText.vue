@@ -18,7 +18,7 @@ withDefaults(defineProps<Props>(), {
 <template>
   <v-tooltip :text="text" :location="location" :open-delay="openDelay" max-width="300">
     <template v-slot:activator="{ props }">
-      <v-icon v-bind="props" :size="size" style="cursor: help" class="ml-4 text-medium-emphasis">
+      <v-icon v-bind="props" :size="size" style="cursor: help" class="text-medium-emphasis">
         {{ icon }}
       </v-icon>
     </template>

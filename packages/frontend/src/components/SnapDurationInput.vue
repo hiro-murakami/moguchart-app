@@ -19,7 +19,7 @@ const localValue = computed({
 
 <template>
   <div class="text-caption text-medium-emphasis mt-1 d-flex align-center">
-    スナップ単位
+    <span class="mr-2">スナップ単位</span>
     <HelpText text="タスクの移動・リサイズ時にスナップする時間単位です" class="ml-1" />
   </div>
   <v-btn-toggle
