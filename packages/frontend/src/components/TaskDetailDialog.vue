@@ -11,7 +11,6 @@ const props = defineProps<{
   task: EditingTaskData
   rows: SimpleRowData[]
   granularity?: ProjectGranularity
-  disableCrossRowMove?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -106,7 +105,6 @@ const inputType = computed(() => granularityToInputType(props.granularity))
           hide-details
           autocomplete="off"
           class="mb-3"
-          :disabled="disableCrossRowMove"
         ></v-select>
       </v-col>
       <v-col cols="4">
