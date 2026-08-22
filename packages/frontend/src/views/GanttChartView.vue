@@ -586,6 +586,7 @@ const handleOpenSlideSchedule = async () => {
       :task="editingTask"
       :rows="rows"
       :granularity="currentProject?.attribute?.granularity"
+      :disable-cross-row-move="currentProject?.attribute?.disableCrossRowMove"
       @save="saveTask"
       @delete="deleteTask"
     />
