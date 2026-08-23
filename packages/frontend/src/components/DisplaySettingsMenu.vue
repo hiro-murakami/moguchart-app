@@ -10,6 +10,7 @@ defineProps<{
   showHiddenRows: boolean
   showCurrentTimeLine: boolean
   showCriticalPath: boolean
+  showMinimap: boolean
   barShadowLevel: 'none' | 'small' | 'medium' | 'large'
   readonlyMode?: boolean
   canEdit?: boolean
@@ -24,6 +25,7 @@ const emit = defineEmits<{
   'update:showHiddenRows': [value: boolean]
   'update:showCurrentTimeLine': [value: boolean]
   'update:showCriticalPath': [value: boolean]
+  'update:showMinimap': [value: boolean]
   'update:barShadowLevel': [value: 'none' | 'small' | 'medium' | 'large']
   'update:readonlyMode': [value: boolean]
   'update:pxPerDay': [value: number]
@@ -119,8 +121,17 @@ const currentTheme = computed({
         color="error"
         hide-details
         density="compact"
-        class="mb-4"
+        class="mb-2"
         @update:model-value="emit('update:showCriticalPath', $event as boolean)"
+      />
+      <v-switch
+        :model-value="showMinimap"
+        label="ミニマップを表示"
+        color="primary"
+        hide-details
+        density="compact"
+        class="mb-4"
+        @update:model-value="emit('update:showMinimap', $event as boolean)"
       />
       <div class="text-caption text-medium-emphasis mb-1">表示倍率</div>
       <!-- 日単位模式 -->

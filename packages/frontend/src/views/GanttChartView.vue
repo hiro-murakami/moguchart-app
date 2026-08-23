@@ -30,6 +30,7 @@ const {
   showHiddenRows,
   showCurrentTimeLine,
   showCriticalPath,
+  showMinimap,
   barShadowLevel,
   readonlyMode,
   currentRole,
@@ -142,6 +143,7 @@ const {
   handleDeleteDependencyFromContextMenu,
   handleSlideSchedule,
   handleZoomChange,
+  handleMinimapResize,
   isImageDialogVisible,
   imageDialogTaskId,
   imageDialogImageUrls,
@@ -376,6 +378,7 @@ const handleOpenSlideSchedule = async () => {
           v-model:show-hidden-rows="showHiddenRows"
           v-model:show-current-time-line="showCurrentTimeLine"
           v-model:show-critical-path="showCriticalPath"
+          v-model:show-minimap="showMinimap"
           v-model:bar-shadow-level="barShadowLevel"
           v-model:px-per-day="pxPerDay"
           v-model:px-per-month="pxPerMonth"
@@ -421,6 +424,7 @@ const handleOpenSlideSchedule = async () => {
             @dependency-create="handleDependencyCreate"
             @dependency-click="handleDependencyClick"
             @zoom-change="handleZoomChange"
+            @minimap-resize="handleMinimapResize"
             @marker-dblclick="handleMarkerDblClick"
             @marker-contextmenu="handleMarkerContextMenu"
           />

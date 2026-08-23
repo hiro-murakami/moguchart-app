@@ -137,6 +137,10 @@ export type ProjectSettings = {
   barShadowLevel?: 'none' | 'small' | 'medium' | 'large'
   /** クリティカルパスを表示するかどうか */
   showCriticalPath?: boolean
+  /** ミニマップ（全体鳥瞰）を表示するかどうか */
+  showMinimap?: boolean
+  /** ミニマップの幅 (px) */
+  minimapWidth?: number
   /** @deprecated barShadowLevel に移行済み。後方互換のため残存 */
   showBarShadow?: boolean
 }

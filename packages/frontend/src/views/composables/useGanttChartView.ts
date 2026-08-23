@@ -96,6 +96,8 @@ export const useGanttChartView = () => {
   const barShadowLevel = ref<'none' | 'small' | 'medium' | 'large'>('medium')
   const readonlyMode = ref(false)
   const showCriticalPath = ref(false)
+  const showMinimap = ref(true)
+  const minimapWidth = ref(200)
   const manualAddRowCount = ref(1)
 
   const isUnassignedTasksOpen = ref(false)
@@ -218,6 +220,8 @@ export const useGanttChartView = () => {
       commentSidebarWidth?: number
       readonlyMode?: boolean
       showCriticalPath?: boolean
+      showMinimap?: boolean
+      minimapWidth?: number
     }) => {
       // 公開閲覧モードではユーザー設定を保存しない
       if (isPublicViewMode.value) return
@@ -290,6 +294,16 @@ export const useGanttChartView = () => {
   // クリティカルパス表示設定変更時に保存
   watch(showCriticalPath, (newValue) => {
     saveProjectSettings({ showCriticalPath: newValue })
+  })
+
+  // ミニマップ表示設定変更時に保存
+  watch(showMinimap, (newValue) => {
+    saveProjectSettings({ showMinimap: newValue })
+  })
+
+  // ミニマップ幅変更時に保存
+  watch(minimapWidth, (newValue) => {
+    saveProjectSettings({ minimapWidth: newValue })
   })
 
   // バー高さ変更時に保存
@@ -390,6 +404,20 @@ export const useGanttChartView = () => {
           showCriticalPath.value = settings.showCriticalPath
         } else {
           showCriticalPath.value = false
+        }
+
+        // showMinimapの復元
+        if (settings?.showMinimap !== undefined) {
+          showMinimap.value = settings.showMinimap
+        } else {
+          showMinimap.value = true
+        }
+
+        // minimapWidthの復元
+        if (settings?.minimapWidth && settings.minimapWidth >= 100) {
+          minimapWidth.value = settings.minimapWidth
+        } else {
+          minimapWidth.value = 200
         }
 
         // commentSidebarOpenの復元
@@ -718,6 +746,11 @@ export const useGanttChartView = () => {
       dependency: {
         showCriticalPath: showCriticalPath.value,
       },
+      minimap: {
+        enabled: showMinimap.value,
+        width: minimapWidth.value,
+        resizable: true,
+      },
     }
   })
 
@@ -737,6 +770,17 @@ export const useGanttChartView = () => {
       pxPerHour.value = Math.round(detail.pxPerDay / 24)
     } else {
       pxPerDay.value = Math.round(detail.pxPerDay)
+    }
+  }
+
+  /**
+   * minimap-resize イベントハンドラ
+   * ユーザーがミニマップをドラッグリサイズした際に幅を同期
+   */
+  const handleMinimapResize = (e: Event) => {
+    const detail = (e as CustomEvent).detail as { width: number; height: number }
+    if (detail?.width) {
+      minimapWidth.value = Math.round(detail.width)
     }
   }
 
@@ -3888,6 +3932,8 @@ export const useGanttChartView = () => {
     showHiddenRows,
     showCurrentTimeLine,
     showCriticalPath,
+    showMinimap,
+    minimapWidth,
     barShadowLevel,
     readonlyMode,
     pxPerDay,
@@ -4006,6 +4052,7 @@ export const useGanttChartView = () => {
     handleDependencyCreate,
     handleSlideSchedule,
     handleZoomChange,
+    handleMinimapResize,
     isImageDialogVisible,
     imageDialogTaskId,
     imageDialogImageUrls,
