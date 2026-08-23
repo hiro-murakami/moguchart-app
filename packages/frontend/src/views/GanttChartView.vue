@@ -144,6 +144,7 @@ const {
   handleSlideSchedule,
   handleZoomChange,
   handleMinimapResize,
+  handleMinimapMove,
   isImageDialogVisible,
   imageDialogTaskId,
   imageDialogImageUrls,
@@ -425,6 +426,7 @@ const handleOpenSlideSchedule = async () => {
             @dependency-click="handleDependencyClick"
             @zoom-change="handleZoomChange"
             @minimap-resize="handleMinimapResize"
+            @minimap-move="handleMinimapMove"
             @marker-dblclick="handleMarkerDblClick"
             @marker-contextmenu="handleMarkerContextMenu"
           />

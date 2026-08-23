@@ -2,7 +2,7 @@
 // 注意: ここにはバックエンド固有のライブラリ(firebase-admin等)をimportしないでください。
 
 /** バージョン */
-export const VERSION = '0.10.0'
+export const VERSION = '0.11.0'
 
 /** Cloud Functions の呼び出しパラメータ */
 export interface FunctionParam {
@@ -141,6 +141,8 @@ export type ProjectSettings = {
   showMinimap?: boolean
   /** ミニマップの幅 (px) */
   minimapWidth?: number
+  /** ミニマップの表示位置（座標） */
+  minimapPosition?: { x: number; y: number }
   /** @deprecated barShadowLevel に移行済み。後方互換のため残存 */
   showBarShadow?: boolean
 }
