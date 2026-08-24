@@ -99,6 +99,7 @@ export const useGanttChartView = () => {
   const showMinimap = ref(true)
   const minimapWidth = ref(200)
   const minimapPosition = ref<{ x: number; y: number } | undefined>(undefined)
+  const isMinimapReady = ref(false)
   const manualAddRowCount = ref(1)
 
   const isUnassignedTasksOpen = ref(false)
@@ -770,7 +771,7 @@ export const useGanttChartView = () => {
         showCriticalPath: showCriticalPath.value,
       },
       minimap: {
-        enabled: showMinimap.value,
+        enabled: isMinimapReady.value && showMinimap.value,
         width: minimapWidth.value,
         position: minimapPosition.value,
         resizable: true,
@@ -802,6 +803,7 @@ export const useGanttChartView = () => {
    * ユーザーがミニマップをドラッグリサイズした際に幅・位置を同期
    */
   const handleMinimapResize = (e: Event) => {
+    if (!isMinimapReady.value) return
     const detail = (e as CustomEvent).detail as {
       width: number
       height: number
@@ -823,6 +825,7 @@ export const useGanttChartView = () => {
    * ユーザーがミニマップをドラッグ移動した際に位置を同期
    */
   const handleMinimapMove = (e: Event) => {
+    if (!isMinimapReady.value) return
     const detail = (e as CustomEvent).detail as { x: number; y: number }
     if (detail && typeof detail.x === 'number' && typeof detail.y === 'number') {
       minimapPosition.value = {
@@ -1196,6 +1199,11 @@ export const useGanttChartView = () => {
       })
     } finally {
       if (!silent) setIsLoading(false)
+      if (!isMinimapReady.value) {
+        nextTick(() => {
+          isMinimapReady.value = true
+        })
+      }
     }
   }
 
@@ -1281,11 +1289,17 @@ export const useGanttChartView = () => {
       })
     } finally {
       setIsLoading(false)
+      if (!isMinimapReady.value) {
+        nextTick(() => {
+          isMinimapReady.value = true
+        })
+      }
     }
   }
 
   watch(storeProjectId, async (newProjectId, oldProjectId) => {
     if (isSnapshotMode.value) return // スナップショットモード時はストアの監視を無視
+    isMinimapReady.value = false
 
     const project = projects.value.find((p) => p.id === newProjectId)
     if (project) {
