@@ -31,6 +31,7 @@ const {
   showCurrentTimeLine,
   showCriticalPath,
   showMinimap,
+  minimapOpacity,
   barShadowLevel,
   readonlyMode,
   currentRole,
@@ -380,6 +381,7 @@ const handleOpenSlideSchedule = async () => {
           v-model:show-current-time-line="showCurrentTimeLine"
           v-model:show-critical-path="showCriticalPath"
           v-model:show-minimap="showMinimap"
+          v-model:minimap-opacity="minimapOpacity"
           v-model:bar-shadow-level="barShadowLevel"
           v-model:px-per-day="pxPerDay"
           v-model:px-per-month="pxPerMonth"

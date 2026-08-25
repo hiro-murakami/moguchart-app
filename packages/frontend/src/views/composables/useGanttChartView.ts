@@ -99,6 +99,7 @@ export const useGanttChartView = () => {
   const showMinimap = ref(true)
   const minimapWidth = ref(200)
   const minimapPosition = ref<{ x: number; y: number } | undefined>(undefined)
+  const minimapOpacity = ref(1)
   const isMinimapReady = ref(false)
   const manualAddRowCount = ref(1)
 
@@ -225,6 +226,7 @@ export const useGanttChartView = () => {
       showMinimap?: boolean
       minimapWidth?: number
       minimapPosition?: { x: number; y: number }
+      minimapOpacity?: number
     }) => {
       // 公開閲覧モードではユーザー設定を保存しない
       if (isPublicViewMode.value) return
@@ -315,6 +317,11 @@ export const useGanttChartView = () => {
     },
     { deep: true },
   )
+
+  // ミニマップ不透明度変更時に保存
+  watch(minimapOpacity, (newValue) => {
+    saveProjectSettings({ minimapOpacity: newValue })
+  })
 
   // バー高さ変更時に保存
   watch(barHeight, (newValue) => {
@@ -442,6 +449,17 @@ export const useGanttChartView = () => {
           }
         } else {
           minimapPosition.value = undefined
+        }
+
+        // minimapOpacityの復元
+        if (
+          typeof settings?.minimapOpacity === 'number' &&
+          settings.minimapOpacity >= 0.1 &&
+          settings.minimapOpacity <= 1
+        ) {
+          minimapOpacity.value = settings.minimapOpacity
+        } else {
+          minimapOpacity.value = 1
         }
 
         // commentSidebarOpenの復元
@@ -774,6 +792,7 @@ export const useGanttChartView = () => {
         enabled: isMinimapReady.value && showMinimap.value,
         width: minimapWidth.value,
         position: minimapPosition.value,
+        opacity: minimapOpacity.value,
         resizable: true,
       },
     }
@@ -3997,6 +4016,7 @@ export const useGanttChartView = () => {
     showMinimap,
     minimapWidth,
     minimapPosition,
+    minimapOpacity,
     barShadowLevel,
     readonlyMode,
     pxPerDay,

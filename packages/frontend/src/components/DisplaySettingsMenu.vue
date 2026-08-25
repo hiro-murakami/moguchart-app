@@ -11,6 +11,7 @@ defineProps<{
   showCurrentTimeLine: boolean
   showCriticalPath: boolean
   showMinimap: boolean
+  minimapOpacity?: number
   barShadowLevel: 'none' | 'small' | 'medium' | 'large'
   readonlyMode?: boolean
   canEdit?: boolean
@@ -26,6 +27,7 @@ const emit = defineEmits<{
   'update:showCurrentTimeLine': [value: boolean]
   'update:showCriticalPath': [value: boolean]
   'update:showMinimap': [value: boolean]
+  'update:minimapOpacity': [value: number]
   'update:barShadowLevel': [value: 'none' | 'small' | 'medium' | 'large']
   'update:readonlyMode': [value: boolean]
   'update:pxPerDay': [value: number]
@@ -130,9 +132,30 @@ const currentTheme = computed({
         color="primary"
         hide-details
         density="compact"
-        class="mb-4"
+        :class="showMinimap ? 'mb-2' : 'mb-4'"
         @update:model-value="emit('update:showMinimap', $event as boolean)"
       />
+      <div v-if="showMinimap" class="pl-2 pr-1 mb-4">
+        <div class="d-flex justify-space-between align-center text-caption text-medium-emphasis mb-1">
+          <span>ミニマップの不透明度</span>
+          <span>{{ Math.round((minimapOpacity ?? 1) * 100) }}%</span>
+        </div>
+        <v-slider
+          :model-value="minimapOpacity ?? 1"
+          :min="0.2"
+          :max="1"
+          :step="0.05"
+          thumb-label
+          density="compact"
+          hide-details
+          color="primary"
+          @update:model-value="emit('update:minimapOpacity', $event)"
+        >
+          <template #thumb-label="{ modelValue }">
+            {{ Math.round(modelValue * 100) }}%
+          </template>
+        </v-slider>
+      </div>
       <div class="text-caption text-medium-emphasis mb-1">表示倍率</div>
       <!-- 日単位模式 -->
       <ZoomControls
