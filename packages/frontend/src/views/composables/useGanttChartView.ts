@@ -98,7 +98,7 @@ export const useGanttChartView = () => {
   const showCriticalPath = ref(false)
   const showMinimap = ref(true)
   const minimapWidth = ref(200)
-  const minimapPosition = ref<{ x: number; y: number } | undefined>(undefined)
+  const minimapPosition = ref<{ right: number; bottom: number } | undefined>(undefined)
   const minimapOpacity = ref(1)
   const isMinimapReady = ref(false)
   const manualAddRowCount = ref(1)
@@ -225,7 +225,7 @@ export const useGanttChartView = () => {
       showCriticalPath?: boolean
       showMinimap?: boolean
       minimapWidth?: number
-      minimapPosition?: { x: number; y: number }
+      minimapPosition?: { right: number; bottom: number }
       minimapOpacity?: number
     }) => {
       // 公開閲覧モードではユーザー設定を保存しない
@@ -440,12 +440,12 @@ export const useGanttChartView = () => {
         // minimapPositionの復元
         if (
           settings?.minimapPosition &&
-          typeof settings.minimapPosition.x === 'number' &&
-          typeof settings.minimapPosition.y === 'number'
+          typeof settings.minimapPosition.right === 'number' &&
+          typeof settings.minimapPosition.bottom === 'number'
         ) {
           minimapPosition.value = {
-            x: settings.minimapPosition.x,
-            y: settings.minimapPosition.y,
+            right: settings.minimapPosition.right,
+            bottom: settings.minimapPosition.bottom,
           }
         } else {
           minimapPosition.value = undefined
@@ -826,15 +826,15 @@ export const useGanttChartView = () => {
     const detail = (e as CustomEvent).detail as {
       width: number
       height: number
-      position?: { x: number; y: number }
+      position?: { right: number; bottom: number }
     }
     if (detail?.width) {
       minimapWidth.value = Math.round(detail.width)
     }
-    if (detail?.position && typeof detail.position.x === 'number' && typeof detail.position.y === 'number') {
+    if (detail?.position && typeof detail.position.right === 'number' && typeof detail.position.bottom === 'number') {
       minimapPosition.value = {
-        x: Math.round(detail.position.x),
-        y: Math.round(detail.position.y),
+        right: Math.round(detail.position.right),
+        bottom: Math.round(detail.position.bottom),
       }
     }
   }
@@ -845,11 +845,11 @@ export const useGanttChartView = () => {
    */
   const handleMinimapMove = (e: Event) => {
     if (!isMinimapReady.value) return
-    const detail = (e as CustomEvent).detail as { x: number; y: number }
-    if (detail && typeof detail.x === 'number' && typeof detail.y === 'number') {
+    const detail = (e as CustomEvent).detail as { right: number; bottom: number }
+    if (detail && typeof detail.right === 'number' && typeof detail.bottom === 'number') {
       minimapPosition.value = {
-        x: Math.round(detail.x),
-        y: Math.round(detail.y),
+        right: Math.round(detail.right),
+        bottom: Math.round(detail.bottom),
       }
     }
   }
