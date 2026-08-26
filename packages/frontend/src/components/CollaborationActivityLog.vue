@@ -12,110 +12,149 @@ const emit = defineEmits<{
   (e: 'dblclick-task', log: ActivityLogEntry): void
 }>()
 
-const { isDark, isExpanded, relativeTime, visibleLogs, unreadCount } = useCollaborationActivityLog(props)
+const { isDark, isExpanded, isMinimized, minimizePanel, restorePanel, relativeTime, visibleLogs, unreadCount } =
+  useCollaborationActivityLog(props)
 </script>
 
 <template>
   <Transition name="log-panel">
-    <div v-if="logs.length > 0" class="activity-log-container" :class="{ expanded: isExpanded, 'is-dark': isDark }">
-      <!-- ヘッダーバー（常に表示） -->
-      <button class="log-header" @click="isExpanded = !isExpanded">
-        <v-icon :icon="isExpanded ? 'mdi-chevron-down' : 'mdi-chevron-up'" size="18" class="mr-1" />
-        <v-icon icon="mdi-history" size="18" class="mr-2" />
-        <span class="log-header-title">変更履歴</span>
-        <span v-if="unreadCount > 0" class="unread-badge">{{ unreadCount }}</span>
-        <v-spacer />
-        <span class="log-header-count">{{ logs.length }}件</span>
+    <div
+      v-if="logs.length > 0"
+      class="activity-log-container"
+      :class="{
+        expanded: isExpanded && !isMinimized,
+        minimized: isMinimized,
+        'is-dark': isDark,
+      }"
+    >
+      <!-- 最小化表示（円形FAB） -->
+      <button
+        v-if="isMinimized"
+        class="log-minimized-fab"
+        title="変更履歴を表示"
+        aria-label="変更履歴を表示"
+        @click="restorePanel"
+      >
+        <v-icon icon="mdi-history" size="20" />
+        <span v-if="unreadCount > 0" class="unread-badge fab-badge">{{ unreadCount }}</span>
       </button>
 
-      <!-- ログ一覧（展開時のみ表示） -->
-      <Transition name="log-list">
-        <div v-if="isExpanded" class="log-list">
-          <TransitionGroup name="log-item" tag="div" class="log-items">
-            <div v-for="log in visibleLogs" :key="log.id" class="log-entry">
-              <UserAvatar
-                :color="log.color"
-                size="28"
-                class="log-avatar"
-                :url="log.avatarUrl"
-                :name="log.displayName"
-              />
-              <div class="log-content">
-                <div class="log-user-line">
-                  <span class="log-user-name">{{ log.displayName }}</span>
-                  <span class="log-time">{{ relativeTime(log.timestamp) }}</span>
-                </div>
-                <div class="log-description">
-                  <template
-                    v-if="
-                      (log.taskId || log.rowId || log.commentTarget === 'project') &&
-                      log.targetName &&
-                      log.description.includes('「' + log.targetName + '」')
-                    "
-                  >
-                    {{ log.description.substring(0, log.description.indexOf('「' + log.targetName + '」') + 1)
-                    }}<span
-                      class="log-task-text-link text-primary"
-                      :title="
-                        log.commentTarget === 'project'
-                          ? 'コメントを表示'
-                          : log.commentTarget === 'row'
-                            ? '行コメントを表示'
-                            : 'タスクを表示 (ダブルクリックで開く)'
+      <!-- 通常パネル表示（ヘッダーバー & リスト） -->
+      <template v-else>
+        <!-- ヘッダーバー -->
+        <div
+          class="log-header"
+          role="button"
+          tabindex="0"
+          @click="isExpanded = !isExpanded"
+          @keydown.enter.self="isExpanded = !isExpanded"
+          @keydown.space.self.prevent="isExpanded = !isExpanded"
+        >
+          <v-icon :icon="isExpanded ? 'mdi-chevron-down' : 'mdi-chevron-up'" size="18" class="mr-1" />
+          <v-icon icon="mdi-history" size="18" class="mr-2" />
+          <span class="log-header-title">変更履歴</span>
+          <span v-if="unreadCount > 0" class="unread-badge">{{ unreadCount }}</span>
+          <v-spacer />
+          <span class="log-header-count mr-2">{{ logs.length }}件</span>
+          <button
+            class="log-action-btn"
+            title="最小化"
+            aria-label="最小化"
+            @click.stop="minimizePanel"
+          >
+            <v-icon icon="mdi-minus" size="16" />
+          </button>
+        </div>
+
+        <!-- ログ一覧（展開時のみ表示） -->
+        <Transition name="log-list">
+          <div v-if="isExpanded" class="log-list">
+            <TransitionGroup name="log-item" tag="div" class="log-items">
+              <div v-for="log in visibleLogs" :key="log.id" class="log-entry">
+                <UserAvatar
+                  :color="log.color"
+                  size="28"
+                  class="log-avatar"
+                  :url="log.avatarUrl"
+                  :name="log.displayName"
+                />
+                <div class="log-content">
+                  <div class="log-user-line">
+                    <span class="log-user-name">{{ log.displayName }}</span>
+                    <span class="log-time">{{ relativeTime(log.timestamp) }}</span>
+                  </div>
+                  <div class="log-description">
+                    <template
+                      v-if="
+                        (log.taskId || log.rowId || log.commentTarget === 'project') &&
+                        log.targetName &&
+                        log.description.includes('「' + log.targetName + '」')
                       "
-                      @click.stop="
-                        () => {
-                          if (log.taskId) emit('click-task', log.taskId)
-                          emit('click-log', log)
-                        }
-                      "
-                      @dblclick.prevent.stop="emit('dblclick-task', log)"
-                      >{{ log.targetName }}</span
-                    >{{
-                      log.description.substring(
-                        log.description.indexOf('「' + log.targetName + '」') + 1 + log.targetName.length,
-                      )
-                    }}
-                  </template>
-                  <template v-else>
-                    {{ log.description }}
-                    <span
-                      v-if="log.taskId || log.rowId || log.commentTarget === 'project'"
-                      class="log-task-link text-primary ml-1"
-                      :title="
-                        log.commentTarget === 'project'
-                          ? 'コメントを表示'
-                          : log.commentTarget === 'row'
-                            ? '行コメントを表示'
-                            : 'タスクを表示 (ダブルクリックで開く)'
-                      "
-                      @click.stop="
-                        () => {
-                          if (log.taskId) emit('click-task', log.taskId)
-                          emit('click-log', log)
-                        }
-                      "
-                      @dblclick.prevent.stop="emit('dblclick-task', log)"
                     >
-                      <v-icon
-                        :icon="
+                      {{ log.description.substring(0, log.description.indexOf('「' + log.targetName + '」') + 1)
+                      }}<span
+                        class="log-task-text-link text-primary"
+                        :title="
                           log.commentTarget === 'project'
-                            ? 'mdi-comment-text-outline'
+                            ? 'コメントを表示'
                             : log.commentTarget === 'row'
-                              ? 'mdi-table-row'
-                              : 'mdi-link-variant'
+                              ? '行コメントを表示'
+                              : 'タスクを表示 (ダブルクリックで開く)'
                         "
-                        size="14"
-                      />
-                    </span>
-                  </template>
+                        @click.stop="
+                          () => {
+                            if (log.taskId) emit('click-task', log.taskId)
+                            emit('click-log', log)
+                          }
+                        "
+                        @dblclick.prevent.stop="emit('dblclick-task', log)"
+                        >{{ log.targetName }}</span
+                      >{{
+                        log.description.substring(
+                          log.description.indexOf('「' + log.targetName + '」') + 1 + log.targetName.length,
+                        )
+                      }}
+                    </template>
+                    <template v-else>
+                      {{ log.description }}
+                      <span
+                        v-if="log.taskId || log.rowId || log.commentTarget === 'project'"
+                        class="log-task-link text-primary ml-1"
+                        :title="
+                          log.commentTarget === 'project'
+                            ? 'コメントを表示'
+                            : log.commentTarget === 'row'
+                              ? '行コメントを表示'
+                              : 'タスクを表示 (ダブルクリックで開く)'
+                        "
+                        @click.stop="
+                          () => {
+                            if (log.taskId) emit('click-task', log.taskId)
+                            emit('click-log', log)
+                          }
+                        "
+                        @dblclick.prevent.stop="emit('dblclick-task', log)"
+                      >
+                        <v-icon
+                          :icon="
+                            log.commentTarget === 'project'
+                              ? 'mdi-comment-text-outline'
+                              : log.commentTarget === 'row'
+                                ? 'mdi-table-row'
+                                : 'mdi-link-variant'
+                          "
+                          size="14"
+                        />
+                      </span>
+                    </template>
+                  </div>
                 </div>
               </div>
-            </div>
-          </TransitionGroup>
-          <div v-if="logs.length > 20" class="log-more">他 {{ logs.length - 20 }}件の変更</div>
-        </div>
-      </Transition>
+            </TransitionGroup>
+            <div v-if="logs.length > 20" class="log-more">他 {{ logs.length - 20 }}件の変更</div>
+          </div>
+        </Transition>
+      </template>
     </div>
   </Transition>
 </template>
@@ -136,8 +175,33 @@ const { isDark, isExpanded, relativeTime, visibleLogs, unreadCount } = useCollab
   box-shadow:
     0 4px 24px rgba(0, 0, 0, 0.1),
     0 1px 4px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition:
+    width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    border-radius 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.3s ease,
+    transform 0.2s ease,
+    background-color 0.3s ease;
   color: #333;
+}
+
+.activity-log-container.minimized {
+  width: 42px;
+  height: 42px;
+  border-radius: 21px;
+  overflow: visible;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.activity-log-container.minimized:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow:
+    0 6px 20px rgba(0, 0, 0, 0.15),
+    0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
 .activity-log-container.is-dark {
@@ -147,6 +211,37 @@ const { isDark, isExpanded, relativeTime, visibleLogs, unreadCount } = useCollab
     0 8px 32px rgba(0, 0, 0, 0.4),
     0 2px 8px rgba(0, 0, 0, 0.25);
   color: #e0e0e0;
+}
+
+.activity-log-container.minimized.is-dark:hover {
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.5),
+    0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.log-minimized-fab {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: inherit;
+  position: relative;
+  border-radius: 50%;
+  outline: none;
+}
+
+.fab-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  margin-left: 0;
+  z-index: 1;
+  pointer-events: none;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 .log-header {
@@ -161,6 +256,8 @@ const { isDark, isExpanded, relativeTime, visibleLogs, unreadCount } = useCollab
   color: inherit;
   background: transparent;
   transition: background-color 0.15s;
+  user-select: none;
+  outline: none;
 }
 
 .log-header:hover {
@@ -176,6 +273,30 @@ const { isDark, isExpanded, relativeTime, visibleLogs, unreadCount } = useCollab
   font-weight: 500;
   opacity: 0.5;
   white-space: nowrap;
+}
+
+.log-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: inherit;
+  opacity: 0.6;
+  transition:
+    opacity 0.15s ease,
+    background-color 0.15s ease;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.log-action-btn:hover {
+  opacity: 1;
+  background: rgba(128, 128, 128, 0.18);
 }
 
 .unread-badge {

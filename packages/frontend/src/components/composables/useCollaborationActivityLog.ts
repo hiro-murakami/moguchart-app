@@ -10,8 +10,41 @@ export function useCollaborationActivityLog(props: UseCollaborationActivityLogPr
   const theme = useTheme()
   const isDark = computed(() => theme.current.value.dark)
 
+  const STORAGE_KEY_MINIMIZED = 'moguchart:activity-log-minimized'
+
   /** パネルの開閉状態 */
   const isExpanded = ref(false)
+
+  /** パネルの最小化状態 */
+  const isMinimized = ref(
+    typeof window !== 'undefined' && localStorage.getItem(STORAGE_KEY_MINIMIZED) === 'true',
+  )
+
+  /** 最小化する */
+  const minimizePanel = () => {
+    isMinimized.value = true
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(STORAGE_KEY_MINIMIZED, 'true')
+    }
+  }
+
+  /** 最小化を解除してパネルを展開する */
+  const restorePanel = () => {
+    isMinimized.value = false
+    isExpanded.value = true
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(STORAGE_KEY_MINIMIZED, 'false')
+    }
+  }
+
+  /** 最小化状態をトグルする */
+  const toggleMinimize = () => {
+    if (isMinimized.value) {
+      restorePanel()
+    } else {
+      minimizePanel()
+    }
+  }
 
   /** 相対時間の再計算用タイマーtick */
   const tick = ref(0)
@@ -51,7 +84,8 @@ export function useCollaborationActivityLog(props: UseCollaborationActivityLogPr
   })
 
   const unreadCount = computed(() => {
-    if (isExpanded.value) return 0
+    // 展開中かつ非最小化の場合は未読バッジ不要
+    if (isExpanded.value && !isMinimized.value) return 0
     // 直近30秒以内の新着ログ数を返す
     const threshold = Date.now() - 30_000
     void tick.value
@@ -61,6 +95,10 @@ export function useCollaborationActivityLog(props: UseCollaborationActivityLogPr
   return {
     isDark,
     isExpanded,
+    isMinimized,
+    minimizePanel,
+    restorePanel,
+    toggleMinimize,
     relativeTime,
     visibleLogs,
     unreadCount,
