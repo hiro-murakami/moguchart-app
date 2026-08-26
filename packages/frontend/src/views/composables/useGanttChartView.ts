@@ -98,7 +98,6 @@ export const useGanttChartView = () => {
   const showCriticalPath = ref(false)
   const showMinimap = ref(true)
   const minimapWidth = ref(200)
-  const minimapPosition = ref<{ right: number; bottom: number } | undefined>(undefined)
   const minimapOpacity = ref(1)
   const isMinimapReady = ref(false)
   const manualAddRowCount = ref(1)
@@ -225,7 +224,6 @@ export const useGanttChartView = () => {
       showCriticalPath?: boolean
       showMinimap?: boolean
       minimapWidth?: number
-      minimapPosition?: { right: number; bottom: number }
       minimapOpacity?: number
     }) => {
       // 公開閲覧モードではユーザー設定を保存しない
@@ -306,17 +304,10 @@ export const useGanttChartView = () => {
     saveProjectSettings({ showMinimap: newValue })
   })
 
-  // ミニマップ幅・位置変更時に保存
-  // 注意: minimapWidth と minimapPosition はリサイズ時に同時に変更されることがあるため、
-  // 個別の watch で saveProjectSettings を呼ぶと debounce により片方が失われる。
-  // 両方をまとめて監視し、一括で保存する。
-  watch(
-    [minimapWidth, minimapPosition],
-    ([newWidth, newPos]) => {
-      saveProjectSettings({ minimapWidth: newWidth, minimapPosition: newPos })
-    },
-    { deep: true },
-  )
+  // ミニマップ幅変更時に保存
+  watch(minimapWidth, (newValue) => {
+    saveProjectSettings({ minimapWidth: newValue })
+  })
 
   // ミニマップ不透明度変更時に保存
   watch(minimapOpacity, (newValue) => {
@@ -437,19 +428,6 @@ export const useGanttChartView = () => {
           minimapWidth.value = 200
         }
 
-        // minimapPositionの復元
-        if (
-          settings?.minimapPosition &&
-          typeof settings.minimapPosition.right === 'number' &&
-          typeof settings.minimapPosition.bottom === 'number'
-        ) {
-          minimapPosition.value = {
-            right: settings.minimapPosition.right,
-            bottom: settings.minimapPosition.bottom,
-          }
-        } else {
-          minimapPosition.value = undefined
-        }
 
         // minimapOpacityの復元
         if (
@@ -791,7 +769,6 @@ export const useGanttChartView = () => {
       minimap: {
         enabled: isMinimapReady.value && showMinimap.value,
         width: minimapWidth.value,
-        position: minimapPosition.value,
         opacity: minimapOpacity.value,
         resizable: true,
       },
@@ -819,38 +796,16 @@ export const useGanttChartView = () => {
 
   /**
    * minimap-resize イベントハンドラ
-   * ユーザーがミニマップをドラッグリサイズした際に幅・位置を同期
+   * ユーザーがミニマップをドラッグリサイズした際に幅を同期
    */
   const handleMinimapResize = (e: Event) => {
     if (!isMinimapReady.value) return
     const detail = (e as CustomEvent).detail as {
       width: number
       height: number
-      position?: { right: number; bottom: number }
     }
     if (detail?.width) {
       minimapWidth.value = Math.round(detail.width)
-    }
-    if (detail?.position && typeof detail.position.right === 'number' && typeof detail.position.bottom === 'number') {
-      minimapPosition.value = {
-        right: Math.round(detail.position.right),
-        bottom: Math.round(detail.position.bottom),
-      }
-    }
-  }
-
-  /**
-   * minimap-move イベントハンドラ
-   * ユーザーがミニマップをドラッグ移動した際に位置を同期
-   */
-  const handleMinimapMove = (e: Event) => {
-    if (!isMinimapReady.value) return
-    const detail = (e as CustomEvent).detail as { right: number; bottom: number }
-    if (detail && typeof detail.right === 'number' && typeof detail.bottom === 'number') {
-      minimapPosition.value = {
-        right: Math.round(detail.right),
-        bottom: Math.round(detail.bottom),
-      }
     }
   }
 
@@ -4015,7 +3970,6 @@ export const useGanttChartView = () => {
     showCriticalPath,
     showMinimap,
     minimapWidth,
-    minimapPosition,
     minimapOpacity,
     barShadowLevel,
     readonlyMode,
@@ -4136,7 +4090,6 @@ export const useGanttChartView = () => {
     handleSlideSchedule,
     handleZoomChange,
     handleMinimapResize,
-    handleMinimapMove,
     isImageDialogVisible,
     imageDialogTaskId,
     imageDialogImageUrls,

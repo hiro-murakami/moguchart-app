@@ -141,8 +141,6 @@ export type ProjectSettings = {
   showMinimap?: boolean
   /** ミニマップの幅 (px) */
   minimapWidth?: number
-  /** ミニマップの表示位置（右下基準の座標 px） */
-  minimapPosition?: { right: number; bottom: number }
   /** ミニマップの不透明度 (0.1 〜 1.0) */
   minimapOpacity?: number
   /** @deprecated barShadowLevel に移行済み。後方互換のため残存 */
