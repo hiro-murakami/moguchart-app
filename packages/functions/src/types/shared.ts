@@ -144,6 +144,8 @@ export type ProjectSettings = {
   minimapWidth?: number
   /** ミニマップの不透明度 (0.1 〜 1.0) */
   minimapOpacity?: number
+  /** ミニマップが最小化（折りたたみ）されているかどうか */
+  minimapCollapsed?: boolean
   /** @deprecated barShadowLevel に移行済み。後方互換のため残存 */
   showBarShadow?: boolean
 }

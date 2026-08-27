@@ -2114,6 +2114,9 @@ components:
         minimapOpacity:
           type: number
           description: ミニマップの不透明度 (0.1 〜 1.0)
+        minimapCollapsed:
+          type: boolean
+          description: ミニマップが最小化（折りたたみ）されているかどうか
 
     ApiKeyMasked:
       type: object

@@ -99,6 +99,7 @@ export const useGanttChartView = () => {
   const showMinimap = ref(true)
   const minimapWidth = ref(200)
   const minimapOpacity = ref(1)
+  const minimapCollapsed = ref(false)
   const isMinimapReady = ref(false)
   const manualAddRowCount = ref(1)
 
@@ -225,6 +226,7 @@ export const useGanttChartView = () => {
       showMinimap?: boolean
       minimapWidth?: number
       minimapOpacity?: number
+      minimapCollapsed?: boolean
     }) => {
       // 公開閲覧モードではユーザー設定を保存しない
       if (isPublicViewMode.value) return
@@ -312,6 +314,11 @@ export const useGanttChartView = () => {
   // ミニマップ不透明度変更時に保存
   watch(minimapOpacity, (newValue) => {
     saveProjectSettings({ minimapOpacity: newValue })
+  })
+
+  // ミニマップ折りたたみ（最小化）設定変更時に保存
+  watch(minimapCollapsed, (newValue) => {
+    saveProjectSettings({ minimapCollapsed: newValue })
   })
 
   // バー高さ変更時に保存
@@ -438,6 +445,13 @@ export const useGanttChartView = () => {
           minimapOpacity.value = settings.minimapOpacity
         } else {
           minimapOpacity.value = 1
+        }
+
+        // minimapCollapsedの復元
+        if (settings?.minimapCollapsed !== undefined) {
+          minimapCollapsed.value = settings.minimapCollapsed
+        } else {
+          minimapCollapsed.value = false
         }
 
         // commentSidebarOpenの復元
@@ -770,6 +784,7 @@ export const useGanttChartView = () => {
         enabled: isMinimapReady.value && showMinimap.value,
         width: minimapWidth.value,
         opacity: minimapOpacity.value,
+        collapsed: minimapCollapsed.value,
         resizable: true,
       },
     }
@@ -806,6 +821,20 @@ export const useGanttChartView = () => {
     }
     if (detail?.width) {
       minimapWidth.value = Math.round(detail.width)
+    }
+  }
+
+  /**
+   * minimap-collapse イベントハンドラ
+   * ユーザーがミニマップを最小化・展開した際に状態を同期
+   */
+  const handleMinimapCollapse = (e: Event) => {
+    if (!isMinimapReady.value) return
+    const detail = (e as CustomEvent).detail as {
+      collapsed: boolean
+    }
+    if (typeof detail?.collapsed === 'boolean') {
+      minimapCollapsed.value = detail.collapsed
     }
   }
 
@@ -3971,6 +4000,7 @@ export const useGanttChartView = () => {
     showMinimap,
     minimapWidth,
     minimapOpacity,
+    minimapCollapsed,
     barShadowLevel,
     readonlyMode,
     pxPerDay,
@@ -4090,6 +4120,7 @@ export const useGanttChartView = () => {
     handleSlideSchedule,
     handleZoomChange,
     handleMinimapResize,
+    handleMinimapCollapse,
     isImageDialogVisible,
     imageDialogTaskId,
     imageDialogImageUrls,
