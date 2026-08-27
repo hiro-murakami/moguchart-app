@@ -27,6 +27,7 @@ export interface FunctionResult {
 /** 利用可能な Cloud Functions の関数名一覧 */
 export type FunctionName =
   | 'selectProjects'
+  | 'selectProject'
   | 'selectGanttChart'
   | 'selectGanttRows'
   | 'upsertGanttTasks'
@@ -415,6 +416,8 @@ export type GanttRowOrder = {
 
 /** プロジェクト一覧を取得する関数の型 */
 export type SelectProjects = (_?: any, email?: string) => Promise<Project[]>
+/** 指定したIDのプロジェクト情報を取得する関数の型 */
+export type SelectProject = (projectId: string, email?: string) => Promise<Project | null>
 /** ガントチャートデータ（行・タスク）を取得する関数の型 */
 export type SelectGanttChart = (projectId: string, email?: string) => Promise<GanttRow[]>
 /** 指定した行ID一覧でガントチャートの行データ（タスク含む）を取得する関数の型 */

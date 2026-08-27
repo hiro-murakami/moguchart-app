@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Moguchart REST API
-  version: 1.0.0
+  version: 1.1.0
   description: |
     Moguchartの外部アプリ向けREST API。
     ガントチャートプロジェクトの管理（プロジェクト・行・タスク・コメント・スナップショット）を提供します。
@@ -37,6 +37,8 @@ servers:
 tags:
   - name: Health
     description: ヘルスチェック
+  - name: Public
+    description: 公開プロジェクト（認証不要）
   - name: Projects
     description: プロジェクトの管理
   - name: Rows
@@ -66,13 +68,13 @@ paths:
       tags: [Health]
       security: []
       responses:
-        "400":
+        '400':
           description: リクエスト不正
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "200":
+                $ref: '#/components/schemas/ErrorResponse'
+        '200':
           description: 正常稼働
           content:
             application/json:
@@ -84,7 +86,62 @@ paths:
                     example: ok
                   version:
                     type: string
-                    example: "1.0.0"
+                    example: '1.0.0'
+
+  # ──────────────────────────────────────────────
+  # Public Projects（認証不要）
+  # ──────────────────────────────────────────────
+  /api/v1/public/projects/{projectId}:
+    parameters:
+      - $ref: '#/components/parameters/ProjectId'
+
+    get:
+      operationId: getPublicProject
+      summary: 公開プロジェクト情報取得
+      description: 一般公開されているプロジェクトのメタ情報を取得します。認証は不要です。
+      tags: [Public]
+      security: []
+      responses:
+        '200':
+          description: 公開プロジェクト情報
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse_Project'
+        '403':
+          description: プロジェクトが一般公開されていない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/public/projects/{projectId}/gantt:
+    parameters:
+      - $ref: '#/components/parameters/ProjectId'
+
+    get:
+      operationId: getPublicProjectGantt
+      summary: 公開プロジェクトのガントチャートデータ取得
+      description: 一般公開されているプロジェクトのガントチャートデータ（行・タスク）を取得します。認証は不要です。
+      tags: [Public]
+      security: []
+      responses:
+        '200':
+          description: ガントチャートデータ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse_GanttRowList'
+        '403':
+          description: プロジェクトが一般公開されていない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
   # ──────────────────────────────────────────────
   # Projects
@@ -96,14 +153,14 @@ paths:
       description: 認証ユーザーがアクセス可能なプロジェクトの一覧を返します。
       tags: [Projects]
       responses:
-        "200":
+        '200':
           description: プロジェクト一覧
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SuccessResponse_ProjectList"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
+                $ref: '#/components/schemas/SuccessResponse_ProjectList'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
 
     post:
       operationId: createProject
@@ -115,22 +172,71 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ProjectInput"
+              $ref: '#/components/schemas/ProjectInput'
       responses:
-        "201":
+        '201':
           description: 作成成功（プロジェクトIDを返す）
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SuccessResponse_String"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
+                $ref: '#/components/schemas/SuccessResponse_String'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/v1/projects/restore:
+    post:
+      operationId: restoreProjectRoot
+      summary: プロジェクト復元（インポート）
+      description: |
+        JSONまたはZIPデータからプロジェクトを復元（インポート）します。`read-write` スコープが必要です。
+      tags: [Projects]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/GanttDataJson'
+                - type: object
+                  properties:
+                    zipBase64:
+                      type: string
+                      description: ZIP圧縮されたデータのBase64文字列
+                  required: [zipBase64]
+      responses:
+        '200':
+          description: 復元成功（プロジェクトIDを返す）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse_String'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
 
   /api/v1/projects/{projectId}:
     parameters:
-      - $ref: "#/components/parameters/ProjectId"
+      - $ref: '#/components/parameters/ProjectId'
+
+    get:
+      operationId: getProject
+      summary: プロジェクト単体取得
+      description: 指定したプロジェクトのメタ情報を取得します。
+      tags: [Projects]
+      responses:
+        '200':
+          description: プロジェクト情報
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse_Project'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
     put:
       operationId: updateProject
@@ -142,20 +248,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ProjectInput"
+              $ref: '#/components/schemas/ProjectInput'
       responses:
-        "200":
+        '200':
           description: 更新成功
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SuccessResponse_String"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
+                $ref: '#/components/schemas/SuccessResponse_String'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
     delete:
       operationId: deleteProject
@@ -163,22 +269,22 @@ paths:
       description: 指定したプロジェクトを削除します。`read-write` スコープが必要です。
       tags: [Projects]
       responses:
-        "200":
+        '200':
           description: 削除成功
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SuccessResponse_Void"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
+                $ref: '#/components/schemas/SuccessResponse_Void'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
   /api/v1/projects/{projectId}/duplicate:
     parameters:
-      - $ref: "#/components/parameters/ProjectId"
+      - $ref: '#/components/parameters/ProjectId'
 
     post:
       operationId: duplicateProject
@@ -195,32 +301,32 @@ paths:
               type: object
               properties:
                 newProjectData:
-                  $ref: "#/components/schemas/ProjectInput"
+                  $ref: '#/components/schemas/ProjectInput'
                   description: 新しいプロジェクトのデータ
                 newStartDate:
                   type: string
                   format: date
                   description: 新しい開始日（YYYY-MM-DD）。指定時、日付をスライドします。
-                  example: "2026-07-01"
+                  example: '2026-07-01'
                 clearProgress:
                   type: boolean
                   description: trueの場合、全タスクの進捗率をクリアします。
                   default: false
       responses:
-        "201":
+        '201':
           description: 複製成功（新しいプロジェクトIDを返す）
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SuccessResponse_String"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
+                $ref: '#/components/schemas/SuccessResponse_String'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
 
   /api/v1/projects/{projectId}/chart:
     parameters:
-      - $ref: "#/components/parameters/ProjectId"
+      - $ref: '#/components/parameters/ProjectId'
 
     get:
       operationId: getProjectChart
@@ -228,20 +334,20 @@ paths:
       description: 指定プロジェクトのガントチャートデータ（行・タスク含む）を返します。
       tags: [Projects]
       responses:
-        "200":
+        '200':
           description: ガントチャートデータ
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SuccessResponse_GanttRowList"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
+                $ref: '#/components/schemas/SuccessResponse_GanttRowList'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
   /api/v1/projects/{projectId}/rows:
     parameters:
-      - $ref: "#/components/parameters/ProjectId"
+      - $ref: '#/components/parameters/ProjectId'
 
     get:
       operationId: getProjectRows
@@ -255,22 +361,22 @@ paths:
           required: false
           schema:
             type: string
-            example: "1,2,3"
+            example: '1,2,3'
       responses:
-        "200":
+        '200':
           description: 行データ
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SuccessResponse_GanttRowList"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
+                $ref: '#/components/schemas/SuccessResponse_GanttRowList'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
   /api/v1/projects/{projectId}/json:
     parameters:
-      - $ref: "#/components/parameters/ProjectId"
+      - $ref: '#/components/parameters/ProjectId'
 
     get:
       operationId: getProjectJson
@@ -278,20 +384,20 @@ paths:
       description: プロジェクトのフルデータをJSON形式で返します。エクスポートやバックアップに利用できます。
       tags: [Projects]
       responses:
-        "200":
+        '200':
           description: フルデータ（JSON）
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SuccessResponse_GanttDataJson"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
+                $ref: '#/components/schemas/SuccessResponse_GanttDataJson'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
   /api/v1/projects/{projectId}/zip:
     parameters:
-      - $ref: "#/components/parameters/ProjectId"
+      - $ref: '#/components/parameters/ProjectId'
 
     get:
       operationId: getProjectZip
@@ -299,20 +405,20 @@ paths:
       description: プロジェクトデータをZIP圧縮してBase64エンコードした文字列を返します。
       tags: [Projects]
       responses:
-        "200":
+        '200':
           description: ZIP（Base64エンコード）
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SuccessResponse_String"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
+                $ref: '#/components/schemas/SuccessResponse_String'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
   /api/v1/projects/{projectId}/restore:
     parameters:
-      - $ref: "#/components/parameters/ProjectId"
+      - $ref: '#/components/parameters/ProjectId'
 
     post:
       operationId: restoreProject
@@ -326,7 +432,7 @@ paths:
           application/json:
             schema:
               oneOf:
-                - $ref: "#/components/schemas/GanttDataJson"
+                - $ref: '#/components/schemas/GanttDataJson'
                 - type: object
                   properties:
                     zipBase64:
@@ -334,16 +440,16 @@ paths:
                       description: ZIP圧縮されたデータのBase64文字列
                   required: [zipBase64]
       responses:
-        "200":
+        '200':
           description: 復元成功（プロジェクトIDを返す）
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SuccessResponse_String"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
+                $ref: '#/components/schemas/SuccessResponse_String'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
 
   # ──────────────────────────────────────────────
   # Rows
@@ -359,18 +465,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/GanttRowInput"
+              $ref: '#/components/schemas/GanttRowInput'
       responses:
-        "201":
+        '201':
           description: 作成成功（行IDを返す）
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SuccessResponse_NumberOrArray"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
+                $ref: '#/components/schemas/SuccessResponse_NumberOrArray'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
 
     put:
       operationId: updateRow
@@ -383,21 +489,21 @@ paths:
           application/json:
             schema:
               oneOf:
-                - $ref: "#/components/schemas/GanttRowInput"
+                - $ref: '#/components/schemas/GanttRowInput'
                 - type: array
                   items:
-                    $ref: "#/components/schemas/GanttRowInput"
+                    $ref: '#/components/schemas/GanttRowInput'
       responses:
-        "200":
+        '200':
           description: 更新成功
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SuccessResponse_NumberOrArray"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
+                $ref: '#/components/schemas/SuccessResponse_NumberOrArray'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
 
     delete:
       operationId: deleteRows
@@ -419,16 +525,60 @@ paths:
                   description: 削除する行IDの配列
                   example: [1, 2, 3]
       responses:
-        "200":
+        '200':
           description: 削除成功
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SuccessResponse_Void"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
+                $ref: '#/components/schemas/SuccessResponse_Void'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/v1/rows/{rowId}:
+    parameters:
+      - $ref: '#/components/parameters/RowId'
+
+    put:
+      operationId: updateRowById
+      summary: 行の単体更新
+      description: 指定した行を更新します。`read-write` スコープが必要です。
+      tags: [Rows]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GanttRowInput'
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse_NumberOrArray'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    delete:
+      operationId: deleteRowById
+      summary: 行の単体削除
+      description: 指定した行IDの行を削除します。`read-write` スコープが必要です。
+      tags: [Rows]
+      responses:
+        '200':
+          description: 削除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse_Void'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
 
   /api/v1/rows/order:
     put:
@@ -443,18 +593,18 @@ paths:
             schema:
               type: array
               items:
-                $ref: "#/components/schemas/GanttRowOrder"
+                $ref: '#/components/schemas/GanttRowOrder'
       responses:
-        "200":
+        '200':
           description: 更新成功
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SuccessResponse_Void"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
+                $ref: '#/components/schemas/SuccessResponse_Void'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
 
   # ──────────────────────────────────────────────
   # Tasks
@@ -476,14 +626,14 @@ paths:
                     tasks:
                       type: array
                       items:
-                        $ref: "#/components/schemas/GanttTaskInput"
+                        $ref: '#/components/schemas/GanttTaskInput'
                   required: [tasks]
                 - type: array
                   items:
-                    $ref: "#/components/schemas/GanttTaskInput"
-                - $ref: "#/components/schemas/GanttTaskInput"
+                    $ref: '#/components/schemas/GanttTaskInput'
+                - $ref: '#/components/schemas/GanttTaskInput'
       responses:
-        "201":
+        '201':
           description: 作成/更新成功（タスクID配列を返す）
           content:
             application/json:
@@ -498,14 +648,57 @@ paths:
                     items:
                       type: integer
                     description: 作成/更新されたタスクID
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    put:
+      operationId: updateTasks
+      summary: タスクの一括/単体更新
+      description: タスクを更新します。配列で複数タスクの一括処理が可能です。`read-write` スコープが必要です。
+      tags: [Tasks]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - type: object
+                  properties:
+                    tasks:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/GanttTaskInput'
+                  required: [tasks]
+                - type: array
+                  items:
+                    $ref: '#/components/schemas/GanttTaskInput'
+                - $ref: '#/components/schemas/GanttTaskInput'
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [succeeded]
+                  data:
+                    type: array
+                    items:
+                      type: integer
+                    description: 更新されたタスクID
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
 
     delete:
       operationId: deleteTasks
-      summary: タスクの削除
+      summary: タスクの一括削除
       description: 指定したタスクIDのタスクを一括削除します。`read-write` スコープが必要です。
       tags: [Tasks]
       requestBody:
@@ -523,16 +716,139 @@ paths:
                   description: 削除するタスクIDの配列
                   example: [10, 20]
       responses:
-        "200":
+        '200':
           description: 削除成功
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SuccessResponse_Void"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
+                $ref: '#/components/schemas/SuccessResponse_Void'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/v1/tasks/{taskId}:
+    parameters:
+      - $ref: '#/components/parameters/TaskId'
+
+    put:
+      operationId: updateTaskById
+      summary: タスクの単体更新
+      description: 指定したタスクを更新します。`read-write` スコープが必要です。
+      tags: [Tasks]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GanttTaskInput'
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [succeeded]
+                  data:
+                    type: array
+                    items:
+                      type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    delete:
+      operationId: deleteTaskById
+      summary: タスクの単体削除
+      description: 指定したタスクを削除します。`read-write` スコープが必要です。
+      tags: [Tasks]
+      responses:
+        '200':
+          description: 削除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse_Void'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/v1/tasks/{taskId}/comments:
+    parameters:
+      - $ref: '#/components/parameters/TaskId'
+
+    get:
+      operationId: getTaskCommentsDirect
+      summary: タスクコメント一覧取得
+      description: 指定タスクに紐づくコメント一覧を取得します。
+      tags: [Task Comments]
+      responses:
+        '200':
+          description: タスクコメント一覧
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse_CommentList'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      operationId: createTaskCommentDirect
+      summary: タスクコメント作成/更新
+      description: タスクに紐づくコメントを作成または更新します。`read-write` スコープが必要です。
+      tags: [Task Comments]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentInput'
+      responses:
+        '201':
+          description: 作成成功（コメントIDを返す）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [succeeded]
+                  data:
+                    type: integer
+                    description: コメントID
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/v1/tasks/{taskId}/comments/{commentId}:
+    parameters:
+      - $ref: '#/components/parameters/TaskId'
+      - $ref: '#/components/parameters/CommentId'
+
+    delete:
+      operationId: deleteTaskCommentDirect
+      summary: タスクコメント削除
+      description: 指定したタスクコメントを削除します。`read-write` スコープが必要です。
+      tags: [Task Comments]
+      responses:
+        '200':
+          description: 削除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse_Void'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
 
   # ──────────────────────────────────────────────
   # Comments
@@ -560,14 +876,14 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: コメント一覧
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SuccessResponse_CommentList"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
+                $ref: '#/components/schemas/SuccessResponse_CommentList'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
 
     post:
       operationId: createComment
@@ -579,9 +895,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CommentInput"
+              $ref: '#/components/schemas/CommentInput'
       responses:
-        "201":
+        '201':
           description: 作成成功（コメントIDを返す）
           content:
             application/json:
@@ -594,10 +910,10 @@ paths:
                   data:
                     type: integer
                     description: コメントID
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
 
   /api/v1/comments/{commentId}:
     parameters:
@@ -614,16 +930,16 @@ paths:
       description: 指定したコメントを削除します。`read-write` スコープが必要です。
       tags: [Comments]
       responses:
-        "200":
+        '200':
           description: 削除成功
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SuccessResponse_Void"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
+                $ref: '#/components/schemas/SuccessResponse_Void'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
 
   # ──────────────────────────────────────────────
   # Task Comments（comments ルーター内のネストルート）
@@ -643,14 +959,14 @@ paths:
       description: 指定タスクに紐づくコメント一覧を取得します。
       tags: [Task Comments]
       responses:
-        "200":
+        '200':
           description: タスクコメント一覧
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SuccessResponse_CommentList"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
+                $ref: '#/components/schemas/SuccessResponse_CommentList'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
 
     post:
       operationId: createTaskComment
@@ -662,9 +978,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CommentInput"
+              $ref: '#/components/schemas/CommentInput'
       responses:
-        "201":
+        '201':
           description: 作成成功（コメントIDを返す）
           content:
             application/json:
@@ -677,10 +993,10 @@ paths:
                   data:
                     type: integer
                     description: コメントID
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
 
   /api/v1/comments/tasks/comments/{commentId}:
     parameters:
@@ -697,23 +1013,23 @@ paths:
       description: タスクコメントを削除します。`read-write` スコープが必要です。
       tags: [Task Comments]
       responses:
-        "200":
+        '200':
           description: 削除成功
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SuccessResponse_Void"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
+                $ref: '#/components/schemas/SuccessResponse_Void'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
 
   # ──────────────────────────────────────────────
   # Snapshots
   # ──────────────────────────────────────────────
   /api/v1/projects/{projectId}/snapshots:
     parameters:
-      - $ref: "#/components/parameters/ProjectId"
+      - $ref: '#/components/parameters/ProjectId'
 
     get:
       operationId: listSnapshots
@@ -721,14 +1037,14 @@ paths:
       description: 指定プロジェクトのスナップショット一覧を取得します。
       tags: [Snapshots]
       responses:
-        "200":
+        '200':
           description: スナップショット一覧
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SuccessResponse_SnapshotList"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
+                $ref: '#/components/schemas/SuccessResponse_SnapshotList'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
 
     post:
       operationId: createSnapshot
@@ -745,23 +1061,23 @@ paths:
                 displayName:
                   type: string
                   description: スナップショットの表示名（省略時はタイムスタンプ）
-                  example: "v1.0 リリース前"
+                  example: 'v1.0 リリース前'
       responses:
-        "201":
+        '201':
           description: 作成成功（Storage URLを返す）
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SuccessResponse_String"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
+                $ref: '#/components/schemas/SuccessResponse_String'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
 
   /api/v1/projects/{projectId}/snapshots/{snapshotName}:
     parameters:
-      - $ref: "#/components/parameters/ProjectId"
-      - $ref: "#/components/parameters/SnapshotName"
+      - $ref: '#/components/parameters/ProjectId'
+      - $ref: '#/components/parameters/SnapshotName'
 
     get:
       operationId: getSnapshot
@@ -769,16 +1085,16 @@ paths:
       description: 指定されたスナップショットのデータを取得します。
       tags: [Snapshots]
       responses:
-        "200":
+        '200':
           description: スナップショットデータ
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SuccessResponse_GanttDataJson"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
+                $ref: '#/components/schemas/SuccessResponse_GanttDataJson'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
     delete:
       operationId: deleteSnapshot
@@ -786,23 +1102,23 @@ paths:
       description: 指定されたスナップショットを削除します。`read-write` スコープが必要です。
       tags: [Snapshots]
       responses:
-        "200":
+        '200':
           description: 削除成功
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SuccessResponse_Void"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
+                $ref: '#/components/schemas/SuccessResponse_Void'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
   /api/v1/projects/{projectId}/snapshots/{snapshotName}/url:
     parameters:
-      - $ref: "#/components/parameters/ProjectId"
-      - $ref: "#/components/parameters/SnapshotName"
+      - $ref: '#/components/parameters/ProjectId'
+      - $ref: '#/components/parameters/SnapshotName'
 
     get:
       operationId: getSnapshotDownloadUrl
@@ -810,16 +1126,16 @@ paths:
       description: スナップショットの署名付きダウンロードURLを取得します。
       tags: [Snapshots]
       responses:
-        "200":
+        '200':
           description: ダウンロードURL
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SuccessResponse_String"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
+                $ref: '#/components/schemas/SuccessResponse_String'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
   # ──────────────────────────────────────────────
   # User
@@ -831,7 +1147,7 @@ paths:
       description: 認証ユーザー自身のユーザー情報を取得します。
       tags: [User]
       responses:
-        "200":
+        '200':
           description: ユーザー情報
           content:
             application/json:
@@ -842,9 +1158,9 @@ paths:
                     type: string
                     enum: [succeeded]
                   data:
-                    $ref: "#/components/schemas/User"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
+                    $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
 
     put:
       operationId: updateUser
@@ -856,18 +1172,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UserInput"
+              $ref: '#/components/schemas/UserInput'
       responses:
-        "200":
+        '200':
           description: 更新成功
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SuccessResponse_Void"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
+                $ref: '#/components/schemas/SuccessResponse_Void'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
 
   # ──────────────────────────────────────────────
   # API Keys
@@ -879,7 +1195,7 @@ paths:
       description: 認証ユーザーのAPIキー一覧を取得します。キーはマスク表示（先頭8文字のみ）されます。
       tags: [API Keys]
       responses:
-        "200":
+        '200':
           description: APIキー一覧
           content:
             application/json:
@@ -892,9 +1208,9 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: "#/components/schemas/ApiKeyMasked"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
+                      $ref: '#/components/schemas/ApiKeyMasked'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
 
     post:
       operationId: createApiKey
@@ -914,14 +1230,14 @@ paths:
                 name:
                   type: string
                   description: キーの名前（識別用）
-                  example: "CI/CDパイプライン用"
+                  example: 'CI/CDパイプライン用'
                 scope:
                   type: string
                   enum: [read, read-write]
                   default: read-write
                   description: キーのスコープ
       responses:
-        "201":
+        '201':
           description: 作成成功（フルキーを含む）
           content:
             application/json:
@@ -932,16 +1248,16 @@ paths:
                     type: string
                     enum: [succeeded]
                   data:
-                    $ref: "#/components/schemas/ApiKeyFull"
+                    $ref: '#/components/schemas/ApiKeyFull'
                   message:
                     type: string
-                    example: "API key created. Save the key now — it will not be shown again."
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
+                    example: 'API key created. Save the key now — it will not be shown again.'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
 
   /api/v1/api-keys/{keyId}:
     parameters:
@@ -959,18 +1275,18 @@ paths:
       description: 指定したAPIキーを論理削除（無効化）します。自分のキーのみ操作可能です。`read-write` スコープが必要です。
       tags: [API Keys]
       responses:
-        "200":
+        '200':
           description: 無効化成功
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SuccessResponse_Void"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
+                $ref: '#/components/schemas/SuccessResponse_Void'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
 # ================================================================
 # Components
@@ -987,6 +1303,12 @@ components:
       description: |
         `mk_` プレフィックス付きのAPIキー。
         スコープは `read`（読み取り専用）または `read-write`（読み書き）。
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Firebase IDトークン（JWT）。WebUIや管理操作向け。フルアクセス権限を持ちます。
 
   # ──────────────────────────────────────────────
   # Parameters
@@ -1000,7 +1322,34 @@ components:
       schema:
         type: string
         format: uuid
-        example: "550e8400-e29b-41d4-a716-446655440000"
+        example: '550e8400-e29b-41d4-a716-446655440000'
+
+    RowId:
+      name: rowId
+      in: path
+      required: true
+      description: 行ID
+      schema:
+        type: integer
+        example: 1
+
+    TaskId:
+      name: taskId
+      in: path
+      required: true
+      description: タスクID
+      schema:
+        type: integer
+        example: 10
+
+    CommentId:
+      name: commentId
+      in: path
+      required: true
+      description: コメントID
+      schema:
+        type: integer
+        example: 100
 
     SnapshotName:
       name: snapshotName
@@ -1009,7 +1358,7 @@ components:
       description: スナップショット名（タイムスタンプ）
       schema:
         type: string
-        example: "2026-06-20T000000"
+        example: '2026-06-20T000000'
 
   # ──────────────────────────────────────────────
   # Responses
@@ -1020,40 +1369,40 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/ErrorResponse"
+            $ref: '#/components/schemas/ErrorResponse'
           example:
             status: failed
-            message: "API key is required. Set the X-API-Key header."
+            message: 'API key is required. Set the X-API-Key header.'
 
     Forbidden:
       description: 権限エラー — read-write スコープが必要
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/ErrorResponse"
+            $ref: '#/components/schemas/ErrorResponse'
           example:
             status: failed
-            message: "This API key has read-only access. A read-write key is required for this operation."
+            message: 'This API key has read-only access. A read-write key is required for this operation.'
 
     NotFound:
       description: リソースが見つからない
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/ErrorResponse"
+            $ref: '#/components/schemas/ErrorResponse'
           example:
             status: failed
-            message: "Resource not found"
+            message: 'Resource not found'
 
     BadRequest:
       description: リクエスト不正
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/ErrorResponse"
+            $ref: '#/components/schemas/ErrorResponse'
           example:
             status: failed
-            message: "name is required"
+            message: 'name is required'
 
   # ──────────────────────────────────────────────
   # Schemas
@@ -1102,6 +1451,16 @@ components:
               items:
                 type: integer
 
+    SuccessResponse_Project:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [succeeded]
+        data:
+          $ref: '#/components/schemas/Project'
+
     SuccessResponse_ProjectList:
       type: object
       required: [status]
@@ -1112,7 +1471,7 @@ components:
         data:
           type: array
           items:
-            $ref: "#/components/schemas/Project"
+            $ref: '#/components/schemas/Project'
 
     SuccessResponse_GanttRowList:
       type: object
@@ -1124,7 +1483,7 @@ components:
         data:
           type: array
           items:
-            $ref: "#/components/schemas/GanttRow"
+            $ref: '#/components/schemas/GanttRow'
 
     SuccessResponse_GanttDataJson:
       type: object
@@ -1134,7 +1493,7 @@ components:
           type: string
           enum: [succeeded]
         data:
-          $ref: "#/components/schemas/GanttDataJson"
+          $ref: '#/components/schemas/GanttDataJson'
 
     SuccessResponse_CommentList:
       type: object
@@ -1146,7 +1505,7 @@ components:
         data:
           type: array
           items:
-            $ref: "#/components/schemas/Comment"
+            $ref: '#/components/schemas/Comment'
 
     SuccessResponse_SnapshotList:
       type: object
@@ -1158,7 +1517,7 @@ components:
         data:
           type: array
           items:
-            $ref: "#/components/schemas/SnapshotInfo"
+            $ref: '#/components/schemas/SnapshotInfo'
 
     # --- ドメインモデル ---
     ColorPalette:
@@ -1171,11 +1530,11 @@ components:
         color:
           type: string
           description: テキスト色（CSS color）
-          example: "#ffffff"
+          example: '#ffffff'
         backgroundColor:
           type: string
           description: 背景色（CSS color）
-          example: "#42a5f5"
+          example: '#42a5f5'
         pattern:
           type: object
           properties:
@@ -1203,7 +1562,7 @@ components:
         color:
           type: string
           description: カラーコード
-          example: "#ef5350"
+          example: '#ef5350'
 
     Authority:
       type: object
@@ -1235,12 +1594,12 @@ components:
         colorPalettes:
           type: array
           items:
-            $ref: "#/components/schemas/ColorPalette"
+            $ref: '#/components/schemas/ColorPalette'
           description: 使用可能なカラーパレット一覧
         labels:
           type: array
           items:
-            $ref: "#/components/schemas/Label"
+            $ref: '#/components/schemas/Label'
           description: 使用可能なラベル一覧
         granularity:
           type: string
@@ -1251,6 +1610,12 @@ components:
           type: integer
           enum: [6, 15, 30, 60]
           description: スナップ単位（分）。hourlyモード時に有効。
+        disableRowReorder:
+          type: boolean
+          description: 行の入れ替えを禁止するかどうか（trueの場合、ドラッグ＆ドロップによる行の並び替えを無効化）
+        disableCrossRowMove:
+          type: boolean
+          description: タスクの移動を横方向に限定するかどうか（trueの場合、ドラッグ＆ドロップによるタスクの行間移動を無効化）
         archived:
           type: boolean
           description: アーカイブ済みフラグ
@@ -1288,7 +1653,7 @@ components:
               duration:
                 type: number
               attribute:
-                $ref: "#/components/schemas/TaskAttribute"
+                $ref: '#/components/schemas/TaskAttribute'
           description: 新規タスクテンプレート一覧
 
     TaskAttribute:
@@ -1299,11 +1664,11 @@ components:
           type: string
           description: タスクの説明
         colorPalette:
-          $ref: "#/components/schemas/ColorPalette"
+          $ref: '#/components/schemas/ColorPalette'
         labels:
           type: array
           items:
-            $ref: "#/components/schemas/Label"
+            $ref: '#/components/schemas/Label'
         lock:
           type: boolean
           description: ロック状態（移動・リサイズ・削除不可）
@@ -1317,6 +1682,11 @@ components:
           items:
             type: string
           description: 依存タスクのID配列
+        imageUrls:
+          type: array
+          items:
+            type: string
+          description: タスクバーに表示する画像のURL配列
 
     RowAttribute:
       type: object
@@ -1328,7 +1698,12 @@ components:
         labels:
           type: array
           items:
-            $ref: "#/components/schemas/Label"
+            $ref: '#/components/schemas/Label'
+        imageUrls:
+          type: array
+          items:
+            type: string
+          description: 行ヘッダーに表示する画像のURL配列
         markers:
           type: array
           items:
@@ -1365,24 +1740,24 @@ components:
         name:
           type: string
           description: プロジェクト名
-          example: "Webサイトリニューアル"
+          example: 'Webサイトリニューアル'
         start:
           type: string
           format: date
           description: 開始日（YYYY-MM-DD）
-          example: "2026-06-01"
+          example: '2026-06-01'
         end:
           type: string
           format: date
           description: 終了日（YYYY-MM-DD）
-          example: "2026-12-31"
+          example: '2026-12-31'
         attribute:
-          $ref: "#/components/schemas/ProjectAttribute"
+          $ref: '#/components/schemas/ProjectAttribute'
         public:
           type: boolean
           description: 公開フラグ
         authority:
-          $ref: "#/components/schemas/Authority"
+          $ref: '#/components/schemas/Authority'
         role:
           type: string
           enum: [owner, editor, viewer]
@@ -1401,24 +1776,24 @@ components:
         name:
           type: string
           description: プロジェクト名
-          example: "新プロジェクト"
+          example: '新プロジェクト'
         start:
           type: string
           format: date
           description: 開始日（YYYY-MM-DD）
-          example: "2026-07-01"
+          example: '2026-07-01'
         end:
           type: string
           format: date
           description: 終了日（YYYY-MM-DD）
-          example: "2026-12-31"
+          example: '2026-12-31'
         attribute:
-          $ref: "#/components/schemas/ProjectAttribute"
+          $ref: '#/components/schemas/ProjectAttribute'
         public:
           type: boolean
           default: false
         authority:
-          $ref: "#/components/schemas/Authority"
+          $ref: '#/components/schemas/Authority'
 
     GanttRow:
       type: object
@@ -1433,7 +1808,7 @@ components:
         name:
           type: string
           description: 行名
-          example: "デザインフェーズ"
+          example: 'デザインフェーズ'
         order:
           type: integer
           description: 表示順序
@@ -1441,11 +1816,11 @@ components:
           type: boolean
           description: 表示/非表示フラグ
         attribute:
-          $ref: "#/components/schemas/RowAttribute"
+          $ref: '#/components/schemas/RowAttribute'
         tasks:
           type: array
           items:
-            $ref: "#/components/schemas/GanttTask"
+            $ref: '#/components/schemas/GanttTask'
           description: 行に含まれるタスク一覧
         commentCount:
           type: integer
@@ -1471,7 +1846,7 @@ components:
           type: boolean
           default: true
         attribute:
-          $ref: "#/components/schemas/RowAttribute"
+          $ref: '#/components/schemas/RowAttribute'
 
     GanttTask:
       type: object
@@ -1486,19 +1861,19 @@ components:
         name:
           type: string
           description: タスク名
-          example: "ワイヤーフレーム作成"
+          example: 'ワイヤーフレーム作成'
         start:
           type: string
           format: date
           description: 開始日（YYYY-MM-DD）
-          example: "2026-07-01"
+          example: '2026-07-01'
         end:
           type: string
           format: date
           description: 終了日（YYYY-MM-DD）
-          example: "2026-07-15"
+          example: '2026-07-15'
         attribute:
-          $ref: "#/components/schemas/TaskAttribute"
+          $ref: '#/components/schemas/TaskAttribute'
         commentCount:
           type: integer
           description: コメント件数
@@ -1525,7 +1900,7 @@ components:
           format: date
           description: 終了日（YYYY-MM-DD）
         attribute:
-          $ref: "#/components/schemas/TaskAttribute"
+          $ref: '#/components/schemas/TaskAttribute'
 
     GanttRowOrder:
       type: object
@@ -1545,7 +1920,7 @@ components:
         version:
           type: string
           description: バージョン情報
-          example: "0.6.9"
+          example: '0.6.9'
         project:
           type: object
           description: プロジェクトデータ
@@ -1583,7 +1958,7 @@ components:
         createdByPhotoURL:
           type:
             - string
-            - "null"
+            - 'null'
           description: 作成者のアバター画像URL
         createdAt:
           type: string
@@ -1609,7 +1984,7 @@ components:
         content:
           type: string
           description: コメント内容
-          example: "進捗確認お願いします"
+          example: '進捗確認お願いします'
 
     SnapshotInfo:
       type: object
@@ -1618,7 +1993,7 @@ components:
         name:
           type: string
           description: スナップショット名（タイムスタンプ）
-          example: "2026-06-20T000000"
+          example: '2026-06-20T000000'
         createdAt:
           type: string
           format: date-time
@@ -1639,7 +2014,7 @@ components:
           type: string
           description: 表示名
         attribute:
-          $ref: "#/components/schemas/UserAttribute"
+          $ref: '#/components/schemas/UserAttribute'
 
     UserInput:
       type: object
@@ -1648,7 +2023,7 @@ components:
           type: string
           description: 表示名
         attribute:
-          $ref: "#/components/schemas/UserAttribute"
+          $ref: '#/components/schemas/UserAttribute'
 
     UserAttribute:
       type: object
@@ -1658,15 +2033,87 @@ components:
           type: string
           enum: [light, dark, system]
           description: UIテーマ設定
+        projectSettings:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/ProjectSettings'
+          description: プロジェクトごとの表示設定
         lastLoginAt:
           type: string
           format: date-time
           description: 最終ログイン日時
+        tutorialCompleted:
+          type: object
+          description: 完了済みチュートリアル一覧
         photoURL:
           type:
             - string
-            - "null"
+            - 'null'
           description: プロフィール画像のURL
+        appVersion:
+          type: string
+          description: アプリバージョン
+        authorityInputHistory:
+          type: array
+          items:
+            type: string
+          description: 権限設定で過去に入力したメールアドレス履歴
+
+    ProjectSettings:
+      type: object
+      description: プロジェクトごとの表示設定
+      properties:
+        pxPerDay:
+          type: number
+          description: 1日あたりのpx数（日単位表示時）
+        pxPerMonth:
+          type: number
+          description: 1月あたりのpx数（月単位表示時）
+        pxPerHour:
+          type: number
+          description: 1時間あたりのpx数（時間単位表示時）
+        selectedLabels:
+          type: array
+          items:
+            type: string
+          description: 選択中ラベル
+        showHiddenRows:
+          type: boolean
+          description: 非表示行を表示するかどうか
+        rowHeaderWidth:
+          type: number
+          description: 行ヘッダーの幅 (px)
+        barHeight:
+          type: number
+          description: ガントバーの高さ (px)
+        commentSidebarOpen:
+          type: boolean
+          description: コメントサイドバーの開閉状態
+        commentSidebarWidth:
+          type: number
+          description: コメントサイドバーの幅 (px)
+        showCurrentTimeLine:
+          type: boolean
+          description: 現在時刻線の表示可否フラグ
+        readonlyMode:
+          type: boolean
+          description: 読み取り専用モードフラグ
+        barShadowLevel:
+          type: string
+          enum: [none, small, medium, large]
+          description: ガントバーの影の段階
+        showCriticalPath:
+          type: boolean
+          description: クリティカルパスを表示するかどうか
+        showMinimap:
+          type: boolean
+          description: ミニマップ（全体鳥瞰）を表示するかどうか
+        minimapWidth:
+          type: number
+          description: ミニマップの幅 (px)
+        minimapOpacity:
+          type: number
+          description: ミニマップの不透明度 (0.1 〜 1.0)
 
     ApiKeyMasked:
       type: object
@@ -1678,11 +2125,11 @@ components:
           format: uuid
         name:
           type: string
-          example: "CI/CDパイプライン用"
+          example: 'CI/CDパイプライン用'
         key:
           type: string
           description: マスク済みキー（先頭8文字 + ****）
-          example: "mk_AbCdE************************"
+          example: 'mk_AbCdE************************'
         scope:
           type: string
           enum: [read, read-write]
@@ -1691,7 +2138,7 @@ components:
         lastUsedAt:
           type:
             - string
-            - "null"
+            - 'null'
           format: date-time
         createdAt:
           type: string
@@ -1708,7 +2155,7 @@ components:
         key:
           type: string
           description: フルAPIキー（この1回のみ表示）
-          example: "mk_AbCdEfGhIjKlMnOpQrStUvWxYz0123"
+          example: 'mk_AbCdEfGhIjKlMnOpQrStUvWxYz0123'
         name:
           type: string
         scope:
@@ -1718,6 +2165,7 @@ components:
           type: string
           format: date-time
 
-# グローバルセキュリティ（ヘルスチェック以外）
+# グローバルセキュリティ（ヘルスチェックおよび公開エンドポイント以外）
 security:
   - ApiKeyAuth: []
+  - BearerAuth: []

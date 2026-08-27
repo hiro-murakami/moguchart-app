@@ -26,12 +26,35 @@ router.put('/', requireWriteScope, async (req: Request, res: Response, next: Nex
   }
 })
 
-// DELETE /rows — 行の削除
+// PUT /rows/:id — 行の単体更新
+router.put('/:id', requireWriteScope, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const id = Number(req.params.id)
+    const row = { ...req.body, id }
+    const data = await upsertGanttRow(row, req.apiKeyUser)
+    res.json({ status: 'succeeded', data })
+  } catch (e) {
+    next(e)
+  }
+})
+
+// DELETE /rows — 行の一括削除
 // body: { ids: number[] }
 router.delete('/', requireWriteScope, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const ids = req.body.ids as number[]
     await deleteGanttRow(ids, req.apiKeyUser)
+    res.json({ status: 'succeeded' })
+  } catch (e) {
+    next(e)
+  }
+})
+
+// DELETE /rows/:id — 行の単体削除
+router.delete('/:id', requireWriteScope, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const id = Number(req.params.id)
+    await deleteGanttRow([id], req.apiKeyUser)
     res.json({ status: 'succeeded' })
   } catch (e) {
     next(e)

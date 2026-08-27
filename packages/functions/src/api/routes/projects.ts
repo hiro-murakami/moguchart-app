@@ -1,6 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express'
 import { requireWriteScope } from '../middleware/apiKeyAuth.js'
 import selectProjects from '../../scripts/selectProjects.js'
+import selectProject from '../../scripts/selectProject.js'
 import selectGanttChart from '../../scripts/selectGanttChart.js'
 import selectGanttRows from '../../scripts/selectGanttRows.js'
 import upsertProject from '../../scripts/upsertProject.js'
@@ -16,6 +17,31 @@ const router = Router()
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = await selectProjects(undefined, req.apiKeyUser)
+    res.json({ status: 'succeeded', data })
+  } catch (e) {
+    next(e)
+  }
+})
+
+// POST /projects/restore — プロジェクト復元（インポート）
+router.post('/restore', requireWriteScope, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const projectId = await restoreProject(req.body, req.apiKeyUser)
+    res.json({ status: 'succeeded', data: projectId })
+  } catch (e) {
+    next(e)
+  }
+})
+
+// GET /projects/:id — プロジェクト単体取得
+router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const id = req.params.id as string
+    const data = await selectProject(id, req.apiKeyUser)
+    if (!data) {
+      res.status(404).json({ status: 'failed', message: 'Project not found' })
+      return
+    }
     res.json({ status: 'succeeded', data })
   } catch (e) {
     next(e)
@@ -122,7 +148,12 @@ router.get('/:id/zip', async (req: Request, res: Response, next: NextFunction) =
 // POST /projects/:id/restore — プロジェクト復元
 router.post('/:id/restore', requireWriteScope, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const projectId = await restoreProject(req.body, req.apiKeyUser)
+    const id = req.params.id as string
+    const body = req.body || {}
+    if (body.project && !body.project.id) {
+      body.project.id = id
+    }
+    const projectId = await restoreProject(body, req.apiKeyUser)
     res.json({ status: 'succeeded', data: projectId })
   } catch (e) {
     next(e)

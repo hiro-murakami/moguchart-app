@@ -893,13 +893,14 @@ APIキーには2つのスコープがあります：
 
 | リソース | 操作 |
 |---|---|
-| **プロジェクト** | 一覧取得、作成、更新、削除、複製、チャートデータ取得、JSON/ZIPエクスポート、復元 |
-| **行** | 作成、更新、削除、並び順更新 |
-| **タスク** | 作成/更新、削除 |
-| **コメント** | 一覧取得、作成/更新、削除（プロジェクト・行・タスク単位） |
-| **スナップショット** | 一覧取得、作成、取得、削除 |
-| **APIキー** | 発行、管理 |
-| **公開プロジェクト** | プロジェクト情報取得、ガントチャートデータ取得（認証不要） |
+| **プロジェクト** | 一覧取得（`GET /projects`）、単体取得（`GET /projects/:id`）、作成（`POST /projects`）、更新（`PUT /projects/:id`）、削除（`DELETE /projects/:id`）、複製（`POST /projects/:id/duplicate`）、チャートデータ取得（`GET /projects/:id/chart`）、行データ取得（`GET /projects/:id/rows`）、JSON/ZIPエクスポート（`GET /projects/:id/json`, `GET /projects/:id/zip`）、復元（`POST /projects/restore`, `POST /projects/:id/restore`） |
+| **行** | 作成（`POST /rows`）、更新（`PUT /rows`, `PUT /rows/:id`）、削除（`DELETE /rows`, `DELETE /rows/:id`）、並び順更新（`PUT /rows/order`） |
+| **タスク** | 作成/更新（`POST /tasks`, `PUT /tasks`, `PUT /tasks/:id`）、削除（`DELETE /tasks`, `DELETE /tasks/:id`）、タスクコメント管理（`GET/POST /tasks/:id/comments`, `DELETE /tasks/:id/comments/:commentId`） |
+| **コメント** | 一覧取得（`GET /comments`）、作成/更新（`POST /comments`）、削除（`DELETE /comments/:id`） |
+| **スナップショット** | 一覧取得（`GET /projects/:id/snapshots`）、作成（`POST /projects/:id/snapshots`）、取得（`GET /projects/:id/snapshots/:name`）、URL取得（`GET /projects/:id/snapshots/:name/url`）、削除（`DELETE /projects/:id/snapshots/:name`） |
+| **ユーザー** | ユーザー情報取得（`GET /user`）、更新（`PUT /user`） |
+| **APIキー** | 一覧取得（`GET /api-keys`）、新規発行（`POST /api-keys`）、無効化（`DELETE /api-keys/:id`） |
+| **公開プロジェクト** | プロジェクト情報取得（`GET /public/projects/:id`）、ガントチャートデータ取得（`GET /public/projects/:id/gantt`）（認証不要） |
 
 ### レートリミット
 
