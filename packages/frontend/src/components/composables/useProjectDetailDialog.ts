@@ -43,6 +43,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
   const localSnapDurationMinutes = ref<number>(60)
   const localDisableRowReorder = ref(false)
   const localDisableCrossRowMove = ref(false)
+  const localEnableProgress = ref(true)
 
   /** 複製モード時の元プロジェクト期間と単位 */
   const originalDuration = ref(0)
@@ -101,6 +102,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
               props.project.attribute.snapDurationMinutes || (localGranularity.value === 'hourly' ? 60 : 1440)
             localDisableRowReorder.value = !!props.project.attribute.disableRowReorder
             localDisableCrossRowMove.value = !!props.project.attribute.disableCrossRowMove
+            localEnableProgress.value = props.project.attribute.enableProgress !== false
             localClearProgress.value = true
 
             // 元のプロジェクト期間を記憶
@@ -150,6 +152,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
               props.project.attribute.snapDurationMinutes || (localGranularity.value === 'hourly' ? 60 : 1440)
             localDisableRowReorder.value = !!props.project.attribute.disableRowReorder
             localDisableCrossRowMove.value = !!props.project.attribute.disableCrossRowMove
+            localEnableProgress.value = props.project.attribute.enableProgress !== false
           }
         } else {
           // 新規追加モード
@@ -170,6 +173,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
           localSnapDurationMinutes.value = localGranularity.value === 'hourly' ? 60 : 1440
           localDisableRowReorder.value = false
           localDisableCrossRowMove.value = false
+          localEnableProgress.value = true
         }
       }
     },
@@ -232,6 +236,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
       localHistoryRetentionDays.value !== (props.project.attribute.historyRetentionDays || 7) ||
       localDisableRowReorder.value !== !!props.project.attribute.disableRowReorder ||
       localDisableCrossRowMove.value !== !!props.project.attribute.disableCrossRowMove ||
+      localEnableProgress.value !== (props.project.attribute.enableProgress !== false) ||
       (localGranularity.value === 'hourly' || localGranularity.value === 'daily'
         ? localSnapDurationMinutes.value !==
           (props.project.attribute.snapDurationMinutes ||
@@ -280,6 +285,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
         historyRetentionDays: localHistoryRetentionDays.value || undefined,
         disableRowReorder: localDisableRowReorder.value ? true : undefined,
         disableCrossRowMove: localDisableCrossRowMove.value ? true : undefined,
+        enableProgress: localEnableProgress.value ? undefined : false,
         // granularity は新規作成時のみ設定（編集時は既存値を保持）
         ...(!isEdit.value ? { granularity: localGranularity.value } : {}),
         // snapDurationMinutes は hourly および daily モード時のみ保存
@@ -341,6 +347,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
     localSnapDurationMinutes,
     localDisableRowReorder,
     localDisableCrossRowMove,
+    localEnableProgress,
     authorityHistoryUsers,
     title,
     localClearProgress,

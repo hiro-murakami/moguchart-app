@@ -42,6 +42,7 @@ const {
   localSnapDurationMinutes,
   localDisableRowReorder,
   localDisableCrossRowMove,
+  localEnableProgress,
   authorityHistoryUsers,
   title,
   localClearProgress,
@@ -341,6 +342,14 @@ watch(
                 </v-window-item>
                 <v-window-item value="editOptions">
                   <v-row density="compact" class="pt-2">
+                    <v-col cols="12" class="mb-2">
+                      <v-checkbox v-model="localEnableProgress" density="compact" hide-details>
+                        <template v-slot:label>
+                          <span class="mr-2">進捗率管理を行う</span>
+                          <HelpText text="ONにするとタスクバーに進捗バーや進捗ラベルが表示され、進捗率のドラッグ編集が可能になります" />
+                        </template>
+                      </v-checkbox>
+                    </v-col>
                     <v-col cols="12" class="mb-2">
                       <v-checkbox v-model="localDisableRowReorder" density="compact" hide-details>
                         <template v-slot:label>

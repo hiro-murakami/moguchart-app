@@ -12,6 +12,7 @@ import {
   loadSnapshot,
   selectComments,
   downloadProjectZip,
+  upsertUser,
 } from '@/modules/scripts'
 import { db } from '@/firebase'
 import { doc, getDoc, setDoc } from 'firebase/firestore'
@@ -48,6 +49,7 @@ import type {
   GanttDataJson,
   Label,
   Comment,
+  User,
 } from '@functions/types/shared'
 import * as holiday_jp from '@holiday-jp/holiday_jp'
 import * as moguchart from '@mogura/moguchart-core'
@@ -75,6 +77,12 @@ export const useGanttChartView = () => {
   const isPublicViewMode = inject<Ref<boolean>>('isPublicViewMode', ref(false))
   /** App.vue から inject: 公開閲覧モード用テーマオーバーライド */
   const publicThemeOverride = inject<Ref<'light' | 'dark' | 'system' | null>>('publicThemeOverride', ref(null))
+
+  /** 過去に入力したことのあるメールアドレスを User[] 形式で返す（補完候補用） */
+  const authorityHistoryUsers = computed<User[]>(() => {
+    const history = userStore.currentUser?.attribute?.authorityInputHistory ?? []
+    return history.map((email) => ({ email, attribute: {} }))
+  })
 
   // --- 設定値 ---
   const selectedFilterLabelNames = ref<string[]>([])
@@ -787,6 +795,14 @@ export const useGanttChartView = () => {
         collapsed: minimapCollapsed.value,
         resizable: true,
       },
+      progress: {
+        enabled: currentProject.value?.attribute?.enableProgress !== false,
+        editable: !isReadOnly.value && currentProject.value?.attribute?.enableProgress !== false,
+        showLabel: true,
+        labelPosition: 'inside',
+        snapStep: 5,
+        indicatorPosition: 'full',
+      },
     }
   })
 
@@ -923,9 +939,83 @@ export const useGanttChartView = () => {
     publishEditEvent('full_reload')
   }
 
+  // タスクの表示用フォーマット関数
+  const formatGanttTask = (task: any) => {
+    const attribute = task.attribute as TaskAttribute | undefined
+    const colorPalette = attribute?.colorPalette
+
+    let style: string | undefined = 'box-shadow: var(--task-box-shadow, 0 2px 4px rgba(0, 0, 0, 0.3)); '
+    let labelStyle: string | undefined
+    let pattern: moguchart.GanttTaskPattern | undefined
+
+    if (colorPalette) {
+      if (colorPalette.backgroundColor) {
+        style = `background-color: ${colorPalette.backgroundColor}; ${style || ''}`
+        if (!colorPalette.borderType || (colorPalette.borderType as string) === 'none') {
+          style += `border-color: ${colorPalette.backgroundColor}; `
+        }
+      }
+      if (colorPalette.color) {
+        labelStyle = `color: ${colorPalette.color}; ${labelStyle || ''}`
+      }
+      if (colorPalette.pattern) {
+        pattern = {
+          type: colorPalette.pattern.type as moguchart.BarPattern,
+          color: colorPalette.pattern.color,
+        }
+      }
+      if (colorPalette.borderType && (colorPalette.borderType as string) !== 'none') {
+        const borderStr = getBorderStyle(colorPalette.borderType, colorPalette.borderColor)
+        if (borderStr) {
+          style += borderStr
+        }
+      }
+    }
+
+    // lock → moguchart の resizable / movable に変換
+    const isLocked = attribute?.lock === true
+    const resizable = isLocked ? false : undefined
+    const movable = isLocked ? ('none' as const) : undefined
+
+    // 進捗編集可否:
+    // プロジェクトが進捗管理有効 かつ (編集権限あり または 担当者) かつ ロックされていない
+    const userEmail = userStore.currentUser?.email
+    const assignees = attribute?.assignees || []
+    const isAssignee = !!userEmail && assignees.includes(userEmail)
+    const canEditProgress =
+      (!isReadOnly.value || isAssignee) &&
+      !isLocked &&
+      currentProject.value?.attribute?.enableProgress !== false
+
+    return {
+      ...task,
+      id: task.id.toString(),
+      start: toLocalDate(task.start),
+      end: toLocalDate(task.end),
+      style,
+      labelStyle,
+      pattern,
+      resizable,
+      movable,
+      progress: attribute?.progress,
+      progressResizable: canEditProgress,
+      dependencies: attribute?.dependencies,
+      html:
+        attribute?.labels && attribute.labels.length > 0
+          ? `<div style="display: flex; gap: 4px; padding: 2px 4px; overflow: hidden;">${attribute?.labels
+              .map(
+                (l) =>
+                  `<span style="background-color: ${l.color}; color: ${getContrastColor(l.color)}; padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; white-space: nowrap;">${l.name}</span>`,
+              )
+              .join('')}</div>`
+          : undefined,
+    }
+  }
+
   /**
-   * サーバーからデータを取得し、ローカルの rows.value に対して変更があった行だけ差し替える。
-   * affectedRowIds が指定された場合はその行のみ取得・差し替え、未指定時は全行を取得・差し替える。
+   * 編集イベント受信時の差分データ反映。
+   * affectedRowIds が指定されていれば、その行のみ API で再取得して rows.value を更新する。
+   * 指定がなければ全行を再取得して全置換する。
    */
   const applyDelta = async (affectedRowIds?: string[]) => {
     if (!projectId.value) return
@@ -939,65 +1029,7 @@ export const useGanttChartView = () => {
       const convertRow = (row: GanttRow) => ({
         ...row,
         id: row.id.toString(),
-        tasks: row.tasks.map((task: GanttTask) => {
-          const attribute = (task as any).attribute as TaskAttribute | undefined
-          const colorPalette = attribute?.colorPalette
-
-          let style: string | undefined = 'box-shadow: var(--task-box-shadow, 0 2px 4px rgba(0, 0, 0, 0.3)); '
-          let labelStyle: string | undefined
-          let pattern: moguchart.GanttTaskPattern | undefined
-
-          if (colorPalette) {
-            if (colorPalette.backgroundColor) {
-              style = `background-color: ${colorPalette.backgroundColor}; ${style || ''}`
-              if (!colorPalette.borderType || (colorPalette.borderType as string) === 'none') {
-                style += `border-color: ${colorPalette.backgroundColor}; `
-              }
-            }
-            if (colorPalette.color) {
-              labelStyle = `color: ${colorPalette.color}; ${labelStyle || ''}`
-            }
-            if (colorPalette.pattern) {
-              pattern = {
-                type: colorPalette.pattern.type as moguchart.BarPattern,
-                color: colorPalette.pattern.color,
-              }
-            }
-            if (colorPalette.borderType && (colorPalette.borderType as string) !== 'none') {
-              const borderStr = getBorderStyle(colorPalette.borderType, colorPalette.borderColor)
-              if (borderStr) {
-                style += borderStr
-              }
-            }
-          }
-
-          // lock → moguchart の resizable / movable に変換
-          const isLocked = attribute?.lock === true
-          const resizable = isLocked ? false : undefined
-          const movable = isLocked ? ('none' as const) : undefined
-
-          return {
-            ...task,
-            id: task.id.toString(),
-            start: toLocalDate(task.start),
-            end: toLocalDate(task.end),
-            style,
-            labelStyle,
-            pattern,
-            resizable,
-            movable,
-            dependencies: attribute?.dependencies,
-            html:
-              attribute?.labels && attribute.labels.length > 0
-                ? `<div style="display: flex; gap: 4px; padding: 2px 4px; overflow: hidden;">${attribute?.labels
-                    .map(
-                      (l) =>
-                        `<span style="background-color: ${l.color}; color: ${getContrastColor(l.color)}; padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; white-space: nowrap;">${l.name}</span>`,
-                    )
-                    .join('')}</div>`
-                : undefined,
-          }
-        }),
+        tasks: row.tasks.map(formatGanttTask),
         // RowAttribute のマーカーを moguchart.GanttMarker[] に変換
         markers: ((row as any).attribute as RowAttribute | undefined)?.markers?.map(
           (m: MarkerAttribute): moguchart.GanttMarker => ({
@@ -1080,67 +1112,6 @@ export const useGanttChartView = () => {
       await applyDelta()
     }
   }, 1000)
-
-  // タスクの表示用フォーマット関数
-  const formatGanttTask = (task: any) => {
-    const attribute = task.attribute as TaskAttribute | undefined
-    const colorPalette = attribute?.colorPalette
-
-    let style: string | undefined = 'box-shadow: var(--task-box-shadow, 0 2px 4px rgba(0, 0, 0, 0.3)); '
-    let labelStyle: string | undefined
-    let pattern: moguchart.GanttTaskPattern | undefined
-
-    if (colorPalette) {
-      if (colorPalette.backgroundColor) {
-        style = `background-color: ${colorPalette.backgroundColor}; ${style || ''}`
-        if (!colorPalette.borderType || (colorPalette.borderType as string) === 'none') {
-          style += `border-color: ${colorPalette.backgroundColor}; `
-        }
-      }
-      if (colorPalette.color) {
-        labelStyle = `color: ${colorPalette.color}; ${labelStyle || ''}`
-      }
-      if (colorPalette.pattern) {
-        pattern = {
-          type: colorPalette.pattern.type as moguchart.BarPattern,
-          color: colorPalette.pattern.color,
-        }
-      }
-      if (colorPalette.borderType && (colorPalette.borderType as string) !== 'none') {
-        const borderStr = getBorderStyle(colorPalette.borderType, colorPalette.borderColor)
-        if (borderStr) {
-          style += borderStr
-        }
-      }
-    }
-
-    // lock → moguchart の resizable / movable に変換
-    const isLocked = attribute?.lock === true
-    const resizable = isLocked ? false : undefined
-    const movable = isLocked ? ('none' as const) : undefined
-
-    return {
-      ...task,
-      id: task.id.toString(),
-      start: toLocalDate(task.start),
-      end: toLocalDate(task.end),
-      style,
-      labelStyle,
-      pattern,
-      resizable,
-      movable,
-      dependencies: attribute?.dependencies,
-      html:
-        attribute?.labels && attribute.labels.length > 0
-          ? `<div style="display: flex; gap: 4px; padding: 2px 4px; overflow: hidden;">${attribute?.labels
-              .map(
-                (l) =>
-                  `<span style="background-color: ${l.color}; color: ${getContrastColor(l.color)}; padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; white-space: nowrap;">${l.name}</span>`,
-              )
-              .join('')}</div>`
-          : undefined,
-    }
-  }
 
   onEditEvent((event) => {
     pendingEditEvents.push({ type: event.type, payload: event.payload })
@@ -1300,6 +1271,29 @@ export const useGanttChartView = () => {
     }
   }
 
+  /** コラボレーションセッションの同期（参加・離脱） */
+  const syncCollaborationSession = async (pId: string | null, oldPId?: string | null) => {
+    if (isSnapshotMode.value || isPublicViewMode.value) {
+      await leaveProject()
+      return
+    }
+
+    if (oldPId && oldPId !== pId) {
+      await leaveProject()
+    }
+
+    if (pId && userStore.user) {
+      await joinProject(
+        pId,
+        userStore.user.email,
+        userStore.user.displayName,
+        userStore.firebaseUser?.photoURL || undefined,
+      )
+    } else {
+      await leaveProject()
+    }
+  }
+
   watch(storeProjectId, async (newProjectId, oldProjectId) => {
     if (isSnapshotMode.value) return // スナップショットモード時はストアの監視を無視
     isMinimapReady.value = false
@@ -1318,19 +1312,7 @@ export const useGanttChartView = () => {
     }
 
     // コラボレーション: プロジェクト切替時にプレゼンスを更新（公開閲覧モードでは不要）
-    if (!isPublicViewMode.value) {
-      if (oldProjectId) {
-        await leaveProject()
-      }
-      if (newProjectId && userStore.user) {
-        await joinProject(
-          newProjectId,
-          userStore.user.email,
-          userStore.user.displayName,
-          userStore.firebaseUser?.photoURL || undefined,
-        )
-      }
-    }
+    await syncCollaborationSession(newProjectId, oldProjectId)
   })
 
   watch(
@@ -1357,7 +1339,13 @@ export const useGanttChartView = () => {
         const targetProject = routeId ? projects.value.find((p) => p.id === routeId) : undefined
 
         if (targetProject) {
-          setProjectId(targetProject.id)
+          if (storeProjectId.value === targetProject.id) {
+            // すでに同一IDがセットされている場合（公開閲覧からの切り替えなど）は watch(storeProjectId) が発火しないため明示的にリロード
+            loadData(targetProject.id)
+            await syncCollaborationSession(targetProject.id)
+          } else {
+            setProjectId(targetProject.id)
+          }
         } else if (!userStore.suppressProjectList) {
           // 匿名ログイン後の案内ダイアログ表示中は抑制する
           isProjectListDialogVisible.value = true
@@ -1365,7 +1353,7 @@ export const useGanttChartView = () => {
       } else if (!isPublicViewMode.value) {
         // ユーザーがログアウトした場合、データをクリアする
         // ただし公開閲覧モードではクリアしない
-        await leaveProject()
+        await syncCollaborationSession(null)
         rows.value = []
         clearProjectStore()
       }
@@ -1375,6 +1363,12 @@ export const useGanttChartView = () => {
 
   // 公開閲覧モードに切り替わったらガントデータを読み込む
   watch(isPublicViewMode, async (isPublic) => {
+    if (isPublic) {
+      await syncCollaborationSession(null)
+    } else if (projectId.value && userStore.user) {
+      await syncCollaborationSession(projectId.value)
+    }
+
     if (isPublic && projectId.value) {
       // すでに App.vue でプロジェクト情報はストアに設定済み
       // ここではガントチャートデータを読み込む
@@ -1582,6 +1576,88 @@ export const useGanttChartView = () => {
       isNew: data.id === 0,
       taskId: affectedTaskId,
     })
+  }
+
+  const handleTaskProgressChange = async (e: CustomEvent<moguchart.TaskProgressChangeEventDetail>) => {
+    const { task, progress, originalProgress, cancelled } = e.detail
+    if (cancelled || progress === originalProgress) return
+
+    const taskIdStr = String(task.id)
+    const row = rows.value.find((r) => r.tasks.some((t) => t.id === taskIdStr))
+    const currentTask = row?.tasks.find((t) => t.id === taskIdStr)
+    if (!row || !currentTask) return
+
+    const attr = ((currentTask as any).attribute as TaskAttribute) || {}
+    const userEmail = userStore.currentUser?.email
+    const assignees = attr.assignees || []
+    const isAssignee = !!userEmail && assignees.includes(userEmail)
+    if (isReadOnly.value && !isAssignee) return
+
+    const beforeAttr = { ...attr }
+    const afterAttr: TaskAttribute = {
+      ...attr,
+      progress,
+    }
+
+    const beforeData = {
+      id: Number(currentTask.id),
+      rowId: Number(row.id),
+      name: currentTask.name || '',
+      start: toDateTimeString(currentTask.start),
+      end: toDateTimeString(currentTask.end),
+      attribute: beforeAttr,
+    }
+
+    const afterData = {
+      ...beforeData,
+      attribute: afterAttr,
+    }
+
+    // 楽観的UI更新
+    rows.value = rows.value.map((r) => {
+      if (r.id === row.id) {
+        return {
+          ...r,
+          tasks: r.tasks.map((t) => {
+            if (t.id === taskIdStr) {
+              return {
+                ...t,
+                progress,
+                attribute: afterAttr,
+              }
+            }
+            return t
+          }),
+        }
+      }
+      return r
+    })
+
+    pushAction({
+      description: 'タスク進捗率の変更',
+      undo: async () => {
+        await upsertGanttTasks([beforeData])
+        await loadData(projectId.value, { silent: true })
+      },
+      redo: async () => {
+        await upsertGanttTasks([afterData])
+        await loadData(projectId.value, { silent: true })
+      },
+    })
+
+    try {
+      await upsertGanttTasks([afterData])
+      await loadData(projectId.value, { silent: true })
+      publishEditEvent('task_upsert', {
+        rowIds: [Number(row.id)],
+        targetName: currentTask.name,
+        isNew: false,
+        taskId: taskIdStr,
+      })
+    } catch (err) {
+      console.error('[Collaboration] Failed to update task progress:', err)
+      await loadData(projectId.value, { silent: true })
+    }
   }
 
   const handleDependencyCreate = async (e: CustomEvent<moguchart.DependencyCreateEventDetail>) => {
@@ -1942,6 +2018,7 @@ export const useGanttChartView = () => {
         labels: taskWithAttr.attribute?.labels ? [...taskWithAttr.attribute.labels] : [],
         lock: taskWithAttr.attribute?.lock,
         progress: taskWithAttr.attribute?.progress,
+        assignees: taskWithAttr.attribute?.assignees ? [...taskWithAttr.attribute.assignees] : undefined,
         dependencies: taskWithAttr.attribute?.dependencies ? [...taskWithAttr.attribute.dependencies] : undefined,
         imageUrls: taskWithAttr.attribute?.imageUrls ? [...taskWithAttr.attribute.imageUrls] : undefined,
       }
@@ -2013,9 +2090,25 @@ export const useGanttChartView = () => {
         labels: taskData.labels,
         lock: taskData.lock || undefined,
         progress: taskData.progress != null ? taskData.progress : undefined,
+        assignees: taskData.assignees && taskData.assignees.length > 0 ? taskData.assignees : undefined,
         dependencies: taskData.dependencies && taskData.dependencies.length > 0 ? taskData.dependencies : undefined,
         imageUrls: taskData.imageUrls && taskData.imageUrls.length > 0 ? taskData.imageUrls : undefined,
       },
+    }
+
+    // 担当者のメールアドレスを履歴に追記して永続化
+    if (userStore.currentUser && taskData.assignees && taskData.assignees.length > 0) {
+      const existingHistory = userStore.currentUser.attribute?.authorityInputHistory ?? []
+      const merged = Array.from(new Set([...existingHistory, ...taskData.assignees]))
+      const updatedUser = {
+        ...userStore.currentUser,
+        attribute: {
+          ...userStore.currentUser.attribute,
+          authorityInputHistory: merged,
+        },
+      }
+      await upsertUser(updatedUser)
+      userStore.user = updatedUser
     }
 
     // ダイアログを閉じる
@@ -4117,6 +4210,7 @@ export const useGanttChartView = () => {
     commentSidebarWidth,
     effectiveCommentSidebarWidth,
     handleDependencyCreate,
+    handleTaskProgressChange,
     handleSlideSchedule,
     handleZoomChange,
     handleMinimapResize,
@@ -4128,5 +4222,6 @@ export const useGanttChartView = () => {
     handleSaveTaskImages,
     handleImageFromRowContextMenu,
     handleSaveImages,
+    authorityHistoryUsers,
   }
 }

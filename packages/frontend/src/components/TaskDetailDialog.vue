@@ -1,17 +1,24 @@
 <script setup lang="ts">
 import { useDiscardConfirm } from '@/composables/useConfirm'
 import { granularityToInputType } from '@/modules/utils'
-import type { ColorPalette, EditingTaskData, Label, SimpleRowData, ProjectGranularity } from '@functions/types/shared'
+import type { ColorPalette, EditingTaskData, Label, SimpleRowData, ProjectGranularity, User } from '@functions/types/shared'
 import { isEqual, cloneDeep } from 'lodash'
 import { computed, ref, watch } from 'vue'
 import dayjs from 'dayjs'
 
-const props = defineProps<{
-  modelValue: boolean
-  task: EditingTaskData
-  rows: SimpleRowData[]
-  granularity?: ProjectGranularity
-}>()
+const props = withDefaults(
+  defineProps<{
+    modelValue: boolean
+    task: EditingTaskData
+    rows: SimpleRowData[]
+    granularity?: ProjectGranularity
+    enableProgress?: boolean
+    users?: User[]
+  }>(),
+  {
+    enableProgress: true,
+  },
+)
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
@@ -48,6 +55,14 @@ const onUpdateColorPalette = (val: ColorPalette | undefined) => {
 const onUpdateLabels = (val: Label[]) => {
   localTask.value.labels = val
 }
+
+// 担当者の管理
+const localAssignees = computed({
+  get: () => localTask.value.assignees || [],
+  set: (val: string[]) => {
+    localTask.value.assignees = val.length > 0 ? val : undefined
+  },
+})
 
 // ロック状態の管理
 const isLocked = computed({
@@ -107,7 +122,13 @@ const inputType = computed(() => granularityToInputType(props.granularity))
           class="mb-3"
         ></v-select>
       </v-col>
-      <v-col cols="4">
+      <UsersInput
+        v-model="localAssignees"
+        label="担当者"
+        help-text="指定されたユーザーは、進捗率を変更できるようになります"
+        :users="props.users"
+      />
+      <v-col :cols="props.enableProgress ? 4 : 6">
         <DateInput
           v-model="localTask.start"
           :type="inputType"
@@ -120,7 +141,7 @@ const inputType = computed(() => granularityToInputType(props.granularity))
           class="mb-3"
         />
       </v-col>
-      <v-col cols="4">
+      <v-col :cols="props.enableProgress ? 4 : 6">
         <DateInput
           v-model="displayEnd"
           :type="inputType"
@@ -133,7 +154,7 @@ const inputType = computed(() => granularityToInputType(props.granularity))
           class="mb-3"
         />
       </v-col>
-      <v-col cols="4">
+      <v-col v-if="props.enableProgress" cols="4">
         <v-number-input
           v-model="localTask.progress"
           label="進捗率"

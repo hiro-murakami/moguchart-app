@@ -30,7 +30,7 @@ export const toGanttTask = (task: PrismaGanttTask, commentCount?: number): Gantt
 
 export const fromGanttTask = (task: GanttTask): Omit<PrismaGanttTask, CommonColumns> => {
   return {
-    ...task,
+    ...omit(task, 'commentCount'),
     start: new Date(task.start),
     end: new Date(task.end),
   }
@@ -53,7 +53,7 @@ export const toGanttRow = (
 export const fromGanttRow = (row: GanttRow): Omit<PrismaGanttRow, CommonColumns> => {
   return {
     // tasksはリレーションデータなので、Rowテーブルの更新データからは除外する
-    ...omit(row, 'tasks'),
+    ...omit(row, ['tasks', 'commentCount']),
   }
 }
 

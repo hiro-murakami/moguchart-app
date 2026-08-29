@@ -286,7 +286,6 @@ export const barContent = (task: moguchart.GanttTask) => {
   const description = taskWithAttr.attribute?.description as string | undefined
   const commentCount = taskWithAttr.commentCount as number | undefined
   const isLocked = taskWithAttr.attribute?.lock === true
-  const progress = taskWithAttr.attribute?.progress as number | undefined
 
   const container = document.createElement('div')
   container.style.display = 'flex'
@@ -601,22 +600,6 @@ export const barContent = (task: moguchart.GanttTask) => {
     container.appendChild(descSpan)
   }
 
-  // プログレスバー（進捗率が設定されている場合のみ表示）
-  if (progress != null && progress >= 0) {
-    const clampedProgress = Math.min(100, Math.max(0, progress))
-    const progressOverlay = document.createElement('div')
-    progressOverlay.style.cssText = `position: absolute; bottom: 0; left: 0; width: 100%; height: 5px; background-color: rgba(0,0,0,0.35); border-radius: 0 0 4px 4px; overflow: hidden;`
-    const progressFill = document.createElement('div')
-    progressFill.style.cssText = `width: ${clampedProgress}%; height: 100%; background-color: #4caf50; transition: width 0.3s ease;`
-    progressOverlay.appendChild(progressFill)
-    container.appendChild(progressOverlay)
-
-    const progressLabel = document.createElement('span')
-    progressLabel.style.cssText = `position: absolute; right: 6px; bottom: 6px; font-size: 9px; color: rgba(255,255,255,0.95); font-weight: bold; text-shadow: 0 0 3px rgba(0,0,0,0.7), 1px 1px 2px rgba(0,0,0,0.5); pointer-events: none;`
-    progressLabel.textContent = `${clampedProgress}%`
-    container.appendChild(progressLabel)
-  }
-
   return container
 }
 
@@ -692,6 +675,34 @@ export const tooltip = (task: moguchart.GanttTask, isHourly?: boolean) => {
     descDiv.style.borderTop = '1px solid rgba(128, 128, 128, 0.3)'
     descDiv.textContent = description
     container.appendChild(descDiv)
+  }
+
+  // 担当者
+  const assignees = taskWithAttr.attribute?.assignees as string[] | undefined
+  if (assignees && assignees.length > 0) {
+    const assigneesDiv = document.createElement('div')
+    assigneesDiv.style.fontSize = '12px'
+    assigneesDiv.style.marginTop = '4px'
+    assigneesDiv.style.paddingTop = '4px'
+    assigneesDiv.style.borderTop = '1px solid rgba(128, 128, 128, 0.3)'
+    assigneesDiv.style.display = 'flex'
+    assigneesDiv.style.alignItems = 'center'
+    assigneesDiv.style.gap = '4px'
+    assigneesDiv.style.flexWrap = 'wrap'
+
+    const titleSpan = document.createElement('span')
+    titleSpan.style.opacity = '0.7'
+    titleSpan.textContent = '担当:'
+    assigneesDiv.appendChild(titleSpan)
+
+    assignees.forEach((email) => {
+      const chip = document.createElement('span')
+      chip.style.cssText =
+        'background-color: rgba(128, 128, 128, 0.2); padding: 1px 6px; border-radius: 10px; font-size: 11px;'
+      chip.textContent = email
+      assigneesDiv.appendChild(chip)
+    })
+    container.appendChild(assigneesDiv)
   }
 
   // 進捗率

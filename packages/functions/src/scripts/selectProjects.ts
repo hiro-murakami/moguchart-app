@@ -1,4 +1,4 @@
-import type { SelectProjects } from '../types/shared'
+import type { SelectProjects, Authority } from '../types/shared'
 import { prisma } from './common/commonFunctions'
 import { toProject } from './common/converters'
 
@@ -7,27 +7,28 @@ const selectProjects: SelectProjects = async (_, email) => {
     where: {
       OR: [
         { public: true },
-        {
-          // owners 配列に含まれているか
-          authority: {
-            path: '$.owners',
-            array_contains: email,
-          },
-        },
-        {
-          // editors 配列に含まれているか
-          authority: {
-            path: '$.editors',
-            array_contains: email,
-          },
-        },
-        {
-          // viewers 配列に含まれているか
-          authority: {
-            path: '$.viewers',
-            array_contains: email,
-          },
-        },
+        ...(email
+          ? [
+              {
+                authority: {
+                  path: '$.owners',
+                  array_contains: email,
+                },
+              },
+              {
+                authority: {
+                  path: '$.editors',
+                  array_contains: email,
+                },
+              },
+              {
+                authority: {
+                  path: '$.viewers',
+                  array_contains: email,
+                },
+              },
+            ]
+          : []),
       ],
     },
     orderBy: {
@@ -37,7 +38,21 @@ const selectProjects: SelectProjects = async (_, email) => {
       _count: { select: { comments: true } },
     },
   })
-  return data.map(toProject(email!))
+
+  if (!email) {
+    return data.filter((p) => p.public).map(toProject(''))
+  }
+
+  const filtered = data.filter((project) => {
+    if (project.public) return true
+    const authority = (project.authority ?? {}) as Authority
+    const owners = authority.owners ?? []
+    const editors = authority.editors ?? []
+    const viewers = authority.viewers ?? []
+    return owners.includes(email) || editors.includes(email) || viewers.includes(email)
+  })
+
+  return filtered.map(toProject(email))
 }
 
 export default selectProjects

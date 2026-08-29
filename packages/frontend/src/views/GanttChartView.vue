@@ -96,6 +96,8 @@ const {
   handleTaskDragStart,
   handleTaskDragEnd,
   handleTaskDrop,
+  handleTaskProgressChange,
+  authorityHistoryUsers,
   handleChartContextMenu,
   handleCreateNewTask,
   handleCreateNewMarker,
@@ -186,16 +188,7 @@ const canComment = computed(() => {
   )
 })
 
-/**
- * 編集権限を持つアクティブユーザーのみ（owners + editors）
- * 閲覧権限のみのユーザーはアバター表示から除外する
- */
-const editableActiveUsers = computed(() => {
-  if (!currentProject.value) return []
-  const auth = currentProject.value.authority
-  const editableEmails = new Set([...(auth.owners ?? []), ...(auth.editors ?? [])])
-  return activeUsers.value.filter((user) => editableEmails.has(user.email))
-})
+
 
 // キーボードショートカット
 const handleKeyDown = (e: KeyboardEvent) => {
@@ -333,8 +326,8 @@ const handleOpenSlideSchedule = async () => {
           </div>
         </div>
         <v-spacer />
-        <div v-if="editableActiveUsers.length > 0" class="d-flex align-center mr-4" style="gap: -4px">
-          <v-tooltip v-for="user in editableActiveUsers" :key="user.email" :text="user.displayName" location="bottom">
+        <div v-if="activeUsers.length > 0" class="d-flex align-center mr-4" style="gap: -4px">
+          <v-tooltip v-for="user in activeUsers" :key="user.email" :text="user.displayName" location="bottom">
             <template v-slot:activator="{ props }">
               <UserAvatar
                 v-bind="props"
@@ -426,6 +419,7 @@ const handleOpenSlideSchedule = async () => {
             @task-delete="handleTaskDelete"
             @dependency-create="handleDependencyCreate"
             @dependency-click="handleDependencyClick"
+            @task-progress-change="handleTaskProgressChange"
             @zoom-change="handleZoomChange"
             @minimap-resize="handleMinimapResize"
             @minimap-collapse="handleMinimapCollapse"
@@ -594,6 +588,8 @@ const handleOpenSlideSchedule = async () => {
       :task="editingTask"
       :rows="rows"
       :granularity="currentProject?.attribute?.granularity"
+      :enable-progress="currentProject?.attribute?.enableProgress !== false"
+      :users="authorityHistoryUsers"
       @save="saveTask"
       @delete="deleteTask"
     />

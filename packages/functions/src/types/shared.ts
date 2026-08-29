@@ -2,7 +2,7 @@
 // 注意: ここにはバックエンド固有のライブラリ(firebase-admin等)をimportしないでください。
 
 /** バージョン */
-export const VERSION = '0.11.0'
+export const VERSION = '0.12.0'
 
 /** Cloud Functions の呼び出しパラメータ */
 export interface FunctionParam {
@@ -232,6 +232,10 @@ export type ProjectAttribute = {
    * タスクの移動を横方向に限定するかどうか（trueの場合、ドラッグ＆ドロップによるタスクの行間移動を無効化）
    */
   disableCrossRowMove?: boolean
+  /**
+   * 進捗率管理を行うかどうか（trueの場合、進捗バー・ラベル・ハンドル等の進捗管理機能を有効化）
+   */
+  enableProgress?: boolean
 }
 
 /** マーカーの種類 */
@@ -285,6 +289,8 @@ export type TaskAttribute = {
   lock?: boolean
   /** タスクの進捗率（0〜100） */
   progress?: number
+  /** 担当者のメールアドレス配列 */
+  assignees?: string[]
   /** 依存タスクのID配列 */
   dependencies?: string[]
   /** タスクバーに表示する画像のURL配列 */
@@ -314,6 +320,8 @@ export interface EditingTaskData {
   lock?: boolean
   /** タスクの進捗率（0〜100） */
   progress?: number
+  /** 担当者のメールアドレス配列 */
+  assignees?: string[]
   /** 依存タスクのID配列 */
   dependencies?: string[]
   /** タスクバーに表示する画像のURL配列 */
