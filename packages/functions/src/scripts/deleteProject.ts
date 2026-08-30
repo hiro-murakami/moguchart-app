@@ -1,16 +1,22 @@
-import { getStorage } from 'firebase-admin/storage'
 import type { DeleteProject } from '../types/shared'
-import { checkProjectPermission, prisma } from './common/commonFunctions'
+import { checkProjectPermission, getStorageBucket, prisma } from './common/commonFunctions'
 
 const deleteProject: DeleteProject = async (id, email) => {
   await checkProjectPermission(id, email, 'owner')
 
   // Firebase Storage の関連スナップショットを削除
-  const bucket = getStorage().bucket()
-  const prefix = `snapshots/${id}/`
-  const [files] = await bucket.getFiles({ prefix })
-  if (files.length > 0) {
-    await Promise.all(files.map((file) => file.delete()))
+  const bucket = getStorageBucket()
+  const snapshotPrefix = `snapshots/${id}/`
+  const [snapshotFiles] = await bucket.getFiles({ prefix: snapshotPrefix })
+  if (snapshotFiles.length > 0) {
+    await Promise.all(snapshotFiles.map((file) => file.delete()))
+  }
+
+  // Firebase Storage の関連画像を削除
+  const imagePrefix = `images/${id}/`
+  const [imageFiles] = await bucket.getFiles({ prefix: imagePrefix })
+  if (imageFiles.length > 0) {
+    await Promise.all(imageFiles.map((file) => file.delete()))
   }
 
   await prisma.project.delete({
@@ -19,3 +25,4 @@ const deleteProject: DeleteProject = async (id, email) => {
 }
 
 export default deleteProject
+

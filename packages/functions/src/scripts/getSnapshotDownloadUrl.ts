@@ -1,6 +1,5 @@
-import { getStorage } from 'firebase-admin/storage'
 import type { GetSnapshotDownloadUrl } from '../types/shared.js'
-import { checkProjectPermission } from './common/commonFunctions.js'
+import { checkProjectPermission, getStorageBucket } from './common/commonFunctions.js'
 
 const getSnapshotDownloadUrl: GetSnapshotDownloadUrl = async (params, email) => {
   const { projectId, snapshotName } = params
@@ -10,7 +9,7 @@ const getSnapshotDownloadUrl: GetSnapshotDownloadUrl = async (params, email) => 
 
   await checkProjectPermission(projectId, email, 'viewer')
 
-  const bucket = getStorage().bucket()
+  const bucket = getStorageBucket()
   const storagePath = `snapshots/${projectId}/${snapshotName}.json.zip`
   const file = bucket.file(storagePath)
 

@@ -2,6 +2,8 @@ import * as functions from 'firebase-functions/v2'
 import { FirebaseFunction } from '../../types'
 import { PrismaClient } from '../../generated/prisma/client'
 import { PrismaMariaDb } from '@prisma/adapter-mariadb'
+import { getApps, initializeApp } from 'firebase-admin/app'
+import { getStorage } from 'firebase-admin/storage'
 import { FunctionParam, FunctionResult, VERSION, type Role } from '../../types/shared'
 import dayjs from 'dayjs'
 
@@ -18,6 +20,34 @@ const adapter = new PrismaMariaDb({
   allowPublicKeyRetrieval: true,
 })
 export const prisma = new PrismaClient({ adapter })
+
+/**
+ * Firebase Storage のバケットを取得する（バケット名が未設定の場合でも適切に解決）
+ */
+export const getStorageBucket = () => {
+  if (getApps().length === 0) {
+    initializeApp()
+  }
+
+  let bucketName = process.env.STORAGE_BUCKET || process.env.FIREBASE_STORAGE_BUCKET || process.env.GCP_PROJECT_ID
+  if (!bucketName && process.env.FIREBASE_CONFIG) {
+    try {
+      const config = JSON.parse(process.env.FIREBASE_CONFIG)
+      bucketName = config.storageBucket || config.projectId
+    } catch {
+      // ignore
+    }
+  }
+  if (!bucketName) {
+    bucketName = 'firestore-sample-c7300.appspot.com'
+  }
+  if (bucketName && !bucketName.includes('.')) {
+    bucketName = `${bucketName}.appspot.com`
+  }
+
+  return getStorage().bucket(bucketName)
+}
+
 
 /**
  * Firebase公開用の関数を返す

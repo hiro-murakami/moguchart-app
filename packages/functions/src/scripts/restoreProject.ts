@@ -1,7 +1,6 @@
 import type { RestoreProject } from '../types/shared'
-import { getCreateCommonColumns, getUpdateCommonColumns, prisma } from './common/commonFunctions'
+import { getCreateCommonColumns, getUpdateCommonColumns, getStorageBucket, prisma } from './common/commonFunctions'
 import AdmZip from 'adm-zip'
-import { getStorage } from 'firebase-admin/storage'
 import crypto from 'node:crypto'
 
 // 依存関係のIDを書き換えるためのヘルパー
@@ -45,7 +44,7 @@ const restoreSnapshots = async (zip: AdmZip, projectId: string) => {
     }
   }
 
-  const bucket = getStorage().bucket()
+  const bucket = getStorageBucket()
 
   for (const entry of snapshotEntries) {
     const snapshotFileName = entry.entryName.replace('snapshots/', '')
@@ -72,6 +71,84 @@ const restoreSnapshots = async (zip: AdmZip, projectId: string) => {
   }
 }
 
+// Firebase StorageのダウンロードURLを構築するヘルパー
+const buildDownloadUrl = (bucketName: string, storagePath: string, token: string): string => {
+  const emulatorHost = process.env.FIREBASE_STORAGE_EMULATOR_HOST || process.env.STORAGE_EMULATOR_HOST
+  const encodedPath = encodeURIComponent(storagePath)
+  if (emulatorHost) {
+    return `http://${emulatorHost}/v0/b/${bucketName}/o/${encodedPath}?alt=media&token=${token}`
+  }
+  return `https://firebasestorage.googleapis.com/v0/b/${bucketName}/o/${encodedPath}?alt=media&token=${token}`
+}
+
+// 画像をCloud Storageに復元し、ファイル名 → 新ダウンロードURL のマッピングを返すヘルパー
+const restoreImages = async (zip: AdmZip, projectId: string): Promise<Map<string, string>> => {
+  const urlMap = new Map<string, string>()
+  const imageEntries = zip.getEntries().filter(
+    (e) => e.entryName.startsWith('images/') && !e.isDirectory && e.entryName !== 'images/metadata.json'
+  )
+
+  if (imageEntries.length === 0) return urlMap
+
+  // メタデータを読み込み
+  const metadataEntry = zip.getEntries().find((e) => e.entryName === 'images/metadata.json')
+  let metadataList: Array<{
+    fileName: string
+    contentType?: string
+    createdAt?: string
+  }> = []
+  if (metadataEntry) {
+    try {
+      metadataList = JSON.parse(metadataEntry.getData().toString('utf8'))
+    } catch {
+      // メタデータのパースに失敗した場合は空のまま
+    }
+  }
+
+  const bucket = getStorageBucket()
+
+
+  for (const entry of imageEntries) {
+    const imageFileName = entry.entryName.replace('images/', '')
+    if (!imageFileName) continue
+
+    const storagePath = `images/${projectId}/${imageFileName}`
+    const file = bucket.file(storagePath)
+
+    const downloadToken = crypto.randomUUID()
+    const meta = metadataList.find((m) => m.fileName === imageFileName)
+
+    const fileBuffer = entry.getData()
+    await file.save(fileBuffer, {
+      metadata: {
+        contentType: meta?.contentType || 'image/png',
+        metadata: {
+          firebaseStorageDownloadTokens: downloadToken,
+        },
+      },
+    })
+
+    const downloadUrl = buildDownloadUrl(bucket.name, storagePath, downloadToken)
+    urlMap.set(imageFileName, downloadUrl)
+  }
+
+  return urlMap
+}
+
+// 画像URLリスト内のURLを新しいダウンロードURLに更新するヘルパー
+const updateImageUrls = (imageUrls: any[], urlMap: Map<string, string>): string[] => {
+  if (!Array.isArray(imageUrls)) return imageUrls
+  return imageUrls.map((url) => {
+    if (typeof url !== 'string') return url
+    for (const [fileName, newUrl] of urlMap.entries()) {
+      if (url.includes(encodeURIComponent(fileName)) || url.includes(fileName)) {
+        return newUrl
+      }
+    }
+    return url
+  })
+}
+
 // UUID v4 形式かどうかを判定するヘルパー
 const isUUID = (value: string): boolean => {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)
@@ -88,7 +165,12 @@ const restoreProject: RestoreProject = async (data, email) => {
     zipInstance = zip
     const entries = zip.getEntries()
     const jsonEntry = entries.find(
-      (e) => e.entryName.endsWith('.json') && !e.entryName.startsWith('snapshots/')
+      (e) =>
+        e.entryName.endsWith('.json') &&
+        !e.entryName.startsWith('snapshots/') &&
+        !e.entryName.startsWith('snapshots\\') &&
+        !e.entryName.startsWith('images/') &&
+        !e.entryName.startsWith('images\\')
     )
     if (!jsonEntry) {
       throw new Error('zipファイル内にJSONファイルが見つかりませんでした')
@@ -97,6 +179,10 @@ const restoreProject: RestoreProject = async (data, email) => {
     projectData = JSON.parse(jsonString)
   } else {
     projectData = data
+  }
+
+  if (!projectData || !projectData.project || !projectData.rows) {
+    throw new Error('復元データの形式が不正です（projectまたはrowsが見つかりません）')
   }
 
   const { project, rows, force, newId } = { ...projectData, force: data.force, newId: (data as any).newId }
@@ -292,9 +378,66 @@ const restoreProject: RestoreProject = async (data, email) => {
         console.warn('Failed to restore snapshots:', e)
       }
     }
+
+    const hasImages = zipInstance.getEntries().some(
+      (e) => e.entryName.startsWith('images/') && !e.isDirectory && e.entryName !== 'images/metadata.json'
+    )
+    if (hasImages) {
+      try {
+        const urlMap = await restoreImages(zipInstance, newProjectId)
+        if (urlMap.size > 0) {
+          // 行の画像URLを更新
+          const rows = await prisma.ganttRow.findMany({
+            where: { projectId: newProjectId },
+            select: { id: true, attribute: true },
+          })
+          for (const row of rows) {
+            const attr = row.attribute as Record<string, any> | null
+            if (attr && attr.imageUrls && Array.isArray(attr.imageUrls)) {
+              const newImageUrls = updateImageUrls(attr.imageUrls, urlMap)
+              await prisma.ganttRow.update({
+                where: { id: row.id },
+                data: {
+                  attribute: {
+                    ...attr,
+                    imageUrls: newImageUrls,
+                  },
+                  ...getUpdateCommonColumns(email),
+                },
+              })
+            }
+          }
+
+          // タスクの画像URLを更新
+          const tasks = await prisma.ganttTask.findMany({
+            where: { row: { projectId: newProjectId } },
+            select: { id: true, attribute: true },
+          })
+          for (const task of tasks) {
+            const attr = task.attribute as Record<string, any> | null
+            if (attr && attr.imageUrls && Array.isArray(attr.imageUrls)) {
+              const newImageUrls = updateImageUrls(attr.imageUrls, urlMap)
+              await prisma.ganttTask.update({
+                where: { id: task.id },
+                data: {
+                  attribute: {
+                    ...attr,
+                    imageUrls: newImageUrls,
+                  },
+                  ...getUpdateCommonColumns(email),
+                },
+              })
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to restore images:', e)
+      }
+    }
   }
 
   return newProjectId
 }
 
 export default restoreProject
+

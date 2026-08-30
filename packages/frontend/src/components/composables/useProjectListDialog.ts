@@ -333,13 +333,17 @@ export const useProjectListDialog = (
     const isZip = file.name.endsWith('.zip')
     if (isZip) {
       // zipファイルの場合はBase64に変換してバックエンドで展開
-      const arrayBuffer = await file.arrayBuffer()
-      const bytes = new Uint8Array(arrayBuffer)
-      let binary = ''
-      for (let i = 0; i < bytes.length; i++) {
-        binary += String.fromCharCode(bytes[i]!)
-      }
-      return { zipBase64: btoa(binary) }
+      const zipBase64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => {
+          const result = reader.result as string
+          const base64 = result.split(',')[1] || ''
+          resolve(base64)
+        }
+        reader.onerror = reject
+        reader.readAsDataURL(file)
+      })
+      return { zipBase64 }
     } else {
       // JSONファイルの場合は従来通りパース
       const text = await file.text()

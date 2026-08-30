@@ -1,13 +1,6 @@
 import { onSchedule } from 'firebase-functions/v2/scheduler'
-import { getApps, initializeApp } from 'firebase-admin/app'
-import { getStorage } from 'firebase-admin/storage'
 import * as functions from 'firebase-functions/v2'
-import { prisma } from './common/commonFunctions.js'
-
-// Firebase Admin SDK の初期化（まだ初期化されていない場合のみ）
-if (getApps().length === 0) {
-  initializeApp()
-}
+import { getStorageBucket, prisma } from './common/commonFunctions.js'
 
 /** クリーンアップ対象とする経過時間（ミリ秒）- 24時間 */
 const CLEANUP_AGE_MS = 24 * 60 * 60 * 1000
@@ -44,18 +37,24 @@ export const cleanupAnonymousData = onSchedule(
         .map((p) => p.id)
 
       if (projectIds.length > 0) {
-        const bucket = getStorage().bucket()
+        const bucket = getStorageBucket()
 
-        // Storageのスナップショットを削除
+        // Storageのスナップショットと画像を削除
         for (const id of projectIds) {
           try {
-            const prefix = `snapshots/${id}/`
-            const [files] = await bucket.getFiles({ prefix })
-            if (files.length > 0) {
-              await Promise.all(files.map((file) => file.delete()))
+            const snapshotPrefix = `snapshots/${id}/`
+            const [snapshotFiles] = await bucket.getFiles({ prefix: snapshotPrefix })
+            if (snapshotFiles.length > 0) {
+              await Promise.all(snapshotFiles.map((file) => file.delete()))
+            }
+
+            const imagePrefix = `images/${id}/`
+            const [imageFiles] = await bucket.getFiles({ prefix: imagePrefix })
+            if (imageFiles.length > 0) {
+              await Promise.all(imageFiles.map((file) => file.delete()))
             }
           } catch (storageErr) {
-            functions.logger.warn(`[cleanupAnonymousData] Failed to delete snapshots for project ${id}:`, storageErr)
+            functions.logger.warn(`[cleanupAnonymousData] Failed to delete storage files for project ${id}:`, storageErr)
           }
         }
 

@@ -1,4 +1,3 @@
-import { getStorage } from 'firebase-admin/storage'
 import AdmZip from 'adm-zip'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc.js'
@@ -8,7 +7,7 @@ import crypto from 'node:crypto'
 dayjs.extend(utc)
 dayjs.extend(timezone)
 import type { CreateSnapshot, ProjectAttribute } from '../types/shared.js'
-import { checkProjectPermission } from './common/commonFunctions.js'
+import { checkProjectPermission, getStorageBucket } from './common/commonFunctions.js'
 import getGanttDataJson from './getGanttDataJson.js'
 
 const createSnapshot: CreateSnapshot = async (params, email) => {
@@ -39,7 +38,7 @@ const createSnapshot: CreateSnapshot = async (params, email) => {
   const zipBuffer = zip.toBuffer()
 
   // Storageへアップロード
-  const bucket = getStorage().bucket()
+  const bucket = getStorageBucket()
   
   const timestamp = dayjs().tz('Asia/Tokyo').format('YYYYMMDD_HHmmss')
   const storagePath = `snapshots/${projectId}/${timestamp}.json.zip`
