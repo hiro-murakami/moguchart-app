@@ -9,6 +9,10 @@ const props = defineProps<{
   rowId?: number | null
   isHidden?: boolean
   addRowCount?: number
+  canIndent?: boolean
+  canOutdent?: boolean
+  isParent?: boolean
+  collapsed?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -16,8 +20,11 @@ const emit = defineEmits<{
   (e: 'edit-row'): void
   (e: 'add-row-above'): void
   (e: 'add-row-below'): void
+  (e: 'indent'): void
+  (e: 'outdent'): void
   (e: 'delete-row'): void
   (e: 'toggle-visibility'): void
+  (e: 'toggle-collapse'): void
   (e: 'add-comment'): void
   (e: 'image'): void
 }>()
@@ -51,6 +58,20 @@ const addRowBelowLabel = computed(() => {
     return `下に${count}行を追加`
   }
   return '下に行を追加'
+})
+
+const indentLabel = computed(() => {
+  if (isMultiSelected.value) {
+    return `選択した${selectedCount.value}行をインデント`
+  }
+  return 'インデント（子行にする）'
+})
+
+const outdentLabel = computed(() => {
+  if (isMultiSelected.value) {
+    return `選択した${selectedCount.value}行のインデント解除`
+  }
+  return 'インデント解除'
 })
 
 const deleteLabel = computed(() => {
@@ -87,9 +108,28 @@ const visibilityLabel = computed(() => {
         <v-list-item prepend-icon="mdi-arrow-down" :title="addRowBelowLabel" @click="emit('add-row-below')" />
         <v-divider />
         <v-list-item
+          prepend-icon="mdi-format-indent-increase"
+          :title="indentLabel"
+          :disabled="!canIndent"
+          @click="emit('indent')"
+        />
+        <v-list-item
+          prepend-icon="mdi-format-indent-decrease"
+          :title="outdentLabel"
+          :disabled="!canOutdent"
+          @click="emit('outdent')"
+        />
+        <v-divider />
+        <v-list-item
           :prepend-icon="isHidden ? 'mdi-eye' : 'mdi-eye-off'"
           :title="visibilityLabel"
           @click="emit('toggle-visibility')"
+        />
+        <v-list-item
+          v-if="isParent"
+          :prepend-icon="collapsed ? 'mdi-chevron-right' : 'mdi-chevron-down'"
+          :title="collapsed ? '配下の行を展開' : '配下の行を折りたたむ'"
+          @click="emit('toggle-collapse')"
         />
         <v-divider />
         <v-list-item prepend-icon="mdi-comment-text-outline" title="行にコメント" :disabled="isMultiSelected" @click="emit('add-comment')" />

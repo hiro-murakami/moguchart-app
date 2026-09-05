@@ -138,6 +138,8 @@ export type ProjectSettings = {
   barShadowLevel?: 'none' | 'small' | 'medium' | 'large'
   /** クリティカルパスを表示するかどうか */
   showCriticalPath?: boolean
+  /** サマリータスク（自動集計バー）を表示するかどうか */
+  showSummaryTasks?: boolean
   /** ミニマップ（全体鳥瞰）を表示するかどうか */
   showMinimap?: boolean
   /** ミニマップの幅 (px) */
@@ -275,6 +277,12 @@ export type RowAttribute = {
   markers?: MarkerAttribute[]
   /** 行ヘッダーに表示する画像のURL配列 */
   imageUrls?: string[]
+  /** 親行ID (WBS階層用。nullまたは未設定時はルート行) */
+  parentId?: number | null
+  /** 折りたたみ状態 (true: 配下の子行を折りたたむ, false: 展開) */
+  collapsed?: boolean
+  /** サマリー行（グループ行）かどうか */
+  isSummary?: boolean
 }
 
 /** タスクの追加属性 */

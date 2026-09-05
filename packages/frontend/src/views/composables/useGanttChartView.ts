@@ -104,6 +104,7 @@ export const useGanttChartView = () => {
   const barShadowLevel = ref<'none' | 'small' | 'medium' | 'large'>('medium')
   const readonlyMode = ref(false)
   const showCriticalPath = ref(false)
+  const showSummaryTasks = ref(true)
   const showMinimap = ref(true)
   const minimapWidth = ref(200)
   const minimapOpacity = ref(1)
@@ -231,6 +232,7 @@ export const useGanttChartView = () => {
       commentSidebarWidth?: number
       readonlyMode?: boolean
       showCriticalPath?: boolean
+      showSummaryTasks?: boolean
       showMinimap?: boolean
       minimapWidth?: number
       minimapOpacity?: number
@@ -307,6 +309,11 @@ export const useGanttChartView = () => {
   // クリティカルパス表示設定変更時に保存
   watch(showCriticalPath, (newValue) => {
     saveProjectSettings({ showCriticalPath: newValue })
+  })
+
+  // サマリータスク表示設定変更時に保存
+  watch(showSummaryTasks, (newValue) => {
+    saveProjectSettings({ showSummaryTasks: newValue })
   })
 
   // ミニマップ表示設定変更時に保存
@@ -427,6 +434,13 @@ export const useGanttChartView = () => {
           showCriticalPath.value = settings.showCriticalPath
         } else {
           showCriticalPath.value = false
+        }
+
+        // showSummaryTasksの復元
+        if (settings?.showSummaryTasks !== undefined) {
+          showSummaryTasks.value = settings.showSummaryTasks
+        } else {
+          showSummaryTasks.value = true
         }
 
         // showMinimapの復元
@@ -741,6 +755,13 @@ export const useGanttChartView = () => {
         maxWidth: 400,
         width: rowHeaderWidth.value,
       },
+      tree: {
+        enabled: true,
+        indentWidth: 16,
+        showToggleIcon: true,
+        showWbsCode: false,
+        autoSummary: showSummaryTasks.value,
+      },
       enableRowReordering: !currentProject.value?.attribute?.disableRowReorder,
       enableCrossRowMove: !currentProject.value?.attribute?.disableCrossRowMove,
       snapDuration: currentProject.value?.attribute?.snapDurationMinutes ?? (isHourly ? 60 : 1440),
@@ -1029,6 +1050,12 @@ export const useGanttChartView = () => {
       const convertRow = (row: GanttRow) => ({
         ...row,
         id: row.id.toString(),
+        parentId:
+          (row.attribute as RowAttribute | undefined)?.parentId != null
+            ? String((row.attribute as RowAttribute).parentId)
+            : null,
+        collapsed: (row.attribute as RowAttribute | undefined)?.collapsed ?? false,
+        isSummary: (row.attribute as RowAttribute | undefined)?.isSummary,
         tasks: row.tasks.map(formatGanttTask),
         // RowAttribute のマーカーを moguchart.GanttMarker[] に変換
         markers: ((row as any).attribute as RowAttribute | undefined)?.markers?.map(
@@ -1139,6 +1166,12 @@ export const useGanttChartView = () => {
       rows.value = data.map((row: GanttRow) => ({
         ...row,
         id: row.id.toString(),
+        parentId:
+          (row.attribute as RowAttribute | undefined)?.parentId != null
+            ? String((row.attribute as RowAttribute).parentId)
+            : null,
+        collapsed: (row.attribute as RowAttribute | undefined)?.collapsed ?? false,
+        isSummary: (row.attribute as RowAttribute | undefined)?.isSummary,
         tasks: row.tasks.map(formatGanttTask),
         // RowAttribute のマーカーを moguchart.GanttMarker[] に変換
         markers: (row.attribute as RowAttribute | undefined)?.markers?.map(
@@ -1202,6 +1235,12 @@ export const useGanttChartView = () => {
         return {
           ...row,
           id: row.id.toString(),
+          parentId:
+            (row.attribute as RowAttribute | undefined)?.parentId != null
+              ? String((row.attribute as RowAttribute).parentId)
+              : null,
+          collapsed: (row.attribute as RowAttribute | undefined)?.collapsed ?? false,
+          isSummary: (row.attribute as RowAttribute | undefined)?.isSummary,
           tasks: row.tasks.map((task: any) => {
             // タスクコメントの処理
             const taskComments = task.comments as any[] | undefined
@@ -1396,17 +1435,50 @@ export const useGanttChartView = () => {
     },
   )
 
+  /** 指定された行IDが配下に子を持つ親行（サマリー行）かどうかを判定 */
+  const isParentRow = (rowId: string | number | null | undefined): boolean => {
+    if (rowId == null) return false
+    const targetIdNum = Number(rowId)
+    return rows.value.some((r) => {
+      const pid =
+        ((r as any).attribute as RowAttribute | undefined)?.parentId ??
+        (r.parentId != null ? Number(r.parentId) : null)
+      return pid === targetIdNum
+    })
+  }
+
+  /** 指定されたタスクIDがサマリータスク（仮想タスク）かどうかを判定 */
+  const isSummaryTaskId = (taskId: string | number | null | undefined): boolean => {
+    if (taskId == null) return false
+    return String(taskId).endsWith('-summary')
+  }
+
   const handleTaskUpdate = async (e: CustomEvent<moguchart.TaskUpdateEventDetail>) => {
     if (e.detail.isDragging || e.detail.isCancel || e.detail.isOutside) {
+      return
+    }
+
+    // サマリータスク自体の更新はスキップ
+    if (isSummaryTaskId(e.detail.id)) {
       return
     }
 
     await maybeAutoSnapshot()
 
     // 複数タスク一括移動の処理
-    const selectedIds = e.detail.selectedTaskIds
+    const rawSelectedIds = e.detail.selectedTaskIds
+    const selectedIds = rawSelectedIds ? rawSelectedIds.filter((id) => !isSummaryTaskId(id)) : undefined
     const isDisableCrossRowMove = !!currentProject.value?.attribute?.disableCrossRowMove
     if (selectedIds && selectedIds.length >= 2 && e.detail.dx !== undefined) {
+      // 移動先がサマリー行（子を持つ親行）の場合はガード
+      if (e.detail.targetRowId && isParentRow(e.detail.targetRowId)) {
+        alert({
+          title: '操作不可',
+          message: 'サマリー行（グループ行）にはタスクを移動できません。子行へ移動してください。',
+        })
+        return
+      }
+
       const msPerPx = (24 * 60 * 60 * 1000) / pxPerDay.value
       const timeDiff = e.detail.dx * msPerPx
 
@@ -1483,6 +1555,19 @@ export const useGanttChartView = () => {
         taskId: String(afterDataList[0]!.id),
       })
       return
+    }
+
+    // 移動先がサマリー行（子を持つ親行）の場合はガード
+    if (e.detail.targetRowId && isParentRow(e.detail.targetRowId)) {
+      const sourceTaskIdStr = String(e.detail.id)
+      const origRow = rows.value.find((r) => r.tasks.some((t) => t.id === sourceTaskIdStr))
+      if (!origRow || String(origRow.id) !== String(e.detail.targetRowId)) {
+        alert({
+          title: '操作不可',
+          message: 'サマリー行（グループ行）にはタスクを移動できません。子行へ移動してください。',
+        })
+        return
+      }
     }
 
     const data = {
@@ -1581,6 +1666,9 @@ export const useGanttChartView = () => {
   const handleTaskProgressChange = async (e: CustomEvent<moguchart.TaskProgressChangeEventDetail>) => {
     const { task, progress, originalProgress, cancelled } = e.detail
     if (cancelled || progress === originalProgress) return
+
+    // サマリータスクは子タスクから自動計算されるため直接変更はスキップ
+    if (task.type === 'summary' || isSummaryTaskId(task.id)) return
 
     const taskIdStr = String(task.id)
     const row = rows.value.find((r) => r.tasks.some((t) => t.id === taskIdStr))
@@ -1837,6 +1925,16 @@ export const useGanttChartView = () => {
 
   const handleTaskDrop = async (e: CustomEvent<moguchart.TaskDropEventDetail>) => {
     const { task, dropDate, targetRowId } = e.detail
+
+    // サマリー行（子を持つ親行）への直接ドロップをガード
+    if (isParentRow(targetRowId)) {
+      alert({
+        title: '操作不可',
+        message: 'サマリー行（グループ行）にはタスクを直接配置できません。子行へ配置してください。',
+      })
+      return
+    }
+
     try {
       const newStart = new Date(dropDate)
       const duration = new Date(task.end).getTime() - new Date(task.start).getTime()
@@ -2030,7 +2128,26 @@ export const useGanttChartView = () => {
 
   const handleTaskDblClick = (e: CustomEvent<moguchart.TaskClickEventDetail>) => {
     if (isReadOnly.value) return
-    const taskId = String(e.detail.task.id)
+    const task = e.detail.task
+    const taskId = String(task.id)
+
+    // サマリータスクの場合は対応する親行の編集ダイアログを開く
+    if (task.type === 'summary' || isSummaryTaskId(taskId)) {
+      const rowId = Number(taskId.replace('-summary', ''))
+      const row = rows.value.find((r) => Number(r.id) === rowId)
+      if (row) {
+        const attribute = (row as any).attribute as RowAttribute | undefined
+        editingRowData.value = {
+          id: rowId,
+          name: row.name,
+          description: attribute?.description || '',
+          labels: attribute?.labels ? attribute.labels.map((l) => ({ ...l })) : [],
+        }
+        isRowEditDialogVisible.value = true
+      }
+      return
+    }
+
     startEditingTask(taskId)
   }
 
@@ -2301,6 +2418,20 @@ export const useGanttChartView = () => {
     if (currentProject.value?.attribute?.disableRowReorder) return
     await maybeAutoSnapshot()
 
+    // 移動前の親行IDのセット
+    const previousParentIds = new Set<number>()
+    for (const r of rows.value) {
+      const pid =
+        ((r as any).attribute as RowAttribute | undefined)?.parentId ??
+        ((r as any).parentId ? Number((r as any).parentId) : null)
+      if (pid != null) {
+        previousParentIds.add(pid)
+      }
+    }
+
+    let isSuccess = false
+    const newlyCreatedParentRowNames: string[] = []
+
     setIsLoading(true)
     try {
       // Undo用に並び替え前の順序を保持
@@ -2309,26 +2440,100 @@ export const useGanttChartView = () => {
         order: index + 1,
       }))
 
+      // parentId が変化した行（子行の間にドロップして兄弟化された行）を検出
+      const oldParentMap = new Map<string, number | null>()
+      const oldAttrMap = new Map<string, RowAttribute | undefined>()
+      for (const r of rows.value) {
+        oldParentMap.set(r.id, r.parentId != null ? Number(r.parentId) : null)
+        oldAttrMap.set(r.id, (r as any).attribute as RowAttribute | undefined)
+      }
+
+      const rowsToUpdate: GanttRow[] = []
+      const undoUpdates: GanttRow[] = []
+
+      for (const r of e.detail.rows) {
+        const oldParentId = oldParentMap.get(r.id) ?? null
+        const newParentId = r.parentId != null ? Number(r.parentId) : null
+        if (oldParentId !== newParentId) {
+          if (newParentId != null && !previousParentIds.has(newParentId)) {
+            const parentRow = rows.value.find((row) => Number(row.id) === newParentId)
+            if (parentRow && parentRow.tasks && parentRow.tasks.length > 0) {
+              if (!newlyCreatedParentRowNames.includes(parentRow.name)) {
+                newlyCreatedParentRowNames.push(parentRow.name)
+              }
+            }
+          }
+
+          const origAttr = oldAttrMap.get(r.id) || {}
+          const newAttr: RowAttribute = {
+            ...origAttr,
+            parentId: newParentId,
+          }
+          const restoredAttr: RowAttribute = {
+            ...origAttr,
+            parentId: oldParentId,
+          }
+          rowsToUpdate.push({
+            id: Number(r.id),
+            name: r.name,
+            order: (r as any).order ?? 0,
+            projectId: projectId.value,
+            visible: r.visible ?? true,
+            attribute: newAttr,
+            tasks: [],
+          })
+          undoUpdates.push({
+            id: Number(r.id),
+            name: r.name,
+            order: (r as any).order ?? 0,
+            projectId: projectId.value,
+            visible: r.visible ?? true,
+            attribute: restoredAttr,
+            tasks: [],
+          })
+        }
+      }
+
       const orderedRows = e.detail.rows.map((row, index) => ({
         id: Number(row.id),
         order: index + 1,
       }))
       await updateGanttRowOrder(orderedRows)
+      if (rowsToUpdate.length > 0) {
+        await upsertGanttRow(rowsToUpdate)
+      }
+
       // loadData() を呼ぶとローカルでの並べ替えと前後してちらつくため、ローカルデータを直接更新する
-      rows.value = e.detail.rows
+      rows.value = e.detail.rows.map((row) => {
+        const updated = rowsToUpdate.find((u) => String(u.id) === row.id)
+        if (updated) {
+          return {
+            ...row,
+            attribute: updated.attribute,
+          }
+        }
+        return row
+      })
       publishEditEvent('row_reorder')
 
       pushAction({
         description: '行並び替え',
         undo: async () => {
           await updateGanttRowOrder(beforeOrder)
+          if (undoUpdates.length > 0) {
+            await upsertGanttRow(undoUpdates)
+          }
           await loadData(projectId.value, { silent: true })
         },
         redo: async () => {
           await updateGanttRowOrder(orderedRows)
+          if (rowsToUpdate.length > 0) {
+            await upsertGanttRow(rowsToUpdate)
+          }
           await loadData(projectId.value, { silent: true })
         },
       })
+      isSuccess = true
     } catch (err) {
       console.error('Failed to reorder rows:', err)
       alert({
@@ -2339,6 +2544,15 @@ export const useGanttChartView = () => {
       await loadData(projectId.value, { silent: true })
     } finally {
       setIsLoading(false)
+    }
+
+    if (isSuccess && newlyCreatedParentRowNames.length > 0) {
+      for (const parentName of newlyCreatedParentRowNames) {
+        await alert({
+          title: 'サマリータスクについて',
+          message: `${parentName}にタスクが存在しているのでサマリータスクが表示されません。表示したい場合はタスクを削除してください`,
+        })
+      }
     }
   }
 
@@ -2554,12 +2768,7 @@ export const useGanttChartView = () => {
     isRowEditDialogVisible.value = true
   }
 
-  const saveRow = async (data: {
-    id: number
-    name: string
-    description?: string
-    labels?: import('@functions/types/shared').Label[]
-  }) => {
+  const saveRow = async (data: EditingRowData) => {
     await maybeAutoSnapshot()
 
     const row = rows.value.find((r) => Number(r.id) === data.id)
@@ -2570,17 +2779,19 @@ export const useGanttChartView = () => {
     const beforeDescription = beforeAttr?.description || ''
     const beforeLabels = JSON.stringify(beforeAttr?.labels || [])
 
+    const newAttr: RowAttribute = {
+      ...((row as any).attribute || {}),
+      description: data.description || undefined,
+      labels: data.labels && data.labels.length > 0 ? data.labels : undefined,
+    }
+
     await upsertGanttRow({
       id: data.id,
       name: data.name,
       order: (row as any).order ?? 0,
       projectId: projectId.value,
       visible: row.visible || true,
-      attribute: {
-        ...((row as any).attribute || {}),
-        description: data.description || undefined,
-        labels: data.labels && data.labels.length > 0 ? data.labels : undefined,
-      },
+      attribute: newAttr,
       tasks: [],
     })
 
@@ -2614,11 +2825,7 @@ export const useGanttChartView = () => {
             order: (row as any).order ?? 0,
             projectId: projectId.value,
             visible: row.visible || true,
-            attribute: {
-              ...((row as any).attribute || {}),
-              description: data.description || undefined,
-              labels: data.labels && data.labels.length > 0 ? data.labels : undefined,
-            },
+            attribute: newAttr,
             tasks: [],
           })
           await loadData(projectId.value, { silent: true })
@@ -2696,6 +2903,8 @@ export const useGanttChartView = () => {
     y: 0,
     rowId: null as number | null,
     isHidden: false,
+    isParent: false,
+    collapsed: false,
   })
 
   // --- タスクコンテキストメニュー関連 ---
@@ -2712,11 +2921,31 @@ export const useGanttChartView = () => {
 
     if (isReadOnly.value) return
 
+    const taskId = String(task.id)
+
+    // サマリータスクの場合は親行のコンテキストメニューを開く
+    if (task.type === 'summary' || isSummaryTaskId(taskId)) {
+      const rowId = Number(taskId.replace('-summary', ''))
+      const row = rows.value.find((r) => Number(r.id) === rowId)
+      if (row) {
+        contextMenu.value = {
+          visible: true,
+          x: event.clientX,
+          y: event.clientY,
+          rowId,
+          isHidden: row.visible === false,
+          isParent: true,
+          collapsed: row.collapsed ?? false,
+        }
+      }
+      return
+    }
+
     taskContextMenu.value = {
       visible: true,
       x: event.clientX,
       y: event.clientY,
-      taskId: String(task.id),
+      taskId,
     }
   }
 
@@ -2913,7 +3142,10 @@ export const useGanttChartView = () => {
    */
   const handleTaskDelete = async (e: CustomEvent<moguchart.TaskDeleteEventDetail>) => {
     if (isReadOnly.value) return
-    await confirmAndDeleteTasks(e.detail.taskIds)
+    // サマリータスク（仮想タスク）は削除対象から除外
+    const validIds = e.detail.taskIds.filter((id) => !isSummaryTaskId(id))
+    if (validIds.length === 0) return
+    await confirmAndDeleteTasks(validIds)
   }
 
   // --- コメントダイアログ関連 ---
@@ -3062,17 +3294,24 @@ export const useGanttChartView = () => {
     const { row, event } = e.detail
     if (!row) return
 
+    const rowIdNum = Number(row.id)
+    const isParent = isParentRow(rowIdNum)
+    const targetRow = rows.value.find((r) => Number(r.id) === rowIdNum)
+
     contextMenu.value = {
       visible: true,
       x: event.clientX,
       y: event.clientY,
-      rowId: Number(row.id),
+      rowId: rowIdNum,
       isHidden: !(row.visible ?? true),
+      isParent,
+      collapsed: targetRow?.collapsed ?? false,
     }
   }
 
   const closeContextMenu = () => {
     contextMenu.value.visible = false
+    contextMenu.value.rowId = null
   }
 
   const getSelectedRowCount = (): number => {
@@ -3214,6 +3453,381 @@ export const useGanttChartView = () => {
         message: '行の表示切り替えに失敗しました。',
       })
     }
+  }
+
+  // --- WBS / 階層ツリー関連 ---
+
+  /** 操作対象の行IDリストを取得する（コンテキストメニュー表示中はその対象行、それ以外は選択行） */
+  const getWbsTargetRowIds = (): string[] => {
+    // コンテキストメニューが表示中の場合のみ、コンテキストメニューの対象行を優先
+    if (contextMenu.value.visible && contextMenu.value.rowId !== null) {
+      const targetRowIdStr = String(contextMenu.value.rowId)
+      if (selectedRowIds.value.includes(targetRowIdStr) && selectedRowIds.value.length > 1) {
+        // 連続しているかチェック
+        const selectedIndices = selectedRowIds.value
+          .map((id) => rows.value.findIndex((r) => String(r.id) === String(id)))
+          .filter((i) => i !== -1)
+          .sort((a, b) => a - b)
+        const isContiguous = selectedIndices.every((val, i) => i === 0 || val === selectedIndices[i - 1]! + 1)
+        if (isContiguous) {
+          return selectedIndices.map((i) => String(rows.value[i]!.id))
+        }
+      }
+      return [targetRowIdStr]
+    }
+
+    // コンテキストメニューが開いていない場合（ツールバーやショートカットから）
+    if (selectedRowIds.value.length > 0) {
+      const selectedIndices = selectedRowIds.value
+        .map((id) => rows.value.findIndex((r) => String(r.id) === String(id)))
+        .filter((i) => i !== -1)
+        .sort((a, b) => a - b)
+      const isContiguous = selectedIndices.every((val, i) => i === 0 || val === selectedIndices[i - 1]! + 1)
+      if (isContiguous) {
+        return selectedIndices.map((i) => String(rows.value[i]!.id))
+      }
+    }
+    return []
+  }
+
+  /** インデント可能かどうか */
+  const canIndent = computed<boolean>(() => {
+    if (isReadOnly.value) return false
+    const targetIds = getWbsTargetRowIds()
+    if (targetIds.length === 0) return false
+
+    const firstIndex = rows.value.findIndex((r) => String(r.id) === targetIds[0])
+    // 最上部の行（インデックス0）は親にできる行がないためインデント不可
+    if (firstIndex <= 0) return false
+
+    const prevRow = rows.value[firstIndex - 1]
+    if (!prevRow) return false
+
+    return true
+  })
+
+  /** インデント解除（アウトデント）可能かどうか */
+  const canOutdent = computed<boolean>(() => {
+    if (isReadOnly.value) return false
+    const targetIds = getWbsTargetRowIds()
+    if (targetIds.length === 0) return false
+
+    // 選択された行のいずれかが親を持っている（parentId != null）なら解除可能
+    return targetIds.some((id) => {
+      const row = rows.value.find((r) => String(r.id) === id)
+      const parentId =
+        ((row as any)?.attribute as RowAttribute | undefined)?.parentId ??
+        ((row as any)?.parentId ? Number((row as any).parentId) : null)
+      return parentId != null
+    })
+  })
+
+  /** 選択行をインデントする（直前の行の子にする） */
+  const handleIndentRows = async () => {
+    if (!canIndent.value || isReadOnly.value) return
+    const targetIds = getWbsTargetRowIds()
+    if (targetIds.length === 0) return
+
+    const firstIndex = rows.value.findIndex((r) => String(r.id) === targetIds[0])
+    if (firstIndex <= 0) return
+    const prevRow = rows.value[firstIndex - 1]
+    if (!prevRow) return
+    const newParentId = Number(prevRow.id)
+
+    // 新規で親行が誕生するかどうかをチェック（インデント前に prevRow を親に持つ行が存在しないか）
+    const wasParent = rows.value.some((r) => {
+      const pid =
+        ((r as any).attribute as RowAttribute | undefined)?.parentId ??
+        ((r as any).parentId ? Number((r as any).parentId) : null)
+      return pid === newParentId
+    })
+    const shouldWarnSummary = !wasParent && (prevRow.tasks && prevRow.tasks.length > 0)
+    const warnRowName = prevRow.name
+
+    await maybeAutoSnapshot()
+    setIsLoading(true)
+
+    let isSuccess = false
+    try {
+      const beforeState = rows.value.map((r) => ({
+        id: Number(r.id),
+        parentId:
+          ((r as any).attribute as RowAttribute | undefined)?.parentId ??
+          ((r as any).parentId ? Number((r as any).parentId) : null),
+      }))
+
+      const rowsToUpdate: GanttRow[] = []
+      rows.value = rows.value.map((row) => {
+        if (targetIds.includes(String(row.id))) {
+          const currentAttr = ((row as any).attribute as RowAttribute | undefined) || {}
+          const newAttr: RowAttribute = { ...currentAttr, parentId: newParentId }
+          rowsToUpdate.push({
+            id: Number(row.id),
+            name: row.name,
+            order: (row as any).order ?? 0,
+            projectId: projectId.value,
+            visible: row.visible ?? true,
+            attribute: newAttr,
+            tasks: [],
+          })
+          return {
+            ...row,
+            parentId: String(newParentId),
+            attribute: newAttr,
+          }
+        }
+        return row
+      })
+
+      await upsertGanttRow(rowsToUpdate)
+      closeContextMenu()
+      publishEditEvent('row_upsert', { targetName: prevRow.name })
+
+      pushAction({
+        description: '行のインデント',
+        undo: async () => {
+          const undoUpdates: GanttRow[] = []
+          for (const b of beforeState) {
+            if (targetIds.includes(String(b.id))) {
+              const r = rows.value.find((row) => Number(row.id) === b.id)
+              if (r) {
+                const currentAttr = ((r as any).attribute as RowAttribute | undefined) || {}
+                const restoredAttr: RowAttribute = { ...currentAttr, parentId: b.parentId }
+                undoUpdates.push({
+                  id: b.id,
+                  name: r.name,
+                  order: (r as any).order ?? 0,
+                  projectId: projectId.value,
+                  visible: r.visible ?? true,
+                  attribute: restoredAttr,
+                  tasks: [],
+                })
+              }
+            }
+          }
+          await upsertGanttRow(undoUpdates)
+          await loadData(projectId.value, { silent: true })
+        },
+        redo: async () => {
+          await upsertGanttRow(rowsToUpdate)
+          await loadData(projectId.value, { silent: true })
+        },
+      })
+      isSuccess = true
+    } catch (err) {
+      console.error('Failed to indent rows:', err)
+      alert({
+        title: 'エラー',
+        message: '行のインデントに失敗しました。',
+      })
+      await loadData(projectId.value, { silent: true })
+    } finally {
+      setIsLoading(false)
+    }
+
+    if (isSuccess && shouldWarnSummary) {
+      await alert({
+        title: 'サマリータスクについて',
+        message: `${warnRowName}にタスクが存在しているのでサマリータスクが表示されません。表示したい場合はタスクを削除してください`,
+      })
+    }
+  }
+
+  /** 選択行のインデントを解除する（レベルを1段上げる） */
+  const handleOutdentRows = async () => {
+    if (!canOutdent.value || isReadOnly.value) return
+    const targetIds = getWbsTargetRowIds()
+    if (targetIds.length === 0) return
+
+    await maybeAutoSnapshot()
+    setIsLoading(true)
+
+    try {
+      const beforeState = rows.value.map((r) => ({
+        id: Number(r.id),
+        parentId:
+          ((r as any).attribute as RowAttribute | undefined)?.parentId ??
+          ((r as any).parentId ? Number((r as any).parentId) : null),
+      }))
+
+      const rowsToUpdate: GanttRow[] = []
+      rows.value = rows.value.map((row) => {
+        if (targetIds.includes(String(row.id))) {
+          const currentParentId =
+            ((row as any).attribute as RowAttribute | undefined)?.parentId ??
+            ((row as any).parentId ? Number((row as any).parentId) : null)
+
+          if (currentParentId != null) {
+            // 親行を探す
+            const parentRow = rows.value.find((r) => Number(r.id) === currentParentId)
+            // 親の親IDを新しい親にする（親がルートなら null）
+            const newParentId = parentRow
+              ? (((parentRow as any).attribute as RowAttribute | undefined)?.parentId ??
+                 ((parentRow as any).parentId ? Number((parentRow as any).parentId) : null))
+              : null
+
+            const currentAttr = ((row as any).attribute as RowAttribute | undefined) || {}
+            const newAttr: RowAttribute = { ...currentAttr, parentId: newParentId }
+            rowsToUpdate.push({
+              id: Number(row.id),
+              name: row.name,
+              order: (row as any).order ?? 0,
+              projectId: projectId.value,
+              visible: row.visible ?? true,
+              attribute: newAttr,
+              tasks: [],
+            })
+            return {
+              ...row,
+              parentId: newParentId != null ? String(newParentId) : null,
+              attribute: newAttr,
+            }
+          }
+        }
+        return row
+      })
+
+      if (rowsToUpdate.length > 0) {
+        await upsertGanttRow(rowsToUpdate)
+        closeContextMenu()
+        publishEditEvent('row_upsert')
+
+        pushAction({
+          description: '行のインデント解除',
+          undo: async () => {
+            const undoUpdates: GanttRow[] = []
+            for (const b of beforeState) {
+              if (targetIds.includes(String(b.id))) {
+                const r = rows.value.find((row) => Number(row.id) === b.id)
+                if (r) {
+                  const currentAttr = ((r as any).attribute as RowAttribute | undefined) || {}
+                  const restoredAttr: RowAttribute = { ...currentAttr, parentId: b.parentId }
+                  undoUpdates.push({
+                    id: b.id,
+                    name: r.name,
+                    order: (r as any).order ?? 0,
+                    projectId: projectId.value,
+                    visible: r.visible ?? true,
+                    attribute: restoredAttr,
+                    tasks: [],
+                  })
+                }
+              }
+            }
+            await upsertGanttRow(undoUpdates)
+            await loadData(projectId.value, { silent: true })
+          },
+          redo: async () => {
+            await upsertGanttRow(rowsToUpdate)
+            await loadData(projectId.value, { silent: true })
+          },
+        })
+      }
+    } catch (err) {
+      console.error('Failed to outdent rows:', err)
+      alert({
+        title: 'エラー',
+        message: 'インデント解除に失敗しました。',
+      })
+      await loadData(projectId.value, { silent: true })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  /** 行の折りたたみ/展開の切り替えハンドラ */
+  const handleRowToggleCollapse = async (e: CustomEvent<moguchart.RowToggleCollapseEventDetail>) => {
+    const { rowId, collapsed } = e.detail
+    const targetRow = rows.value.find((r) => String(r.id) === String(rowId))
+    if (!targetRow) return
+
+    // ローカル状態を即座に更新
+    const currentAttr = ((targetRow as any).attribute as RowAttribute | undefined) || {}
+    const newAttr: RowAttribute = { ...currentAttr, collapsed }
+
+    rows.value = rows.value.map((r) => {
+      if (String(r.id) === String(rowId)) {
+        return {
+          ...r,
+          collapsed,
+          attribute: newAttr,
+        }
+      }
+      return r
+    })
+
+    // 読み取り専用でなければ非同期でサーバーに保存
+    if (!isReadOnly.value) {
+      try {
+        await upsertGanttRow({
+          id: Number(targetRow.id),
+          name: targetRow.name,
+          order: (targetRow as any).order ?? 0,
+          projectId: projectId.value,
+          visible: targetRow.visible ?? true,
+          attribute: newAttr,
+          tasks: [],
+        })
+      } catch (err) {
+        console.error('Failed to save collapsed state:', err)
+      }
+    }
+  }
+
+  /** コンテキストメニューから配下行の折りたたみ/展開を切り替える */
+  const handleToggleCollapseFromContextMenu = async () => {
+    const rowId = contextMenu.value.rowId
+    if (rowId === null) return
+    const targetRow = rows.value.find((r) => Number(r.id) === rowId)
+    if (!targetRow) return
+    const newCollapsed = !(targetRow.collapsed ?? false)
+    closeContextMenu()
+    await handleRowToggleCollapse(
+      new CustomEvent('row-toggle-collapse', {
+        detail: { rowId: String(rowId), collapsed: newCollapsed, row: targetRow as any },
+      }),
+    )
+  }
+
+  /** 全親行を一括折りたたみ */
+  const handleCollapseAll = async () => {
+    const parentIds = new Set<string>()
+    for (const r of rows.value) {
+      const pid =
+        ((r as any).attribute as RowAttribute | undefined)?.parentId ??
+        ((r as any).parentId ? Number((r as any).parentId) : null)
+      if (pid != null) {
+        parentIds.add(String(pid))
+      }
+    }
+    if (parentIds.size === 0) return
+
+    rows.value = rows.value.map((r) => {
+      if (parentIds.has(String(r.id))) {
+        const currentAttr = ((r as any).attribute as RowAttribute | undefined) || {}
+        return {
+          ...r,
+          collapsed: true,
+          attribute: { ...currentAttr, collapsed: true },
+        }
+      }
+      return r
+    })
+  }
+
+  /** 全行を一括展開 */
+  const handleExpandAll = async () => {
+    rows.value = rows.value.map((r) => {
+      if (r.collapsed) {
+        const currentAttr = ((r as any).attribute as RowAttribute | undefined) || {}
+        return {
+          ...r,
+          collapsed: false,
+          attribute: { ...currentAttr, collapsed: false },
+        }
+      }
+      return r
+    })
   }
 
   // --- 行削除関連 ---
@@ -4090,6 +4704,7 @@ export const useGanttChartView = () => {
     showHiddenRows,
     showCurrentTimeLine,
     showCriticalPath,
+    showSummaryTasks,
     showMinimap,
     minimapWidth,
     minimapOpacity,
@@ -4223,5 +4838,15 @@ export const useGanttChartView = () => {
     handleImageFromRowContextMenu,
     handleSaveImages,
     authorityHistoryUsers,
+
+    // WBS / 階層ツリー関連
+    canIndent,
+    canOutdent,
+    handleIndentRows,
+    handleOutdentRows,
+    handleRowToggleCollapse,
+    handleToggleCollapseFromContextMenu,
+    handleCollapseAll,
+    handleExpandAll,
   }
 }

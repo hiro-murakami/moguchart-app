@@ -10,6 +10,7 @@ defineProps<{
   showHiddenRows: boolean
   showCurrentTimeLine: boolean
   showCriticalPath: boolean
+  showSummaryTasks: boolean
   showMinimap: boolean
   minimapOpacity?: number
   barShadowLevel: 'none' | 'small' | 'medium' | 'large'
@@ -26,6 +27,7 @@ const emit = defineEmits<{
   'update:showHiddenRows': [value: boolean]
   'update:showCurrentTimeLine': [value: boolean]
   'update:showCriticalPath': [value: boolean]
+  'update:showSummaryTasks': [value: boolean]
   'update:showMinimap': [value: boolean]
   'update:minimapOpacity': [value: number]
   'update:barShadowLevel': [value: 'none' | 'small' | 'medium' | 'large']
@@ -125,6 +127,15 @@ const currentTheme = computed({
         density="compact"
         class="mb-2"
         @update:model-value="emit('update:showCriticalPath', $event as boolean)"
+      />
+      <v-switch
+        :model-value="showSummaryTasks"
+        label="サマリータスクを表示"
+        color="primary"
+        hide-details
+        density="compact"
+        class="mb-2"
+        @update:model-value="emit('update:showSummaryTasks', $event as boolean)"
       />
       <v-switch
         :model-value="showMinimap"

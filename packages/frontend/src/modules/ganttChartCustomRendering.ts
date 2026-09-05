@@ -281,6 +281,46 @@ const openImageLightbox = (srcs: string[], initialIndex = 0) => {
 }
 
 export const barContent = (task: moguchart.GanttTask) => {
+  // サマリータスクの場合（ブラケット形状に最適化した専用レイアウト）
+  if (task.type === 'summary') {
+    const summaryContainer = document.createElement('div')
+    summaryContainer.style.display = 'flex'
+    summaryContainer.style.alignItems = 'center'
+    summaryContainer.style.justifyContent = 'flex-start'
+    summaryContainer.style.width = '100%'
+    summaryContainer.style.height = '60%'
+    summaryContainer.style.padding = '0 8px'
+    summaryContainer.style.boxSizing = 'border-box'
+    summaryContainer.style.gap = '6px'
+    summaryContainer.style.whiteSpace = 'nowrap'
+    summaryContainer.style.overflow = 'hidden'
+    summaryContainer.style.pointerEvents = 'none'
+    summaryContainer.style.userSelect = 'none'
+
+    const iconSpan = document.createElement('span')
+    iconSpan.style.fontSize = '10px'
+    iconSpan.style.opacity = '0.9'
+    iconSpan.style.filter = 'drop-shadow(1px 1px 1px rgba(0,0,0,0.5))'
+    iconSpan.textContent = '📁'
+    summaryContainer.appendChild(iconSpan)
+
+    const nameSpan = document.createElement('span')
+    nameSpan.style.cssText =
+      'font-weight: 700; font-size: 11px; text-shadow: 1px 1px 2px rgba(0,0,0,0.6); color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;'
+    nameSpan.textContent = task.name || ''
+    summaryContainer.appendChild(nameSpan)
+
+    if (task.progress !== undefined && !Number.isNaN(task.progress)) {
+      const progressBadge = document.createElement('span')
+      progressBadge.style.cssText =
+        'font-size: 10px; font-weight: 700; background: rgba(0,0,0,0.4); color: #ffffff; padding: 0px 5px; border-radius: 4px; text-shadow: 1px 1px 1px rgba(0,0,0,0.5); flex-shrink: 0; border: 1px solid rgba(255,255,255,0.2);'
+      progressBadge.textContent = `${Math.round(task.progress)}%`
+      summaryContainer.appendChild(progressBadge)
+    }
+
+    return summaryContainer
+  }
+
   const taskWithAttr = task as any
   const labels = taskWithAttr.attribute?.labels as { name: string; color: string }[] | undefined
   const description = taskWithAttr.attribute?.description as string | undefined
@@ -604,10 +644,11 @@ export const barContent = (task: moguchart.GanttTask) => {
 }
 
 export const tooltip = (task: moguchart.GanttTask, isHourly?: boolean) => {
+  const isSummary = task.type === 'summary'
   const taskWithAttr = task as any
   const labels = taskWithAttr.attribute?.labels as { name: string; color: string }[] | undefined
   const description = taskWithAttr.attribute?.description as string | undefined
-  const progress = taskWithAttr.attribute?.progress as number | undefined
+  const progress = isSummary ? task.progress : (taskWithAttr.attribute?.progress as number | undefined)
 
   const container = document.createElement('div')
   container.style.display = 'flex'
@@ -639,7 +680,11 @@ export const tooltip = (task: moguchart.GanttTask, isHourly?: boolean) => {
   nameSpan.style.fontWeight = 'bold'
   nameSpan.style.fontSize = '14px'
   nameSpan.style.marginBottom = '4px'
-  nameSpan.textContent = task.name || ''
+  if (isSummary) {
+    nameSpan.innerHTML = `<span style="opacity: 0.85; font-size: 11px; display: flex; align-items: center; gap: 4px; margin-bottom: 2px;">📁 <span>サマリータスク（配下集計）</span></span>${task.name || ''}`
+  } else {
+    nameSpan.textContent = task.name || ''
+  }
   container.appendChild(nameSpan)
 
   // ラベル
