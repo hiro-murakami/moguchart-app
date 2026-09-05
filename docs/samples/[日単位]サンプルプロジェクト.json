@@ -1,0 +1,1077 @@
+{
+  "version": "0.12.0",
+  "project": {
+    "id": "3f333df6-90a4-4fda-8dd3-9485d27cee36",
+    "name": "[日単位]サンプルプロジェクト",
+    "start": "2025-12-01T00:00:00",
+    "end": "2026-04-30T00:00:00",
+    "attribute": {
+      "labels": [
+        {
+          "name": "高優先",
+          "color": "#e53935"
+        },
+        {
+          "name": "中優先",
+          "color": "#fb8c00"
+        },
+        {
+          "name": "低優先",
+          "color": "#43a047"
+        },
+        {
+          "name": "レビュー待ち",
+          "color": "#8e24aa"
+        },
+        {
+          "name": "ブロック中",
+          "color": "#d32f2f"
+        },
+        {
+          "name": "外部依存",
+          "color": "#1e88e5"
+        }
+      ],
+      "milestones": [
+        {
+          "name": "要件定義完了",
+          "color": "#1e88e5",
+          "datetime": "2025-12-19T10:00:00+09:00"
+        },
+        {
+          "name": "デザインFix",
+          "color": "#8e24aa",
+          "datetime": "2026-01-09T10:00:00+09:00"
+        },
+        {
+          "name": "開発完了",
+          "color": "#43a047",
+          "datetime": "2026-03-06T10:00:00+09:00"
+        },
+        {
+          "name": "リリース",
+          "color": "#e53935",
+          "datetime": "2026-04-20T10:00:00+09:00"
+        }
+      ],
+      "description": "サマリータスク（WBS階層・自動集計バー）表示およびカラーパレット・ラベル・進捗管理の各パターンを網羅したデモプロジェクトです。",
+      "granularity": "daily",
+      "enableProgress": true,
+      "colorPalettes": [
+        {
+          "name": "Black",
+          "color": "#ffffff",
+          "backgroundColor": "#000000"
+        },
+        {
+          "name": "Red",
+          "color": "#ffffff",
+          "backgroundColor": "#ef5350"
+        },
+        {
+          "name": "Pink",
+          "color": "#ffffff",
+          "backgroundColor": "#ec407a"
+        },
+        {
+          "name": "Purple",
+          "color": "#ffffff",
+          "backgroundColor": "#ab47bc"
+        },
+        {
+          "name": "Deep Purple",
+          "color": "#ffffff",
+          "backgroundColor": "#7e57c2"
+        },
+        {
+          "name": "Indigo",
+          "color": "#ffffff",
+          "backgroundColor": "#5c6bc0"
+        },
+        {
+          "name": "Blue",
+          "color": "#ffffff",
+          "backgroundColor": "#42a5f5"
+        },
+        {
+          "name": "Light Blue",
+          "color": "#000000",
+          "backgroundColor": "#29b6f6"
+        },
+        {
+          "name": "Cyan",
+          "color": "#000000",
+          "backgroundColor": "#26c6da"
+        },
+        {
+          "name": "Teal",
+          "color": "#ffffff",
+          "backgroundColor": "#26a69a"
+        },
+        {
+          "name": "Green",
+          "color": "#000000",
+          "backgroundColor": "#66bb6a"
+        },
+        {
+          "name": "Light Green",
+          "color": "#000000",
+          "backgroundColor": "#9ccc65"
+        },
+        {
+          "name": "Lime",
+          "color": "#000000",
+          "backgroundColor": "#d4e157"
+        },
+        {
+          "name": "Yellow",
+          "color": "#000000",
+          "backgroundColor": "#ffee58"
+        },
+        {
+          "name": "Orange",
+          "color": "#000000",
+          "backgroundColor": "#ffa726"
+        },
+        {
+          "name": "Brown",
+          "color": "#ffffff",
+          "backgroundColor": "#8d6e63"
+        },
+        {
+          "name": "Pending",
+          "color": "#ffffff",
+          "pattern": {
+            "type": "diagonal-stripe",
+            "color": "#4a5568"
+          },
+          "backgroundColor": "#718096"
+        },
+        {
+          "name": "On Hold",
+          "color": "#ffffff",
+          "pattern": {
+            "type": "diagonal-stripe",
+            "color": "#542c0e"
+          },
+          "backgroundColor": "#744210"
+        }
+      ],
+      "newTaskTemplates": [
+        {
+          "name": "通常タスク",
+          "duration": 5,
+          "attribute": {
+            "colorPalette": {
+              "name": "Blue",
+              "color": "#ffffff",
+              "backgroundColor": "#42a5f5"
+            }
+          }
+        },
+        {
+          "name": "レビュー",
+          "duration": 2,
+          "attribute": {
+            "labels": [
+              {
+                "name": "レビュー待ち",
+                "color": "#8e24aa"
+              }
+            ],
+            "colorPalette": {
+              "name": "Purple",
+              "color": "#ffffff",
+              "backgroundColor": "#ab47bc"
+            }
+          }
+        },
+        {
+          "name": "マイルストーン",
+          "duration": 1,
+          "attribute": {
+            "labels": [
+              {
+                "name": "高優先",
+                "color": "#e53935"
+              }
+            ],
+            "colorPalette": {
+              "name": "Red",
+              "color": "#ffffff",
+              "backgroundColor": "#ef5350"
+            }
+          }
+        },
+        {
+          "name": "長期タスク",
+          "duration": 14,
+          "attribute": {
+            "colorPalette": {
+              "name": "Green",
+              "color": "#000000",
+              "backgroundColor": "#66bb6a"
+            }
+          }
+        },
+        {
+          "name": "調査・検討",
+          "duration": 3,
+          "attribute": {
+            "colorPalette": {
+              "name": "Teal",
+              "color": "#ffffff",
+              "backgroundColor": "#26a69a"
+            }
+          }
+        }
+      ]
+    },
+    "public": true,
+    "authority": {
+      "owners": [
+        "h.murakami@esm.co.jp"
+      ]
+    },
+    "createdBy": "system",
+    "createdAt": "2026-05-06T00:19:46.559Z",
+    "updatedBy": "system",
+    "updatedAt": "2026-05-06T00:19:46.559Z",
+    "comments": []
+  },
+  "rows": [
+    {
+      "id": 10,
+      "projectId": "3f333df6-90a4-4fda-8dd3-9485d27cee36",
+      "name": "📁 企画・要件定義フェーズ",
+      "order": 1,
+      "visible": true,
+      "attribute": {
+        "isSummary": true,
+        "collapsed": false,
+        "labels": [
+          {
+            "name": "高優先",
+            "color": "#e53935"
+          }
+        ],
+        "description": "要件定義とUI/UXデザインを取りまとめるフェーズサマリーです。"
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": []
+    },
+    {
+      "id": 1,
+      "projectId": "3f333df6-90a4-4fda-8dd3-9485d27cee36",
+      "name": "要件定義",
+      "order": 2,
+      "visible": true,
+      "attribute": {
+        "parentId": 10,
+        "labels": [
+          {
+            "name": "高優先",
+            "color": "#e53935"
+          }
+        ],
+        "description": "プロジェクトの目的や機能要件を定義するフェーズです。"
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
+        {
+          "id": 4110,
+          "rowId": 1,
+          "name": "ヒアリング・要望整理",
+          "start": "2025-12-01T00:00:00",
+          "end": "2025-12-05T00:00:00",
+          "attribute": {
+            "progress": 100,
+            "labels": [
+              {
+                "name": "高優先",
+                "color": "#e53935"
+              }
+            ],
+            "description": "ステークホルダーへのヒアリングを実施し、要望を整理する。",
+            "colorPalette": {
+              "name": "Blue",
+              "color": "#ffffff",
+              "backgroundColor": "#42a5f5"
+            }
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:46.708Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:46.708Z",
+          "comments": []
+        },
+        {
+          "id": 4111,
+          "rowId": 1,
+          "name": "要件定義書作成",
+          "start": "2025-12-08T00:00:00",
+          "end": "2025-12-16T00:00:00",
+          "attribute": {
+            "progress": 100,
+            "labels": [
+              {
+                "name": "中優先",
+                "color": "#fb8c00"
+              }
+            ],
+            "colorPalette": {
+              "name": "Blue",
+              "color": "#ffffff",
+              "backgroundColor": "#42a5f5"
+            },
+            "dependencies": [
+              "4110"
+            ]
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:46.801Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:46.801Z",
+          "comments": []
+        },
+        {
+          "id": 4112,
+          "rowId": 1,
+          "name": "要件レビュー",
+          "start": "2025-12-17T00:00:00",
+          "end": "2025-12-19T00:00:00",
+          "attribute": {
+            "progress": 100,
+            "labels": [
+              {
+                "name": "レビュー待ち",
+                "color": "#8e24aa"
+              }
+            ],
+            "colorPalette": {
+              "name": "Purple",
+              "color": "#ffffff",
+              "backgroundColor": "#ab47bc"
+            },
+            "dependencies": [
+              "4111"
+            ]
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:46.890Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:46.890Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "projectId": "3f333df6-90a4-4fda-8dd3-9485d27cee36",
+      "name": "UI/UXデザイン",
+      "order": 3,
+      "visible": true,
+      "attribute": {
+        "parentId": 10,
+        "labels": [
+          {
+            "name": "外部依存",
+            "color": "#1e88e5"
+          }
+        ],
+        "description": "ユーザーインターフェースと体験を設計するフェーズです。"
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
+        {
+          "id": 4113,
+          "rowId": 2,
+          "name": "ワイヤーフレーム作成",
+          "start": "2025-12-15T00:00:00",
+          "end": "2025-12-26T00:00:00",
+          "attribute": {
+            "progress": 100,
+            "description": "主要画面のワイヤーフレームを作成する。",
+            "colorPalette": {
+              "name": "Teal",
+              "color": "#ffffff",
+              "backgroundColor": "#26a69a"
+            },
+            "dependencies": [
+              "4112"
+            ]
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:47.003Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:47.003Z",
+          "comments": []
+        },
+        {
+          "id": 4114,
+          "rowId": 2,
+          "name": "デザインモックアップ",
+          "start": "2025-12-29T00:00:00",
+          "end": "2026-01-09T00:00:00",
+          "attribute": {
+            "progress": 100,
+            "labels": [
+              {
+                "name": "外部依存",
+                "color": "#1e88e5"
+              }
+            ],
+            "colorPalette": {
+              "name": "Teal",
+              "color": "#ffffff",
+              "backgroundColor": "#26a69a"
+            },
+            "dependencies": [
+              "4113"
+            ]
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:47.099Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:47.099Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "projectId": "3f333df6-90a4-4fda-8dd3-9485d27cee36",
+      "name": "📁 設計・開発フェーズ",
+      "order": 4,
+      "visible": true,
+      "attribute": {
+        "isSummary": true,
+        "collapsed": false,
+        "labels": [
+          {
+            "name": "中優先",
+            "color": "#fb8c00"
+          }
+        ],
+        "description": "アーキテクチャ設計からフロントエンド・バックエンド・インフラ構築を取りまとめるフェーズサマリーです。"
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": []
+    },
+    {
+      "id": 3,
+      "projectId": "3f333df6-90a4-4fda-8dd3-9485d27cee36",
+      "name": "基本設計",
+      "order": 5,
+      "visible": true,
+      "attribute": {
+        "parentId": 20,
+        "labels": [
+          {
+            "name": "高優先",
+            "color": "#e53935"
+          }
+        ],
+        "description": "システムの構成やデータ構造を決定するフェーズです。"
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
+        {
+          "id": 4115,
+          "rowId": 3,
+          "name": "アーキテクチャ設計",
+          "start": "2026-01-05T00:00:00",
+          "end": "2026-01-16T00:00:00",
+          "attribute": {
+            "progress": 100,
+            "labels": [
+              {
+                "name": "高優先",
+                "color": "#e53935"
+              }
+            ],
+            "description": "システム全体のアーキテクチャを設計し、技術選定を行う。",
+            "colorPalette": {
+              "name": "Green",
+              "color": "#000000",
+              "backgroundColor": "#66bb6a"
+            },
+            "dependencies": [
+              "4112"
+            ]
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:47.195Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:47.195Z",
+          "comments": []
+        },
+        {
+          "id": 4116,
+          "rowId": 3,
+          "name": "DB設計",
+          "start": "2026-01-12T00:00:00",
+          "end": "2026-01-23T00:00:00",
+          "attribute": {
+            "progress": 100,
+            "colorPalette": {
+              "name": "Green",
+              "color": "#000000",
+              "backgroundColor": "#66bb6a"
+            },
+            "dependencies": [
+              "4115"
+            ]
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:47.285Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:47.285Z",
+          "comments": []
+        },
+        {
+          "id": 4117,
+          "rowId": 3,
+          "name": "API設計レビュー",
+          "start": "2026-01-26T00:00:00",
+          "end": "2026-01-28T00:00:00",
+          "attribute": {
+            "progress": 100,
+            "labels": [
+              {
+                "name": "レビュー待ち",
+                "color": "#8e24aa"
+              },
+              {
+                "name": "ブロック中",
+                "color": "#d32f2f"
+              }
+            ],
+            "colorPalette": {
+              "name": "Purple",
+              "color": "#ffffff",
+              "backgroundColor": "#ab47bc"
+            },
+            "dependencies": [
+              "4116"
+            ]
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:47.387Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:47.387Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "projectId": "3f333df6-90a4-4fda-8dd3-9485d27cee36",
+      "name": "フロントエンド開発",
+      "order": 6,
+      "visible": true,
+      "attribute": {
+        "parentId": 20,
+        "labels": [
+          {
+            "name": "中優先",
+            "color": "#fb8c00"
+          }
+        ],
+        "description": "ユーザーが直接目にする部分の実装を行うフェーズです。"
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
+        {
+          "id": 4118,
+          "rowId": 4,
+          "name": "共通コンポーネント実装",
+          "start": "2026-01-26T00:00:00",
+          "end": "2026-02-13T00:00:00",
+          "attribute": {
+            "progress": 100,
+            "labels": [
+              {
+                "name": "中優先",
+                "color": "#fb8c00"
+              }
+            ],
+            "colorPalette": {
+              "name": "Blue",
+              "color": "#ffffff",
+              "backgroundColor": "#42a5f5"
+            },
+            "dependencies": [
+              "4117",
+              "4114"
+            ]
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:47.487Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:47.487Z",
+          "comments": []
+        },
+        {
+          "id": 4119,
+          "rowId": 4,
+          "name": "画面実装（一覧・詳細）",
+          "start": "2026-02-16T00:00:00",
+          "end": "2026-03-06T00:00:00",
+          "attribute": {
+            "progress": 60,
+            "colorPalette": {
+              "name": "Blue",
+              "color": "#ffffff",
+              "backgroundColor": "#42a5f5"
+            },
+            "dependencies": [
+              "4118"
+            ]
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:47.589Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:47.589Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "projectId": "3f333df6-90a4-4fda-8dd3-9485d27cee36",
+      "name": "バックエンド開発",
+      "order": 7,
+      "visible": true,
+      "attribute": {
+        "parentId": 20,
+        "labels": [
+          {
+            "name": "中優先",
+            "color": "#fb8c00"
+          }
+        ],
+        "description": "サーバーサイドAPIおよびビジネスロジックを実装するフェーズです。"
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
+        {
+          "id": 4120,
+          "rowId": 5,
+          "name": "認証・ユーザー管理API",
+          "start": "2026-01-26T00:00:00",
+          "end": "2026-02-13T00:00:00",
+          "attribute": {
+            "progress": 100,
+            "labels": [
+              {
+                "name": "中優先",
+                "color": "#fb8c00"
+              }
+            ],
+            "colorPalette": {
+              "name": "Cyan",
+              "color": "#000000",
+              "backgroundColor": "#26c6da"
+            },
+            "dependencies": [
+              "4117"
+            ]
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:47.690Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:47.690Z",
+          "comments": []
+        },
+        {
+          "id": 4121,
+          "rowId": 5,
+          "name": "データ集計・業務ロジックAPI",
+          "start": "2026-02-16T00:00:00",
+          "end": "2026-03-06T00:00:00",
+          "attribute": {
+            "progress": 70,
+            "colorPalette": {
+              "name": "Cyan",
+              "color": "#000000",
+              "backgroundColor": "#26c6da"
+            },
+            "dependencies": [
+              "4120"
+            ]
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:47.791Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:47.791Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "projectId": "3f333df6-90a4-4fda-8dd3-9485d27cee36",
+      "name": "インフラ・CI/CD",
+      "order": 8,
+      "visible": true,
+      "attribute": {
+        "parentId": 20,
+        "labels": [
+          {
+            "name": "低優先",
+            "color": "#43a047"
+          }
+        ],
+        "description": "クラウド基盤および自動デプロイ環境を構築するフェーズです。"
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
+        {
+          "id": 4122,
+          "rowId": 6,
+          "name": "CI/CDパイプライン構築",
+          "start": "2026-01-12T00:00:00",
+          "end": "2026-01-23T00:00:00",
+          "attribute": {
+            "progress": 100,
+            "labels": [
+              {
+                "name": "低優先",
+                "color": "#43a047"
+              }
+            ],
+            "colorPalette": {
+              "name": "Teal",
+              "color": "#ffffff",
+              "backgroundColor": "#26a69a"
+            }
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:47.892Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:47.892Z",
+          "comments": []
+        },
+        {
+          "id": 4123,
+          "rowId": 6,
+          "name": "ステージング環境構築",
+          "start": "2026-02-02T00:00:00",
+          "end": "2026-02-13T00:00:00",
+          "attribute": {
+            "progress": 40,
+            "description": "クラウド基盤のセットアップと動作確認。",
+            "colorPalette": {
+              "name": "Pending",
+              "color": "#ffffff",
+              "pattern": {
+                "type": "diagonal-stripe",
+                "color": "#4a5568"
+              },
+              "backgroundColor": "#718096"
+            }
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:47.993Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:47.993Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "id": 30,
+      "projectId": "3f333df6-90a4-4fda-8dd3-9485d27cee36",
+      "name": "📁 検証・リリースフェーズ",
+      "order": 9,
+      "visible": true,
+      "attribute": {
+        "isSummary": true,
+        "collapsed": false,
+        "labels": [
+          {
+            "name": "レビュー待ち",
+            "color": "#8e24aa"
+          }
+        ],
+        "description": "各種テストから本番リリースまでを取りまとめるフェーズサマリーです。"
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": []
+    },
+    {
+      "id": 7,
+      "projectId": "3f333df6-90a4-4fda-8dd3-9485d27cee36",
+      "name": "テスト",
+      "order": 10,
+      "visible": true,
+      "attribute": {
+        "parentId": 30,
+        "labels": [
+          {
+            "name": "レビュー待ち",
+            "color": "#8e24aa"
+          }
+        ],
+        "description": "システムの品質を検証・保証するフェーズです。"
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
+        {
+          "id": 4124,
+          "rowId": 7,
+          "name": "単体テスト",
+          "start": "2026-03-09T00:00:00",
+          "end": "2026-03-20T00:00:00",
+          "attribute": {
+            "progress": 0,
+            "colorPalette": {
+              "name": "Green",
+              "color": "#000000",
+              "backgroundColor": "#66bb6a"
+            },
+            "dependencies": [
+              "4119",
+              "4121"
+            ]
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.099Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.099Z",
+          "comments": []
+        },
+        {
+          "id": 4125,
+          "rowId": 7,
+          "name": "結合テスト",
+          "start": "2026-03-23T00:00:00",
+          "end": "2026-04-03T00:00:00",
+          "attribute": {
+            "progress": 0,
+            "labels": [
+              {
+                "name": "中優先",
+                "color": "#fb8c00"
+              }
+            ],
+            "colorPalette": {
+              "name": "Green",
+              "color": "#000000",
+              "backgroundColor": "#66bb6a"
+            },
+            "dependencies": [
+              "4124"
+            ]
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.198Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.198Z",
+          "comments": []
+        },
+        {
+          "id": 4126,
+          "rowId": 7,
+          "name": "UAT（ユーザー受入テスト）",
+          "start": "2026-04-06T00:00:00",
+          "end": "2026-04-10T00:00:00",
+          "attribute": {
+            "progress": 0,
+            "labels": [
+              {
+                "name": "ブロック中",
+                "color": "#d32f2f"
+              }
+            ],
+            "description": "クライアント側による最終受け入れ検証。",
+            "colorPalette": {
+              "name": "On Hold",
+              "color": "#ffffff",
+              "pattern": {
+                "type": "diagonal-stripe",
+                "color": "#542c0e"
+              },
+              "backgroundColor": "#744210"
+            },
+            "dependencies": [
+              "4125",
+              "4123"
+            ]
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.300Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.300Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "projectId": "3f333df6-90a4-4fda-8dd3-9485d27cee36",
+      "name": "リリース",
+      "order": 11,
+      "visible": true,
+      "attribute": {
+        "parentId": 30,
+        "labels": [
+          {
+            "name": "高優先",
+            "color": "#e53935"
+          }
+        ],
+        "description": "本番環境へのデプロイと公開作業を行うフェーズです。"
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
+        {
+          "id": 4127,
+          "rowId": 8,
+          "name": "リリース準備",
+          "start": "2026-04-13T00:00:00",
+          "end": "2026-04-17T00:00:00",
+          "attribute": {
+            "progress": 0,
+            "labels": [
+              {
+                "name": "高優先",
+                "color": "#e53935"
+              }
+            ],
+            "colorPalette": {
+              "name": "Red",
+              "color": "#ffffff",
+              "backgroundColor": "#ef5350"
+            },
+            "dependencies": [
+              "4126"
+            ]
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.402Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.402Z",
+          "comments": []
+        },
+        {
+          "id": 4128,
+          "rowId": 8,
+          "name": "本番リリース",
+          "start": "2026-04-20T00:00:00",
+          "end": "2026-04-20T00:00:00",
+          "attribute": {
+            "progress": 0,
+            "labels": [
+              {
+                "name": "高優先",
+                "color": "#e53935"
+              }
+            ],
+            "description": "v1.0 本番リリース（マイルストーン）",
+            "colorPalette": {
+              "name": "Red",
+              "color": "#ffffff",
+              "backgroundColor": "#ef5350"
+            },
+            "dependencies": [
+              "4127"
+            ]
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.502Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.502Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "projectId": "3f333df6-90a4-4fda-8dd3-9485d27cee36",
+      "name": "非表示行（テスト用）",
+      "order": 12,
+      "visible": false,
+      "attribute": {
+        "description": "画面上には表示されない行のデータです。"
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
+        {
+          "id": 4129,
+          "rowId": 9,
+          "name": "アーカイブ済みタスク",
+          "start": "2025-12-01T00:00:00",
+          "end": "2025-12-05T00:00:00",
+          "attribute": {
+            "progress": 100,
+            "description": "不要になった過去のタスクです。",
+            "colorPalette": {
+              "name": "Pending",
+              "color": "#ffffff",
+              "pattern": {
+                "type": "diagonal-stripe",
+                "color": "#4a5568"
+              },
+              "backgroundColor": "#718096"
+            }
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.610Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.610Z",
+          "comments": []
+        }
+      ]
+    }
+  ]
+}

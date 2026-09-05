@@ -116,6 +116,9 @@ const duplicateProject: DuplicateProject = async (
       const taskIdMap = new Map<string, string>()
       // 依存関係を持つ新タスクの情報（後でIDを書き換えるために保持）
       const createdTasksWithDependencies: { newId: number; attribute: any }[] = []
+      // 旧行ID → 新行IDのマッピング（親行IDの更新に使用）
+      const rowIdMap = new Map<number, number>()
+      const rowsWithParentId: { newId: number; oldParentId: number; attribute: any }[] = []
 
       // 元のGanttRowとGanttTaskを新しいプロジェクトにコピー
       // 各行は順序を保つために逐次処理するが、各行内のタスクは並列で作成する
@@ -133,6 +136,16 @@ const duplicateProject: DuplicateProject = async (
             updatedBy: email,
           },
         })
+
+        rowIdMap.set(row.id, newRow.id)
+        const oldParentId = (row.attribute as any)?.parentId
+        if (oldParentId != null) {
+          rowsWithParentId.push({
+            newId: newRow.id,
+            oldParentId: Number(oldParentId),
+            attribute: row.attribute,
+          })
+        }
 
         // タスクを並列で作成してタイムアウトを回避
         const taskResults = await Promise.all(
@@ -201,6 +214,23 @@ const duplicateProject: DuplicateProject = async (
           }
         }),
       )
+
+      // 行の親子関係（parentId）のIDを新しい行IDに書き換える
+      for (const { newId, oldParentId, attribute } of rowsWithParentId) {
+        const newParentId = rowIdMap.get(oldParentId)
+        if (newParentId != null) {
+          await tx.ganttRow.update({
+            where: { id: newId },
+            data: {
+              attribute: {
+                ...attribute,
+                parentId: newParentId,
+              },
+              updatedBy: email,
+            },
+          })
+        }
+      }
 
       return newProject.id
     },

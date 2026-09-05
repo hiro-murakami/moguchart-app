@@ -1,0 +1,2071 @@
+{
+  "version": "0.12.0",
+  "project": {
+    "id": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
+    "name": "[月単位]サンプルプロジェクト",
+    "start": "2025-01-01T00:00:00",
+    "end": "2034-12-31T00:00:00",
+    "attribute": {
+      "labels": [
+        {
+          "name": "高優先",
+          "color": "#e53935"
+        },
+        {
+          "name": "中優先",
+          "color": "#fb8c00"
+        },
+        {
+          "name": "低優先",
+          "color": "#43a047"
+        },
+        {
+          "name": "レビュー待ち",
+          "color": "#8e24aa"
+        },
+        {
+          "name": "ブロック中",
+          "color": "#d32f2f"
+        },
+        {
+          "name": "外部依存",
+          "color": "#1e88e5"
+        }
+      ],
+      "milestones": [
+        {
+          "name": "フェーズ1完了",
+          "color": "#1e88e5",
+          "datetime": "2026-12-31T10:00:00+09:00"
+        },
+        {
+          "name": "MVPリリース",
+          "color": "#43a047",
+          "datetime": "2028-06-30T10:00:00+09:00"
+        },
+        {
+          "name": "グローバル展開",
+          "color": "#8e24aa",
+          "datetime": "2031-03-31T10:00:00+09:00"
+        },
+        {
+          "name": "プロジェクト完了",
+          "color": "#e53935",
+          "datetime": "2034-12-31T10:00:00+09:00"
+        }
+      ],
+      "description": "サマリータスク（WBS階層・自動集計バー）表示およびカラーパレット・ラベル・進捗管理の各パターンを網羅した長期ロードマップのサンプルプロジェクトです。",
+      "granularity": "monthly",
+      "colorPalettes": [
+        {
+          "name": "Black",
+          "color": "#ffffff",
+          "backgroundColor": "#000000"
+        },
+        {
+          "name": "Red",
+          "color": "#ffffff",
+          "backgroundColor": "#ef5350"
+        },
+        {
+          "name": "Pink",
+          "color": "#ffffff",
+          "backgroundColor": "#ec407a"
+        },
+        {
+          "name": "Purple",
+          "color": "#ffffff",
+          "backgroundColor": "#ab47bc"
+        },
+        {
+          "name": "Deep Purple",
+          "color": "#ffffff",
+          "backgroundColor": "#7e57c2"
+        },
+        {
+          "name": "Indigo",
+          "color": "#ffffff",
+          "backgroundColor": "#5c6bc0"
+        },
+        {
+          "name": "Blue",
+          "color": "#ffffff",
+          "backgroundColor": "#42a5f5"
+        },
+        {
+          "name": "Light Blue",
+          "color": "#000000",
+          "backgroundColor": "#29b6f6"
+        },
+        {
+          "name": "Cyan",
+          "color": "#000000",
+          "backgroundColor": "#26c6da"
+        },
+        {
+          "name": "Teal",
+          "color": "#ffffff",
+          "backgroundColor": "#26a69a"
+        },
+        {
+          "name": "Green",
+          "color": "#000000",
+          "backgroundColor": "#66bb6a"
+        },
+        {
+          "name": "Light Green",
+          "color": "#000000",
+          "backgroundColor": "#9ccc65"
+        },
+        {
+          "name": "Lime",
+          "color": "#000000",
+          "backgroundColor": "#d4e157"
+        },
+        {
+          "name": "Yellow",
+          "color": "#000000",
+          "backgroundColor": "#ffee58"
+        },
+        {
+          "name": "Orange",
+          "color": "#000000",
+          "backgroundColor": "#ffa726"
+        },
+        {
+          "name": "Brown",
+          "color": "#ffffff",
+          "backgroundColor": "#8d6e63"
+        },
+        {
+          "name": "Pending",
+          "color": "#ffffff",
+          "pattern": {
+            "type": "diagonal-stripe",
+            "color": "#4a5568"
+          },
+          "backgroundColor": "#718096"
+        },
+        {
+          "name": "On Hold",
+          "color": "#ffffff",
+          "pattern": {
+            "type": "diagonal-stripe",
+            "color": "#542c0e"
+          },
+          "backgroundColor": "#744210"
+        }
+      ],
+      "enableProgress": true
+    },
+    "public": true,
+    "authority": {
+      "owners": [
+        "h.murakami@esm.co.jp"
+      ]
+    },
+    "createdBy": "system",
+    "createdAt": "2026-05-06T00:19:46.559Z",
+    "updatedBy": "system",
+    "updatedAt": "2026-05-06T00:19:46.559Z",
+    "comments": []
+  },
+  "rows": [
+    {
+      "id": 1000,
+      "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
+      "name": "📁 プロダクト戦略・UX設計",
+      "order": 1,
+      "visible": true,
+      "attribute": {
+        "isSummary": true,
+        "collapsed": false,
+        "labels": [
+          {
+            "name": "高優先",
+            "color": "#e53935"
+          }
+        ],
+        "description": "事業戦略、市場リサーチ、要件定義、UI/UXデザインを取りまとめるフェーズサマリーです。"
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": []
+    },
+    {
+      "id": 101,
+      "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
+      "name": "企画・戦略立案",
+      "order": 2,
+      "visible": true,
+      "attribute": {
+        "parentId": 1000
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
+        {
+          "id": 4130,
+          "rowId": 101,
+          "name": "中期戦略策定",
+          "start": "2025-01-01T00:00:00",
+          "end": "2025-06-30T00:00:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "高優先",
+                "color": "#e53935"
+              }
+            ],
+            "colorPalette": {
+              "name": "Blue",
+              "color": "#ffffff",
+              "backgroundColor": "#42a5f5"
+            },
+            "progress": 100
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        },
+        {
+          "id": 4131,
+          "rowId": 101,
+          "name": "事業計画立案",
+          "start": "2025-07-01T00:00:00",
+          "end": "2025-12-31T00:00:00",
+          "attribute": {
+            "colorPalette": {
+              "name": "Blue",
+              "color": "#ffffff",
+              "backgroundColor": "#42a5f5"
+            },
+            "progress": 100
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        },
+        {
+          "id": 4132,
+          "rowId": 101,
+          "name": "第2フェーズ戦略",
+          "start": "2027-01-01T00:00:00",
+          "end": "2027-06-30T00:00:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "中優先",
+                "color": "#fb8c00"
+              }
+            ],
+            "colorPalette": {
+              "name": "Blue",
+              "color": "#ffffff",
+              "backgroundColor": "#42a5f5"
+            },
+            "progress": 15
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        },
+        {
+          "id": 4133,
+          "rowId": 101,
+          "name": "長期ビジョン策定",
+          "start": "2030-01-01T00:00:00",
+          "end": "2030-09-30T00:00:00",
+          "attribute": {
+            "colorPalette": {
+              "name": "Blue",
+              "color": "#ffffff",
+              "backgroundColor": "#42a5f5"
+            },
+            "progress": 0
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "id": 102,
+      "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
+      "name": "市場調査・競合分析",
+      "order": 3,
+      "visible": true,
+      "attribute": {
+        "parentId": 1000
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
+        {
+          "id": 4134,
+          "rowId": 102,
+          "name": "初期市場調査",
+          "start": "2025-01-01T00:00:00",
+          "end": "2025-04-30T00:00:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "高優先",
+                "color": "#e53935"
+              }
+            ],
+            "colorPalette": {
+              "name": "Teal",
+              "color": "#ffffff",
+              "backgroundColor": "#26a69a"
+            },
+            "progress": 100
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        },
+        {
+          "id": 4135,
+          "rowId": 102,
+          "name": "競合分析",
+          "start": "2025-05-01T00:00:00",
+          "end": "2025-09-30T00:00:00",
+          "attribute": {
+            "colorPalette": {
+              "name": "Teal",
+              "color": "#ffffff",
+              "backgroundColor": "#26a69a"
+            },
+            "progress": 100
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        },
+        {
+          "id": 4136,
+          "rowId": 102,
+          "name": "トレンド再調査",
+          "start": "2028-01-01T00:00:00",
+          "end": "2028-06-30T00:00:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "外部依存",
+                "color": "#1e88e5"
+              }
+            ],
+            "colorPalette": {
+              "name": "Teal",
+              "color": "#ffffff",
+              "backgroundColor": "#26a69a"
+            },
+            "progress": 5
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "id": 103,
+      "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
+      "name": "要件定義",
+      "order": 4,
+      "visible": true,
+      "attribute": {
+        "parentId": 1000
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
+        {
+          "id": 4137,
+          "rowId": 103,
+          "name": "ユーザーヒアリング",
+          "start": "2025-03-01T00:00:00",
+          "end": "2025-06-30T00:00:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "高優先",
+                "color": "#e53935"
+              }
+            ],
+            "colorPalette": {
+              "name": "Purple",
+              "color": "#ffffff",
+              "backgroundColor": "#ab47bc"
+            },
+            "progress": 100
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        },
+        {
+          "id": 4138,
+          "rowId": 103,
+          "name": "要件定義書作成",
+          "start": "2025-07-01T00:00:00",
+          "end": "2025-12-31T00:00:00",
+          "attribute": {
+            "colorPalette": {
+              "name": "Purple",
+              "color": "#ffffff",
+              "backgroundColor": "#ab47bc"
+            },
+            "progress": 100
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        },
+        {
+          "id": 4139,
+          "rowId": 103,
+          "name": "第2フェーズ要件定義",
+          "start": "2027-07-01T00:00:00",
+          "end": "2027-12-31T00:00:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "中優先",
+                "color": "#fb8c00"
+              }
+            ],
+            "colorPalette": {
+              "name": "Purple",
+              "color": "#ffffff",
+              "backgroundColor": "#ab47bc"
+            },
+            "progress": 15
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "id": 104,
+      "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
+      "name": "UI/UXデザイン",
+      "order": 5,
+      "visible": true,
+      "attribute": {
+        "parentId": 1000
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
+        {
+          "id": 4140,
+          "rowId": 104,
+          "name": "UXリサーチ",
+          "start": "2025-06-01T00:00:00",
+          "end": "2025-09-30T00:00:00",
+          "attribute": {
+            "colorPalette": {
+              "name": "Teal",
+              "color": "#ffffff",
+              "backgroundColor": "#26a69a"
+            },
+            "progress": 100
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        },
+        {
+          "id": 4141,
+          "rowId": 104,
+          "name": "デザインシステム構築",
+          "start": "2025-10-01T00:00:00",
+          "end": "2026-03-31T00:00:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "中優先",
+                "color": "#fb8c00"
+              }
+            ],
+            "colorPalette": {
+              "name": "Teal",
+              "color": "#ffffff",
+              "backgroundColor": "#26a69a"
+            },
+            "progress": 80
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        },
+        {
+          "id": 4142,
+          "rowId": 104,
+          "name": "UI全面刷新",
+          "start": "2029-01-01T00:00:00",
+          "end": "2029-06-30T00:00:00",
+          "attribute": {
+            "colorPalette": {
+              "name": "Teal",
+              "color": "#ffffff",
+              "backgroundColor": "#26a69a"
+            },
+            "progress": 0
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "id": 2000,
+      "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
+      "name": "📁 コアシステム・サービス開発",
+      "order": 6,
+      "visible": true,
+      "attribute": {
+        "isSummary": true,
+        "collapsed": false,
+        "labels": [
+          {
+            "name": "中優先",
+            "color": "#fb8c00"
+          }
+        ],
+        "description": "システム設計、データ基盤、フロントエンド、バックエンド、API連携を取りまとめるフェーズサマリーです。"
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": []
+    },
+    {
+      "id": 105,
+      "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
+      "name": "アーキテクチャ設計",
+      "order": 7,
+      "visible": true,
+      "attribute": {
+        "parentId": 2000
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
+        {
+          "id": 4143,
+          "rowId": 105,
+          "name": "システム方式設計",
+          "start": "2025-07-01T00:00:00",
+          "end": "2025-12-31T00:00:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "高優先",
+                "color": "#e53935"
+              }
+            ],
+            "colorPalette": {
+              "name": "Green",
+              "color": "#000000",
+              "backgroundColor": "#66bb6a"
+            },
+            "progress": 100
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        },
+        {
+          "id": 4144,
+          "rowId": 105,
+          "name": "マイクロサービス化",
+          "start": "2026-01-01T00:00:00",
+          "end": "2026-06-30T00:00:00",
+          "attribute": {
+            "colorPalette": {
+              "name": "Green",
+              "color": "#000000",
+              "backgroundColor": "#66bb6a"
+            },
+            "progress": 60
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        },
+        {
+          "id": 4145,
+          "rowId": 105,
+          "name": "アーキテクチャ見直し",
+          "start": "2030-01-01T00:00:00",
+          "end": "2030-06-30T00:00:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "中優先",
+                "color": "#fb8c00"
+              }
+            ],
+            "colorPalette": {
+              "name": "Green",
+              "color": "#000000",
+              "backgroundColor": "#66bb6a"
+            },
+            "progress": 0
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "id": 106,
+      "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
+      "name": "データ基盤構築",
+      "order": 8,
+      "visible": true,
+      "attribute": {
+        "parentId": 2000
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
+        {
+          "id": 4146,
+          "rowId": 106,
+          "name": "DWH構築",
+          "start": "2025-10-01T00:00:00",
+          "end": "2026-06-30T00:00:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "高優先",
+                "color": "#e53935"
+              }
+            ],
+            "colorPalette": {
+              "name": "Orange",
+              "color": "#000000",
+              "backgroundColor": "#ffa726"
+            },
+            "progress": 80
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        },
+        {
+          "id": 4147,
+          "rowId": 106,
+          "name": "データパイプライン整備",
+          "start": "2026-07-01T00:00:00",
+          "end": "2026-12-31T00:00:00",
+          "attribute": {
+            "colorPalette": {
+              "name": "Orange",
+              "color": "#000000",
+              "backgroundColor": "#ffa726"
+            },
+            "progress": 60
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        },
+        {
+          "id": 4148,
+          "rowId": 106,
+          "name": "データレイク拡張",
+          "start": "2029-07-01T00:00:00",
+          "end": "2030-06-30T00:00:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "中優先",
+                "color": "#fb8c00"
+              }
+            ],
+            "colorPalette": {
+              "name": "Orange",
+              "color": "#000000",
+              "backgroundColor": "#ffa726"
+            },
+            "progress": 0
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "id": 107,
+      "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
+      "name": "フロントエンド開発",
+      "order": 9,
+      "visible": true,
+      "attribute": {
+        "parentId": 2000
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
+        {
+          "id": 4149,
+          "rowId": 107,
+          "name": "MVP開発",
+          "start": "2026-01-01T00:00:00",
+          "end": "2026-12-31T00:00:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "高優先",
+                "color": "#e53935"
+              }
+            ],
+            "colorPalette": {
+              "name": "Blue",
+              "color": "#ffffff",
+              "backgroundColor": "#42a5f5"
+            },
+            "progress": 60
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        },
+        {
+          "id": 4150,
+          "rowId": 107,
+          "name": "v2.0開発",
+          "start": "2028-01-01T00:00:00",
+          "end": "2028-12-31T00:00:00",
+          "attribute": {
+            "colorPalette": {
+              "name": "Blue",
+              "color": "#ffffff",
+              "backgroundColor": "#42a5f5"
+            },
+            "progress": 5
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        },
+        {
+          "id": 4151,
+          "rowId": 107,
+          "name": "v3.0開発",
+          "start": "2031-01-01T00:00:00",
+          "end": "2031-12-31T00:00:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "中優先",
+                "color": "#fb8c00"
+              }
+            ],
+            "colorPalette": {
+              "name": "Blue",
+              "color": "#ffffff",
+              "backgroundColor": "#42a5f5"
+            },
+            "progress": 0
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "id": 108,
+      "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
+      "name": "バックエンド開発",
+      "order": 10,
+      "visible": true,
+      "attribute": {
+        "parentId": 2000
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
+        {
+          "id": 4152,
+          "rowId": 108,
+          "name": "コアAPI開発",
+          "start": "2026-01-01T00:00:00",
+          "end": "2026-12-31T00:00:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "高優先",
+                "color": "#e53935"
+              }
+            ],
+            "colorPalette": {
+              "name": "Orange",
+              "color": "#000000",
+              "backgroundColor": "#ffa726"
+            },
+            "progress": 60
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        },
+        {
+          "id": 4153,
+          "rowId": 108,
+          "name": "スケールアップ対応",
+          "start": "2028-07-01T00:00:00",
+          "end": "2029-06-30T00:00:00",
+          "attribute": {
+            "colorPalette": {
+              "name": "Orange",
+              "color": "#000000",
+              "backgroundColor": "#ffa726"
+            },
+            "progress": 5
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        },
+        {
+          "id": 4154,
+          "rowId": 108,
+          "name": "レガシー移行",
+          "start": "2031-07-01T00:00:00",
+          "end": "2032-12-31T00:00:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "中優先",
+                "color": "#fb8c00"
+              }
+            ],
+            "colorPalette": {
+              "name": "Orange",
+              "color": "#000000",
+              "backgroundColor": "#ffa726"
+            },
+            "progress": 0
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "id": 109,
+      "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
+      "name": "API・インテグレーション",
+      "order": 11,
+      "visible": true,
+      "attribute": {
+        "parentId": 2000
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
+        {
+          "id": 4155,
+          "rowId": 109,
+          "name": "外部API連携",
+          "start": "2026-07-01T00:00:00",
+          "end": "2027-03-31T00:00:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "外部依存",
+                "color": "#1e88e5"
+              }
+            ],
+            "colorPalette": {
+              "name": "Teal",
+              "color": "#ffffff",
+              "backgroundColor": "#26a69a"
+            },
+            "progress": 40
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        },
+        {
+          "id": 4156,
+          "rowId": 109,
+          "name": "パートナーAPI連携",
+          "start": "2029-01-01T00:00:00",
+          "end": "2029-12-31T00:00:00",
+          "attribute": {
+            "colorPalette": {
+              "name": "Teal",
+              "color": "#ffffff",
+              "backgroundColor": "#26a69a"
+            },
+            "progress": 0
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        },
+        {
+          "id": 4157,
+          "rowId": 109,
+          "name": "グローバルAPI整備",
+          "start": "2031-07-01T00:00:00",
+          "end": "2032-06-30T00:00:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "外部依存",
+                "color": "#1e88e5"
+              }
+            ],
+            "colorPalette": {
+              "name": "Teal",
+              "color": "#ffffff",
+              "backgroundColor": "#26a69a"
+            },
+            "progress": 0
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "id": 3000,
+      "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
+      "name": "📁 プラットフォーム・信頼性・品質管理",
+      "order": 12,
+      "visible": true,
+      "attribute": {
+        "isSummary": true,
+        "collapsed": false,
+        "labels": [
+          {
+            "name": "低優先",
+            "color": "#43a047"
+          }
+        ],
+        "description": "クラウドインフラ、セキュリティ、QA・テスト、CI/CD・DevOps、技術ドキュメントを取りまとめるフェーズサマリーです。"
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": []
+    },
+    {
+      "id": 110,
+      "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
+      "name": "インフラ・クラウド",
+      "order": 13,
+      "visible": true,
+      "attribute": {
+        "parentId": 3000
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
+        {
+          "id": 4158,
+          "rowId": 110,
+          "name": "クラウド移行",
+          "start": "2025-10-01T00:00:00",
+          "end": "2026-09-30T00:00:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "高優先",
+                "color": "#e53935"
+              }
+            ],
+            "colorPalette": {
+              "name": "Green",
+              "color": "#000000",
+              "backgroundColor": "#66bb6a"
+            },
+            "progress": 80
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        },
+        {
+          "id": 4159,
+          "rowId": 110,
+          "name": "マルチクラウド化",
+          "start": "2029-01-01T00:00:00",
+          "end": "2029-12-31T00:00:00",
+          "attribute": {
+            "colorPalette": {
+              "name": "Green",
+              "color": "#000000",
+              "backgroundColor": "#66bb6a"
+            },
+            "progress": 0
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        },
+        {
+          "id": 4160,
+          "rowId": 110,
+          "name": "インフラ最適化",
+          "start": "2032-01-01T00:00:00",
+          "end": "2032-12-31T00:00:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "中優先",
+                "color": "#fb8c00"
+              }
+            ],
+            "colorPalette": {
+              "name": "Green",
+              "color": "#000000",
+              "backgroundColor": "#66bb6a"
+            },
+            "progress": 0
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "id": 111,
+      "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
+      "name": "セキュリティ対策",
+      "order": 14,
+      "visible": true,
+      "attribute": {
+        "parentId": 3000
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
+        {
+          "id": 4161,
+          "rowId": 111,
+          "name": "セキュリティ基盤整備",
+          "start": "2025-07-01T00:00:00",
+          "end": "2026-06-30T00:00:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "高優先",
+                "color": "#e53935"
+              }
+            ],
+            "colorPalette": {
+              "name": "Red",
+              "color": "#ffffff",
+              "backgroundColor": "#ef5350"
+            },
+            "progress": 80
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        },
+        {
+          "id": 4162,
+          "rowId": 111,
+          "name": "ペネトレーションテスト",
+          "start": "2027-07-01T00:00:00",
+          "end": "2027-12-31T00:00:00",
+          "attribute": {
+            "colorPalette": {
+              "name": "Red",
+              "color": "#ffffff",
+              "backgroundColor": "#ef5350"
+            },
+            "progress": 15
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        },
+        {
+          "id": 4163,
+          "rowId": 111,
+          "name": "セキュリティ強化v3",
+          "start": "2031-01-01T00:00:00",
+          "end": "2031-12-31T00:00:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "高優先",
+                "color": "#e53935"
+              }
+            ],
+            "colorPalette": {
+              "name": "Red",
+              "color": "#ffffff",
+              "backgroundColor": "#ef5350"
+            },
+            "progress": 0
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "id": 112,
+      "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
+      "name": "QA・テスト",
+      "order": 15,
+      "visible": true,
+      "attribute": {
+        "parentId": 3000
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
+        {
+          "id": 4164,
+          "rowId": 112,
+          "name": "テスト基盤整備",
+          "start": "2026-10-01T00:00:00",
+          "end": "2027-03-31T00:00:00",
+          "attribute": {
+            "colorPalette": {
+              "name": "Green",
+              "color": "#000000",
+              "backgroundColor": "#66bb6a"
+            },
+            "progress": 40
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        },
+        {
+          "id": 4165,
+          "rowId": 112,
+          "name": "パフォーマンステスト",
+          "start": "2028-10-01T00:00:00",
+          "end": "2028-12-31T00:00:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "中優先",
+                "color": "#fb8c00"
+              }
+            ],
+            "colorPalette": {
+              "name": "Green",
+              "color": "#000000",
+              "backgroundColor": "#66bb6a"
+            },
+            "progress": 5
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        },
+        {
+          "id": 4166,
+          "rowId": 112,
+          "name": "E2Eテスト自動化",
+          "start": "2031-07-01T00:00:00",
+          "end": "2032-06-30T00:00:00",
+          "attribute": {
+            "colorPalette": {
+              "name": "Green",
+              "color": "#000000",
+              "backgroundColor": "#66bb6a"
+            },
+            "progress": 0
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "id": 113,
+      "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
+      "name": "CI/CD・DevOps",
+      "order": 16,
+      "visible": true,
+      "attribute": {
+        "parentId": 3000
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
+        {
+          "id": 4167,
+          "rowId": 113,
+          "name": "CI/CDパイプライン構築",
+          "start": "2025-10-01T00:00:00",
+          "end": "2026-03-31T00:00:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "中優先",
+                "color": "#fb8c00"
+              }
+            ],
+            "colorPalette": {
+              "name": "Teal",
+              "color": "#ffffff",
+              "backgroundColor": "#26a69a"
+            },
+            "progress": 80
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        },
+        {
+          "id": 4168,
+          "rowId": 113,
+          "name": "DevOps文化推進",
+          "start": "2027-01-01T00:00:00",
+          "end": "2027-12-31T00:00:00",
+          "attribute": {
+            "colorPalette": {
+              "name": "Teal",
+              "color": "#ffffff",
+              "backgroundColor": "#26a69a"
+            },
+            "progress": 15
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        },
+        {
+          "id": 4169,
+          "rowId": 113,
+          "name": "GitOps移行",
+          "start": "2030-07-01T00:00:00",
+          "end": "2031-03-31T00:00:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "中優先",
+                "color": "#fb8c00"
+              }
+            ],
+            "colorPalette": {
+              "name": "Teal",
+              "color": "#ffffff",
+              "backgroundColor": "#26a69a"
+            },
+            "progress": 0
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "id": 114,
+      "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
+      "name": "ドキュメント整備",
+      "order": 17,
+      "visible": true,
+      "attribute": {
+        "parentId": 3000
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
+        {
+          "id": 4170,
+          "rowId": 114,
+          "name": "技術仕様書作成",
+          "start": "2026-07-01T00:00:00",
+          "end": "2026-12-31T00:00:00",
+          "attribute": {
+            "colorPalette": {
+              "name": "Purple",
+              "color": "#ffffff",
+              "backgroundColor": "#ab47bc"
+            },
+            "progress": 60
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        },
+        {
+          "id": 4171,
+          "rowId": 114,
+          "name": "APIドキュメント整備",
+          "start": "2028-01-01T00:00:00",
+          "end": "2028-06-30T00:00:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "低優先",
+                "color": "#43a047"
+              }
+            ],
+            "colorPalette": {
+              "name": "Purple",
+              "color": "#ffffff",
+              "backgroundColor": "#ab47bc"
+            },
+            "progress": 5
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        },
+        {
+          "id": 4172,
+          "rowId": 114,
+          "name": "ナレッジベース構築",
+          "start": "2031-01-01T00:00:00",
+          "end": "2031-12-31T00:00:00",
+          "attribute": {
+            "colorPalette": {
+              "name": "Purple",
+              "color": "#ffffff",
+              "backgroundColor": "#ab47bc"
+            },
+            "progress": 0
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "id": 4000,
+      "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
+      "name": "📁 ビジネス・グローバル展開・運用",
+      "order": 18,
+      "visible": true,
+      "attribute": {
+        "isSummary": true,
+        "collapsed": false,
+        "labels": [
+          {
+            "name": "外部依存",
+            "color": "#1e88e5"
+          }
+        ],
+        "description": "マーケティング、営業、サポート、コンプライアンス、海外展開、システム保守を取りまとめるフェーズサマリーです。"
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": []
+    },
+    {
+      "id": 115,
+      "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
+      "name": "マーケティング",
+      "order": 19,
+      "visible": true,
+      "attribute": {
+        "parentId": 4000
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
+        {
+          "id": 4173,
+          "rowId": 115,
+          "name": "ブランド戦略立案",
+          "start": "2026-07-01T00:00:00",
+          "end": "2026-12-31T00:00:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "中優先",
+                "color": "#fb8c00"
+              }
+            ],
+            "colorPalette": {
+              "name": "Orange",
+              "color": "#000000",
+              "backgroundColor": "#ffa726"
+            },
+            "progress": 60
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        },
+        {
+          "id": 4174,
+          "rowId": 115,
+          "name": "ローンチキャンペーン",
+          "start": "2028-04-01T00:00:00",
+          "end": "2028-09-30T00:00:00",
+          "attribute": {
+            "colorPalette": {
+              "name": "Orange",
+              "color": "#000000",
+              "backgroundColor": "#ffa726"
+            },
+            "progress": 5
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        },
+        {
+          "id": 4175,
+          "rowId": 115,
+          "name": "グローバルマーケティング",
+          "start": "2031-04-01T00:00:00",
+          "end": "2032-03-31T00:00:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "外部依存",
+                "color": "#1e88e5"
+              }
+            ],
+            "colorPalette": {
+              "name": "Orange",
+              "color": "#000000",
+              "backgroundColor": "#ffa726"
+            },
+            "progress": 0
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "id": 116,
+      "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
+      "name": "営業・パートナー開拓",
+      "order": 20,
+      "visible": true,
+      "attribute": {
+        "parentId": 4000
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
+        {
+          "id": 4176,
+          "rowId": 116,
+          "name": "国内営業体制構築",
+          "start": "2027-01-01T00:00:00",
+          "end": "2027-09-30T00:00:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "中優先",
+                "color": "#fb8c00"
+              }
+            ],
+            "colorPalette": {
+              "name": "Blue",
+              "color": "#ffffff",
+              "backgroundColor": "#42a5f5"
+            },
+            "progress": 15
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        },
+        {
+          "id": 4177,
+          "rowId": 116,
+          "name": "パートナーシップ締結",
+          "start": "2028-10-01T00:00:00",
+          "end": "2029-06-30T00:00:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "外部依存",
+                "color": "#1e88e5"
+              }
+            ],
+            "colorPalette": {
+              "name": "Blue",
+              "color": "#ffffff",
+              "backgroundColor": "#42a5f5"
+            },
+            "progress": 5
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        },
+        {
+          "id": 4178,
+          "rowId": 116,
+          "name": "海外販路開拓",
+          "start": "2031-07-01T00:00:00",
+          "end": "2032-12-31T00:00:00",
+          "attribute": {
+            "colorPalette": {
+              "name": "Blue",
+              "color": "#ffffff",
+              "backgroundColor": "#42a5f5"
+            },
+            "progress": 0
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "id": 117,
+      "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
+      "name": "カスタマーサポート体制",
+      "order": 21,
+      "visible": true,
+      "attribute": {
+        "parentId": 4000
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
+        {
+          "id": 4179,
+          "rowId": 117,
+          "name": "サポート体制整備",
+          "start": "2027-10-01T00:00:00",
+          "end": "2028-06-30T00:00:00",
+          "attribute": {
+            "colorPalette": {
+              "name": "Teal",
+              "color": "#ffffff",
+              "backgroundColor": "#26a69a"
+            },
+            "progress": 15
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        },
+        {
+          "id": 4180,
+          "rowId": 117,
+          "name": "サポートツール導入",
+          "start": "2029-07-01T00:00:00",
+          "end": "2029-12-31T00:00:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "中優先",
+                "color": "#fb8c00"
+              }
+            ],
+            "colorPalette": {
+              "name": "Teal",
+              "color": "#ffffff",
+              "backgroundColor": "#26a69a"
+            },
+            "progress": 0
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        },
+        {
+          "id": 4181,
+          "rowId": 117,
+          "name": "グローバルサポート対応",
+          "start": "2032-01-01T00:00:00",
+          "end": "2032-12-31T00:00:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "外部依存",
+                "color": "#1e88e5"
+              }
+            ],
+            "colorPalette": {
+              "name": "Teal",
+              "color": "#ffffff",
+              "backgroundColor": "#26a69a"
+            },
+            "progress": 0
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "id": 118,
+      "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
+      "name": "法務・コンプライアンス",
+      "order": 22,
+      "visible": true,
+      "attribute": {
+        "parentId": 4000
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
+        {
+          "id": 4182,
+          "rowId": 118,
+          "name": "規約・ポリシー整備",
+          "start": "2026-10-01T00:00:00",
+          "end": "2027-03-31T00:00:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "高優先",
+                "color": "#e53935"
+              }
+            ],
+            "colorPalette": {
+              "name": "Red",
+              "color": "#ffffff",
+              "backgroundColor": "#ef5350"
+            },
+            "progress": 40
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        },
+        {
+          "id": 4183,
+          "rowId": 118,
+          "name": "GDPR/個人情報対応",
+          "start": "2030-01-01T00:00:00",
+          "end": "2030-09-30T00:00:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "高優先",
+                "color": "#e53935"
+              }
+            ],
+            "colorPalette": {
+              "name": "Red",
+              "color": "#ffffff",
+              "backgroundColor": "#ef5350"
+            },
+            "progress": 0
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        },
+        {
+          "id": 4184,
+          "rowId": 118,
+          "name": "グローバル法規制対応",
+          "start": "2032-07-01T00:00:00",
+          "end": "2033-06-30T00:00:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "高優先",
+                "color": "#e53935"
+              }
+            ],
+            "colorPalette": {
+              "name": "Red",
+              "color": "#ffffff",
+              "backgroundColor": "#ef5350"
+            },
+            "progress": 0
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "id": 119,
+      "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
+      "name": "グローバル展開",
+      "order": 23,
+      "visible": true,
+      "attribute": {
+        "parentId": 4000
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
+        {
+          "id": 4185,
+          "rowId": 119,
+          "name": "アジア展開",
+          "start": "2030-01-01T00:00:00",
+          "end": "2030-12-31T00:00:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "外部依存",
+                "color": "#1e88e5"
+              }
+            ],
+            "colorPalette": {
+              "name": "Green",
+              "color": "#000000",
+              "backgroundColor": "#66bb6a"
+            },
+            "progress": 0
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        },
+        {
+          "id": 4186,
+          "rowId": 119,
+          "name": "北米展開",
+          "start": "2031-07-01T00:00:00",
+          "end": "2032-06-30T00:00:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "外部依存",
+                "color": "#1e88e5"
+              }
+            ],
+            "colorPalette": {
+              "name": "Green",
+              "color": "#000000",
+              "backgroundColor": "#66bb6a"
+            },
+            "progress": 0
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        },
+        {
+          "id": 4187,
+          "rowId": 119,
+          "name": "欧州展開",
+          "start": "2033-01-01T00:00:00",
+          "end": "2034-06-30T00:00:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "外部依存",
+                "color": "#1e88e5"
+              }
+            ],
+            "colorPalette": {
+              "name": "Green",
+              "color": "#000000",
+              "backgroundColor": "#66bb6a"
+            },
+            "progress": 0
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "id": 120,
+      "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
+      "name": "保守・運用",
+      "order": 24,
+      "visible": true,
+      "attribute": {
+        "parentId": 4000
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
+        {
+          "id": 4188,
+          "rowId": 120,
+          "name": "運用体制構築",
+          "start": "2028-01-01T00:00:00",
+          "end": "2028-06-30T00:00:00",
+          "attribute": {
+            "colorPalette": {
+              "name": "Pending",
+              "color": "#ffffff",
+              "pattern": {
+                "type": "diagonal-stripe",
+                "color": "#4a5568"
+              },
+              "backgroundColor": "#718096"
+            },
+            "progress": 5
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        },
+        {
+          "id": 4189,
+          "rowId": 120,
+          "name": "SLA管理・監視強化",
+          "start": "2030-07-01T00:00:00",
+          "end": "2031-06-30T00:00:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "中優先",
+                "color": "#fb8c00"
+              }
+            ],
+            "colorPalette": {
+              "name": "Pending",
+              "color": "#ffffff",
+              "pattern": {
+                "type": "diagonal-stripe",
+                "color": "#4a5568"
+              },
+              "backgroundColor": "#718096"
+            },
+            "progress": 0
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        },
+        {
+          "id": 4190,
+          "rowId": 120,
+          "name": "次世代システム検討",
+          "start": "2033-07-01T00:00:00",
+          "end": "2034-12-31T00:00:00",
+          "attribute": {
+            "colorPalette": {
+              "name": "Pending",
+              "color": "#ffffff",
+              "pattern": {
+                "type": "diagonal-stripe",
+                "color": "#4a5568"
+              },
+              "backgroundColor": "#718096"
+            },
+            "progress": 0
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.726Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.726Z",
+          "comments": []
+        }
+      ]
+    }
+  ]
+}

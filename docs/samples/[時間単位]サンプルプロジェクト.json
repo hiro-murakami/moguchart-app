@@ -1,0 +1,923 @@
+{
+  "version": "0.12.0",
+  "project": {
+    "id": "c2a1b3d4-e5f6-7890-abcd-ef1234567890",
+    "name": "[時間単位]サンプルプロジェクト",
+    "start": "2026-05-10T08:00:00",
+    "end": "2026-05-10T20:00:00",
+    "attribute": {
+      "labels": [
+        {
+          "name": "高優先",
+          "color": "#e53935"
+        },
+        {
+          "name": "中優先",
+          "color": "#fb8c00"
+        },
+        {
+          "name": "低優先",
+          "color": "#43a047"
+        },
+        {
+          "name": "レビュー待ち",
+          "color": "#8e24aa"
+        },
+        {
+          "name": "ブロック中",
+          "color": "#d32f2f"
+        },
+        {
+          "name": "外部依存",
+          "color": "#1e88e5"
+        }
+      ],
+      "milestones": [
+        {
+          "name": "障害検知",
+          "color": "#e53935",
+          "datetime": "2026-05-10T09:15:00+09:00"
+        },
+        {
+          "name": "原因特定",
+          "color": "#fb8c00",
+          "datetime": "2026-05-10T11:00:00+09:00"
+        },
+        {
+          "name": "暫定復旧",
+          "color": "#43a047",
+          "datetime": "2026-05-10T13:00:00+09:00"
+        },
+        {
+          "name": "完全復旧・クローズ",
+          "color": "#1e88e5",
+          "datetime": "2026-05-10T18:00:00+09:00"
+        }
+      ],
+      "description": "本番障害インシデント対応の1日タイムライン。サマリータスク（WBS階層・自動集計バー）表示および時間単位ガントチャートのサンプルです。",
+      "granularity": "hourly",
+      "colorPalettes": [
+        {
+          "name": "Black",
+          "color": "#ffffff",
+          "backgroundColor": "#000000"
+        },
+        {
+          "name": "Red",
+          "color": "#ffffff",
+          "backgroundColor": "#ef5350"
+        },
+        {
+          "name": "Pink",
+          "color": "#ffffff",
+          "backgroundColor": "#ec407a"
+        },
+        {
+          "name": "Purple",
+          "color": "#ffffff",
+          "backgroundColor": "#ab47bc"
+        },
+        {
+          "name": "Deep Purple",
+          "color": "#ffffff",
+          "backgroundColor": "#7e57c2"
+        },
+        {
+          "name": "Indigo",
+          "color": "#ffffff",
+          "backgroundColor": "#5c6bc0"
+        },
+        {
+          "name": "Blue",
+          "color": "#ffffff",
+          "backgroundColor": "#42a5f5"
+        },
+        {
+          "name": "Light Blue",
+          "color": "#000000",
+          "backgroundColor": "#29b6f6"
+        },
+        {
+          "name": "Cyan",
+          "color": "#000000",
+          "backgroundColor": "#26c6da"
+        },
+        {
+          "name": "Teal",
+          "color": "#ffffff",
+          "backgroundColor": "#26a69a"
+        },
+        {
+          "name": "Green",
+          "color": "#000000",
+          "backgroundColor": "#66bb6a"
+        },
+        {
+          "name": "Light Green",
+          "color": "#000000",
+          "backgroundColor": "#9ccc65"
+        },
+        {
+          "name": "Lime",
+          "color": "#000000",
+          "backgroundColor": "#d4e157"
+        },
+        {
+          "name": "Yellow",
+          "color": "#000000",
+          "backgroundColor": "#ffee58"
+        },
+        {
+          "name": "Orange",
+          "color": "#000000",
+          "backgroundColor": "#ffa726"
+        },
+        {
+          "name": "Brown",
+          "color": "#ffffff",
+          "backgroundColor": "#8d6e63"
+        },
+        {
+          "name": "Pending",
+          "color": "#ffffff",
+          "pattern": {
+            "type": "diagonal-stripe",
+            "color": "#4a5568"
+          },
+          "backgroundColor": "#718096"
+        },
+        {
+          "name": "On Hold",
+          "color": "#ffffff",
+          "pattern": {
+            "type": "diagonal-stripe",
+            "color": "#542c0e"
+          },
+          "backgroundColor": "#744210"
+        }
+      ],
+      "newTaskTemplates": [
+        {
+          "name": "調査タスク",
+          "duration": 1,
+          "attribute": {
+            "colorPalette": {
+              "name": "Teal",
+              "color": "#ffffff",
+              "backgroundColor": "#26a69a"
+            }
+          }
+        },
+        {
+          "name": "対応タスク",
+          "duration": 2,
+          "attribute": {
+            "labels": [
+              {
+                "name": "高優先",
+                "color": "#e53935"
+              }
+            ],
+            "colorPalette": {
+              "name": "Orange",
+              "color": "#000000",
+              "backgroundColor": "#ffa726"
+            }
+          }
+        },
+        {
+          "name": "レビュー・確認",
+          "duration": 1,
+          "attribute": {
+            "labels": [
+              {
+                "name": "レビュー待ち",
+                "color": "#8e24aa"
+              }
+            ],
+            "colorPalette": {
+              "name": "Purple",
+              "color": "#ffffff",
+              "backgroundColor": "#ab47bc"
+            }
+          }
+        }
+      ],
+      "snapDurationMinutes": 15,
+      "enableProgress": true
+    },
+    "public": true,
+    "authority": {
+      "owners": [
+        "h.murakami@esm.co.jp"
+      ]
+    },
+    "createdBy": "system",
+    "createdAt": "2026-05-06T00:19:46.559Z",
+    "updatedBy": "system",
+    "updatedAt": "2026-05-06T00:19:46.559Z",
+    "comments": []
+  },
+  "rows": [
+    {
+      "id": 200,
+      "projectId": "c2a1b3d4-e5f6-7890-abcd-ef1234567890",
+      "name": "📁 フェーズ1: 検知・原因究明",
+      "order": 1,
+      "visible": true,
+      "attribute": {
+        "isSummary": true,
+        "collapsed": false,
+        "labels": [
+          {
+            "name": "高優先",
+            "color": "#e53935"
+          }
+        ],
+        "description": "障害検知・体制召集から原因調査・特定までの初動フェーズです。"
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": []
+    },
+    {
+      "id": 201,
+      "projectId": "c2a1b3d4-e5f6-7890-abcd-ef1234567890",
+      "name": "障害検知・初動対応",
+      "order": 2,
+      "visible": true,
+      "attribute": {
+        "description": "アラート受信から第一報発出までの対応フェーズ。",
+        "parentId": 200
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
+        {
+          "id": 4191,
+          "rowId": 201,
+          "name": "アラート受信・確認",
+          "start": "2026-05-10T09:00:00",
+          "end": "2026-05-10T09:30:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "高優先",
+                "color": "#e53935"
+              }
+            ],
+            "description": "監視ツールのアラートを受信し、担当者が内容を確認する。",
+            "colorPalette": {
+              "name": "Red",
+              "color": "#ffffff",
+              "backgroundColor": "#ef5350"
+            },
+            "progress": 100
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.818Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.818Z",
+          "comments": []
+        },
+        {
+          "id": 4192,
+          "rowId": 201,
+          "name": "インシデント宣言・体制召集",
+          "start": "2026-05-10T09:30:00",
+          "end": "2026-05-10T10:00:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "高優先",
+                "color": "#e53935"
+              }
+            ],
+            "colorPalette": {
+              "name": "Red",
+              "color": "#ffffff",
+              "backgroundColor": "#ef5350"
+            },
+            "dependencies": [
+              "4191"
+            ],
+            "progress": 100
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:48.922Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:48.922Z",
+          "comments": []
+        },
+        {
+          "id": 4193,
+          "rowId": 201,
+          "name": "第一報・社内エスカレーション",
+          "start": "2026-05-10T09:45:00",
+          "end": "2026-05-10T10:15:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "高優先",
+                "color": "#e53935"
+              }
+            ],
+            "colorPalette": {
+              "name": "Orange",
+              "color": "#000000",
+              "backgroundColor": "#ffa726"
+            },
+            "progress": 100
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:49.024Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:49.024Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "id": 202,
+      "projectId": "c2a1b3d4-e5f6-7890-abcd-ef1234567890",
+      "name": "原因調査",
+      "order": 3,
+      "visible": true,
+      "attribute": {
+        "description": "障害原因を特定するための調査フェーズ。",
+        "parentId": 200
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
+        {
+          "id": 4194,
+          "rowId": 202,
+          "name": "ログ収集・解析",
+          "start": "2026-05-10T09:30:00",
+          "end": "2026-05-10T11:00:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "高優先",
+                "color": "#e53935"
+              }
+            ],
+            "description": "アプリ・インフラ各層のログを収集し、エラー箇所を特定する。",
+            "colorPalette": {
+              "name": "Teal",
+              "color": "#ffffff",
+              "backgroundColor": "#26a69a"
+            },
+            "dependencies": [
+              "4191"
+            ],
+            "progress": 100
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:49.124Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:49.124Z",
+          "comments": []
+        },
+        {
+          "id": 4195,
+          "rowId": 202,
+          "name": "原因仮説立案",
+          "start": "2026-05-10T10:30:00",
+          "end": "2026-05-10T11:30:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "中優先",
+                "color": "#fb8c00"
+              }
+            ],
+            "colorPalette": {
+              "name": "Teal",
+              "color": "#ffffff",
+              "backgroundColor": "#26a69a"
+            },
+            "dependencies": [
+              "4194"
+            ],
+            "progress": 100
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:49.223Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:49.223Z",
+          "comments": []
+        },
+        {
+          "id": 4196,
+          "rowId": 202,
+          "name": "根本原因特定",
+          "start": "2026-05-10T11:30:00",
+          "end": "2026-05-10T13:00:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "高優先",
+                "color": "#e53935"
+              }
+            ],
+            "colorPalette": {
+              "name": "Teal",
+              "color": "#ffffff",
+              "backgroundColor": "#26a69a"
+            },
+            "dependencies": [
+              "4195"
+            ],
+            "progress": 100
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:49.328Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:49.328Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "id": 210,
+      "projectId": "c2a1b3d4-e5f6-7890-abcd-ef1234567890",
+      "name": "📁 フェーズ2: 復旧・暫定/恒久対処",
+      "order": 4,
+      "visible": true,
+      "attribute": {
+        "isSummary": true,
+        "collapsed": false,
+        "labels": [
+          {
+            "name": "中優先",
+            "color": "#fb8c00"
+          }
+        ],
+        "description": "暫定切り戻し、設定修正、アプリ改修から本番デプロイまでの復旧フェーズです。"
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": []
+    },
+    {
+      "id": 203,
+      "projectId": "c2a1b3d4-e5f6-7890-abcd-ef1234567890",
+      "name": "インフラ・環境対応",
+      "order": 5,
+      "visible": true,
+      "attribute": {
+        "description": "インフラ側の暫定・恒久対策フェーズ。",
+        "parentId": 210
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
+        {
+          "id": 4197,
+          "rowId": 203,
+          "name": "暫定対処（サービス切り戻し）",
+          "start": "2026-05-10T10:00:00",
+          "end": "2026-05-10T11:00:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "高優先",
+                "color": "#e53935"
+              },
+              {
+                "name": "ブロック中",
+                "color": "#d32f2f"
+              }
+            ],
+            "description": "影響範囲を最小化するため旧バージョンへ切り戻す。",
+            "colorPalette": {
+              "name": "Orange",
+              "color": "#000000",
+              "backgroundColor": "#ffa726"
+            },
+            "dependencies": [
+              "4192"
+            ],
+            "progress": 100
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:49.426Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:49.426Z",
+          "comments": []
+        },
+        {
+          "id": 4198,
+          "rowId": 203,
+          "name": "インフラ設定修正",
+          "start": "2026-05-10T13:00:00",
+          "end": "2026-05-10T15:00:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "中優先",
+                "color": "#fb8c00"
+              }
+            ],
+            "colorPalette": {
+              "name": "Orange",
+              "color": "#000000",
+              "backgroundColor": "#ffa726"
+            },
+            "dependencies": [
+              "4196"
+            ],
+            "progress": 80
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:49.523Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:49.523Z",
+          "comments": []
+        },
+        {
+          "id": 4199,
+          "rowId": 203,
+          "name": "スケールアウト・負荷分散確認",
+          "start": "2026-05-10T15:00:00",
+          "end": "2026-05-10T16:00:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "中優先",
+                "color": "#fb8c00"
+              }
+            ],
+            "colorPalette": {
+              "name": "Green",
+              "color": "#000000",
+              "backgroundColor": "#66bb6a"
+            },
+            "dependencies": [
+              "4198"
+            ],
+            "progress": 50
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:49.624Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:49.624Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "id": 204,
+      "projectId": "c2a1b3d4-e5f6-7890-abcd-ef1234567890",
+      "name": "アプリ修正・デプロイ",
+      "order": 6,
+      "visible": true,
+      "attribute": {
+        "description": "アプリケーションコードの修正と本番反映。",
+        "parentId": 210
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
+        {
+          "id": 4200,
+          "rowId": 204,
+          "name": "コード修正・ローカル検証",
+          "start": "2026-05-10T11:30:00",
+          "end": "2026-05-10T14:00:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "高優先",
+                "color": "#e53935"
+              }
+            ],
+            "description": "バグ修正のコーディングとローカル環境での動作確認。",
+            "colorPalette": {
+              "name": "Blue",
+              "color": "#ffffff",
+              "backgroundColor": "#42a5f5"
+            },
+            "dependencies": [
+              "4196"
+            ],
+            "progress": 100
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:49.721Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:49.721Z",
+          "comments": []
+        },
+        {
+          "id": 4201,
+          "rowId": 204,
+          "name": "コードレビュー",
+          "start": "2026-05-10T14:00:00",
+          "end": "2026-05-10T15:00:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "レビュー待ち",
+                "color": "#8e24aa"
+              }
+            ],
+            "colorPalette": {
+              "name": "Purple",
+              "color": "#ffffff",
+              "backgroundColor": "#ab47bc"
+            },
+            "dependencies": [
+              "4200"
+            ],
+            "progress": 60
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:49.822Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:49.822Z",
+          "comments": []
+        },
+        {
+          "id": 4202,
+          "rowId": 204,
+          "name": "本番デプロイ",
+          "start": "2026-05-10T15:00:00",
+          "end": "2026-05-10T16:00:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "高優先",
+                "color": "#e53935"
+              }
+            ],
+            "colorPalette": {
+              "name": "Red",
+              "color": "#ffffff",
+              "backgroundColor": "#ef5350"
+            },
+            "dependencies": [
+              "4201",
+              "4198"
+            ],
+            "progress": 0
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:49.925Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:49.925Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "id": 220,
+      "projectId": "c2a1b3d4-e5f6-7890-abcd-ef1234567890",
+      "name": "📁 フェーズ3: 事後検証・報告・クローズ",
+      "order": 7,
+      "visible": true,
+      "attribute": {
+        "isSummary": true,
+        "collapsed": false,
+        "labels": [
+          {
+            "name": "レビュー待ち",
+            "color": "#8e24aa"
+          }
+        ],
+        "description": "復旧後スモークテスト、監視強化、ステークホルダー報告からクローズまでのフェーズです。"
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": []
+    },
+    {
+      "id": 205,
+      "projectId": "c2a1b3d4-e5f6-7890-abcd-ef1234567890",
+      "name": "動作確認・リリース後検証",
+      "order": 8,
+      "visible": true,
+      "attribute": {
+        "description": "修正後の正常性確認と監視強化。",
+        "parentId": 220
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
+        {
+          "id": 4203,
+          "rowId": 205,
+          "name": "動作確認・スモークテスト",
+          "start": "2026-05-10T16:00:00",
+          "end": "2026-05-10T17:00:00",
+          "attribute": {
+            "description": "リリース後の主要機能が正常に動作していることを確認する。",
+            "colorPalette": {
+              "name": "Green",
+              "color": "#000000",
+              "backgroundColor": "#66bb6a"
+            },
+            "dependencies": [
+              "4202",
+              "4199"
+            ],
+            "progress": 0
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:50.027Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:50.027Z",
+          "comments": []
+        },
+        {
+          "id": 4204,
+          "rowId": 205,
+          "name": "監視強化・異常値監視",
+          "start": "2026-05-10T16:00:00",
+          "end": "2026-05-10T18:00:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "中優先",
+                "color": "#fb8c00"
+              }
+            ],
+            "colorPalette": {
+              "name": "Teal",
+              "color": "#ffffff",
+              "backgroundColor": "#26a69a"
+            },
+            "dependencies": [
+              "4202"
+            ],
+            "progress": 0
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:50.127Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:50.127Z",
+          "comments": []
+        },
+        {
+          "id": 4205,
+          "rowId": 205,
+          "name": "インシデントクローズ判定",
+          "start": "2026-05-10T18:00:00",
+          "end": "2026-05-10T18:30:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "レビュー待ち",
+                "color": "#8e24aa"
+              }
+            ],
+            "colorPalette": {
+              "name": "Green",
+              "color": "#000000",
+              "backgroundColor": "#66bb6a"
+            },
+            "dependencies": [
+              "4203",
+              "4204"
+            ],
+            "progress": 0
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:50.227Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:50.227Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "id": 206,
+      "projectId": "c2a1b3d4-e5f6-7890-abcd-ef1234567890",
+      "name": "コミュニケーション・報告",
+      "order": 9,
+      "visible": true,
+      "attribute": {
+        "description": "社内外への状況共有・報告対応フェーズ。",
+        "parentId": 220
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
+        {
+          "id": 4206,
+          "rowId": 206,
+          "name": "カスタマー向け障害告知",
+          "start": "2026-05-10T10:15:00",
+          "end": "2026-05-10T11:00:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "外部依存",
+                "color": "#1e88e5"
+              }
+            ],
+            "description": "ステータスページ・SNSへの障害情報公開。",
+            "colorPalette": {
+              "name": "Orange",
+              "color": "#000000",
+              "backgroundColor": "#ffa726"
+            },
+            "dependencies": [
+              "4193"
+            ],
+            "progress": 100
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:50.324Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:50.324Z",
+          "comments": []
+        },
+        {
+          "id": 4207,
+          "rowId": 206,
+          "name": "中間報告（経営層向け）",
+          "start": "2026-05-10T13:00:00",
+          "end": "2026-05-10T13:30:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "高優先",
+                "color": "#e53935"
+              }
+            ],
+            "colorPalette": {
+              "name": "Orange",
+              "color": "#000000",
+              "backgroundColor": "#ffa726"
+            },
+            "progress": 100
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:50.418Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:50.418Z",
+          "comments": []
+        },
+        {
+          "id": 4208,
+          "rowId": 206,
+          "name": "復旧完了報告・ポストモーテム開始",
+          "start": "2026-05-10T18:30:00",
+          "end": "2026-05-10T19:30:00",
+          "attribute": {
+            "labels": [
+              {
+                "name": "レビュー待ち",
+                "color": "#8e24aa"
+              }
+            ],
+            "colorPalette": {
+              "name": "Purple",
+              "color": "#ffffff",
+              "backgroundColor": "#ab47bc"
+            },
+            "dependencies": [
+              "4205"
+            ],
+            "progress": 0
+          },
+          "createdBy": "system",
+          "createdAt": "2026-05-06T00:19:50.518Z",
+          "updatedBy": "system",
+          "updatedAt": "2026-05-06T00:19:50.518Z",
+          "comments": []
+        }
+      ]
+    }
+  ]
+}
