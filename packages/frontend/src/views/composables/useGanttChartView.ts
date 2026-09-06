@@ -1337,6 +1337,17 @@ export const useGanttChartView = () => {
     if (isSnapshotMode.value) return // スナップショットモード時はストアの監視を無視
     isMinimapReady.value = false
 
+    if (!newProjectId) {
+      clearHistory()
+      rows.value = []
+      const currentRouteId = Array.isArray(route.params.id) ? route.params.id[0] : route.params.id
+      if (currentRouteId) {
+        router.push('/')
+      }
+      await syncCollaborationSession(null, oldProjectId)
+      return
+    }
+
     const project = projects.value.find((p) => p.id === newProjectId)
     if (project) {
       chartStartStr.value = project.start
@@ -4558,6 +4569,11 @@ export const useGanttChartView = () => {
 
   const refresh = async () => {
     if (projectId.value) {
+      const exists = projects.value.some((p) => p.id === projectId.value)
+      if (!exists && !isPublicViewMode.value && !isSnapshotMode.value) {
+        setProjectId('')
+        return
+      }
       await loadData(projectId.value)
     }
   }

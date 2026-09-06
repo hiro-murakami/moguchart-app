@@ -27,6 +27,9 @@ export const useProjectStore = defineStore('project', {
   actions: {
     async fetchProjects() {
       this.projects = await selectProjects()
+      if (this.currentProjectId && !this.projects.some((p) => p.id === this.currentProjectId)) {
+        this.currentProjectId = ''
+      }
       return this.projects
     },
 
