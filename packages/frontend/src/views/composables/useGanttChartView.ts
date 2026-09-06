@@ -1470,15 +1470,6 @@ export const useGanttChartView = () => {
     const selectedIds = rawSelectedIds ? rawSelectedIds.filter((id) => !isSummaryTaskId(id)) : undefined
     const isDisableCrossRowMove = !!currentProject.value?.attribute?.disableCrossRowMove
     if (selectedIds && selectedIds.length >= 2 && e.detail.dx !== undefined) {
-      // 移動先がサマリー行（子を持つ親行）の場合はガード
-      if (e.detail.targetRowId && isParentRow(e.detail.targetRowId)) {
-        alert({
-          title: '操作不可',
-          message: 'サマリー行（グループ行）にはタスクを移動できません。子行へ移動してください。',
-        })
-        return
-      }
-
       const msPerPx = (24 * 60 * 60 * 1000) / pxPerDay.value
       const timeDiff = e.detail.dx * msPerPx
 
@@ -1555,19 +1546,6 @@ export const useGanttChartView = () => {
         taskId: String(afterDataList[0]!.id),
       })
       return
-    }
-
-    // 移動先がサマリー行（子を持つ親行）の場合はガード
-    if (e.detail.targetRowId && isParentRow(e.detail.targetRowId)) {
-      const sourceTaskIdStr = String(e.detail.id)
-      const origRow = rows.value.find((r) => r.tasks.some((t) => t.id === sourceTaskIdStr))
-      if (!origRow || String(origRow.id) !== String(e.detail.targetRowId)) {
-        alert({
-          title: '操作不可',
-          message: 'サマリー行（グループ行）にはタスクを移動できません。子行へ移動してください。',
-        })
-        return
-      }
     }
 
     const data = {
@@ -1925,15 +1903,6 @@ export const useGanttChartView = () => {
 
   const handleTaskDrop = async (e: CustomEvent<moguchart.TaskDropEventDetail>) => {
     const { task, dropDate, targetRowId } = e.detail
-
-    // サマリー行（子を持つ親行）への直接ドロップをガード
-    if (isParentRow(targetRowId)) {
-      alert({
-        title: '操作不可',
-        message: 'サマリー行（グループ行）にはタスクを直接配置できません。子行へ配置してください。',
-      })
-      return
-    }
 
     try {
       const newStart = new Date(dropDate)
@@ -2418,19 +2387,7 @@ export const useGanttChartView = () => {
     if (currentProject.value?.attribute?.disableRowReorder) return
     await maybeAutoSnapshot()
 
-    // 移動前の親行IDのセット
-    const previousParentIds = new Set<number>()
-    for (const r of rows.value) {
-      const pid =
-        ((r as any).attribute as RowAttribute | undefined)?.parentId ??
-        ((r as any).parentId ? Number((r as any).parentId) : null)
-      if (pid != null) {
-        previousParentIds.add(pid)
-      }
-    }
-
     let isSuccess = false
-    const newlyCreatedParentRowNames: string[] = []
 
     setIsLoading(true)
     try {
@@ -2455,15 +2412,6 @@ export const useGanttChartView = () => {
         const oldParentId = oldParentMap.get(r.id) ?? null
         const newParentId = r.parentId != null ? Number(r.parentId) : null
         if (oldParentId !== newParentId) {
-          if (newParentId != null && !previousParentIds.has(newParentId)) {
-            const parentRow = rows.value.find((row) => Number(row.id) === newParentId)
-            if (parentRow && parentRow.tasks && parentRow.tasks.length > 0) {
-              if (!newlyCreatedParentRowNames.includes(parentRow.name)) {
-                newlyCreatedParentRowNames.push(parentRow.name)
-              }
-            }
-          }
-
           const origAttr = oldAttrMap.get(r.id) || {}
           const newAttr: RowAttribute = {
             ...origAttr,
@@ -2544,15 +2492,6 @@ export const useGanttChartView = () => {
       await loadData(projectId.value, { silent: true })
     } finally {
       setIsLoading(false)
-    }
-
-    if (isSuccess && newlyCreatedParentRowNames.length > 0) {
-      for (const parentName of newlyCreatedParentRowNames) {
-        await alert({
-          title: 'サマリータスクについて',
-          message: `${parentName}にタスクが存在しているのでサマリータスクが表示されません。表示したい場合はタスクを削除してください`,
-        })
-      }
     }
   }
 
@@ -3534,16 +3473,6 @@ export const useGanttChartView = () => {
     if (!prevRow) return
     const newParentId = Number(prevRow.id)
 
-    // 新規で親行が誕生するかどうかをチェック（インデント前に prevRow を親に持つ行が存在しないか）
-    const wasParent = rows.value.some((r) => {
-      const pid =
-        ((r as any).attribute as RowAttribute | undefined)?.parentId ??
-        ((r as any).parentId ? Number((r as any).parentId) : null)
-      return pid === newParentId
-    })
-    const shouldWarnSummary = !wasParent && (prevRow.tasks && prevRow.tasks.length > 0)
-    const warnRowName = prevRow.name
-
     await maybeAutoSnapshot()
     setIsLoading(true)
 
@@ -3623,13 +3552,6 @@ export const useGanttChartView = () => {
       await loadData(projectId.value, { silent: true })
     } finally {
       setIsLoading(false)
-    }
-
-    if (isSuccess && shouldWarnSummary) {
-      await alert({
-        title: 'サマリータスクについて',
-        message: `${warnRowName}にタスクが存在しているのでサマリータスクが表示されません。表示したい場合はタスクを削除してください`,
-      })
     }
   }
 
