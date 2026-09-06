@@ -40,6 +40,40 @@ export const useExportData = () => {
         // フィルタ適用中の場合は、タスクが無い（あるいは全てフィルタアウトされた）行は出力しない
         if (isFiltered) continue
 
+        // 子行を持つ親行の場合、配下タスクからサマリーを自動集計して出力
+        const childRows = rows.filter((r) => {
+          const pid =
+            ((r as any).attribute as RowAttribute | undefined)?.parentId ??
+            (r.parentId != null ? String(r.parentId) : null)
+          return pid === String(row.id)
+        })
+        const allChildTasks = childRows.flatMap((r) => (r.tasks || []).filter((t: any) => !t._isFilteredOut))
+        if (allChildTasks.length > 0) {
+          let minStart: number | null = null
+          let maxEnd: number | null = null
+          for (const t of allChildTasks) {
+            const s = t.start instanceof Date ? t.start.getTime() : new Date(t.start).getTime()
+            const e = t.end instanceof Date ? t.end.getTime() : new Date(t.end).getTime()
+            if (!Number.isNaN(s) && (minStart === null || s < minStart)) minStart = s
+            if (!Number.isNaN(e) && (maxEnd === null || e > maxEnd)) maxEnd = e
+          }
+          if (minStart !== null && maxEnd !== null) {
+            const startStr = dayjs(minStart).format('YYYY-MM-DD')
+            const endStr = dayjs(maxEnd).format('YYYY-MM-DD')
+            const days = dayjs(endStr).diff(dayjs(startStr), 'day') + 1
+            exportRows.push({
+              行名: rowName,
+              タスク名: `[サマリー] ${rowName}`,
+              開始日: startStr,
+              終了日: endStr,
+              日数: days,
+              ラベル: '',
+              説明: '配下タスクの自動集計サマリー',
+            })
+            continue
+          }
+        }
+
         // フィルタ未適用の場合は、タスクが無い行も含める
         exportRows.push({
           行名: rowName,

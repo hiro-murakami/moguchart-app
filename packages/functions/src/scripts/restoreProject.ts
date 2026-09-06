@@ -292,6 +292,8 @@ const restoreProject: RestoreProject = async (data, email) => {
 
     const taskIdMap = new Map<number, number>()
     const createdTasks: { newId: number; attribute: any }[] = []
+    const rowIdMap = new Map<number, number>()
+    const createdRowsWithParentId: { newId: number; oldParentId: number; attribute: any }[] = []
 
     // 2. 行とタスクの作成
     // 行の順序を維持するために for...of を使用
@@ -308,6 +310,16 @@ const restoreProject: RestoreProject = async (data, email) => {
           ...commonColumns,
         },
       })
+
+      rowIdMap.set(oldRowId, newRow.id)
+      const oldParentId = (rowData.attribute as any)?.parentId
+      if (oldParentId != null) {
+        createdRowsWithParentId.push({
+          newId: newRow.id,
+          oldParentId: Number(oldParentId),
+          attribute: rowData.attribute,
+        })
+      }
 
       if (tasks && Array.isArray(tasks)) {
         for (const task of tasks) {
@@ -357,6 +369,23 @@ const restoreProject: RestoreProject = async (data, email) => {
           where: { id: newId },
           data: {
             attribute: newAttribute,
+            ...getUpdateCommonColumns(email),
+          },
+        })
+      }
+    }
+
+    // 4. 行の親子関係（parentId）のID更新
+    for (const { newId, oldParentId, attribute } of createdRowsWithParentId) {
+      const newParentId = rowIdMap.get(oldParentId)
+      if (newParentId != null) {
+        await tx.ganttRow.update({
+          where: { id: newId },
+          data: {
+            attribute: {
+              ...attribute,
+              parentId: newParentId,
+            },
             ...getUpdateCommonColumns(email),
           },
         })

@@ -30,6 +30,7 @@ const {
   showHiddenRows,
   showCurrentTimeLine,
   showCriticalPath,
+  showSummaryTasks,
   showMinimap,
   minimapOpacity,
   barShadowLevel,
@@ -155,6 +156,14 @@ const {
   handleSaveTaskImages,
   handleImageFromRowContextMenu,
   handleSaveImages,
+  canIndent,
+  canOutdent,
+  handleIndentRows,
+  handleOutdentRows,
+  handleRowToggleCollapse,
+  handleToggleCollapseFromContextMenu,
+  handleCollapseAll,
+  handleExpandAll,
 } = useGanttChartView()
 
 const projectCommentPanelRef = ref<InstanceType<typeof ProjectCommentPanel>>()
@@ -220,6 +229,22 @@ const handleKeyDown = (e: KeyboardEvent) => {
     } else if (key === 'v') {
       e.preventDefault()
       handlePasteTasksShortcut(e)
+    }
+  }
+
+  // 行選択時のインデント / アウトデント
+  if (e.key === 'Tab') {
+    if (selectedRowIds.value.length > 0) {
+      e.preventDefault()
+      if (e.shiftKey) {
+        if (canOutdent.value) {
+          handleOutdentRows()
+        }
+      } else {
+        if (canIndent.value) {
+          handleIndentRows()
+        }
+      }
     }
   }
 }
@@ -320,6 +345,37 @@ const handleOpenSlideSchedule = async () => {
               @export-png="handleExportPng"
               @export-pdf="handleExportPdf"
             />
+            <template v-if="!isSnapshotMode">
+              <v-divider vertical class="mx-1 my-2" />
+              <TooltipBtn
+                v-if="!isReadOnly"
+                icon="mdi-format-indent-increase"
+                variant="text"
+                :disabled="!canIndent"
+                @click="handleIndentRows"
+                tooltip="インデント（子行にする） [Tab]"
+              />
+              <TooltipBtn
+                v-if="!isReadOnly"
+                icon="mdi-format-indent-decrease"
+                variant="text"
+                :disabled="!canOutdent"
+                @click="handleOutdentRows"
+                tooltip="インデント解除 [Shift+Tab]"
+              />
+              <TooltipBtn
+                icon="mdi-folder"
+                variant="text"
+                @click="handleCollapseAll"
+                tooltip="すべての親行を折りたたみ"
+              />
+              <TooltipBtn
+                icon="mdi-folder-open"
+                variant="text"
+                @click="handleExpandAll"
+                tooltip="すべての行を展開"
+              />
+            </template>
           </div>
           <div v-if="currentProject.attribute.description" class="text-caption text-medium-emphasis">
             {{ currentProject.attribute.description }}
@@ -373,6 +429,7 @@ const handleOpenSlideSchedule = async () => {
           v-model:show-hidden-rows="showHiddenRows"
           v-model:show-current-time-line="showCurrentTimeLine"
           v-model:show-critical-path="showCriticalPath"
+          v-model:show-summary-tasks="showSummaryTasks"
           v-model:show-minimap="showMinimap"
           v-model:minimap-opacity="minimapOpacity"
           v-model:bar-shadow-level="barShadowLevel"
@@ -425,6 +482,7 @@ const handleOpenSlideSchedule = async () => {
             @minimap-collapse="handleMinimapCollapse"
             @marker-dblclick="handleMarkerDblClick"
             @marker-contextmenu="handleMarkerContextMenu"
+            @row-toggle-collapse="handleRowToggleCollapse"
           />
         </div>
 
@@ -497,8 +555,15 @@ const handleOpenSlideSchedule = async () => {
       :row-id="contextMenu.rowId"
       :is-hidden="contextMenu.isHidden"
       :add-row-count="addRowCount"
+      :can-indent="canIndent"
+      :can-outdent="canOutdent"
+      :is-parent="contextMenu.isParent"
+      :collapsed="contextMenu.collapsed"
       @add-row-above="handleAddRowAbove"
       @add-row-below="handleAddRowBelow"
+      @indent="handleIndentRows"
+      @outdent="handleOutdentRows"
+      @toggle-collapse="handleToggleCollapseFromContextMenu"
       @edit-row="handleEditRowFromContextMenu"
       @delete-row="handleDeleteRowFromContextMenu"
       @toggle-visibility="toggleRowVisibility"

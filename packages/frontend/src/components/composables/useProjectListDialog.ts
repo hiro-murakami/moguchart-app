@@ -305,7 +305,11 @@ export const useProjectListDialog = (
 
     deleting.value = true
     try {
+      const isCurrentProject = projectStore.currentProjectId === project.id
       await deleteProjectScript(project.id)
+      if (isCurrentProject) {
+        projectStore.setProjectId('')
+      }
       snackbar({
         message: 'プロジェクトを削除しました。',
         color: 'success',
