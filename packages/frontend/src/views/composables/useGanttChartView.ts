@@ -761,6 +761,7 @@ export const useGanttChartView = () => {
         showToggleIcon: true,
         showWbsCode: false,
         autoSummary: showSummaryTasks.value,
+        summaryColor: currentProject.value?.attribute?.summaryTaskColor,
       },
       enableRowReordering: !currentProject.value?.attribute?.disableRowReorder,
       enableCrossRowMove: !currentProject.value?.attribute?.disableCrossRowMove,
@@ -1056,6 +1057,7 @@ export const useGanttChartView = () => {
             : null,
         collapsed: (row.attribute as RowAttribute | undefined)?.collapsed ?? false,
         isSummary: (row.attribute as RowAttribute | undefined)?.isSummary,
+        summaryColor: (row.attribute as RowAttribute | undefined)?.summaryColor,
         tasks: row.tasks.map(formatGanttTask),
         // RowAttribute のマーカーを moguchart.GanttMarker[] に変換
         markers: ((row as any).attribute as RowAttribute | undefined)?.markers?.map(
@@ -1172,6 +1174,7 @@ export const useGanttChartView = () => {
             : null,
         collapsed: (row.attribute as RowAttribute | undefined)?.collapsed ?? false,
         isSummary: (row.attribute as RowAttribute | undefined)?.isSummary,
+        summaryColor: (row.attribute as RowAttribute | undefined)?.summaryColor,
         tasks: row.tasks.map(formatGanttTask),
         // RowAttribute のマーカーを moguchart.GanttMarker[] に変換
         markers: (row.attribute as RowAttribute | undefined)?.markers?.map(
@@ -1241,6 +1244,7 @@ export const useGanttChartView = () => {
               : null,
           collapsed: (row.attribute as RowAttribute | undefined)?.collapsed ?? false,
           isSummary: (row.attribute as RowAttribute | undefined)?.isSummary,
+          summaryColor: (row.attribute as RowAttribute | undefined)?.summaryColor,
           tasks: row.tasks.map((task: any) => {
             // タスクコメントの処理
             const taskComments = task.comments as any[] | undefined
@@ -2122,6 +2126,7 @@ export const useGanttChartView = () => {
           name: row.name,
           description: attribute?.description || '',
           labels: attribute?.labels ? attribute.labels.map((l) => ({ ...l })) : [],
+          summaryColor: attribute?.summaryColor || '',
         }
         isRowEditDialogVisible.value = true
       }
@@ -2714,6 +2719,7 @@ export const useGanttChartView = () => {
       name: row.name,
       description: attribute?.description || '',
       labels: attribute?.labels ? attribute.labels.map((l) => ({ ...l })) : [],
+      summaryColor: attribute?.summaryColor || '',
     }
     isRowEditDialogVisible.value = true
   }
@@ -2728,11 +2734,13 @@ export const useGanttChartView = () => {
     const beforeAttr = (row as any).attribute as RowAttribute | undefined
     const beforeDescription = beforeAttr?.description || ''
     const beforeLabels = JSON.stringify(beforeAttr?.labels || [])
+    const beforeSummaryColor = beforeAttr?.summaryColor || ''
 
     const newAttr: RowAttribute = {
       ...((row as any).attribute || {}),
       description: data.description || undefined,
       labels: data.labels && data.labels.length > 0 ? data.labels : undefined,
+      summaryColor: data.summaryColor || undefined,
     }
 
     await upsertGanttRow({
@@ -2748,7 +2756,8 @@ export const useGanttChartView = () => {
     if (
       beforeName !== data.name ||
       beforeDescription !== (data.description || '') ||
-      beforeLabels !== JSON.stringify(data.labels || [])
+      beforeLabels !== JSON.stringify(data.labels || []) ||
+      beforeSummaryColor !== (data.summaryColor || '')
     ) {
       pushAction({
         description: '行編集',
@@ -2763,6 +2772,7 @@ export const useGanttChartView = () => {
               ...((row as any).attribute || {}),
               description: beforeDescription || undefined,
               labels: beforeAttr?.labels && beforeAttr.labels.length > 0 ? beforeAttr.labels : undefined,
+              summaryColor: beforeSummaryColor || undefined,
             },
             tasks: [],
           })
@@ -2827,6 +2837,7 @@ export const useGanttChartView = () => {
         name: r.name,
         description: attribute?.description || '',
         labels: attribute?.labels ? attribute.labels.map((l) => ({ ...l })) : [],
+        summaryColor: attribute?.summaryColor || '',
       }
       isRowEditDialogVisible.value = true
     }

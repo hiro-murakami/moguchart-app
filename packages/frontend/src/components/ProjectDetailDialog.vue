@@ -43,6 +43,7 @@ const {
   localDisableRowReorder,
   localDisableCrossRowMove,
   localEnableProgress,
+  localSummaryTaskColor,
   authorityHistoryUsers,
   title,
   localClearProgress,
@@ -346,7 +347,9 @@ watch(
                       <v-checkbox v-model="localEnableProgress" density="compact" hide-details>
                         <template v-slot:label>
                           <span class="mr-2">進捗率管理を行う</span>
-                          <HelpText text="ONにするとタスクバーに進捗バーや進捗ラベルが表示され、進捗率のドラッグ編集が可能になります" />
+                          <HelpText
+                            text="ONにするとタスクバーに進捗バーや進捗ラベルが表示され、進捗率のドラッグ編集が可能になります"
+                          />
                         </template>
                       </v-checkbox>
                     </v-col>
@@ -365,6 +368,26 @@ watch(
                           <HelpText text="ONにするとタスクを別の行へドラッグ移動できなくなります" />
                         </template>
                       </v-checkbox>
+                    </v-col>
+                    <v-col cols="5" class="mb-2">
+                      <div class="d-flex align-center">
+                        <v-color-input
+                          class="mr-2"
+                          v-model="localSummaryTaskColor"
+                          color-pip
+                          label="サマリータスクの既定色"
+                          variant="outlined"
+                          pip-variant="flat"
+                          density="compact"
+                          hide-details="auto"
+                          pip-location="prepend-inner"
+                          show-swatches
+                          clearable
+                        />
+                        <HelpText
+                          text="WBS親行に自動計算されるサマリータスク（集計バー）の既定色を設定します。行ごとに個別色を設定することも可能です"
+                        />
+                      </div>
                     </v-col>
                   </v-row>
                 </v-window-item>

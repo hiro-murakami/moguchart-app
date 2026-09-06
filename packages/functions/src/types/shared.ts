@@ -238,6 +238,10 @@ export type ProjectAttribute = {
    * 進捗率管理を行うかどうか（trueの場合、進捗バー・ラベル・ハンドル等の進捗管理機能を有効化）
    */
   enableProgress?: boolean
+  /**
+   * サマリータスク（自動集計バー）の既定色 (CSSカラー文字列、未指定時は #334155)
+   */
+  summaryTaskColor?: string
 }
 
 /** マーカーの種類 */
@@ -283,6 +287,8 @@ export type RowAttribute = {
   collapsed?: boolean
   /** サマリー行（グループ行）かどうか */
   isSummary?: boolean
+  /** サマリータスクバーのカスタム色 (CSSカラー文字列) */
+  summaryColor?: string
 }
 
 /** タスクの追加属性 */
@@ -312,6 +318,8 @@ export interface EditingRowData {
   description?: string
   labels?: Label[]
   imageUrls?: string[]
+  /** サマリータスクバーのカスタム色 (CSSカラー文字列) */
+  summaryColor?: string
 }
 
 /** フロントエンドの編集用：タスクデータ */

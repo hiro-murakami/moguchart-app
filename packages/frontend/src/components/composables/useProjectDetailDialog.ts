@@ -44,6 +44,8 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
   const localDisableRowReorder = ref(false)
   const localDisableCrossRowMove = ref(false)
   const localEnableProgress = ref(true)
+  const DEFAULT_SUMMARY_TASK_COLOR = '#334155'
+  const localSummaryTaskColor = ref<string>(DEFAULT_SUMMARY_TASK_COLOR)
 
   /** 複製モード時の元プロジェクト期間と単位 */
   const originalDuration = ref(0)
@@ -103,6 +105,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
             localDisableRowReorder.value = !!props.project.attribute.disableRowReorder
             localDisableCrossRowMove.value = !!props.project.attribute.disableCrossRowMove
             localEnableProgress.value = props.project.attribute.enableProgress !== false
+            localSummaryTaskColor.value = props.project.attribute.summaryTaskColor || DEFAULT_SUMMARY_TASK_COLOR
             localClearProgress.value = true
 
             // 元のプロジェクト期間を記憶
@@ -153,6 +156,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
             localDisableRowReorder.value = !!props.project.attribute.disableRowReorder
             localDisableCrossRowMove.value = !!props.project.attribute.disableCrossRowMove
             localEnableProgress.value = props.project.attribute.enableProgress !== false
+            localSummaryTaskColor.value = props.project.attribute.summaryTaskColor || DEFAULT_SUMMARY_TASK_COLOR
           }
         } else {
           // 新規追加モード
@@ -174,6 +178,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
           localDisableRowReorder.value = false
           localDisableCrossRowMove.value = false
           localEnableProgress.value = true
+          localSummaryTaskColor.value = DEFAULT_SUMMARY_TASK_COLOR
         }
       }
     },
@@ -208,6 +213,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
         localPublic.value !== false ||
         localDisableRowReorder.value !== false ||
         localDisableCrossRowMove.value !== false ||
+        localSummaryTaskColor.value !== DEFAULT_SUMMARY_TASK_COLOR ||
         localOwners.value.length > 0 ||
         localEditors.value.length > 0 ||
         localViewers.value.length > 0 ||
@@ -237,6 +243,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
       localDisableRowReorder.value !== !!props.project.attribute.disableRowReorder ||
       localDisableCrossRowMove.value !== !!props.project.attribute.disableCrossRowMove ||
       localEnableProgress.value !== (props.project.attribute.enableProgress !== false) ||
+      localSummaryTaskColor.value !== (props.project.attribute.summaryTaskColor || DEFAULT_SUMMARY_TASK_COLOR) ||
       (localGranularity.value === 'hourly' || localGranularity.value === 'daily'
         ? localSnapDurationMinutes.value !==
           (props.project.attribute.snapDurationMinutes ||
@@ -286,6 +293,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
         disableRowReorder: localDisableRowReorder.value ? true : undefined,
         disableCrossRowMove: localDisableCrossRowMove.value ? true : undefined,
         enableProgress: localEnableProgress.value ? undefined : false,
+        summaryTaskColor: localSummaryTaskColor.value || undefined,
         // granularity は新規作成時のみ設定（編集時は既存値を保持）
         ...(!isEdit.value ? { granularity: localGranularity.value } : {}),
         // snapDurationMinutes は hourly および daily モード時のみ保存
@@ -348,6 +356,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
     localDisableRowReorder,
     localDisableCrossRowMove,
     localEnableProgress,
+    localSummaryTaskColor,
     authorityHistoryUsers,
     title,
     localClearProgress,

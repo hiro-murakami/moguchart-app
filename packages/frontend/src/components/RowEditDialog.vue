@@ -27,12 +27,14 @@ const formRef = ref<VForm | null>(null)
 const formValid = ref(false)
 
 const projectStore = useProjectStore()
-const { labels: storeLabels } = storeToRefs(projectStore)
+const { labels: storeLabels, currentProject } = storeToRefs(projectStore)
+const defaultSummaryColor = computed(() => currentProject.value?.attribute?.summaryTaskColor || '#334155')
 
 const form = ref({
   name: '',
   description: '',
   labels: [] as import('@functions/types/shared').Label[],
+  summaryColor: '',
 })
 
 watch(
@@ -43,6 +45,7 @@ watch(
         name: newRow.name,
         description: newRow.description || '',
         labels: newRow.labels ? newRow.labels.map((l) => ({ ...l })) : [],
+        summaryColor: newRow.summaryColor || '',
       }
       await nextTick()
       formRef.value?.validate()
@@ -60,6 +63,7 @@ const save = () => {
     name: form.value.name,
     description: form.value.description,
     labels: form.value.labels,
+    summaryColor: form.value.summaryColor || undefined,
   })
 }
 </script>
@@ -87,6 +91,22 @@ const save = () => {
             </v-col>
             <v-col cols="12" class="mb-3">
               <LabelSelect v-model="form.labels" :items="storeLabels" />
+            </v-col>
+            <v-col cols="6" class="mb-3">
+              <v-color-input
+                v-model="form.summaryColor"
+                color-pip
+                label="サマリータスクの色"
+                variant="outlined"
+                pip-variant="flat"
+                density="compact"
+                hide-details="auto"
+                pip-location="prepend-inner"
+                show-swatches
+                clearable
+                :hint="form.summaryColor ? undefined : `未設定時は既定色 (${defaultSummaryColor}) が適用されます`"
+                :persistent-hint="!form.summaryColor"
+              />
             </v-col>
             <v-col cols="12">
               <v-textarea
