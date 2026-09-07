@@ -313,7 +313,8 @@ export const barContent = (task: moguchart.GanttTask) => {
     nameSpan.style.cssText = `font-weight: 700; font-size: 11px; text-shadow: ${
       isLightBg ? '0 1px 1px rgba(255,255,255,0.7)' : '1px 1px 2px rgba(0,0,0,0.6)'
     }; color: ${textColor}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;`
-    nameSpan.textContent = task.name || ''
+    const cleanName = (task.name || '').replace(/^[📁📂]\ufe0f?\s*/u, '')
+    nameSpan.textContent = cleanName
     summaryContainer.appendChild(nameSpan)
 
     if (task.progress !== undefined && !Number.isNaN(task.progress)) {

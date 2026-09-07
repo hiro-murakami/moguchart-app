@@ -1745,10 +1745,18 @@ export const useGanttChartView = () => {
     if (isReadOnly.value) return
     const { sourceTaskId, targetTaskId } = e.detail
 
+    // サマリータスクとの依存関係は作成不可
+    if (isSummaryTaskId(sourceTaskId) || isSummaryTaskId(targetTaskId)) return
+
     const targetRow = rows.value.find((r) => r.tasks.some((t) => t.id === targetTaskId))
     const targetTask = targetRow?.tasks.find((t) => t.id === targetTaskId)
 
     if (!targetRow || !targetTask) return
+    if (targetTask.type === 'summary') return
+
+    const sourceRow = rows.value.find((r) => r.tasks.some((t) => t.id === sourceTaskId))
+    const sourceTask = sourceRow?.tasks.find((t) => t.id === sourceTaskId)
+    if (sourceTask?.type === 'summary') return
 
     const attribute = ((targetTask as any).attribute as TaskAttribute) || {}
     const deps = attribute.dependencies || []
