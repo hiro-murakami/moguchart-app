@@ -3,6 +3,7 @@ import express from 'express'
 import { apiKeyAuth } from './middleware/apiKeyAuth.js'
 import { createRateLimiter } from './middleware/rateLimit.js'
 import { errorHandler } from './middleware/errorHandler.js'
+import { VERSION } from '../types/shared.js'
 import projectsRouter from './routes/projects.js'
 import rowsRouter from './routes/rows.js'
 import tasksRouter from './routes/tasks.js'
@@ -19,7 +20,7 @@ app.use(express.json({ limit: '10mb' }))
 
 // ヘルスチェック（認証不要）
 app.get('/api/v1/health', (_req, res) => {
-  res.json({ status: 'ok', version: '1.0.0' })
+  res.json({ status: 'ok', version: VERSION })
 })
 
 // 公開プロジェクト用エンドポイント（認証不要）

@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Moguchart REST API
-  version: 1.1.0
+  version: 1.0.0
   description: |
     Moguchartの外部アプリ向けREST API。
     ガントチャートプロジェクトの管理（プロジェクト・行・タスク・コメント・スナップショット）を提供します。
@@ -1655,6 +1655,12 @@ components:
               attribute:
                 $ref: '#/components/schemas/TaskAttribute'
           description: 新規タスクテンプレート一覧
+        enableProgress:
+          type: boolean
+          description: 進捗率管理を行うかどうか（trueの場合、進捗バー・ラベル・ハンドル等の進捗管理機能を有効化）
+        summaryTaskColor:
+          type: string
+          description: サマリータスク（自動集計バー）の既定色（CSSカラー文字列、未指定時は #334155）
 
     TaskAttribute:
       type: object
@@ -1728,6 +1734,18 @@ components:
               fontSize:
                 type: string
                 enum: [xs, sm, md, lg, xl]
+        parentId:
+          type: [integer, "null"]
+          description: 親行ID（WBS階層用。nullまたは未設定時はルート行）
+        collapsed:
+          type: boolean
+          description: 折りたたみ状態（true: 配下の子行を折りたたむ、false: 展開）
+        isSummary:
+          type: boolean
+          description: サマリー行（グループ行）かどうか
+        summaryColor:
+          type: string
+          description: サマリータスクバーのカスタム色（CSSカラー文字列）
 
     Project:
       type: object

@@ -31,5 +31,23 @@ if (content !== updated) {
   writeFileSync(sharedPath, updated, 'utf-8')
   console.log(`✅ VERSION を '${version}' に同期しました (shared.ts)`)
 } else {
-  console.log(`✅ VERSION は既に '${version}' です`)
+  console.log(`✅ VERSION は既に '${version}' です (shared.ts)`)
+}
+
+// openapi.yaml のパス
+const openApiPath = resolve(root, 'docs/openapi.yaml')
+try {
+  const openApiContent = readFileSync(openApiPath, 'utf-8')
+  const openApiUpdated = openApiContent.replace(
+    /(info:\r?\n\s+title:.*\r?\n\s+version:)\s*.*/,
+    `$1 ${version}`,
+  )
+  if (openApiContent !== openApiUpdated) {
+    writeFileSync(openApiPath, openApiUpdated, 'utf-8')
+    console.log(`✅ OpenAPI バージョンを '${version}' に同期しました (openapi.yaml)`)
+  } else {
+    console.log(`✅ OpenAPI バージョンは既に '${version}' です (openapi.yaml)`)
+  }
+} catch {
+  // openapi.yaml が存在しない場合はスキップ
 }
