@@ -1,5 +1,17 @@
 import dayjs from 'dayjs'
-import { DEFAULT_TASK_COLOR, UNLABELED_VALUE, ZOOM_DAILY, ZOOM_MONTHLY, ZOOM_HOURLY } from '@/modules/constants'
+import {
+  DEFAULT_TASK_COLOR,
+  UNLABELED_VALUE,
+  ZOOM_DAILY,
+  ZOOM_MONTHLY,
+  ZOOM_HOURLY,
+  ZOOM_PERCENT,
+  DEFAULT_PX_PER_DAY,
+  DEFAULT_PX_PER_MONTH,
+  DEFAULT_PX_PER_HOUR,
+  DEFAULT_ROW_HEADER_WIDTH,
+  DEFAULT_BAR_HEIGHT,
+} from '@/modules/constants'
 import {
   deleteGanttRow,
   deleteGanttTask,
@@ -91,11 +103,32 @@ export const useGanttChartView = () => {
   const searchIncludeRows = ref(false)
   const chartStartStr = ref('2025-12-15')
   const chartEndStr = ref('2026-03-31')
-  const pxPerDay = ref(28)
-  const pxPerMonth = ref(40)
-  const pxPerHour = ref(140)
-  const rowHeaderWidth = ref(200)
-  const barHeight = ref(38)
+  // --- 表示倍率（ズーム倍率）と連動値 ---
+  const zoomPercent = ref<number>(ZOOM_PERCENT.default)
+  const zoomScale = computed(() => zoomPercent.value / 100)
+  const fontScale = computed(() => zoomScale.value)
+
+  // 基準値（等倍・100%時の値）
+  const basePxPerDay = ref(DEFAULT_PX_PER_DAY)
+  const basePxPerMonth = ref(DEFAULT_PX_PER_MONTH)
+  const basePxPerHour = ref(DEFAULT_PX_PER_HOUR)
+  const baseRowHeaderWidth = ref(DEFAULT_ROW_HEADER_WIDTH)
+  const baseBarHeight = ref(DEFAULT_BAR_HEIGHT)
+
+  // 実効値（ズーム連動）
+  const pxPerDay = computed(() => Math.max(8, Math.round(basePxPerDay.value * zoomScale.value)))
+  const pxPerMonth = computed(() => Math.max(10, Math.round(basePxPerMonth.value * zoomScale.value)))
+  const pxPerHour = computed(() => Math.max(30, Math.round(basePxPerHour.value * zoomScale.value)))
+  const effectiveRowHeaderWidth = computed(() =>
+    Math.max(60, Math.min(600, Math.round(baseRowHeaderWidth.value * zoomScale.value))),
+  )
+  const effectiveBarHeight = computed(() =>
+    Math.max(16, Math.round(baseBarHeight.value * Math.max(0.7, Math.min(1.5, 1 + (zoomScale.value - 1) * 0.7)))),
+  )
+
+  // 互換性のためのエイリアス
+  const rowHeaderWidth = effectiveRowHeaderWidth
+  const barHeight = effectiveBarHeight
   const barMargin = ref(4)
   const barCornerRadius = ref(4)
   const labelWidth = ref(150)
@@ -193,6 +226,48 @@ export const useGanttChartView = () => {
   const currentProject = computed(() => (isSnapshotMode.value ? snapshotProject.value : storeProject.value))
   const currentRole = computed(() => (isSnapshotMode.value ? 'viewer' : storeRole.value))
 
+  const ganttChartRef = ref<any | null>(null)
+
+  /**
+   * ガントチャートのスクロール位置を左上（0, 0）にリセットする
+   */
+  const resetScroll = async () => {
+    await nextTick()
+    const chart = ganttChartRef.value
+    if (chart) {
+      if (chart.updateComplete) {
+        await chart.updateComplete
+      }
+      if (typeof chart.resetScroll === 'function') {
+        chart.resetScroll()
+      } else {
+        const container = chart.shadowRoot?.querySelector('.scroll-container')
+        if (container) {
+          container.scrollLeft = 0
+          container.scrollTop = 0
+        }
+      }
+      requestAnimationFrame(() => {
+        if (typeof chart.resetScroll === 'function') {
+          chart.resetScroll()
+        } else {
+          const container = chart.shadowRoot?.querySelector('.scroll-container')
+          if (container) {
+            container.scrollLeft = 0
+            container.scrollTop = 0
+          }
+        }
+      })
+    }
+  }
+
+  const handleSelectProject = (id: string) => {
+    if (storeProjectId.value === id) {
+      loadData(id, { resetScroll: true })
+    } else {
+      setProjectId(id)
+    }
+  }
 
   // プロジェクトの変更に応じてブラウザのタブタイトルと期間を更新
   watch(
@@ -220,14 +295,20 @@ export const useGanttChartView = () => {
   const saveProjectSettings = debounce(
     async (settings: {
       pxPerDay?: number
+      basePxPerDay?: number
       pxPerMonth?: number
+      basePxPerMonth?: number
       pxPerHour?: number
+      basePxPerHour?: number
+      zoomPercent?: number
       selectedLabels?: string[]
       showHiddenRows?: boolean
       showCurrentTimeLine?: boolean
       barShadowLevel?: 'none' | 'small' | 'medium' | 'large'
       rowHeaderWidth?: number
+      baseRowHeaderWidth?: number
       barHeight?: number
+      baseBarHeight?: number
       commentSidebarOpen?: boolean
       commentSidebarWidth?: number
       readonlyMode?: boolean
@@ -257,24 +338,44 @@ export const useGanttChartView = () => {
     500,
   )
 
-  // pxPerDay変更時に保存
-  watch(pxPerDay, (newValue) => {
-    saveProjectSettings({ pxPerDay: newValue })
+  // zoomPercent変更時に保存
+  watch(zoomPercent, (newValue) => {
+    saveProjectSettings({
+      zoomPercent: newValue,
+      pxPerDay: pxPerDay.value,
+      pxPerMonth: pxPerMonth.value,
+      pxPerHour: pxPerHour.value,
+    })
   })
 
-  // pxPerMonth変更時に保存
-  watch(pxPerMonth, (newValue) => {
-    saveProjectSettings({ pxPerMonth: newValue })
+  // カレンダー基準幅変更時に保存
+  watch(basePxPerDay, (newValue) => {
+    saveProjectSettings({
+      basePxPerDay: newValue,
+      pxPerDay: pxPerDay.value,
+    })
   })
 
-  // pxPerHour変更時に保存
-  watch(pxPerHour, (newValue) => {
-    saveProjectSettings({ pxPerHour: newValue })
+  watch(basePxPerMonth, (newValue) => {
+    saveProjectSettings({
+      basePxPerMonth: newValue,
+      pxPerMonth: pxPerMonth.value,
+    })
   })
 
-  // 行ヘッダー幅変更時に保存
-  watch(rowHeaderWidth, (newValue) => {
-    saveProjectSettings({ rowHeaderWidth: newValue })
+  watch(basePxPerHour, (newValue) => {
+    saveProjectSettings({
+      basePxPerHour: newValue,
+      pxPerHour: pxPerHour.value,
+    })
+  })
+
+  // 行ヘッダー基準幅変更時に保存
+  watch(baseRowHeaderWidth, (newValue) => {
+    saveProjectSettings({
+      baseRowHeaderWidth: newValue,
+      rowHeaderWidth: effectiveRowHeaderWidth.value,
+    })
   })
 
   // 選択ラベル変更時に保存
@@ -336,9 +437,9 @@ export const useGanttChartView = () => {
     saveProjectSettings({ minimapCollapsed: newValue })
   })
 
-  // バー高さ変更時に保存
-  watch(barHeight, (newValue) => {
-    saveProjectSettings({ barHeight: newValue })
+  // バー基準高さ変更時に保存
+  watch(baseBarHeight, (newValue) => {
+    saveProjectSettings({ baseBarHeight: newValue, barHeight: effectiveBarHeight.value })
   })
 
   // コメントサイドバー開閉状態・幅変更時に保存
@@ -356,32 +457,47 @@ export const useGanttChartView = () => {
       if (newUser && newProjectId) {
         const settings = newUser.attribute?.projectSettings?.[newProjectId]
 
-        // pxPerDayの復元
-        if (settings?.pxPerDay) {
-          pxPerDay.value = settings.pxPerDay
+        // basePxPerDayの復元
+        if (settings?.basePxPerDay) {
+          basePxPerDay.value = settings.basePxPerDay
+        } else if (settings?.pxPerDay) {
+          basePxPerDay.value = settings.pxPerDay
         } else {
-          pxPerDay.value = 28
+          basePxPerDay.value = DEFAULT_PX_PER_DAY
         }
 
-        // pxPerMonthの復元
-        if (settings?.pxPerMonth) {
-          pxPerMonth.value = settings.pxPerMonth
+        // basePxPerMonthの復元
+        if (settings?.basePxPerMonth) {
+          basePxPerMonth.value = settings.basePxPerMonth
+        } else if (settings?.pxPerMonth) {
+          basePxPerMonth.value = settings.pxPerMonth
         } else {
-          pxPerMonth.value = 40
+          basePxPerMonth.value = DEFAULT_PX_PER_MONTH
         }
 
-        // pxPerHourの復元
-        if (settings?.pxPerHour) {
-          pxPerHour.value = settings.pxPerHour
+        // basePxPerHourの復元
+        if (settings?.basePxPerHour) {
+          basePxPerHour.value = settings.basePxPerHour
+        } else if (settings?.pxPerHour) {
+          basePxPerHour.value = settings.pxPerHour
         } else {
-          pxPerHour.value = 140
+          basePxPerHour.value = DEFAULT_PX_PER_HOUR
         }
 
-        // rowHeaderWidthの復元
-        if (settings?.rowHeaderWidth) {
-          rowHeaderWidth.value = settings.rowHeaderWidth
+        // zoomPercentの復元
+        if (settings?.zoomPercent) {
+          zoomPercent.value = settings.zoomPercent
         } else {
-          rowHeaderWidth.value = 200
+          zoomPercent.value = ZOOM_PERCENT.default
+        }
+
+        // baseRowHeaderWidthの復元
+        if (settings?.baseRowHeaderWidth) {
+          baseRowHeaderWidth.value = settings.baseRowHeaderWidth
+        } else if (settings?.rowHeaderWidth) {
+          baseRowHeaderWidth.value = settings.rowHeaderWidth
+        } else {
+          baseRowHeaderWidth.value = DEFAULT_ROW_HEADER_WIDTH
         }
 
         // selectedFilterLabelNamesの復元
@@ -422,11 +538,13 @@ export const useGanttChartView = () => {
           readonlyMode.value = false
         }
 
-        // barHeightの復元
-        if (settings?.barHeight) {
-          barHeight.value = settings.barHeight
+        // baseBarHeightの復元
+        if (settings?.baseBarHeight) {
+          baseBarHeight.value = settings.baseBarHeight
+        } else if (settings?.barHeight) {
+          baseBarHeight.value = settings.barHeight
         } else {
-          barHeight.value = 38
+          baseBarHeight.value = DEFAULT_BAR_HEIGHT
         }
 
         // showCriticalPathの復元
@@ -799,13 +917,23 @@ export const useGanttChartView = () => {
           },
         })),
       },
+      fontScale: fontScale.value,
       zoom: {
         enabled: true,
         ...(isMonthly
-          ? { min: ZOOM_MONTHLY.min, max: ZOOM_MONTHLY.max }
+          ? {
+              min: Math.round(basePxPerMonth.value * (ZOOM_PERCENT.min / 100)),
+              max: Math.round(basePxPerMonth.value * (ZOOM_PERCENT.max / 100)),
+            }
           : isHourly
-            ? { min: ZOOM_HOURLY.min * 24, max: ZOOM_HOURLY.max * 24 }
-            : { min: ZOOM_DAILY.min, max: ZOOM_DAILY.max }),
+            ? {
+                min: Math.round(basePxPerHour.value * (ZOOM_PERCENT.min / 100)) * 24,
+                max: Math.round(basePxPerHour.value * (ZOOM_PERCENT.max / 100)) * 24,
+              }
+            : {
+                min: Math.round(basePxPerDay.value * (ZOOM_PERCENT.min / 100)),
+                max: Math.round(basePxPerDay.value * (ZOOM_PERCENT.max / 100)),
+              }),
       },
       dependency: {
         showCriticalPath: showCriticalPath.value,
@@ -830,21 +958,27 @@ export const useGanttChartView = () => {
 
   /**
    * zoom-change イベントハンドラ
-   * ホイールズームで変更された pxPerDay/pxPerMonth を ref に反映し、
-   * DisplaySettingsMenu のスライダーおよびユーザー設定と同期する。
+   * ホイールズームで変更された値を zoomPercent に反映し、
+   * ガントチャート全体（行ヘッダー幅、フォントサイズ、バー高さ等）と同期する。
    */
   const handleZoomChange = (e: Event) => {
     const detail = (e as CustomEvent).detail as { pxPerDay: number; pxPerMonth?: number }
     const granularity = currentProject.value?.attribute?.granularity
+    let newScale = 1.0
 
     if (granularity === 'monthly' && detail.pxPerMonth !== undefined) {
-      pxPerMonth.value = Math.round(detail.pxPerMonth)
+      newScale = detail.pxPerMonth / basePxPerMonth.value
     } else if (granularity === 'hourly') {
-      // core は pxPerDay で通知するので pxPerHour に逆変換
-      pxPerHour.value = Math.round(detail.pxPerDay / 24)
+      newScale = detail.pxPerDay / 24 / basePxPerHour.value
     } else {
-      pxPerDay.value = Math.round(detail.pxPerDay)
+      newScale = detail.pxPerDay / basePxPerDay.value
     }
+
+    const clampedPercent = Math.max(
+      ZOOM_PERCENT.min,
+      Math.min(ZOOM_PERCENT.max, Math.round(newScale * 100)),
+    )
+    zoomPercent.value = clampedPercent
   }
 
   /**
@@ -1149,7 +1283,7 @@ export const useGanttChartView = () => {
 
   // --- データ永続化ロジック ---
 
-  async function loadData(pId: string, options?: { silent?: boolean }) {
+  async function loadData(pId: string, options?: { silent?: boolean; resetScroll?: boolean }) {
     if (!pId) return
     const silent = options?.silent ?? false
     if (!silent) setIsLoading(true)
@@ -1213,6 +1347,9 @@ export const useGanttChartView = () => {
         nextTick(() => {
           isMinimapReady.value = true
         })
+      }
+      if (options?.resetScroll) {
+        await resetScroll()
       }
     }
   }
@@ -1311,6 +1448,7 @@ export const useGanttChartView = () => {
           isMinimapReady.value = true
         })
       }
+      await resetScroll()
     }
   }
 
@@ -1349,6 +1487,7 @@ export const useGanttChartView = () => {
         router.push('/')
       }
       await syncCollaborationSession(null, oldProjectId)
+      await resetScroll()
       return
     }
 
@@ -1358,7 +1497,7 @@ export const useGanttChartView = () => {
       chartEndStr.value = project.end
     }
     clearHistory()
-    loadData(newProjectId)
+    loadData(newProjectId, { resetScroll: true })
 
     const currentRouteId = Array.isArray(route.params.id) ? route.params.id[0] : route.params.id
     if (newProjectId && currentRouteId !== newProjectId) {
@@ -1395,7 +1534,7 @@ export const useGanttChartView = () => {
         if (targetProject) {
           if (storeProjectId.value === targetProject.id) {
             // すでに同一IDがセットされている場合（公開閲覧からの切り替えなど）は watch(storeProjectId) が発火しないため明示的にリロード
-            loadData(targetProject.id)
+            loadData(targetProject.id, { resetScroll: true })
             await syncCollaborationSession(targetProject.id)
           } else {
             setProjectId(targetProject.id)
@@ -1432,7 +1571,7 @@ export const useGanttChartView = () => {
         chartEndStr.value = project.end
       }
       clearHistory()
-      await loadData(projectId.value)
+      await loadData(projectId.value, { resetScroll: true })
     }
   }, { immediate: true })
 
@@ -1869,8 +2008,6 @@ export const useGanttChartView = () => {
   }
 
   // --- ドラッグ＆ドロップ関連 ---
-  const ganttChartRef = ref<any | null>(null)
-
   const handleTaskDragStart = (e: DragEvent, task: moguchart.GanttTask) => {
     if (e.dataTransfer) {
       e.dataTransfer.setData('application/json', JSON.stringify(task))
@@ -2520,7 +2657,7 @@ export const useGanttChartView = () => {
   }
 
   const handleRowHeaderResize = (e: CustomEvent<moguchart.RowHeaderResizeEventDetail>) => {
-    rowHeaderWidth.value = e.detail.width
+    baseRowHeaderWidth.value = Math.max(60, Math.round(e.detail.width / zoomScale.value))
   }
 
   // --- 行追加関連 ---
@@ -4669,9 +4806,17 @@ export const useGanttChartView = () => {
     barShadowLevel,
     readonlyMode,
     pxPerDay,
+    basePxPerDay,
     pxPerMonth,
+    basePxPerMonth,
     pxPerHour,
+    basePxPerHour,
     barHeight,
+    zoomPercent,
+    zoomScale,
+    fontScale,
+    baseBarHeight,
+    baseRowHeaderWidth,
     addRowCount,
     manualAddRowCount,
     isUnassignedTasksOpen,
@@ -4729,6 +4874,8 @@ export const useGanttChartView = () => {
     handleBarSelectionChange,
     toggleRowVisibility,
     setProjectId,
+    handleSelectProject,
+    resetScroll,
     handleTaskContextMenu,
     handleEditTaskFromContextMenu,
     handleDeleteTaskFromContextMenu,

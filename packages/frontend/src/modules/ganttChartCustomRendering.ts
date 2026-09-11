@@ -298,7 +298,7 @@ export const barContent = (task: moguchart.GanttTask) => {
     summaryContainer.style.userSelect = 'none'
 
     const iconSpan = document.createElement('span')
-    iconSpan.style.fontSize = '10px'
+    iconSpan.style.fontSize = 'calc(10px * var(--moguchart-font-scale, 1))'
     iconSpan.style.opacity = '0.9'
     iconSpan.style.filter = 'drop-shadow(1px 1px 1px rgba(0,0,0,0.5))'
     iconSpan.textContent = '📁'
@@ -310,7 +310,7 @@ export const barContent = (task: moguchart.GanttTask) => {
     const isLightBg = textColor === '#000000'
 
     const nameSpan = document.createElement('span')
-    nameSpan.style.cssText = `font-weight: 700; font-size: 11px; text-shadow: ${
+    nameSpan.style.cssText = `font-weight: 700; font-size: calc(11px * var(--moguchart-font-scale, 1)); text-shadow: ${
       isLightBg ? '0 1px 1px rgba(255,255,255,0.7)' : '1px 1px 2px rgba(0,0,0,0.6)'
     }; color: ${textColor}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;`
     const cleanName = (task.name || '').replace(/^[📁📂]\ufe0f?\s*/u, '')
@@ -319,7 +319,7 @@ export const barContent = (task: moguchart.GanttTask) => {
 
     if (task.progress !== undefined && !Number.isNaN(task.progress)) {
       const progressBadge = document.createElement('span')
-      progressBadge.style.cssText = `font-size: 10px; font-weight: 700; background: ${
+      progressBadge.style.cssText = `font-size: calc(10px * var(--moguchart-font-scale, 1)); font-weight: 700; background: ${
         isLightBg ? 'rgba(0,0,0,0.1)' : 'rgba(0,0,0,0.4)'
       }; color: ${textColor}; padding: 0px 5px; border-radius: 4px; text-shadow: ${
         isLightBg ? 'none' : '1px 1px 1px rgba(0,0,0,0.5)'
@@ -364,7 +364,7 @@ export const barContent = (task: moguchart.GanttTask) => {
   // ロックアイコン
   if (isLocked) {
     const lockIcon = document.createElement('span')
-    lockIcon.style.fontSize = '11px'
+    lockIcon.style.fontSize = 'calc(11px * var(--moguchart-font-scale, 1))'
     lockIcon.style.flexShrink = '0'
     lockIcon.style.opacity = '0.85'
     lockIcon.style.filter = 'drop-shadow(1px 1px 1px rgba(0,0,0,0.4))'
@@ -373,7 +373,7 @@ export const barContent = (task: moguchart.GanttTask) => {
   }
 
   const nameSpan = document.createElement('span')
-  nameSpan.style.cssText = `font-weight: bold; font-size: 12px; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); color: white; white-space: nowrap; ${task.labelStyle || ''}`
+  nameSpan.style.cssText = `font-weight: bold; font-size: calc(12px * var(--moguchart-font-scale, 1)); text-shadow: 1px 1px 2px rgba(0,0,0,0.5); color: white; white-space: nowrap; ${task.labelStyle || ''}`
 
   const searchKeywords = (task as any)._searchKeywords as string[] | undefined
   if (searchKeywords && searchKeywords.length > 0) {
@@ -395,7 +395,7 @@ export const barContent = (task: moguchart.GanttTask) => {
       labelSpan.style.color = getContrastColor(l.color)
       labelSpan.style.padding = '0px 6px'
       labelSpan.style.borderRadius = '3px'
-      labelSpan.style.fontSize = '10px'
+      labelSpan.style.fontSize = 'calc(10px * var(--moguchart-font-scale, 1))'
       labelSpan.style.fontWeight = 'bold'
       labelSpan.textContent = l.name
       labelsContainer.appendChild(labelSpan)
@@ -414,7 +414,7 @@ export const barContent = (task: moguchart.GanttTask) => {
     badge.style.color = 'white'
     badge.style.padding = '0px 5px'
     badge.style.borderRadius = '8px'
-    badge.style.fontSize = '10px'
+    badge.style.fontSize = 'calc(10px * var(--moguchart-font-scale, 1))'
     badge.style.fontWeight = 'bold'
     badge.style.flexShrink = '0'
     badge.style.textShadow = '1px 1px 2px rgba(0,0,0,0.5)'
@@ -643,7 +643,7 @@ export const barContent = (task: moguchart.GanttTask) => {
 
   if (description) {
     const descSpan = document.createElement('span')
-    descSpan.style.cssText = `font-size: 10px; opacity: 0.9; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); color: white; overflow: hidden; text-overflow: ellipsis; width: 100%; display: block; ${task.labelStyle || ''}`
+    descSpan.style.cssText = `font-size: calc(10px * var(--moguchart-font-scale, 1)); opacity: 0.9; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); color: white; overflow: hidden; text-overflow: ellipsis; width: 100%; display: block; ${task.labelStyle || ''}`
     if (searchKeywords && searchKeywords.length > 0) {
       highlightText(description, searchKeywords, descSpan)
     } else {
@@ -861,7 +861,7 @@ export const rowHeaderContent = (row: moguchart.GanttRow, barHeight: number = 38
 
   const nameDiv = document.createElement('div')
   nameDiv.style.fontWeight = 'bold'
-  nameDiv.style.fontSize = '14px'
+  nameDiv.style.fontSize = 'calc(14px * var(--moguchart-font-scale, 1))'
   nameDiv.style.whiteSpace = 'nowrap'
   nameDiv.style.overflow = 'hidden'
   nameDiv.style.textOverflow = 'ellipsis'
@@ -887,9 +887,9 @@ export const rowHeaderContent = (row: moguchart.GanttRow, barHeight: number = 38
       labelSpan.style.color = getContrastColor(l.color)
       labelSpan.style.padding = '0px 5px'
       labelSpan.style.borderRadius = '3px'
-      labelSpan.style.fontSize = '10px'
+      labelSpan.style.fontSize = 'calc(10px * var(--moguchart-font-scale, 1))'
       labelSpan.style.fontWeight = 'bold'
-      labelSpan.style.lineHeight = '16px'
+      labelSpan.style.lineHeight = 'calc(16px * var(--moguchart-font-scale, 1))'
       labelSpan.style.flexShrink = '0'
       labelSpan.textContent = l.name
       labelsContainer.appendChild(labelSpan)
@@ -907,7 +907,7 @@ export const rowHeaderContent = (row: moguchart.GanttRow, barHeight: number = 38
     badge.style.color = 'rgb(var(--v-theme-on-surface))'
     badge.style.padding = '0px 5px'
     badge.style.borderRadius = '8px'
-    badge.style.fontSize = '10px'
+    badge.style.fontSize = 'calc(10px * var(--moguchart-font-scale, 1))'
     badge.style.fontWeight = 'bold'
     badge.style.flexShrink = '0'
     badge.style.opacity = '0.7'
@@ -1136,7 +1136,7 @@ export const rowHeaderContent = (row: moguchart.GanttRow, barHeight: number = 38
 
   if (description) {
     const descDiv = document.createElement('div')
-    descDiv.style.fontSize = '11px'
+    descDiv.style.fontSize = 'calc(11px * var(--moguchart-font-scale, 1))'
     descDiv.style.color = 'rgba(var(--v-theme-on-surface), 0.6)'
     descDiv.style.marginTop = '2px'
     descDiv.style.whiteSpace = 'nowrap'

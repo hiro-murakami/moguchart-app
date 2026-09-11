@@ -114,18 +114,30 @@ export type Label = {
 export type ProjectSettings = {
   /** ズームレベル（1日あたりのpx数）: 日単位表示時に使用 */
   pxPerDay?: number
+  /** 基準カレンダー幅（1日あたりのpx数）: 日単位表示時に使用（倍率100%基準） */
+  basePxPerDay?: number
   /** ズームレベル（1月あたりのpx数）: 月単位表示時に使用 */
   pxPerMonth?: number
+  /** 基準カレンダー幅（1月あたりのpx数）: 月単位表示時に使用（倍率100%基準） */
+  basePxPerMonth?: number
   /** ズームレベル（1時間あたりのpx数）: 時間単位表示時に使用 */
   pxPerHour?: number
+  /** 基準カレンダー幅（1時間あたりのpx数）: 時間単位表示時に使用（倍率100%基準） */
+  basePxPerHour?: number
   /** 選択されたラベル（フィルタリング用） */
   selectedLabels?: string[]
   /** 非表示行を表示するかどうか */
   showHiddenRows?: boolean
   /** 行ヘッダーの幅 */
   rowHeaderWidth?: number
+  /** 基準行ヘッダーの幅 (px)（倍率100%基準） */
+  baseRowHeaderWidth?: number
+  /** 表示倍率 (%) */
+  zoomPercent?: number
   /** ガントバーの高さ (px) */
   barHeight?: number
+  /** 基準ガントバーの高さ (px)（倍率100%基準） */
+  baseBarHeight?: number
   /** コメントサイドバーの開閉状態 */
   commentSidebarOpen?: boolean
   /** コメントサイドバーの幅 (px) */

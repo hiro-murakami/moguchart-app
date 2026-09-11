@@ -37,9 +37,15 @@ const {
   readonlyMode,
   currentRole,
   pxPerDay,
+  basePxPerDay,
   pxPerMonth,
+  basePxPerMonth,
   pxPerHour,
+  basePxPerHour,
   barHeight,
+  zoomPercent,
+  fontScale,
+  baseBarHeight,
   addRowCount,
   manualAddRowCount,
   isUnassignedTasksOpen,
@@ -89,6 +95,7 @@ const {
   handleRowSelectionChange,
   toggleRowVisibility,
   setProjectId,
+  handleSelectProject,
   handleTaskContextMenu,
   handleEditTaskFromContextMenu,
   handleDeleteTaskFromContextMenu,
@@ -229,6 +236,9 @@ const handleKeyDown = (e: KeyboardEvent) => {
     } else if (key === 'v') {
       e.preventDefault()
       handlePasteTasksShortcut(e)
+    } else if (key === '0') {
+      e.preventDefault()
+      zoomPercent.value = 100
     }
   }
 
@@ -300,6 +310,7 @@ const handleOpenSlideSchedule = async () => {
     :style="{
       paddingRight: currentProject ? `${effectiveCommentSidebarWidth + 8}px` : undefined,
       '--task-box-shadow': barShadowCssVar,
+      '--moguchart-font-scale': fontScale,
     }"
   >
     <template v-if="currentProject">
@@ -433,10 +444,15 @@ const handleOpenSlideSchedule = async () => {
           v-model:show-minimap="showMinimap"
           v-model:minimap-opacity="minimapOpacity"
           v-model:bar-shadow-level="barShadowLevel"
-          v-model:px-per-day="pxPerDay"
-          v-model:px-per-month="pxPerMonth"
-          v-model:px-per-hour="pxPerHour"
-          v-model:bar-height="barHeight"
+          v-model:zoom-percent="zoomPercent"
+          v-model:base-px-per-day="basePxPerDay"
+          v-model:base-px-per-month="basePxPerMonth"
+          v-model:base-px-per-hour="basePxPerHour"
+          :px-per-day="pxPerDay"
+          :px-per-month="pxPerMonth"
+          :px-per-hour="pxPerHour"
+          v-model:base-bar-height="baseBarHeight"
+          :bar-height="barHeight"
           v-model:readonly-mode="readonlyMode"
           :can-edit="currentRole !== 'viewer'"
           :granularity="currentProject?.attribute?.granularity"
@@ -459,6 +475,9 @@ const handleOpenSlideSchedule = async () => {
         <div style="flex: 1; min-height: 0">
           <gantt-chart
             ref="ganttChartRef"
+            :style="{
+              '--moguchart-font-scale': fontScale,
+            }"
             :rows="displayRows"
             :selected-row-ids="selectedRowIds"
             :option="chartOption"
@@ -684,7 +703,7 @@ const handleOpenSlideSchedule = async () => {
       :saving="slideScheduleSaving"
       @slide="handleSlideSchedule"
     />
-    <ProjectListDialog v-model="isProjectListDialogVisible" @select="setProjectId" @update="refresh" />
+    <ProjectListDialog v-model="isProjectListDialogVisible" @select="handleSelectProject" @update="refresh" />
 
     <!-- Collaboration Activity Log -->
     <CollaborationActivityLog
