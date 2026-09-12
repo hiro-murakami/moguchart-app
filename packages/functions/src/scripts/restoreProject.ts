@@ -4,14 +4,15 @@ import AdmZip from 'adm-zip'
 import crypto from 'node:crypto'
 
 // 依存関係のIDを書き換えるためのヘルパー
-const updateDependencies = (attribute: any, taskIdMap: Map<number, number>): any => {
+// dependenciesはstring[]として保存されているため、キー・値ともに文字列として扱う
+const updateDependencies = (attribute: any, taskIdMap: Map<string, string>): any => {
   if (!attribute || !attribute.dependencies || !Array.isArray(attribute.dependencies)) {
     return attribute
   }
 
   const newDependencies = attribute.dependencies
-    .map((oldId: number) => taskIdMap.get(oldId))
-    .filter((newId: number | undefined) => newId !== undefined)
+    .map((oldId: any) => taskIdMap.get(String(oldId)))
+    .filter((newId: string | undefined): newId is string => newId !== undefined)
 
   return {
     ...attribute,
@@ -290,7 +291,7 @@ const restoreProject: RestoreProject = async (data, email) => {
       newProjectId = newProject.id
     }
 
-    const taskIdMap = new Map<number, number>()
+    const taskIdMap = new Map<string, string>()
     const createdTasks: { newId: number; attribute: any }[] = []
     const rowIdMap = new Map<number, number>()
     const createdRowsWithParentId: { newId: number; oldParentId: number; attribute: any }[] = []
@@ -348,7 +349,7 @@ const restoreProject: RestoreProject = async (data, email) => {
             },
           })
 
-          taskIdMap.set(oldTaskId, newTask.id)
+          taskIdMap.set(String(oldTaskId), String(newTask.id))
           createdTasks.push({ newId: newTask.id, attribute: taskData.attribute })
         }
       }
