@@ -101,7 +101,7 @@ const currentBaseCalendarWidth = computed(() => {
   return props.basePxPerDay ?? props.pxPerDay ?? 28
 })
 
-const handleCalendarWidthChange = (val: number) => {
+const handleCalendarWidthChange = (val: number | null) => {
   if (val == null) return
   if (currentGranularity.value === 'monthly') {
     emit('update:basePxPerMonth', val)
@@ -112,21 +112,26 @@ const handleCalendarWidthChange = (val: number) => {
   }
 }
 
-const selectedCalendarWidth = computed<number>(() => {
-  const current = currentBaseCalendarWidth.value
-  const presets = calendarPresets.value
-  const found = presets.find((p) => p.value === current)
-  if (found) return current
-  let closest: number = presets[2]?.value ?? 28
-  let minDiff = Infinity
-  presets.forEach((p) => {
-    const diff = Math.abs(p.value - current)
-    if (diff < minDiff) {
-      minDiff = diff
-      closest = p.value
-    }
-  })
-  return closest
+const selectedCalendarWidth = computed<number>({
+  get: () => {
+    const current = currentBaseCalendarWidth.value
+    const presets = calendarPresets.value
+    const found = presets.find((p) => p.value === current)
+    if (found) return current
+    let closest: number = presets[2]?.value ?? 28
+    let minDiff = Infinity
+    presets.forEach((p) => {
+      const diff = Math.abs(p.value - current)
+      if (diff < minDiff) {
+        minDiff = diff
+        closest = p.value
+      }
+    })
+    return closest
+  },
+  set: (val: number | null) => {
+    if (val != null) handleCalendarWidthChange(val)
+  },
 })
 
 // --- バーの高さ ---
@@ -140,18 +145,20 @@ const BAR_HEIGHT_PRESETS = [
 
 const currentBaseBarHeight = computed(() => props.baseBarHeight ?? props.barHeight ?? DEFAULT_BAR_HEIGHT)
 
-const selectedBarHeight = computed(() => {
-  const current = currentBaseBarHeight.value
-  const found = BAR_HEIGHT_PRESETS.find((p) => p.value === current)
-  if (found) return current
-  return 38
+const selectedBarHeight = computed<number>({
+  get: () => {
+    const current = currentBaseBarHeight.value
+    const found = BAR_HEIGHT_PRESETS.find((p) => p.value === current)
+    if (found) return current
+    return 38
+  },
+  set: (val: number | null) => {
+    if (val != null) {
+      emit('update:baseBarHeight', val)
+      emit('update:barHeight', val)
+    }
+  },
 })
-
-const handleBarHeightChange = (val: number) => {
-  if (val == null) return
-  emit('update:baseBarHeight', val)
-  emit('update:barHeight', val)
-}
 
 // --- バーの影 ---
 const BAR_SHADOW_PRESETS = [
@@ -161,15 +168,16 @@ const BAR_SHADOW_PRESETS = [
   { label: '大', value: 'large' as const },
 ]
 
-const selectedBarShadow = computed(() => {
-  const current = props.barShadowLevel
-  const found = BAR_SHADOW_PRESETS.find((p) => p.value === current)
-  return found ? current : 'medium'
+const selectedBarShadow = computed<'none' | 'small' | 'medium' | 'large'>({
+  get: () => {
+    const current = props.barShadowLevel
+    const found = BAR_SHADOW_PRESETS.find((p) => p.value === current)
+    return found ? current : 'medium'
+  },
+  set: (val: 'none' | 'small' | 'medium' | 'large' | null) => {
+    if (val != null) emit('update:barShadowLevel', val)
+  },
 })
-
-const handleBarShadowChange = (val: 'none' | 'small' | 'medium' | 'large') => {
-  if (val != null) emit('update:barShadowLevel', val)
-}
 
 const userStore = useUserStore()
 const user = computed(() => userStore.user)
@@ -178,9 +186,9 @@ const isPublicViewMode = inject<Ref<boolean>>('isPublicViewMode', ref(false))
 const publicThemeOverride = inject<Ref<'light' | 'dark' | 'system' | null>>('publicThemeOverride', ref(null))
 
 const themeOptions = [
-  { title: 'ライト', value: 'light', image: themeLightImg },
-  { title: 'ダーク', value: 'dark', image: themeDarkImg },
-  { title: 'システム', value: 'system', image: themeSystemImg },
+  { title: 'ライト', value: 'light' as const, image: themeLightImg },
+  { title: 'ダーク', value: 'dark' as const, image: themeDarkImg },
+  { title: 'システム', value: 'system' as const, image: themeSystemImg },
 ]
 
 const currentTheme = computed({
@@ -190,8 +198,6 @@ const currentTheme = computed({
   },
   set: async (val: 'light' | 'dark' | 'system') => {
     if (isPublicViewMode.value) {
-      // 公開閲覧モード: App.vue の publicThemeOverride を更新
-      // → effectiveTheme → <v-app :theme> に反映される
       publicThemeOverride.value = val
       return
     }
@@ -222,105 +228,157 @@ const currentTheme = computed({
         </template>
       </TutorialOverlay>
     </template>
-    <v-card min-width="320" class="pa-4">
-      <div class="text-subtitle-2 mb-3">表示設定</div>
-      <v-switch
-        :model-value="showHiddenRows"
-        label="非表示行を表示"
-        color="primary"
-        hide-details
-        density="compact"
-        class="mb-2"
-        @update:model-value="emit('update:showHiddenRows', $event as boolean)"
-      />
-      <v-switch
-        :model-value="showCurrentTimeLine"
-        label="現在時刻線を表示"
-        color="primary"
-        hide-details
-        density="compact"
-        class="mb-2"
-        @update:model-value="emit('update:showCurrentTimeLine', $event as boolean)"
-      />
-      <v-switch
-        v-if="canEdit"
-        :model-value="readonlyMode"
-        label="読み取り専用モード"
-        color="primary"
-        hide-details
-        density="compact"
-        class="mb-2"
-        @update:model-value="emit('update:readonlyMode', $event as boolean)"
-      />
-      <v-switch
-        :model-value="showCriticalPath"
-        label="クリティカルパスを表示"
-        color="error"
-        hide-details
-        density="compact"
-        class="mb-2"
-        @update:model-value="emit('update:showCriticalPath', $event as boolean)"
-      />
-      <v-switch
-        :model-value="showSummaryTasks"
-        label="サマリータスクを表示"
-        color="primary"
-        hide-details
-        density="compact"
-        class="mb-2"
-        @update:model-value="emit('update:showSummaryTasks', $event as boolean)"
-      />
-      <div class="d-flex align-center justify-space-between mb-2">
-        <v-switch
-          :model-value="showMinimap"
-          label="ミニマップを表示"
-          color="primary"
-          hide-details
-          density="compact"
-          class="flex-grow-0 text-no-wrap"
-          @update:model-value="emit('update:showMinimap', $event as boolean)"
-        />
-        <div v-if="showMinimap" class="d-flex align-center">
-          <v-btn
-            icon="mdi-minus"
-            variant="flat"
-            density="compact"
-            size="small"
-            class="setting-round-btn"
-            :disabled="Math.round((minimapOpacity ?? 1) * 100) <= 20"
-            aria-label="不透明度を下げる"
-            @click="handleMinimapOpacityDecrease"
-          />
-          <v-tooltip text="不透明度" location="top">
-            <template #activator="{ props: tooltipProps }">
-              <span
-                v-bind="tooltipProps"
-                class="setting-value-text d-flex align-center justify-center px-1 cursor-default"
-              >
-                {{ Math.round((minimapOpacity ?? 1) * 100) }}%
-              </span>
-            </template>
-          </v-tooltip>
-          <v-btn
-            icon="mdi-plus"
-            variant="flat"
-            density="compact"
-            size="small"
-            class="setting-round-btn"
-            :disabled="Math.round((minimapOpacity ?? 1) * 100) >= 100"
-            aria-label="不透明度を上げる"
-            @click="handleMinimapOpacityIncrease"
-          />
-        </div>
+    <v-card min-width="380" max-width="420" class="pa-4 display-settings-card">
+      <div class="text-subtitle-1 font-weight-bold mb-3 d-flex align-center">
+        <v-icon size="22" class="mr-2" color="primary">mdi-tune-variant</v-icon>
+        表示設定
       </div>
 
-      <!-- Chrome風 設定項目グループ（ズーム、カレンダーの横幅、バーの高さ、バーの影） -->
-      <div class="chrome-settings-group my-2">
+      <!-- セクション 1: 表示項目 -->
+      <div class="section-label">表示項目</div>
+      <div class="settings-section mb-1">
+        <!-- 非表示行を表示 -->
+        <div class="setting-row">
+          <div class="setting-label-group">
+            <v-icon size="20" color="medium-emphasis" class="setting-icon">mdi-eye-off-outline</v-icon>
+            <span class="setting-title">非表示行を表示</span>
+          </div>
+          <v-switch
+            :model-value="showHiddenRows"
+            color="primary"
+            hide-details
+            density="compact"
+            class="setting-switch"
+            @update:model-value="emit('update:showHiddenRows', $event as boolean)"
+          />
+        </div>
+
+        <!-- 現在時刻線を表示 -->
+        <div class="setting-row">
+          <div class="setting-label-group">
+            <v-icon size="20" color="medium-emphasis" class="setting-icon">mdi-clock-outline</v-icon>
+            <span class="setting-title">現在時刻線を表示</span>
+          </div>
+          <v-switch
+            :model-value="showCurrentTimeLine"
+            color="primary"
+            hide-details
+            density="compact"
+            class="setting-switch"
+            @update:model-value="emit('update:showCurrentTimeLine', $event as boolean)"
+          />
+        </div>
+
+        <!-- サマリータスクを表示 -->
+        <div class="setting-row">
+          <div class="setting-label-group">
+            <v-icon size="20" color="medium-emphasis" class="setting-icon">mdi-format-list-group</v-icon>
+            <span class="setting-title">サマリータスクを表示</span>
+          </div>
+          <v-switch
+            :model-value="showSummaryTasks"
+            color="primary"
+            hide-details
+            density="compact"
+            class="setting-switch"
+            @update:model-value="emit('update:showSummaryTasks', $event as boolean)"
+          />
+        </div>
+
+        <!-- クリティカルパスを表示 -->
+        <div class="setting-row">
+          <div class="setting-label-group">
+            <v-icon size="20" color="primary" class="setting-icon">mdi-chart-timeline-variant</v-icon>
+            <span class="setting-title">クリティカルパスを表示</span>
+          </div>
+          <v-switch
+            :model-value="showCriticalPath"
+            color="primary"
+            hide-details
+            density="compact"
+            class="setting-switch"
+            @update:model-value="emit('update:showCriticalPath', $event as boolean)"
+          />
+        </div>
+
+        <!-- 読み取り専用モード (canEdit時のみ) -->
+        <div v-if="canEdit" class="setting-row">
+          <div class="setting-label-group">
+            <v-icon size="20" color="medium-emphasis" class="setting-icon">mdi-lock-outline</v-icon>
+            <span class="setting-title">読み取り専用モード</span>
+          </div>
+          <v-switch
+            :model-value="readonlyMode"
+            color="primary"
+            hide-details
+            density="compact"
+            class="setting-switch"
+            @update:model-value="emit('update:readonlyMode', $event as boolean)"
+          />
+        </div>
+
+        <!-- ミニマップを表示 -->
+        <div class="setting-row">
+          <div class="setting-label-group">
+            <v-icon size="20" color="medium-emphasis" class="setting-icon">mdi-map-outline</v-icon>
+            <span class="setting-title">ミニマップを表示</span>
+          </div>
+          <v-switch
+            :model-value="showMinimap"
+            color="primary"
+            hide-details
+            density="compact"
+            class="setting-switch"
+            @update:model-value="emit('update:showMinimap', $event as boolean)"
+          />
+        </div>
+
+        <!-- ミニマップ不透明度（ミニマップON時のみインデント表示） -->
+        <transition name="expand">
+          <div v-if="showMinimap" class="setting-row sub-row">
+            <div class="setting-label-group">
+              <v-icon size="18" color="medium-emphasis" class="setting-icon">mdi-opacity</v-icon>
+              <span class="setting-title sub-title text-medium-emphasis">ミニマップ不透明度</span>
+            </div>
+            <div class="d-flex align-center">
+              <v-btn
+                icon="mdi-minus"
+                variant="flat"
+                density="compact"
+                size="small"
+                class="setting-round-btn"
+                :disabled="Math.round((minimapOpacity ?? 1) * 100) <= 20"
+                aria-label="不透明度を下げる"
+                @click="handleMinimapOpacityDecrease"
+              />
+              <span class="setting-value-text d-flex align-center justify-center px-1 cursor-default">
+                {{ Math.round((minimapOpacity ?? 1) * 100) }}%
+              </span>
+              <v-btn
+                icon="mdi-plus"
+                variant="flat"
+                density="compact"
+                size="small"
+                class="setting-round-btn"
+                :disabled="Math.round((minimapOpacity ?? 1) * 100) >= 100"
+                aria-label="不透明度を上げる"
+                @click="handleMinimapOpacityIncrease"
+              />
+            </div>
+          </div>
+        </transition>
+      </div>
+
+      <v-divider class="my-3" />
+
+      <!-- セクション 2: サイズ・配置 -->
+      <div class="section-label">サイズ・配置</div>
+      <div class="settings-section mb-1">
         <!-- ズーム -->
-        <div class="chrome-setting-row d-flex align-center justify-space-between py-2 px-1">
-          <div class="d-flex align-center" style="gap: 10px">
-            <v-icon size="18" color="medium-emphasis">mdi-magnify-plus-outline</v-icon>
-            <span class="text-body-2 font-weight-medium">ズーム</span>
+        <div class="setting-row">
+          <div class="setting-label-group">
+            <v-icon size="20" color="medium-emphasis" class="setting-icon">mdi-magnify-plus-outline</v-icon>
+            <span class="setting-title">ズーム</span>
           </div>
           <div class="d-flex align-center">
             <v-btn
@@ -353,7 +411,7 @@ const currentTheme = computed({
               aria-label="ズームイン"
               @click="handleZoomIn"
             />
-            <div class="setting-divider mx-2"></div>
+            <div class="setting-divider mx-1"></div>
             <TooltipBtn
               icon="mdi-restore"
               :tooltip="`100%にリセット (${resetShortcutText})`"
@@ -369,91 +427,176 @@ const currentTheme = computed({
         </div>
 
         <!-- カレンダーの横幅 -->
-        <div class="chrome-setting-row d-flex align-center justify-space-between py-2 px-1">
-          <div class="d-flex align-center" style="gap: 10px">
-            <v-icon size="18" color="medium-emphasis">mdi-arrow-expand-horizontal</v-icon>
-            <span class="text-body-2 font-weight-medium">カレンダーの横幅</span>
+        <div class="setting-row">
+          <div class="setting-label-group">
+            <v-icon size="20" color="medium-emphasis" class="setting-icon">mdi-arrow-expand-horizontal</v-icon>
+            <span class="setting-title">カレンダー幅</span>
           </div>
-          <v-select
-            :model-value="selectedCalendarWidth"
-            :items="calendarPresets"
-            item-title="label"
-            item-value="value"
+          <v-btn-toggle
+            v-model="selectedCalendarWidth"
+            mandatory
             density="compact"
+            color="primary"
             variant="outlined"
-            hide-details
-            class="setting-select"
-            @update:model-value="(v: number) => handleCalendarWidthChange(v)"
-          />
+            class="setting-toggle"
+          >
+            <v-btn
+              v-for="preset in calendarPresets"
+              :key="preset.value"
+              :value="preset.value"
+              class="toggle-btn"
+            >
+              {{ preset.label }}
+            </v-btn>
+          </v-btn-toggle>
         </div>
 
         <!-- バーの高さ -->
-        <div class="chrome-setting-row d-flex align-center justify-space-between py-2 px-1">
-          <div class="d-flex align-center" style="gap: 10px">
-            <v-icon size="18" color="medium-emphasis">mdi-arrow-expand-vertical</v-icon>
-            <span class="text-body-2 font-weight-medium">バーの高さ</span>
+        <div class="setting-row">
+          <div class="setting-label-group">
+            <v-icon size="20" color="medium-emphasis" class="setting-icon">mdi-arrow-expand-vertical</v-icon>
+            <span class="setting-title">行の高さ</span>
           </div>
-          <v-select
-            :model-value="selectedBarHeight"
-            :items="BAR_HEIGHT_PRESETS"
-            item-title="label"
-            item-value="value"
+          <v-btn-toggle
+            v-model="selectedBarHeight"
+            mandatory
             density="compact"
+            color="primary"
             variant="outlined"
-            hide-details
-            class="setting-select"
-            @update:model-value="(v: number) => handleBarHeightChange(v)"
-          />
+            class="setting-toggle"
+          >
+            <v-btn
+              v-for="preset in BAR_HEIGHT_PRESETS"
+              :key="preset.value"
+              :value="preset.value"
+              class="toggle-btn"
+            >
+              {{ preset.label }}
+            </v-btn>
+          </v-btn-toggle>
         </div>
 
         <!-- バーの影 -->
-        <div class="chrome-setting-row d-flex align-center justify-space-between py-2 px-1">
-          <div class="d-flex align-center" style="gap: 10px">
-            <v-icon size="18" color="medium-emphasis">mdi-box-shadow</v-icon>
-            <span class="text-body-2 font-weight-medium">バーの影</span>
+        <div class="setting-row">
+          <div class="setting-label-group">
+            <v-icon size="20" color="medium-emphasis" class="setting-icon">mdi-box-shadow</v-icon>
+            <span class="setting-title">バーの影</span>
           </div>
-          <v-select
-            :model-value="selectedBarShadow"
-            :items="BAR_SHADOW_PRESETS"
-            item-title="label"
-            item-value="value"
+          <v-btn-toggle
+            v-model="selectedBarShadow"
+            mandatory
             density="compact"
+            color="primary"
             variant="outlined"
-            hide-details
-            class="setting-select"
-            @update:model-value="(v: 'none' | 'small' | 'medium' | 'large') => handleBarShadowChange(v)"
-          />
+            class="setting-toggle"
+          >
+            <v-btn
+              v-for="preset in BAR_SHADOW_PRESETS"
+              :key="preset.value"
+              :value="preset.value"
+              class="toggle-btn"
+            >
+              {{ preset.label }}
+            </v-btn>
+          </v-btn-toggle>
         </div>
       </div>
 
-      <div class="text-caption text-medium-emphasis mt-3 mb-1">テーマ</div>
-      <v-radio-group v-model="currentTheme" inline hide-details class="mb-3 d-flex justify-center">
-        <v-radio v-for="option in themeOptions" :key="option.value" :value="option.value">
-          <template v-slot:label>
-            <div class="d-flex flex-column align-center ma-1 mt-2 cursor-pointer">
-              <img
-                :src="option.image"
-                width="64"
-                :alt="option.title"
-                style="border-radius: 4px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2)"
-              />
-              <span class="mt-2 text-caption">{{ option.title }}</span>
-            </div>
-          </template>
-        </v-radio>
-      </v-radio-group>
+      <v-divider class="my-3" />
+
+      <!-- セクション 3: テーマ -->
+      <div class="section-label">テーマ</div>
+      <div class="theme-card-group mt-1">
+        <div
+          v-for="option in themeOptions"
+          :key="option.value"
+          class="theme-card"
+          :class="{ active: currentTheme === option.value }"
+          @click="currentTheme = option.value"
+        >
+          <div class="theme-card-thumbnail-wrapper">
+            <img :src="option.image" :alt="option.title" class="theme-card-img" />
+            <v-icon
+              v-if="currentTheme === option.value"
+              size="16"
+              color="primary"
+              class="theme-check-badge"
+            >
+              mdi-check-circle
+            </v-icon>
+          </div>
+          <span class="theme-card-title mt-1.5">{{ option.title }}</span>
+        </div>
+      </div>
     </v-card>
   </v-menu>
 </template>
 
 <style scoped>
-.chrome-settings-group {
-  border-top: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
-  border-bottom: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+.display-settings-card {
+  user-select: none;
 }
 
-.chrome-setting-row {
-  user-select: none;
+.section-label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: rgba(var(--v-theme-on-surface), 0.6);
+  margin-bottom: 8px;
+  padding-left: 2px;
+}
+
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 38px;
+  padding: 3px 6px;
+  border-radius: 6px;
+  transition: background-color 0.15s ease;
+}
+
+.setting-row:hover {
+  background-color: rgba(var(--v-theme-on-surface), 0.04);
+}
+
+.setting-row.sub-row {
+  min-height: 34px;
+  padding-left: 28px;
+  background-color: rgba(var(--v-theme-on-surface), 0.02);
+}
+
+.setting-label-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.setting-icon {
+  flex-shrink: 0;
+}
+
+.setting-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: rgb(var(--v-theme-on-surface));
+  white-space: nowrap;
+}
+
+.setting-title.sub-title {
+  font-size: 13px;
+}
+
+.setting-switch {
+  flex: 0 0 auto;
 }
 
 .setting-round-btn {
@@ -471,9 +614,9 @@ const currentTheme = computed({
 }
 
 .setting-value-text {
-  min-width: 48px !important;
+  min-width: 46px !important;
   height: 28px !important;
-  font-weight: 500;
+  font-weight: 600;
   font-size: 13px !important;
   letter-spacing: 0;
   color: rgb(var(--v-theme-on-surface));
@@ -481,29 +624,102 @@ const currentTheme = computed({
 
 .setting-divider {
   width: 1px;
-  height: 18px;
+  height: 16px;
   background-color: rgba(var(--v-border-color), var(--v-border-opacity));
 }
 
-.setting-select {
-  max-width: 120px;
+/* セグメントボタン */
+.setting-toggle {
+  height: 30px !important;
+  border-radius: 6px !important;
+  background-color: rgba(var(--v-theme-on-surface), 0.03);
 }
 
-.setting-select :deep(.v-field__input) {
-  min-height: 32px !important;
-  padding-top: 4px !important;
-  padding-bottom: 4px !important;
-  padding-left: 10px !important;
-  padding-right: 6px !important;
-  font-size: 13px !important;
+.setting-toggle .toggle-btn {
+  height: 30px !important;
+  min-width: 34px !important;
+  padding: 0 8px !important;
+  font-size: 12px !important;
+  font-weight: 500;
+  letter-spacing: 0;
 }
 
-.setting-select :deep(.v-field__append-inner) {
-  padding-top: 4px !important;
-  padding-bottom: 4px !important;
+/* テーマカード選択 */
+.theme-card-group {
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
 }
 
-.setting-select :deep(.v-field) {
-  border-radius: 8px !important;
+.theme-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 6px;
+  border-radius: 8px;
+  border: 1.5px solid rgba(var(--v-border-color), var(--v-border-opacity));
+  background-color: rgba(var(--v-theme-on-surface), 0.02);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.theme-card:hover {
+  border-color: rgba(var(--v-theme-primary), 0.5);
+  background-color: rgba(var(--v-theme-on-surface), 0.05);
+}
+
+.theme-card.active {
+  border-color: rgb(var(--v-theme-primary));
+  background-color: rgba(var(--v-theme-primary), 0.08);
+}
+
+.theme-card-thumbnail-wrapper {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.theme-card-img {
+  width: 100%;
+  max-width: 90px;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.theme-check-badge {
+  position: absolute;
+  top: -4px;
+  right: -2px;
+  background-color: rgb(var(--v-theme-surface));
+  border-radius: 50%;
+}
+
+.theme-card-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgb(var(--v-theme-on-surface));
+}
+
+.theme-card.active .theme-card-title {
+  color: rgb(var(--v-theme-primary));
+  font-weight: 600;
+}
+
+/* アニメーション */
+.expand-enter-active,
+.expand-leave-active {
+  transition: all 0.2s ease;
+  overflow: hidden;
+}
+
+.expand-enter-from,
+.expand-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+  max-height: 0;
 }
 </style>
