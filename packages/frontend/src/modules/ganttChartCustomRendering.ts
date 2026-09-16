@@ -9,6 +9,31 @@ import { getCachedImageUrl, setImageSrc } from '@/modules/imageCache'
 const commentsCache = new Map<number, { data: Comment[]; fetchedAt: number }>()
 const rowCommentsCache = new Map<number, { data: Comment[]; fetchedAt: number }>()
 
+/** ガントバー・行ヘッダーのツールチップと同じ表示遅延時間 (ms) - moguchart-core のデフォルト値 */
+const IMAGE_POPUP_DELAY = 500
+
+/** ガントチャートのツールチップを一時的に非表示にする */
+const hideGanttChartTooltips = () => {
+  document.querySelectorAll('gantt-chart').forEach((chart) => {
+    const tip = chart.shadowRoot?.querySelector('.tooltip') as HTMLElement | null
+    if (tip) {
+      tip.style.opacity = '0'
+      tip.style.pointerEvents = 'none'
+    }
+  })
+}
+
+/** ガントチャートのツールチップの表示設定を元に戻す */
+const restoreGanttChartTooltips = () => {
+  document.querySelectorAll('gantt-chart').forEach((chart) => {
+    const tip = chart.shadowRoot?.querySelector('.tooltip') as HTMLElement | null
+    if (tip) {
+      tip.style.opacity = ''
+      tip.style.pointerEvents = ''
+    }
+  })
+}
+
 /** ダークモード判定に基づくツールチップの配色を返す */
 const getTooltipColors = () => {
   const isDark = !!document.querySelector('.v-theme--dark')
@@ -534,21 +559,46 @@ export const barContent = (task: moguchart.GanttTask) => {
       thumbWrapper.appendChild(countBadge)
     }
 
+    thumbWrapper.setAttribute('data-task-thumb', String(task.id))
+
     let popupEl: HTMLElement | null = null
+    let popupShowTimeout: ReturnType<typeof setTimeout> | null = null
     let popupHideTimeout: ReturnType<typeof setTimeout> | null = null
 
-    const showImagePopup = () => {
+    const clearShowTimeout = () => {
+      if (popupShowTimeout) {
+        clearTimeout(popupShowTimeout)
+        popupShowTimeout = null
+      }
+    }
+
+    const clearHideTimeout = () => {
       if (popupHideTimeout) {
         clearTimeout(popupHideTimeout)
         popupHideTimeout = null
       }
+    }
+
+    const showImagePopup = () => {
+      clearHideTimeout()
+      clearShowTimeout()
       if (popupEl) return
+
+      let anchorEl: HTMLElement = thumbWrapper
+      if (!anchorEl.isConnected) {
+        const latest = document.querySelector(`[data-task-thumb="${task.id}"]`) as HTMLElement | null
+        if (latest && latest.isConnected) {
+          anchorEl = latest
+        } else {
+          return
+        }
+      }
 
       // 再レンダリングで孤立した既存ポップアップを削除
       document.querySelectorAll('[data-moguchart-image-popup]').forEach((el) => el.remove())
 
-      // ガントバーのツールチップを非表示にする（タイマーもキャンセル）
-      thumbWrapper.dispatchEvent(new CustomEvent('bar-mouseleave', { bubbles: true, composed: true }))
+      // ガントバーのツールチップを非表示にする
+      hideGanttChartTooltips()
 
       const colors = getTooltipColors()
       popupEl = document.createElement('div')
@@ -589,10 +639,7 @@ export const barContent = (task: moguchart.GanttTask) => {
       })
 
       popupEl.addEventListener('mouseenter', () => {
-        if (popupHideTimeout) {
-          clearTimeout(popupHideTimeout)
-          popupHideTimeout = null
-        }
+        clearHideTimeout()
       })
       popupEl.addEventListener('mouseleave', () => {
         popupHideTimeout = setTimeout(removeImagePopup, 100)
@@ -600,15 +647,27 @@ export const barContent = (task: moguchart.GanttTask) => {
 
       document.body.appendChild(popupEl)
 
-      const rect = thumbWrapper.getBoundingClientRect()
+      const rect = anchorEl.getBoundingClientRect()
       adjustTooltipPosition(popupEl, rect)
     }
 
+    const scheduleImagePopup = () => {
+      clearHideTimeout()
+
+      // ガントバーのツールチップを非表示にする（タイマーもキャンセル）
+      hideGanttChartTooltips()
+      thumbWrapper.dispatchEvent(new CustomEvent('bar-mouseleave', { bubbles: true, composed: true }))
+
+      if (popupEl) return
+      if (popupShowTimeout) return
+
+      popupShowTimeout = setTimeout(showImagePopup, IMAGE_POPUP_DELAY)
+    }
+
     const removeImagePopup = () => {
-      if (popupHideTimeout) {
-        clearTimeout(popupHideTimeout)
-        popupHideTimeout = null
-      }
+      clearShowTimeout()
+      clearHideTimeout()
+      restoreGanttChartTooltips()
       if (popupEl) {
         popupEl.remove()
         popupEl = null
@@ -616,10 +675,14 @@ export const barContent = (task: moguchart.GanttTask) => {
     }
 
     const hideImagePopup = () => {
-      popupHideTimeout = setTimeout(removeImagePopup, 100)
+      clearShowTimeout()
+      restoreGanttChartTooltips()
+      if (popupEl) {
+        popupHideTimeout = setTimeout(removeImagePopup, 100)
+      }
     }
 
-    thumbWrapper.addEventListener('mouseenter', showImagePopup)
+    thumbWrapper.addEventListener('mouseenter', scheduleImagePopup)
     thumbWrapper.addEventListener('mouseleave', hideImagePopup)
     thumbWrapper.addEventListener('mousedown', (e) => {
       // ライトボックスが開くときの mousedown ではポップアップを消さない
@@ -627,11 +690,10 @@ export const barContent = (task: moguchart.GanttTask) => {
     })
     document.addEventListener('mousedown', (e) => {
       if (
-        popupEl &&
+        (popupEl || popupShowTimeout) &&
         e.target !== thumbWrapper &&
         !thumbWrapper.contains(e.target as Node) &&
-        e.target !== popupEl &&
-        !popupEl.contains(e.target as Node)
+        (!popupEl || (e.target !== popupEl && !popupEl.contains(e.target as Node)))
       )
         removeImagePopup()
     })
@@ -1030,18 +1092,40 @@ export const rowHeaderContent = (row: moguchart.GanttRow, barHeight: number = 38
       thumbWrapper.appendChild(countBadge)
     }
 
+    thumbWrapper.setAttribute('data-row-thumb', String(row.id))
+
     let popupEl: HTMLElement | null = null
+    let popupShowTimeout: ReturnType<typeof setTimeout> | null = null
     let popupHideTimeout: ReturnType<typeof setTimeout> | null = null
 
-    const showImagePopup = () => {
+    const clearShowTimeout = () => {
+      if (popupShowTimeout) {
+        clearTimeout(popupShowTimeout)
+        popupShowTimeout = null
+      }
+    }
+
+    const clearHideTimeout = () => {
       if (popupHideTimeout) {
         clearTimeout(popupHideTimeout)
         popupHideTimeout = null
       }
+    }
+
+    const showImagePopup = () => {
+      clearHideTimeout()
+      clearShowTimeout()
       if (popupEl) return
 
-      // 行ヘッダーのツールチップを非表示にする（タイマーもキャンセル）
-      thumbWrapper.dispatchEvent(new CustomEvent('row-header-mouseleave', { bubbles: true, composed: true }))
+      let anchorEl: HTMLElement = thumbWrapper
+      if (!anchorEl.isConnected) {
+        const latest = document.querySelector(`[data-row-thumb="${row.id}"]`) as HTMLElement | null
+        if (latest && latest.isConnected) {
+          anchorEl = latest
+        } else {
+          return
+        }
+      }
 
       // 既存のポップアップを削除
       document.querySelectorAll('[data-moguchart-row-image-popup]').forEach((el) => el.remove())
@@ -1085,10 +1169,7 @@ export const rowHeaderContent = (row: moguchart.GanttRow, barHeight: number = 38
       })
 
       popupEl.addEventListener('mouseenter', () => {
-        if (popupHideTimeout) {
-          clearTimeout(popupHideTimeout)
-          popupHideTimeout = null
-        }
+        clearHideTimeout()
       })
       popupEl.addEventListener('mouseleave', () => {
         popupHideTimeout = setTimeout(removeImagePopup, 100)
@@ -1096,15 +1177,25 @@ export const rowHeaderContent = (row: moguchart.GanttRow, barHeight: number = 38
 
       document.body.appendChild(popupEl)
 
-      const rect = thumbWrapper.getBoundingClientRect()
+      const rect = anchorEl.getBoundingClientRect()
       adjustTooltipPosition(popupEl, rect)
     }
 
+    const scheduleImagePopup = () => {
+      clearHideTimeout()
+
+      // 行ヘッダーのツールチップを非表示にする（タイマーもキャンセル）
+      thumbWrapper.dispatchEvent(new CustomEvent('row-header-mouseleave', { bubbles: true, composed: true }))
+
+      if (popupEl) return
+      if (popupShowTimeout) return
+
+      popupShowTimeout = setTimeout(showImagePopup, IMAGE_POPUP_DELAY)
+    }
+
     const removeImagePopup = () => {
-      if (popupHideTimeout) {
-        clearTimeout(popupHideTimeout)
-        popupHideTimeout = null
-      }
+      clearShowTimeout()
+      clearHideTimeout()
       if (popupEl) {
         popupEl.remove()
         popupEl = null
@@ -1112,21 +1203,23 @@ export const rowHeaderContent = (row: moguchart.GanttRow, barHeight: number = 38
     }
 
     const hideImagePopup = () => {
-      popupHideTimeout = setTimeout(removeImagePopup, 100)
+      clearShowTimeout()
+      if (popupEl) {
+        popupHideTimeout = setTimeout(removeImagePopup, 100)
+      }
     }
 
-    thumbWrapper.addEventListener('mouseenter', showImagePopup)
+    thumbWrapper.addEventListener('mouseenter', scheduleImagePopup)
     thumbWrapper.addEventListener('mouseleave', hideImagePopup)
     thumbWrapper.addEventListener('mousedown', (e) => {
       e.stopPropagation()
     })
     document.addEventListener('mousedown', (e) => {
       if (
-        popupEl &&
+        (popupEl || popupShowTimeout) &&
         e.target !== thumbWrapper &&
         !thumbWrapper.contains(e.target as Node) &&
-        e.target !== popupEl &&
-        !popupEl.contains(e.target as Node)
+        (!popupEl || (e.target !== popupEl && !popupEl.contains(e.target as Node)))
       )
         removeImagePopup()
     })
