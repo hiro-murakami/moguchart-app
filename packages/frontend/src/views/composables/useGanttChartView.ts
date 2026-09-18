@@ -65,7 +65,6 @@ import type {
 } from '@functions/types/shared'
 import * as holiday_jp from '@holiday-jp/holiday_jp'
 import * as moguchart from '@mogura/moguchart-core'
-import { exportPlugin } from '@mogura/moguchart-plugin-export'
 import type { GanttChartInstance } from '@mogura/moguchart-vue'
 import { debounce } from 'lodash'
 import { storeToRefs } from 'pinia'
@@ -962,7 +961,6 @@ export const useGanttChartView = () => {
         snapStep: 5,
         indicatorPosition: 'full',
       },
-      plugins: [exportPlugin()],
     }
   })
 
@@ -1064,11 +1062,23 @@ export const useGanttChartView = () => {
     }
   }
 
+  /**
+   * エクスポートプラグインを遅延読み込みしてチャートインスタンスに登録する
+   */
+  const ensureExportPlugin = async (chart: GanttChartInstance) => {
+    const isAlreadyInstalled = chart.element?.pluginManager?.hasPlugin('export') ?? false
+    if (!isAlreadyInstalled) {
+      const { exportPlugin } = await import('@mogura/moguchart-plugin-export')
+      chart.use(exportPlugin())
+    }
+  }
+
   const exportAsPng = async (projectName: string) => {
     const chart = ganttChartRef.value
     if (!chart) return
     await withNormalizedZoomForExport(async () => {
       try {
+        await ensureExportPlugin(chart)
         await chart.exportImage('png', { filename: projectName, download: true })
       } catch (e) {
         console.error('PNG export failed:', e)
@@ -1085,6 +1095,7 @@ export const useGanttChartView = () => {
     if (!chart) return
     await withNormalizedZoomForExport(async () => {
       try {
+        await ensureExportPlugin(chart)
         await chart.exportImage('pdf', { filename: projectName, download: true })
       } catch (e) {
         console.error('PDF export failed:', e)

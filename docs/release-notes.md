@@ -12,8 +12,9 @@
   - ガントチャートのレンダリングを生の Web Component (`<gantt-chart>`) から公式 Vue 3 コンポーネント (`<GanttChart>`) へ刷新しました
   - `displayRows`, `chartOption`, `selectedRowIds` などの Props バインディングおよび全21種類のカスタムイベント（`@task-update`, `@task-dblclick`, `@dependency-create` 等）を Vue 3 標準の形式で安全かつリアクティブに同期
   - Template Ref 経由で公開されるメソッド・プロパティ（`updateComplete`, `exportImage`, `selectTask`, `resetScroll`, `externalDraggingTask` 等）の型定義を完全整備し、堅牢な開発環境を実現
-- **公式エクスポートプラグイン `@mogura/moguchart-plugin-export` の採用**:
-  - 重大な外部ライブラリ（`html2canvas-pro`、`jspdf`）をコアから切り離したプラグインアーキテクチャに対応し、チャートオプション経由（`chartOption.plugins = [exportPlugin()]`）でエクスポート機能を統合
+- **公式エクスポートプラグイン `@mogura/moguchart-plugin-export` の採用と動的インポート対応**:
+  - 重大な外部ライブラリ（`html2canvas-pro`、`jspdf`）をコアから切り離したプラグインアーキテクチャに対応
+  - エクスポートプラグインを初期表示時ではなくエクスポート実行時にオンデマンドで動的インポート（遅延読み込み）することで、初期バンドルサイズを大幅に削減し、初回ページロードの高速化を実現
 
 ### 改善・不具合修正
 
