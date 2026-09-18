@@ -65,6 +65,7 @@ import type {
 } from '@functions/types/shared'
 import * as holiday_jp from '@holiday-jp/holiday_jp'
 import * as moguchart from '@mogura/moguchart-core'
+import { exportPlugin } from '@mogura/moguchart-plugin-export'
 import { debounce } from 'lodash'
 import { storeToRefs } from 'pinia'
 import { computed, inject, nextTick, ref, watch, type Ref } from 'vue'
@@ -107,6 +108,7 @@ export const useGanttChartView = () => {
   const zoomPercent = ref<number>(ZOOM_PERCENT.default)
   const zoomScale = computed(() => zoomPercent.value / 100)
   const fontScale = computed(() => zoomScale.value)
+  const isExporting = ref(false)
 
   // 基準値（等倍・100%時の値）
   const basePxPerDay = ref(DEFAULT_PX_PER_DAY)
@@ -340,6 +342,7 @@ export const useGanttChartView = () => {
 
   // zoomPercent変更時に保存
   watch(zoomPercent, (newValue) => {
+    if (isExporting.value) return
     saveProjectSettings({
       zoomPercent: newValue,
       pxPerDay: pxPerDay.value,
@@ -953,6 +956,7 @@ export const useGanttChartView = () => {
         snapStep: 5,
         indicatorPosition: 'full',
       },
+      plugins: [exportPlugin()],
     }
   })
 
@@ -1012,25 +1016,78 @@ export const useGanttChartView = () => {
 
   const alert = useAlert()
   const { exportAsCsv, exportAsExcel } = useExportData()
+  const { setIsLoading } = useLoading()
+
+  /**
+   * エクスポート時に表示倍率を一時的に100%（等倍）にしてキャプチャを実行し、
+   * 完了後に元の倍率に復元するラッパー関数
+   */
+  const withNormalizedZoomForExport = async (exportFn: () => Promise<void>) => {
+    const chart = ganttChartRef.value
+    if (!chart) return
+
+    const originalZoom = zoomPercent.value
+    const needResetZoom = originalZoom !== ZOOM_PERCENT.default
+
+    setIsLoading(true)
+    isExporting.value = true
+
+    try {
+      if (needResetZoom) {
+        zoomPercent.value = ZOOM_PERCENT.default
+      }
+      await nextTick()
+      if (chart.updateComplete) {
+        await chart.updateComplete
+      }
+      // Shadow DOM 内のレイアウトとコンポーネント再描画の安定（および影の消失）を待つ
+      await new Promise((resolve) => setTimeout(resolve, needResetZoom ? 200 : 50))
+
+      await exportFn()
+    } finally {
+      if (needResetZoom) {
+        zoomPercent.value = originalZoom
+        await nextTick()
+        if (chart.updateComplete) {
+          await chart.updateComplete
+        }
+        await new Promise((resolve) => setTimeout(resolve, 50))
+      }
+      isExporting.value = false
+      setIsLoading(false)
+    }
+  }
 
   const exportAsPng = async (projectName: string) => {
     const chart = ganttChartRef.value
     if (!chart) return
-    try {
-      await chart.exportImage('png', { filename: projectName, download: true })
-    } catch (e) {
-      console.error('PNG export failed:', e)
-    }
+    await withNormalizedZoomForExport(async () => {
+      try {
+        await chart.exportImage('png', { filename: projectName, download: true })
+      } catch (e) {
+        console.error('PNG export failed:', e)
+        alert({
+          title: 'エラー',
+          message: 'PNGのエクスポートに失敗しました。',
+        })
+      }
+    })
   }
 
   const exportAsPdf = async (projectName: string) => {
     const chart = ganttChartRef.value
     if (!chart) return
-    try {
-      await chart.exportImage('pdf', { filename: projectName, download: true })
-    } catch (e) {
-      console.error('PDF export failed:', e)
-    }
+    await withNormalizedZoomForExport(async () => {
+      try {
+        await chart.exportImage('pdf', { filename: projectName, download: true })
+      } catch (e) {
+        console.error('PDF export failed:', e)
+        alert({
+          title: 'エラー',
+          message: 'PDFのエクスポートに失敗しました。',
+        })
+      }
+    })
   }
 
   const exportAsZip = async (projectId: string, projectName: string) => {
@@ -1061,7 +1118,6 @@ export const useGanttChartView = () => {
       setIsLoading(false)
     }
   }
-  const { setIsLoading } = useLoading()
   const confirm = useConfirm()
   const prompt = usePrompt()
   const { canUndo, canRedo, isUndoRedoing, pushAction, undo: _undo, redo: _redo, clearHistory } = useUndoRedo()
@@ -4815,6 +4871,7 @@ export const useGanttChartView = () => {
     zoomPercent,
     zoomScale,
     fontScale,
+    isExporting,
     baseBarHeight,
     baseRowHeaderWidth,
     addRowCount,

@@ -30,8 +30,11 @@ importers:
         specifier: 7.4.47
         version: 7.4.47
       '@mogura/moguchart-core':
-        specifier: link:../../../moguchart-core
-        version: link:../../../moguchart-core
+        specifier: link:../../../moguchart-core/packages/core
+        version: link:../../../moguchart-core/packages/core
+      '@mogura/moguchart-plugin-export':
+        specifier: link:../../../moguchart-core/packages/plugin-export
+        version: link:../../../moguchart-core/packages/plugin-export
       dayjs:
         specifier: ^1.11.19
         version: 1.11.23

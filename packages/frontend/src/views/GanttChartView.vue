@@ -34,6 +34,7 @@ const {
   showMinimap,
   minimapOpacity,
   barShadowLevel,
+  isExporting,
   readonlyMode,
   currentRole,
   pxPerDay,
@@ -179,6 +180,7 @@ const vuetifyTheme = useTheme()
 
 // ダーク/ライトテーマに対応した影のCSS変数値を計算
 const barShadowCssVar = computed(() => {
+  if (isExporting.value) return 'none'
   const dark = vuetifyTheme.global.current.value.dark
   const shadowMap = {
     none: 'none',
