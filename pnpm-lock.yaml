@@ -35,6 +35,9 @@ importers:
       '@mogura/moguchart-plugin-export':
         specifier: link:../../../moguchart-core/packages/plugin-export
         version: link:../../../moguchart-core/packages/plugin-export
+      '@mogura/moguchart-vue':
+        specifier: link:../../../moguchart-core/packages/vue
+        version: link:../../../moguchart-core/packages/vue
       dayjs:
         specifier: ^1.11.19
         version: 1.11.23

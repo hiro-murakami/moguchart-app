@@ -57,7 +57,7 @@ export default defineConfig({
   },
   optimizeDeps: {
     // リンクされたパッケージを事前バンドルから除外する（これで dedupe が効くようになります）
-    exclude: ['@mogura/moguchart-core', '@mogura/moguchart-plugin-export'],
+    exclude: ['@mogura/moguchart-core', '@mogura/moguchart-plugin-export', '@mogura/moguchart-vue'],
   },
   server: {
     proxy: {

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import splashImage from '@/assets/splash2.png'
+import { GanttChart } from '@mogura/moguchart-vue'
 import { useGanttChartView } from './composables/useGanttChartView'
 import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { useTheme } from 'vuetify'
@@ -475,7 +476,7 @@ const handleOpenSlideSchedule = async () => {
         }"
       >
         <div style="flex: 1; min-height: 0">
-          <gantt-chart
+          <GanttChart
             ref="ganttChartRef"
             :style="{
               '--moguchart-font-scale': fontScale,

@@ -17,6 +17,7 @@
     "@mdi/font": "7.4.47",
     "@mogura/moguchart-core": "link:../../../moguchart-core/packages/core",
     "@mogura/moguchart-plugin-export": "link:../../../moguchart-core/packages/plugin-export",
+    "@mogura/moguchart-vue": "link:../../../moguchart-core/packages/vue",
     "dayjs": "^1.11.19",
     "firebase": "^12.8.0",
     "lodash": "^4.17.23",
