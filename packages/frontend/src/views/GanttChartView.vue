@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import splashImage from '@/assets/splash2.png'
+import { GanttChart } from '@mogura/moguchart-vue'
 import { useGanttChartView } from './composables/useGanttChartView'
 import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { useTheme } from 'vuetify'
@@ -34,6 +35,7 @@ const {
   showMinimap,
   minimapOpacity,
   barShadowLevel,
+  isExporting,
   readonlyMode,
   currentRole,
   pxPerDay,
@@ -179,6 +181,7 @@ const vuetifyTheme = useTheme()
 
 // ダーク/ライトテーマに対応した影のCSS変数値を計算
 const barShadowCssVar = computed(() => {
+  if (isExporting.value) return 'none'
   const dark = vuetifyTheme.global.current.value.dark
   const shadowMap = {
     none: 'none',
@@ -473,7 +476,7 @@ const handleOpenSlideSchedule = async () => {
         }"
       >
         <div style="flex: 1; min-height: 0">
-          <gantt-chart
+          <GanttChart
             ref="ganttChartRef"
             :style="{
               '--moguchart-font-scale': fontScale,

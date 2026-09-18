@@ -65,9 +65,15 @@ import type {
 } from '@functions/types/shared'
 import * as holiday_jp from '@holiday-jp/holiday_jp'
 import * as moguchart from '@mogura/moguchart-core'
+import type { GanttChartInstance } from '@mogura/moguchart-vue'
 import { debounce } from 'lodash'
 import { storeToRefs } from 'pinia'
 import { computed, inject, nextTick, ref, watch, type Ref } from 'vue'
+
+const getDetail = <T>(e: T | { detail: T }): T => {
+  return e && typeof e === 'object' && 'detail' in e ? (e as any).detail : e
+}
+
 import { useRoute, useRouter } from 'vue-router'
 import { fetchPublicGanttChart } from '@/modules/publicApi'
 import { preloadImages } from '@/modules/imageCache'
@@ -107,6 +113,7 @@ export const useGanttChartView = () => {
   const zoomPercent = ref<number>(ZOOM_PERCENT.default)
   const zoomScale = computed(() => zoomPercent.value / 100)
   const fontScale = computed(() => zoomScale.value)
+  const isExporting = ref(false)
 
   // 基準値（等倍・100%時の値）
   const basePxPerDay = ref(DEFAULT_PX_PER_DAY)
@@ -226,7 +233,7 @@ export const useGanttChartView = () => {
   const currentProject = computed(() => (isSnapshotMode.value ? snapshotProject.value : storeProject.value))
   const currentRole = computed(() => (isSnapshotMode.value ? 'viewer' : storeRole.value))
 
-  const ganttChartRef = ref<any | null>(null)
+  const ganttChartRef = ref<GanttChartInstance | null>(null)
 
   /**
    * ガントチャートのスクロール位置を左上（0, 0）にリセットする
@@ -340,6 +347,7 @@ export const useGanttChartView = () => {
 
   // zoomPercent変更時に保存
   watch(zoomPercent, (newValue) => {
+    if (isExporting.value) return
     saveProjectSettings({
       zoomPercent: newValue,
       pxPerDay: pxPerDay.value,
@@ -961,8 +969,8 @@ export const useGanttChartView = () => {
    * ホイールズームで変更された値を zoomPercent に反映し、
    * ガントチャート全体（行ヘッダー幅、フォントサイズ、バー高さ等）と同期する。
    */
-  const handleZoomChange = (e: Event) => {
-    const detail = (e as CustomEvent).detail as { pxPerDay: number; pxPerMonth?: number }
+  const handleZoomChange = (e: any) => {
+    const detail = getDetail(e) as { pxPerDay: number; pxPerMonth?: number }
     const granularity = currentProject.value?.attribute?.granularity
     let newScale = 1.0
 
@@ -985,9 +993,9 @@ export const useGanttChartView = () => {
    * minimap-resize イベントハンドラ
    * ユーザーがミニマップをドラッグリサイズした際に幅を同期
    */
-  const handleMinimapResize = (e: Event) => {
+  const handleMinimapResize = (e: any) => {
     if (!isMinimapReady.value) return
-    const detail = (e as CustomEvent).detail as {
+    const detail = getDetail(e) as {
       width: number
       height: number
     }
@@ -1000,9 +1008,9 @@ export const useGanttChartView = () => {
    * minimap-collapse イベントハンドラ
    * ユーザーがミニマップを最小化・展開した際に状態を同期
    */
-  const handleMinimapCollapse = (e: Event) => {
+  const handleMinimapCollapse = (e: any) => {
     if (!isMinimapReady.value) return
-    const detail = (e as CustomEvent).detail as {
+    const detail = getDetail(e) as {
       collapsed: boolean
     }
     if (typeof detail?.collapsed === 'boolean') {
@@ -1012,25 +1020,91 @@ export const useGanttChartView = () => {
 
   const alert = useAlert()
   const { exportAsCsv, exportAsExcel } = useExportData()
+  const { setIsLoading } = useLoading()
+
+  /**
+   * エクスポート時に表示倍率を一時的に100%（等倍）にしてキャプチャを実行し、
+   * 完了後に元の倍率に復元するラッパー関数
+   */
+  const withNormalizedZoomForExport = async (exportFn: () => Promise<void>) => {
+    const chart = ganttChartRef.value
+    if (!chart) return
+
+    const originalZoom = zoomPercent.value
+    const needResetZoom = originalZoom !== ZOOM_PERCENT.default
+
+    setIsLoading(true)
+    isExporting.value = true
+
+    try {
+      if (needResetZoom) {
+        zoomPercent.value = ZOOM_PERCENT.default
+      }
+      await nextTick()
+      if (chart.updateComplete) {
+        await chart.updateComplete
+      }
+      // Shadow DOM 内のレイアウトとコンポーネント再描画の安定（および影の消失）を待つ
+      await new Promise((resolve) => setTimeout(resolve, needResetZoom ? 200 : 50))
+
+      await exportFn()
+    } finally {
+      if (needResetZoom) {
+        zoomPercent.value = originalZoom
+        await nextTick()
+        if (chart.updateComplete) {
+          await chart.updateComplete
+        }
+        await new Promise((resolve) => setTimeout(resolve, 50))
+      }
+      isExporting.value = false
+      setIsLoading(false)
+    }
+  }
+
+  /**
+   * エクスポートプラグインを遅延読み込みしてチャートインスタンスに登録する
+   */
+  const ensureExportPlugin = async (chart: GanttChartInstance) => {
+    const isAlreadyInstalled = chart.element?.pluginManager?.hasPlugin('export') ?? false
+    if (!isAlreadyInstalled) {
+      const { exportPlugin } = await import('@mogura/moguchart-plugin-export')
+      chart.use(exportPlugin())
+    }
+  }
 
   const exportAsPng = async (projectName: string) => {
     const chart = ganttChartRef.value
     if (!chart) return
-    try {
-      await chart.exportImage('png', { filename: projectName, download: true })
-    } catch (e) {
-      console.error('PNG export failed:', e)
-    }
+    await withNormalizedZoomForExport(async () => {
+      try {
+        await ensureExportPlugin(chart)
+        await chart.exportImage('png', { filename: projectName, download: true })
+      } catch (e) {
+        console.error('PNG export failed:', e)
+        alert({
+          title: 'エラー',
+          message: 'PNGのエクスポートに失敗しました。',
+        })
+      }
+    })
   }
 
   const exportAsPdf = async (projectName: string) => {
     const chart = ganttChartRef.value
     if (!chart) return
-    try {
-      await chart.exportImage('pdf', { filename: projectName, download: true })
-    } catch (e) {
-      console.error('PDF export failed:', e)
-    }
+    await withNormalizedZoomForExport(async () => {
+      try {
+        await ensureExportPlugin(chart)
+        await chart.exportImage('pdf', { filename: projectName, download: true })
+      } catch (e) {
+        console.error('PDF export failed:', e)
+        alert({
+          title: 'エラー',
+          message: 'PDFのエクスポートに失敗しました。',
+        })
+      }
+    })
   }
 
   const exportAsZip = async (projectId: string, projectName: string) => {
@@ -1061,7 +1135,6 @@ export const useGanttChartView = () => {
       setIsLoading(false)
     }
   }
-  const { setIsLoading } = useLoading()
   const confirm = useConfirm()
   const prompt = usePrompt()
   const { canUndo, canRedo, isUndoRedoing, pushAction, undo: _undo, redo: _redo, clearHistory } = useUndoRedo()
@@ -1607,28 +1680,29 @@ export const useGanttChartView = () => {
     return String(taskId).endsWith('-summary')
   }
 
-  const handleTaskUpdate = async (e: CustomEvent<moguchart.TaskUpdateEventDetail>) => {
-    if (e.detail.isDragging || e.detail.isCancel || e.detail.isOutside) {
+  const handleTaskUpdate = async (e: any) => {
+    const detail = getDetail<moguchart.TaskUpdateEventDetail>(e)
+    if (detail.isDragging || detail.isCancel || detail.isOutside) {
       return
     }
 
     // サマリータスク自体の更新はスキップ
-    if (isSummaryTaskId(e.detail.id)) {
+    if (isSummaryTaskId(detail.id)) {
       return
     }
 
     await maybeAutoSnapshot()
 
     // 複数タスク一括移動の処理
-    const rawSelectedIds = e.detail.selectedTaskIds
+    const rawSelectedIds = detail.selectedTaskIds
     const selectedIds = rawSelectedIds ? rawSelectedIds.filter((id) => !isSummaryTaskId(id)) : undefined
     const isDisableCrossRowMove = !!currentProject.value?.attribute?.disableCrossRowMove
-    if (selectedIds && selectedIds.length >= 2 && e.detail.dx !== undefined) {
+    if (selectedIds && selectedIds.length >= 2 && detail.dx !== undefined) {
       const msPerPx = (24 * 60 * 60 * 1000) / pxPerDay.value
-      const timeDiff = e.detail.dx * msPerPx
+      const timeDiff = detail.dx * msPerPx
 
       // 行移動が発生するかどうかを判定
-      const targetRowId = e.detail.targetRowId
+      const targetRowId = detail.targetRowId
       const hasRowChange = !isDisableCrossRowMove && !!targetRowId && rows.value.some((r) => {
         const hasTask = r.tasks.some((t) => selectedIds.includes(t.id))
         return hasTask && String(r.id) !== String(targetRowId)
@@ -1703,16 +1777,16 @@ export const useGanttChartView = () => {
     }
 
     const data = {
-      id: e.detail.mode === 'copy' ? 0 : Number(e.detail.id),
-      rowId: Number(e.detail.targetRowId),
-      name: e.detail.name || '',
-      start: toDateTimeString(e.detail.start),
-      end: toDateTimeString(e.detail.end),
+      id: detail.mode === 'copy' ? 0 : Number(detail.id),
+      rowId: Number(detail.targetRowId),
+      name: detail.name || '',
+      start: toDateTimeString(detail.start),
+      end: toDateTimeString(detail.end),
       attribute: {},
     }
 
     // コピー時はdata.idが0なので、元タスクのIDで検索する
-    const sourceTaskIdStr = String(e.detail.id)
+    const sourceTaskIdStr = String(detail.id)
     const row = rows.value.find((r) => r.tasks.some((t) => t.id === sourceTaskIdStr))
     if (isDisableCrossRowMove && row) {
       data.rowId = Number(row.id)
@@ -1721,7 +1795,7 @@ export const useGanttChartView = () => {
     if (task) {
       const attribute = (task as any).attribute as TaskAttribute | undefined
       if (attribute) {
-        if (e.detail.mode === 'copy') {
+        if (detail.mode === 'copy') {
           // コピー時は接続線情報（dependencies）を引き継がない
           const { dependencies: _deps, ...attributeWithoutDeps } = attribute
           data.attribute = attributeWithoutDeps
@@ -1786,7 +1860,7 @@ export const useGanttChartView = () => {
     }
     await loadData(projectId.value, { silent: true })
     // 行をまたぐ移動の場合、元の行と移動先の行の両方を差分更新対象にする
-    const affectedRowIds = [...new Set([Number(e.detail.targetRowId), ...(row ? [Number(row.id)] : [])])]
+    const affectedRowIds = [...new Set([Number(detail.targetRowId), ...(row ? [Number(row.id)] : [])])]
     publishEditEvent('task_upsert', {
       rowIds: affectedRowIds,
       targetName: data.name,
@@ -1795,8 +1869,9 @@ export const useGanttChartView = () => {
     })
   }
 
-  const handleTaskProgressChange = async (e: CustomEvent<moguchart.TaskProgressChangeEventDetail>) => {
-    const { task, progress, originalProgress, cancelled } = e.detail
+  const handleTaskProgressChange = async (e: any) => {
+    const detail = getDetail<moguchart.TaskProgressChangeEventDetail>(e)
+    const { task, progress, originalProgress, cancelled } = detail
     if (cancelled || progress === originalProgress) return
 
     // サマリータスクは子タスクから自動計算されるため直接変更はスキップ
@@ -1880,9 +1955,10 @@ export const useGanttChartView = () => {
     }
   }
 
-  const handleDependencyCreate = async (e: CustomEvent<moguchart.DependencyCreateEventDetail>) => {
+  const handleDependencyCreate = async (e: any) => {
     if (isReadOnly.value) return
-    const { sourceTaskId, targetTaskId } = e.detail
+    const detail = getDetail<moguchart.DependencyCreateEventDetail>(e)
+    const { sourceTaskId, targetTaskId } = detail
 
     // サマリータスクとの依存関係は作成不可
     if (isSummaryTaskId(sourceTaskId) || isSummaryTaskId(targetTaskId)) return
@@ -1945,17 +2021,18 @@ export const useGanttChartView = () => {
     targetTaskId: null as string | null,
   })
 
-  const handleDependencyClick = (e: CustomEvent<moguchart.DependencyClickEventDetail>) => {
+  const handleDependencyClick = (e: any) => {
     if (isReadOnly.value) return
-    const event = e.detail.event
+    const detail = getDetail<moguchart.DependencyClickEventDetail>(e)
+    const event = detail.event
     if (event) {
       event.preventDefault()
       dependencyContextMenu.value = {
         visible: true,
         x: event.clientX,
         y: event.clientY,
-        sourceTaskId: e.detail.sourceTaskId,
-        targetTaskId: e.detail.targetTaskId,
+        sourceTaskId: detail.sourceTaskId,
+        targetTaskId: detail.targetTaskId,
       }
     }
   }
@@ -2043,9 +2120,9 @@ export const useGanttChartView = () => {
     if (ganttChartRef.value) {
       ganttChartRef.value.externalDraggingTask = {
         ...task,
-        type: 'normal',
+        type: 'task',
         attribute: (task as any).attribute,
-      }
+      } as any
     }
   }
 
@@ -2061,8 +2138,9 @@ export const useGanttChartView = () => {
     }
   }
 
-  const handleTaskDrop = async (e: CustomEvent<moguchart.TaskDropEventDetail>) => {
-    const { task, dropDate, targetRowId } = e.detail
+  const handleTaskDrop = async (e: any) => {
+    const detail = getDetail<moguchart.TaskDropEventDetail>(e)
+    const { task, dropDate, targetRowId } = detail
 
     try {
       const newStart = new Date(dropDate)
@@ -2255,9 +2333,10 @@ export const useGanttChartView = () => {
     }
   }
 
-  const handleTaskDblClick = (e: CustomEvent<moguchart.TaskClickEventDetail>) => {
+  const handleTaskDblClick = (e: any) => {
     if (isReadOnly.value) return
-    const task = e.detail.task
+    const detail = getDetail<moguchart.TaskClickEventDetail>(e)
+    const task = detail.task
     const taskId = String(task.id)
 
     // サマリータスクの場合は対応する親行の編集ダイアログを開く
@@ -2544,8 +2623,9 @@ export const useGanttChartView = () => {
     await execDeleteTasksWithAnimation([taskId])
   }
 
-  const handleRowReordered = async (e: CustomEvent<moguchart.RowReorderEventDetail>) => {
+  const handleRowReordered = async (e: any) => {
     if (currentProject.value?.attribute?.disableRowReorder) return
+    const detail = getDetail<moguchart.RowReorderEventDetail>(e)
     await maybeAutoSnapshot()
 
     let isSuccess = false
@@ -2569,7 +2649,7 @@ export const useGanttChartView = () => {
       const rowsToUpdate: GanttRow[] = []
       const undoUpdates: GanttRow[] = []
 
-      for (const r of e.detail.rows) {
+      for (const r of detail.rows) {
         const oldParentId = oldParentMap.get(r.id) ?? null
         const newParentId = r.parentId != null ? Number(r.parentId) : null
         if (oldParentId !== newParentId) {
@@ -2603,7 +2683,7 @@ export const useGanttChartView = () => {
         }
       }
 
-      const orderedRows = e.detail.rows.map((row, index) => ({
+      const orderedRows = detail.rows.map((row, index) => ({
         id: Number(row.id),
         order: index + 1,
       }))
@@ -2613,7 +2693,7 @@ export const useGanttChartView = () => {
       }
 
       // loadData() を呼ぶとローカルでの並べ替えと前後してちらつくため、ローカルデータを直接更新する
-      rows.value = e.detail.rows.map((row) => {
+      rows.value = detail.rows.map((row) => {
         const updated = rowsToUpdate.find((u) => String(u.id) === row.id)
         if (updated) {
           return {
@@ -2656,8 +2736,9 @@ export const useGanttChartView = () => {
     }
   }
 
-  const handleRowHeaderResize = (e: CustomEvent<moguchart.RowHeaderResizeEventDetail>) => {
-    baseRowHeaderWidth.value = Math.max(60, Math.round(e.detail.width / zoomScale.value))
+  const handleRowHeaderResize = (e: any) => {
+    const detail = getDetail<moguchart.RowHeaderResizeEventDetail>(e)
+    baseRowHeaderWidth.value = Math.max(60, Math.round(detail.width / zoomScale.value))
   }
 
   // --- 行追加関連 ---
@@ -2943,11 +3024,12 @@ export const useGanttChartView = () => {
     publishEditEvent('row_upsert', { targetName: data.name })
   }
 
-  const handleRowHeaderDblClick = (e: CustomEvent<moguchart.RowHeaderDblClickEventDetail>) => {
+  const handleRowHeaderDblClick = (e: any) => {
     if (isReadOnly.value) return
     if (editingRowId.value !== null) return // Already editing
 
-    const { row, target, event } = e.detail
+    const detail = getDetail<moguchart.RowHeaderDblClickEventDetail>(e)
+    const { row, target, event } = detail
     if (!row) return
 
     if (event.shiftKey) {
@@ -3021,8 +3103,9 @@ export const useGanttChartView = () => {
     taskId: null as string | null,
   })
 
-  const handleTaskContextMenu = (e: CustomEvent<moguchart.TaskContextMenuEventDetail>) => {
-    const { task, event } = e.detail
+  const handleTaskContextMenu = (e: any) => {
+    const detail = getDetail<moguchart.TaskContextMenuEventDetail>(e)
+    const { task, event } = detail
     event.preventDefault()
 
     if (isReadOnly.value) return
@@ -3246,10 +3329,11 @@ export const useGanttChartView = () => {
    * moguchart-core の task-delete イベントハンドラー。
    * Delete / Backspace キー押下時に発火される。
    */
-  const handleTaskDelete = async (e: CustomEvent<moguchart.TaskDeleteEventDetail>) => {
+  const handleTaskDelete = async (e: any) => {
     if (isReadOnly.value) return
+    const detail = getDetail<moguchart.TaskDeleteEventDetail>(e)
     // サマリータスク（仮想タスク）は削除対象から除外
-    const validIds = e.detail.taskIds.filter((id) => !isSummaryTaskId(id))
+    const validIds = detail.taskIds.filter((id) => !isSummaryTaskId(id))
     if (validIds.length === 0) return
     await confirmAndDeleteTasks(validIds)
   }
@@ -3394,10 +3478,16 @@ export const useGanttChartView = () => {
     })
   }
 
-  const handleRowHeaderContextMenu = (e: CustomEvent<moguchart.RowHeaderContextMenuEventDetail>) => {
-    e.preventDefault()
+  const handleRowHeaderContextMenu = (e: any) => {
+    if (typeof e?.preventDefault === 'function') {
+      e.preventDefault()
+    }
     if (isReadOnly.value) return
-    const { row, event } = e.detail
+    const detail = getDetail<moguchart.RowHeaderContextMenuEventDetail>(e)
+    const { row, event } = detail
+    if (event && typeof event.preventDefault === 'function') {
+      event.preventDefault()
+    }
     if (!row) return
 
     const rowIdNum = Number(row.id)
@@ -3825,8 +3915,9 @@ export const useGanttChartView = () => {
   }
 
   /** 行の折りたたみ/展開の切り替えハンドラ */
-  const handleRowToggleCollapse = async (e: CustomEvent<moguchart.RowToggleCollapseEventDetail>) => {
-    const { rowId, collapsed } = e.detail
+  const handleRowToggleCollapse = async (e: any) => {
+    const detail = getDetail<moguchart.RowToggleCollapseEventDetail>(e)
+    const { rowId, collapsed } = detail
     const targetRow = rows.value.find((r) => String(r.id) === String(rowId))
     if (!targetRow) return
 
@@ -4065,12 +4156,14 @@ export const useGanttChartView = () => {
   // --- プロジェクト追加/編集関連 ---
   const isProjectListDialogVisible = ref(false)
 
-  const handleRowSelectionChange = (e: CustomEvent<moguchart.RowSelectionChangeEventDetail>) => {
-    selectedRowIds.value = e.detail.selectedIds
+  const handleRowSelectionChange = (e: any) => {
+    const detail = getDetail<moguchart.RowSelectionChangeEventDetail>(e)
+    selectedRowIds.value = detail.selectedIds
   }
 
-  const handleBarSelectionChange = (e: CustomEvent<moguchart.BarSelectionChangeEventDetail>) => {
-    selectedTaskIds.value = e.detail.selectedIds
+  const handleBarSelectionChange = (e: any) => {
+    const detail = getDetail<moguchart.BarSelectionChangeEventDetail>(e)
+    selectedTaskIds.value = detail.selectedIds
   }
 
   // --- Chart Context Menu ---
@@ -4082,9 +4175,10 @@ export const useGanttChartView = () => {
     rowId: undefined as string | undefined,
   })
 
-  const handleChartContextMenu = (e: CustomEvent<moguchart.ChartContextMenuEventDetail>) => {
+  const handleChartContextMenu = (e: any) => {
     if (isReadOnly.value) return
-    const { event, date, rowId } = e.detail
+    const detail = getDetail<moguchart.ChartContextMenuEventDetail>(e)
+    const { event, date, rowId } = detail
     // event.preventDefault() は gantt-chart 側で行われている
 
     chartContextMenu.value = {
@@ -4333,9 +4427,10 @@ export const useGanttChartView = () => {
   /**
    * マーカーダブルクリック時に既存マーカーの編集ダイアログを開く
    */
-  const handleMarkerDblClick = (e: CustomEvent<moguchart.MarkerDblClickEventDetail>) => {
+  const handleMarkerDblClick = (e: any) => {
     if (isReadOnly.value) return
-    const { marker, rowId } = e.detail
+    const detail = getDetail<moguchart.MarkerDblClickEventDetail>(e)
+    const { marker, rowId } = detail
 
     // moguchart.GanttMarker → MarkerAttribute に変換
     const markerAttr: MarkerAttribute = {
@@ -4366,9 +4461,12 @@ export const useGanttChartView = () => {
   /**
    * マーカー右クリック時にコンテキストメニューを表示
    */
-  const handleMarkerContextMenu = (e: CustomEvent<moguchart.MarkerContextMenuEventDetail>) => {
-    const { marker, rowId, event } = e.detail
-    event.preventDefault()
+  const handleMarkerContextMenu = (e: any) => {
+    const detail = getDetail<moguchart.MarkerContextMenuEventDetail>(e)
+    const { marker, rowId, event } = detail
+    if (event && typeof event.preventDefault === 'function') {
+      event.preventDefault()
+    }
 
     markerContextMenu.value = {
       visible: true,
@@ -4815,6 +4913,7 @@ export const useGanttChartView = () => {
     zoomPercent,
     zoomScale,
     fontScale,
+    isExporting,
     baseBarHeight,
     baseRowHeaderWidth,
     addRowCount,
