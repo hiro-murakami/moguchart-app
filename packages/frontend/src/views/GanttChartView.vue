@@ -126,6 +126,8 @@ const {
   handleRowHeaderResize,
   undo,
   redo,
+  handleCommand,
+  handleHistoryChange,
   refresh,
   handleAddCommentFromContextMenu,
   handleAddCommentToRow,
@@ -507,6 +509,8 @@ const handleOpenSlideSchedule = async () => {
             @marker-dblclick="handleMarkerDblClick"
             @marker-contextmenu="handleMarkerContextMenu"
             @row-toggle-collapse="handleRowToggleCollapse"
+            @command="handleCommand"
+            @history-change="handleHistoryChange"
           />
         </div>
 

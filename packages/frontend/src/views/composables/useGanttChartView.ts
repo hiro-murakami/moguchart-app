@@ -961,6 +961,11 @@ export const useGanttChartView = () => {
         snapStep: 5,
         indicatorPosition: 'full',
       },
+      history: {
+        enabled: true,
+        keyboard: false,
+        maxDepth: 50,
+      },
     }
   })
 
@@ -1137,7 +1142,12 @@ export const useGanttChartView = () => {
   }
   const confirm = useConfirm()
   const prompt = usePrompt()
-  const { canUndo, canRedo, isUndoRedoing, pushAction, undo: _undo, redo: _redo, clearHistory } = useUndoRedo()
+  const { canUndo, canRedo, isUndoRedoing, pushAction, undo: _undo, redo: _redo, clearHistory: _clearHistory } = useUndoRedo()
+
+  const clearHistory = () => {
+    _clearHistory()
+    ganttChartRef.value?.clearHistory()
+  }
 
   // --- リアルタイムコラボレーション ---
   const { activeUsers, editLogs, joinProject, leaveProject, publishEditEvent, onEditEvent, updateEditingTasks } =
@@ -1161,11 +1171,238 @@ export const useGanttChartView = () => {
   // undo/redo 実行後に他ユーザーへ通知するラッパー
   const undo = async () => {
     await _undo()
+    ganttChartRef.value?.clearHistory()
     publishEditEvent('full_reload')
   }
   const redo = async () => {
     await _redo()
+    ganttChartRef.value?.clearHistory()
     publishEditEvent('full_reload')
+  }
+
+  /** 指定されたタスクIDがサマリータスク（仮想タスク）かどうかを判定 */
+  const isSummaryTaskId = (taskId: string | number | null | undefined): boolean => {
+    if (taskId == null) return false
+    return String(taskId).endsWith('-summary')
+  }
+
+  /**
+   * moguchart-core の GanttRow[] 差分から変更のあったタスクデータを抽出する
+   */
+  const extractTaskChanges = (beforeRows: moguchart.GanttRow[], afterRows: moguchart.GanttRow[]) => {
+    const beforeMap = new Map<string, { rowId: number; task: moguchart.GanttTask }>()
+    for (const row of beforeRows) {
+      for (const task of row.tasks || []) {
+        if (task.type === 'summary' || isSummaryTaskId(task.id)) continue
+        beforeMap.set(String(task.id), { rowId: Number(row.id), task })
+      }
+    }
+
+    const afterMap = new Map<string, { rowId: number; task: moguchart.GanttTask }>()
+    for (const row of afterRows) {
+      for (const task of row.tasks || []) {
+        if (task.type === 'summary' || isSummaryTaskId(task.id)) continue
+        afterMap.set(String(task.id), { rowId: Number(row.id), task })
+      }
+    }
+
+    interface UpsertTaskItem {
+      id: number
+      rowId: number
+      name: string
+      start: string
+      end: string
+      attribute: TaskAttribute
+    }
+
+    const beforeTasks: UpsertTaskItem[] = []
+    const afterTasks: UpsertTaskItem[] = []
+    const affectedRowIdSet = new Set<number>()
+
+    for (const [taskIdStr, afterInfo] of afterMap) {
+      const beforeInfo = beforeMap.get(taskIdStr)
+      if (!beforeInfo) continue
+
+      const bTask = beforeInfo.task
+      const aTask = afterInfo.task
+
+      const bStart = toDateTimeString(bTask.start)
+      const bEnd = toDateTimeString(bTask.end)
+      const aStart = toDateTimeString(aTask.start)
+      const aEnd = toDateTimeString(aTask.end)
+
+      const bRowId = beforeInfo.rowId
+      const aRowId = afterInfo.rowId
+
+      const bProgress = bTask.progress ?? 0
+      const aProgress = aTask.progress ?? 0
+
+      const bDeps = (((bTask as any).dependencies ?? (bTask as any).attribute?.dependencies ?? []) as (string | number)[]).map(String)
+      const aDeps = (((aTask as any).dependencies ?? (aTask as any).attribute?.dependencies ?? []) as (string | number)[]).map(String)
+      const depsChanged =
+        bDeps.length !== aDeps.length || !bDeps.every((d, i) => d === aDeps[i])
+
+      const hasChange =
+        bRowId !== aRowId ||
+        bStart !== aStart ||
+        bEnd !== aEnd ||
+        bProgress !== aProgress ||
+        depsChanged
+
+      if (hasChange) {
+        affectedRowIdSet.add(bRowId)
+        affectedRowIdSet.add(aRowId)
+
+        const bRawAttr = ((bTask as any).attribute as TaskAttribute) || {}
+        const aRawAttr = ((aTask as any).attribute as TaskAttribute) || {}
+
+        const bAttr: TaskAttribute = {
+          ...bRawAttr,
+          ...(bTask.progress !== undefined ? { progress: bTask.progress } : {}),
+          dependencies: bDeps,
+        }
+        const aAttr: TaskAttribute = {
+          ...aRawAttr,
+          ...(aTask.progress !== undefined ? { progress: aTask.progress } : {}),
+          dependencies: aDeps,
+        }
+
+        beforeTasks.push({
+          id: Number(taskIdStr),
+          rowId: bRowId,
+          name: bTask.name || '',
+          start: bStart,
+          end: bEnd,
+          attribute: bAttr,
+        })
+
+        afterTasks.push({
+          id: Number(taskIdStr),
+          rowId: aRowId,
+          name: aTask.name || '',
+          start: aStart,
+          end: aEnd,
+          attribute: aAttr,
+        })
+      }
+    }
+
+    return {
+      beforeTasks,
+      afterTasks,
+      affectedRowIds: Array.from(affectedRowIdSet),
+    }
+  }
+
+  /**
+   * 変更タスクリストを Undo/Redo スタックへ登録し、バックエンドへ保存・ブロードキャストする
+   */
+  const syncTasksWithUndo = async (
+    description: string,
+    beforeTasks: any[],
+    afterTasks: any[],
+    affectedRowIds: number[],
+  ) => {
+    pushAction({
+      description,
+      undo: async () => {
+        await upsertGanttTasks(beforeTasks)
+        await loadData(projectId.value, { silent: true })
+      },
+      redo: async () => {
+        await upsertGanttTasks(afterTasks)
+        await loadData(projectId.value, { silent: true })
+      },
+    })
+
+    try {
+      await upsertGanttTasks(afterTasks)
+      await loadData(projectId.value, { silent: true })
+      publishEditEvent('task_upsert', {
+        rowIds: affectedRowIds,
+        targetName: afterTasks.length === 1 ? afterTasks[0]!.name : `${afterTasks.length}件のタスク`,
+        isNew: false,
+        taskId: String(afterTasks[0]!.id),
+      })
+    } catch (err) {
+      console.error('[GanttChart] Failed to sync tasks with undo:', err)
+      await loadData(projectId.value, { silent: true })
+    }
+  }
+
+  /**
+   * moguchart-core からのコマンド発行イベントハンドラ
+   */
+  const handleCommand = async (e: any) => {
+    const detail = getDetail<moguchart.CommandEventDetail>(e)
+    if (!detail?.command) return
+
+    const cmd = detail.command
+    const supportedTypes: string[] = [
+      'task-move',
+      'task-resize',
+      'task-progress',
+      'dependency-create',
+      'dependency-delete',
+    ]
+
+    if (!supportedTypes.includes(cmd.type)) {
+      return
+    }
+
+    if (isReadOnly.value && cmd.type !== 'task-progress') {
+      return
+    }
+
+    if (!cmd.before || !cmd.after) {
+      return
+    }
+
+    const { beforeTasks, afterTasks, affectedRowIds } = extractTaskChanges(
+      cmd.before as moguchart.GanttRow[],
+      cmd.after as moguchart.GanttRow[],
+    )
+    if (afterTasks.length === 0) {
+      return
+    }
+
+    // 進捗率変更時の権限チェック
+    if (cmd.type === 'task-progress') {
+      const userEmail = userStore.currentUser?.email
+      const canEdit = afterTasks.every((t) => {
+        const assignees = t.attribute?.assignees || []
+        return !isReadOnly.value || (!!userEmail && assignees.includes(userEmail))
+      })
+      if (!canEdit) {
+        await loadData(projectId.value, { silent: true })
+        return
+      }
+    }
+
+    await maybeAutoSnapshot()
+
+    let description = 'タスクの変更'
+    if (cmd.type === 'task-move') {
+      description = afterTasks.length > 1 ? `タスク一括移動 (${afterTasks.length}件)` : 'タスク移動'
+    } else if (cmd.type === 'task-resize') {
+      description = 'タスクリサイズ'
+    } else if (cmd.type === 'task-progress') {
+      description = 'タスク進捗率の変更'
+    } else if (cmd.type === 'dependency-create') {
+      description = 'タスクの依存関係を追加'
+    } else if (cmd.type === 'dependency-delete') {
+      description = 'タスクの依存関係を削除'
+    }
+
+    await syncTasksWithUndo(description, beforeTasks, afterTasks, affectedRowIds)
+  }
+
+  /**
+   * moguchart-core からの履歴変更イベントハンドラ
+   */
+  const handleHistoryChange = (e: any) => {
+    const detail = getDetail<moguchart.HistoryChangeEventDetail>(e)
+    if (!detail) return
   }
 
   // タスクの表示用フォーマット関数
@@ -1674,15 +1911,14 @@ export const useGanttChartView = () => {
     })
   }
 
-  /** 指定されたタスクIDがサマリータスク（仮想タスク）かどうかを判定 */
-  const isSummaryTaskId = (taskId: string | number | null | undefined): boolean => {
-    if (taskId == null) return false
-    return String(taskId).endsWith('-summary')
-  }
-
   const handleTaskUpdate = async (e: any) => {
     const detail = getDetail<moguchart.TaskUpdateEventDetail>(e)
     if (detail.isDragging || detail.isCancel || detail.isOutside) {
+      return
+    }
+
+    // コピー以外（通常の移動・リサイズ・一括移動）は moguchart-core の GanttCommand 経由で同期するためスキップ
+    if (detail.mode !== 'copy') {
       return
     }
 
@@ -1693,91 +1929,9 @@ export const useGanttChartView = () => {
 
     await maybeAutoSnapshot()
 
-    // 複数タスク一括移動の処理
-    const rawSelectedIds = detail.selectedTaskIds
-    const selectedIds = rawSelectedIds ? rawSelectedIds.filter((id) => !isSummaryTaskId(id)) : undefined
     const isDisableCrossRowMove = !!currentProject.value?.attribute?.disableCrossRowMove
-    if (selectedIds && selectedIds.length >= 2 && detail.dx !== undefined) {
-      const msPerPx = (24 * 60 * 60 * 1000) / pxPerDay.value
-      const timeDiff = detail.dx * msPerPx
-
-      // 行移動が発生するかどうかを判定
-      const targetRowId = detail.targetRowId
-      const hasRowChange = !isDisableCrossRowMove && !!targetRowId && rows.value.some((r) => {
-        const hasTask = r.tasks.some((t) => selectedIds.includes(t.id))
-        return hasTask && String(r.id) !== String(targetRowId)
-      })
-
-      // 水平移動も行移動もない場合は何もしない
-      if (timeDiff === 0 && !hasRowChange) return
-
-      // 変更前データ（undo用）と変更後データを構築
-      const beforeDataList: { id: number; rowId: number; name: string; start: string; end: string; attribute: any }[] =
-        []
-      const afterDataList: { id: number; rowId: number; name: string; start: string; end: string; attribute: any }[] =
-        []
-      const affectedRowIdSet = new Set<number>()
-
-      for (const taskId of selectedIds) {
-        const taskIdStr = String(taskId)
-        const taskRow = rows.value.find((r) => r.tasks.some((t) => t.id === taskIdStr))
-        const taskItem = taskRow?.tasks.find((t) => t.id === taskIdStr)
-        if (!taskRow || !taskItem) continue
-
-        const attr = (taskItem as any).attribute as TaskAttribute | undefined
-        affectedRowIdSet.add(Number(taskRow.id))
-
-        // 行移動先のrowIdを決定
-        const afterRowId = hasRowChange ? Number(targetRowId) : Number(taskRow.id)
-        if (hasRowChange) {
-          affectedRowIdSet.add(Number(targetRowId))
-        }
-
-        beforeDataList.push({
-          id: Number(taskItem.id),
-          rowId: Number(taskRow.id),
-          name: taskItem.name || '',
-          start: toDateTimeString(taskItem.start),
-          end: toDateTimeString(taskItem.end),
-          attribute: attr ? { ...attr } : {},
-        })
-
-        afterDataList.push({
-          id: Number(taskItem.id),
-          rowId: afterRowId,
-          name: taskItem.name || '',
-          start: toDateTimeString(new Date(taskItem.start.getTime() + timeDiff)),
-          end: toDateTimeString(new Date(taskItem.end.getTime() + timeDiff)),
-          attribute: attr ? { ...attr } : {},
-        })
-      }
-
-      if (afterDataList.length === 0) return
-
-      pushAction({
-        description: `タスク一括移動 (${afterDataList.length}件)`,
-        undo: async () => {
-          await upsertGanttTasks(beforeDataList)
-          await loadData(projectId.value, { silent: true })
-        },
-        redo: async () => {
-          await upsertGanttTasks(afterDataList)
-          await loadData(projectId.value, { silent: true })
-        },
-      })
-      await upsertGanttTasks(afterDataList)
-      await loadData(projectId.value, { silent: true })
-      publishEditEvent('task_upsert', {
-        rowIds: [...affectedRowIdSet],
-        targetName: `${afterDataList.length}件のタスク`,
-        isNew: false,
-        taskId: String(afterDataList[0]!.id),
-      })
-      return
-    }
-
     const data = {
-      id: detail.mode === 'copy' ? 0 : Number(detail.id),
+      id: 0,
       rowId: Number(detail.targetRowId),
       name: detail.name || '',
       start: toDateTimeString(detail.start),
@@ -1785,7 +1939,7 @@ export const useGanttChartView = () => {
       attribute: {},
     }
 
-    // コピー時はdata.idが0なので、元タスクのIDで検索する
+    // コピー時は元タスクのIDで検索する
     const sourceTaskIdStr = String(detail.id)
     const row = rows.value.find((r) => r.tasks.some((t) => t.id === sourceTaskIdStr))
     if (isDisableCrossRowMove && row) {
@@ -1795,222 +1949,42 @@ export const useGanttChartView = () => {
     if (task) {
       const attribute = (task as any).attribute as TaskAttribute | undefined
       if (attribute) {
-        if (detail.mode === 'copy') {
-          // コピー時は接続線情報（dependencies）を引き継がない
-          const { dependencies: _deps, ...attributeWithoutDeps } = attribute
-          data.attribute = attributeWithoutDeps
-        } else {
-          data.attribute = { ...attribute }
-        }
-      }
-
-      // 変更がない場合は何もしない
-      if (
-        data.id !== 0 && // 新規作成(コピー)でない
-        data.rowId === Number(row?.id) &&
-        data.name === task.name &&
-        data.start === toDateString(task.start) &&
-        data.end === toDateString(task.end)
-      ) {
-        return
+        // コピー時は接続線情報（dependencies）を引き継がない
+        const { dependencies: _deps, ...attributeWithoutDeps } = attribute
+        data.attribute = attributeWithoutDeps
       }
     }
 
-    let affectedTaskId = String(data.id)
-    if (data.id === 0) {
-      // コピー（新規作成）の場合
-      const result = await upsertGanttTasks([data])
-      const newTaskId = result[0]!
-      affectedTaskId = String(newTaskId)
-      pushAction({
-        description: 'タスクコピー',
-        undo: async () => {
-          await deleteGanttTask([newTaskId])
-          await loadData(projectId.value, { silent: true })
-        },
-        redo: async () => {
-          await upsertGanttTasks([{ ...data, id: 0 }])
-          await loadData(projectId.value, { silent: true })
-        },
-      })
-    } else if (task && row) {
-      // 移動/リサイズの場合
-      const beforeData = {
-        id: Number(task.id),
-        rowId: Number(row.id),
-        name: task.name || '',
-        start: toDateTimeString(task.start),
-        end: toDateTimeString(task.end),
-        attribute: { ...((task as any).attribute || {}) },
-      }
-      pushAction({
-        description: 'タスク移動/リサイズ',
-        undo: async () => {
-          await upsertGanttTasks([beforeData])
-          await loadData(projectId.value, { silent: true })
-        },
-        redo: async () => {
-          await upsertGanttTasks([data])
-          await loadData(projectId.value, { silent: true })
-        },
-      })
-      await upsertGanttTasks([data])
-    } else {
-      await upsertGanttTasks([data])
-    }
+    const result = await upsertGanttTasks([data])
+    const newTaskId = result[0]!
+    const affectedTaskId = String(newTaskId)
+    pushAction({
+      description: 'タスクコピー',
+      undo: async () => {
+        await deleteGanttTask([newTaskId])
+        await loadData(projectId.value, { silent: true })
+      },
+      redo: async () => {
+        await upsertGanttTasks([{ ...data, id: 0 }])
+        await loadData(projectId.value, { silent: true })
+      },
+    })
     await loadData(projectId.value, { silent: true })
-    // 行をまたぐ移動の場合、元の行と移動先の行の両方を差分更新対象にする
     const affectedRowIds = [...new Set([Number(detail.targetRowId), ...(row ? [Number(row.id)] : [])])]
     publishEditEvent('task_upsert', {
       rowIds: affectedRowIds,
       targetName: data.name,
-      isNew: data.id === 0,
+      isNew: true,
       taskId: affectedTaskId,
     })
   }
 
-  const handleTaskProgressChange = async (e: any) => {
-    const detail = getDetail<moguchart.TaskProgressChangeEventDetail>(e)
-    const { task, progress, originalProgress, cancelled } = detail
-    if (cancelled || progress === originalProgress) return
-
-    // サマリータスクは子タスクから自動計算されるため直接変更はスキップ
-    if (task.type === 'summary' || isSummaryTaskId(task.id)) return
-
-    const taskIdStr = String(task.id)
-    const row = rows.value.find((r) => r.tasks.some((t) => t.id === taskIdStr))
-    const currentTask = row?.tasks.find((t) => t.id === taskIdStr)
-    if (!row || !currentTask) return
-
-    const attr = ((currentTask as any).attribute as TaskAttribute) || {}
-    const userEmail = userStore.currentUser?.email
-    const assignees = attr.assignees || []
-    const isAssignee = !!userEmail && assignees.includes(userEmail)
-    if (isReadOnly.value && !isAssignee) return
-
-    const beforeAttr = { ...attr }
-    const afterAttr: TaskAttribute = {
-      ...attr,
-      progress,
-    }
-
-    const beforeData = {
-      id: Number(currentTask.id),
-      rowId: Number(row.id),
-      name: currentTask.name || '',
-      start: toDateTimeString(currentTask.start),
-      end: toDateTimeString(currentTask.end),
-      attribute: beforeAttr,
-    }
-
-    const afterData = {
-      ...beforeData,
-      attribute: afterAttr,
-    }
-
-    // 楽観的UI更新
-    rows.value = rows.value.map((r) => {
-      if (r.id === row.id) {
-        return {
-          ...r,
-          tasks: r.tasks.map((t) => {
-            if (t.id === taskIdStr) {
-              return {
-                ...t,
-                progress,
-                attribute: afterAttr,
-              }
-            }
-            return t
-          }),
-        }
-      }
-      return r
-    })
-
-    pushAction({
-      description: 'タスク進捗率の変更',
-      undo: async () => {
-        await upsertGanttTasks([beforeData])
-        await loadData(projectId.value, { silent: true })
-      },
-      redo: async () => {
-        await upsertGanttTasks([afterData])
-        await loadData(projectId.value, { silent: true })
-      },
-    })
-
-    try {
-      await upsertGanttTasks([afterData])
-      await loadData(projectId.value, { silent: true })
-      publishEditEvent('task_upsert', {
-        rowIds: [Number(row.id)],
-        targetName: currentTask.name,
-        isNew: false,
-        taskId: taskIdStr,
-      })
-    } catch (err) {
-      console.error('[Collaboration] Failed to update task progress:', err)
-      await loadData(projectId.value, { silent: true })
-    }
+  const handleTaskProgressChange = async (_e: any) => {
+    // moguchart-core の GanttCommand ('task-progress') 経由で一括同期されるためここでは何もしない
   }
 
-  const handleDependencyCreate = async (e: any) => {
-    if (isReadOnly.value) return
-    const detail = getDetail<moguchart.DependencyCreateEventDetail>(e)
-    const { sourceTaskId, targetTaskId } = detail
-
-    // サマリータスクとの依存関係は作成不可
-    if (isSummaryTaskId(sourceTaskId) || isSummaryTaskId(targetTaskId)) return
-
-    const targetRow = rows.value.find((r) => r.tasks.some((t) => t.id === targetTaskId))
-    const targetTask = targetRow?.tasks.find((t) => t.id === targetTaskId)
-
-    if (!targetRow || !targetTask) return
-    if (targetTask.type === 'summary') return
-
-    const sourceRow = rows.value.find((r) => r.tasks.some((t) => t.id === sourceTaskId))
-    const sourceTask = sourceRow?.tasks.find((t) => t.id === sourceTaskId)
-    if (sourceTask?.type === 'summary') return
-
-    const attribute = ((targetTask as any).attribute as TaskAttribute) || {}
-    const deps = attribute.dependencies || []
-
-    // すでに依存関係が存在する場合は何もしない
-    if (deps.includes(sourceTaskId)) return
-
-    const newDependencies = [...deps, sourceTaskId]
-
-    const data = {
-      id: Number(targetTask.id),
-      rowId: Number(targetRow.id),
-      name: targetTask.name || '',
-      start: toDateTimeString(targetTask.start),
-      end: toDateTimeString(targetTask.end),
-      attribute: { ...attribute, dependencies: newDependencies },
-    }
-
-    pushAction({
-      description: 'タスクの依存関係を追加',
-      undo: async () => {
-        const undoData = { ...data, attribute }
-        await upsertGanttTasks([undoData])
-        await loadData(projectId.value, { silent: true })
-      },
-      redo: async () => {
-        await upsertGanttTasks([data])
-        await loadData(projectId.value, { silent: true })
-      },
-    })
-
-    await upsertGanttTasks([data])
-    await loadData(projectId.value, { silent: true })
-    publishEditEvent('task_upsert', {
-      rowIds: [Number(targetRow.id)],
-      targetName: targetTask.name,
-      isNew: false,
-      taskId: String(targetTask.id),
-    })
+  const handleDependencyCreate = async (_e: any) => {
+    // moguchart-core の GanttCommand ('dependency-create') 経由で一括同期されるためここでは何もしない
   }
 
   const dependencyContextMenu = ref({
@@ -2061,48 +2035,11 @@ export const useGanttChartView = () => {
 
     if (!result) return
 
-    const attribute = ((targetTask as any).attribute as TaskAttribute) || {}
-    const deps = attribute.dependencies || []
-
-    const newDependencies = deps.filter((id) => id !== sourceTaskId)
-
-    const data = {
-      id: Number(targetTask.id),
-      rowId: Number(targetRow.id),
-      name: targetTask.name || '',
-      start: toDateTimeString(targetTask.start),
-      end: toDateTimeString(targetTask.end),
-      attribute: { ...attribute, dependencies: newDependencies },
-    }
-
-    pushAction({
-      description: 'タスクの依存関係を削除',
-      undo: async () => {
-        const undoData = { ...data, attribute }
-        await upsertGanttTasks([undoData])
-        await loadData(projectId.value, { silent: true })
-      },
-      redo: async () => {
-        await upsertGanttTasks([data])
-        await loadData(projectId.value, { silent: true })
-      },
-    })
-
-    await upsertGanttTasks([data])
-    await loadData(projectId.value, { silent: true })
-    publishEditEvent('task_upsert', {
-      rowIds: [Number(targetRow.id)],
-      targetName: targetTask.name,
-      isNew: false,
-      taskId: String(targetTask.id),
-    })
+    ganttChartRef.value?.triggerDependencyDelete(sourceTaskId, targetTaskId)
   }
 
-  const handleDependencyDelete = async (e: any) => {
-    if (isReadOnly.value) return
-    const detail = getDetail<moguchart.DependencyDeleteEventDetail>(e)
-    if (!detail) return
-    await removeDependency(detail.sourceTaskId, detail.targetTaskId)
+  const handleDependencyDelete = async (_e: any) => {
+    // moguchart-core の GanttCommand ('dependency-delete') 経由で一括同期されるためここでは何もしない
   }
 
   const handleDeleteDependencyFromContextMenu = async () => {
@@ -5080,5 +5017,10 @@ export const useGanttChartView = () => {
     handleToggleCollapseFromContextMenu,
     handleCollapseAll,
     handleExpandAll,
+
+    // 操作履歴 / コマンドイベント
+    clearHistory,
+    handleCommand,
+    handleHistoryChange,
   }
 }
