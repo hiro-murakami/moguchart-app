@@ -2046,6 +2046,21 @@ export const useGanttChartView = () => {
 
     if (!targetRow || !targetTask) return
 
+    const sourceRow = rows.value.find((r) => r.tasks.some((t) => t.id === sourceTaskId))
+    const sourceTask = sourceRow?.tasks.find((t) => t.id === sourceTaskId)
+
+    const sourceName = sourceTask?.name || '先行タスク'
+    const targetName = targetTask?.name || '後続タスク'
+
+    const result = await confirm({
+      title: '接続線削除の確認',
+      message: `「<b>${sourceName}</b>」から「<b>${targetName}</b>」への接続線を削除してもよろしいですか？`,
+      confirmText: '削除',
+      confirmColor: 'error',
+    })
+
+    if (!result) return
+
     const attribute = ((targetTask as any).attribute as TaskAttribute) || {}
     const deps = attribute.dependencies || []
 
