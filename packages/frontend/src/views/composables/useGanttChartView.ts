@@ -1170,14 +1170,28 @@ export const useGanttChartView = () => {
 
   // undo/redo 実行後に他ユーザーへ通知するラッパー
   const undo = async () => {
-    await _undo()
-    ganttChartRef.value?.clearHistory()
-    publishEditEvent('full_reload')
+    if (!canUndo.value || isUndoRedoing.value) return
+    setIsLoading(true)
+    try {
+      await nextTick()
+      await _undo()
+      ganttChartRef.value?.clearHistory()
+      publishEditEvent('full_reload')
+    } finally {
+      setIsLoading(false)
+    }
   }
   const redo = async () => {
-    await _redo()
-    ganttChartRef.value?.clearHistory()
-    publishEditEvent('full_reload')
+    if (!canRedo.value || isUndoRedoing.value) return
+    setIsLoading(true)
+    try {
+      await nextTick()
+      await _redo()
+      ganttChartRef.value?.clearHistory()
+      publishEditEvent('full_reload')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   /** 指定されたタスクIDがサマリータスク（仮想タスク）かどうかを判定 */
@@ -2588,6 +2602,15 @@ export const useGanttChartView = () => {
     await execDeleteTasksWithAnimation([taskId])
   }
 
+  /** 行の現在の並び順を取得する（orderが未設定または0の場合はrows.value内のインデックスに基づく） */
+  const getRowOrder = (row: moguchart.GanttRow | { id: string | number; [key: string]: any }): number => {
+    if (typeof (row as any).order === 'number' && !isNaN((row as any).order) && (row as any).order > 0) {
+      return (row as any).order
+    }
+    const idx = rows.value.findIndex((r) => String(r.id) === String(row.id))
+    return idx !== -1 ? idx + 1 : 1
+  }
+
   const handleRowReordered = async (e: any) => {
     if (currentProject.value?.attribute?.disableRowReorder) return
     const detail = getDetail<moguchart.RowReorderEventDetail>(e)
@@ -2602,6 +2625,20 @@ export const useGanttChartView = () => {
         id: Number(row.id),
         order: index + 1,
       }))
+      const beforeOrderMap = new Map<string, number>()
+      rows.value.forEach((row, index) => {
+        beforeOrderMap.set(String(row.id), index + 1)
+      })
+
+      // 並び替え後の順序マップを作成
+      const orderedRows = detail.rows.map((row, index) => ({
+        id: Number(row.id),
+        order: index + 1,
+      }))
+      const newOrderMap = new Map<string, number>()
+      detail.rows.forEach((row, index) => {
+        newOrderMap.set(String(row.id), index + 1)
+      })
 
       // parentId が変化した行（子行の間にドロップして兄弟化された行）を検出
       const oldParentMap = new Map<string, number | null>()
@@ -2630,7 +2667,7 @@ export const useGanttChartView = () => {
           rowsToUpdate.push({
             id: Number(r.id),
             name: r.name,
-            order: (r as any).order ?? 0,
+            order: newOrderMap.get(String(r.id)) ?? 1,
             projectId: projectId.value,
             visible: r.visible ?? true,
             attribute: newAttr,
@@ -2639,7 +2676,7 @@ export const useGanttChartView = () => {
           undoUpdates.push({
             id: Number(r.id),
             name: r.name,
-            order: (r as any).order ?? 0,
+            order: beforeOrderMap.get(String(r.id)) ?? 1,
             projectId: projectId.value,
             visible: r.visible ?? true,
             attribute: restoredAttr,
@@ -2648,25 +2685,19 @@ export const useGanttChartView = () => {
         }
       }
 
-      const orderedRows = detail.rows.map((row, index) => ({
-        id: Number(row.id),
-        order: index + 1,
-      }))
       await updateGanttRowOrder(orderedRows)
       if (rowsToUpdate.length > 0) {
         await upsertGanttRow(rowsToUpdate)
       }
 
       // loadData() を呼ぶとローカルでの並べ替えと前後してちらつくため、ローカルデータを直接更新する
-      rows.value = detail.rows.map((row) => {
+      rows.value = detail.rows.map((row, index) => {
         const updated = rowsToUpdate.find((u) => String(u.id) === row.id)
-        if (updated) {
-          return {
-            ...row,
-            attribute: updated.attribute,
-          }
+        return {
+          ...row,
+          order: index + 1,
+          attribute: updated ? updated.attribute : (row as any).attribute,
         }
-        return row
       })
       publishEditEvent('row_reorder')
 
@@ -2834,7 +2865,7 @@ export const useGanttChartView = () => {
     await upsertGanttRow({
       id: rowId,
       name,
-      order: (row as any).order ?? 0,
+      order: getRowOrder(row),
       projectId: projectId.value,
       visible: row.visible || true,
       attribute: attribute || {},
@@ -2848,7 +2879,7 @@ export const useGanttChartView = () => {
           await upsertGanttRow({
             id: rowId,
             name: beforeName,
-            order: (row as any).order ?? 0,
+            order: getRowOrder(row),
             projectId: projectId.value,
             visible: row.visible || true,
             attribute: attribute || {},
@@ -2860,7 +2891,7 @@ export const useGanttChartView = () => {
           await upsertGanttRow({
             id: rowId,
             name,
-            order: (row as any).order ?? 0,
+            order: getRowOrder(row),
             projectId: projectId.value,
             visible: row.visible || true,
             attribute: attribute || {},
@@ -2937,7 +2968,7 @@ export const useGanttChartView = () => {
     await upsertGanttRow({
       id: data.id,
       name: data.name,
-      order: (row as any).order ?? 0,
+      order: getRowOrder(row),
       projectId: projectId.value,
       visible: row.visible || true,
       attribute: newAttr,
@@ -2956,7 +2987,7 @@ export const useGanttChartView = () => {
           await upsertGanttRow({
             id: data.id,
             name: beforeName,
-            order: (row as any).order ?? 0,
+            order: getRowOrder(row),
             projectId: projectId.value,
             visible: row.visible || true,
             attribute: {
@@ -2973,7 +3004,7 @@ export const useGanttChartView = () => {
           await upsertGanttRow({
             id: data.id,
             name: data.name,
-            order: (row as any).order ?? 0,
+            order: getRowOrder(row),
             projectId: projectId.value,
             visible: row.visible || true,
             attribute: newAttr,
@@ -3211,7 +3242,7 @@ export const useGanttChartView = () => {
     await upsertGanttRow({
       id: Number(rowId),
       name: row.name,
-      order: (row as any).order ?? 0,
+      order: getRowOrder(row),
       projectId: projectId.value,
       visible: row.visible || true,
       attribute: {
@@ -3572,7 +3603,7 @@ export const useGanttChartView = () => {
       const rowUpdateData = targetRows.map((row) => ({
         id: Number(row.id),
         name: row.name,
-        order: (row as any).order ?? 0,
+        order: getRowOrder(row),
         projectId: projectId.value,
         visible: newVisible,
         attribute: (row as any).attribute || {},
@@ -3589,7 +3620,7 @@ export const useGanttChartView = () => {
             targetRows.map((row) => ({
               id: Number(row.id),
               name: row.name,
-              order: (row as any).order ?? 0,
+              order: getRowOrder(row),
               projectId: projectId.value,
               visible: oldVisible,
               attribute: (row as any).attribute || {},
@@ -3715,7 +3746,7 @@ export const useGanttChartView = () => {
           rowsToUpdate.push({
             id: Number(row.id),
             name: row.name,
-            order: (row as any).order ?? 0,
+            order: getRowOrder(row),
             projectId: projectId.value,
             visible: row.visible ?? true,
             attribute: newAttr,
@@ -3747,7 +3778,7 @@ export const useGanttChartView = () => {
                 undoUpdates.push({
                   id: b.id,
                   name: r.name,
-                  order: (r as any).order ?? 0,
+                  order: getRowOrder(r),
                   projectId: projectId.value,
                   visible: r.visible ?? true,
                   attribute: restoredAttr,
@@ -3815,7 +3846,7 @@ export const useGanttChartView = () => {
             rowsToUpdate.push({
               id: Number(row.id),
               name: row.name,
-              order: (row as any).order ?? 0,
+              order: getRowOrder(row),
               projectId: projectId.value,
               visible: row.visible ?? true,
               attribute: newAttr,
@@ -3849,7 +3880,7 @@ export const useGanttChartView = () => {
                   undoUpdates.push({
                     id: b.id,
                     name: r.name,
-                    order: (r as any).order ?? 0,
+                    order: getRowOrder(r),
                     projectId: projectId.value,
                     visible: r.visible ?? true,
                     attribute: restoredAttr,
@@ -3907,7 +3938,7 @@ export const useGanttChartView = () => {
         await upsertGanttRow({
           id: Number(targetRow.id),
           name: targetRow.name,
-          order: (targetRow as any).order ?? 0,
+          order: getRowOrder(targetRow),
           projectId: projectId.value,
           visible: targetRow.visible ?? true,
           attribute: newAttr,
@@ -3989,7 +4020,7 @@ export const useGanttChartView = () => {
         return {
           id: Number(row.id),
           name: row.name,
-          order: (row as any).order ?? 0,
+          order: getRowOrder(row),
           projectId: projectId.value,
           visible: row.visible ?? true,
           attribute: attr ? { ...attr } : {},
@@ -4526,7 +4557,7 @@ export const useGanttChartView = () => {
     await upsertGanttRow({
       id: rowIdNum,
       name: row.name,
-      order: (row as any).order ?? 0,
+      order: getRowOrder(row),
       projectId: projectId.value,
       visible: row.visible || true,
       attribute: {
@@ -4542,7 +4573,7 @@ export const useGanttChartView = () => {
         await upsertGanttRow({
           id: rowIdNum,
           name: row.name,
-          order: (row as any).order ?? 0,
+          order: getRowOrder(row),
           projectId: projectId.value,
           visible: row.visible || true,
           attribute: {
@@ -4557,7 +4588,7 @@ export const useGanttChartView = () => {
         await upsertGanttRow({
           id: rowIdNum,
           name: row.name,
-          order: (row as any).order ?? 0,
+          order: getRowOrder(row),
           projectId: projectId.value,
           visible: row.visible || true,
           attribute: {
@@ -4596,7 +4627,7 @@ export const useGanttChartView = () => {
     await upsertGanttRow({
       id: rowIdNum,
       name: row.name,
-      order: (row as any).order ?? 0,
+      order: getRowOrder(row),
       projectId: projectId.value,
       visible: row.visible || true,
       attribute: {
@@ -4612,7 +4643,7 @@ export const useGanttChartView = () => {
         await upsertGanttRow({
           id: rowIdNum,
           name: row.name,
-          order: (row as any).order ?? 0,
+          order: getRowOrder(row),
           projectId: projectId.value,
           visible: row.visible || true,
           attribute: {
@@ -4627,7 +4658,7 @@ export const useGanttChartView = () => {
         await upsertGanttRow({
           id: rowIdNum,
           name: row.name,
-          order: (row as any).order ?? 0,
+          order: getRowOrder(row),
           projectId: projectId.value,
           visible: row.visible || true,
           attribute: {
