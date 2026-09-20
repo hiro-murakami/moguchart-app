@@ -151,6 +151,7 @@ const {
   commentSidebarWidth,
   effectiveCommentSidebarWidth,
   handleDependencyCreate,
+  handleDependencyDelete,
   dependencyContextMenu,
   handleDependencyClick,
   handleDeleteDependencyFromContextMenu,
@@ -498,6 +499,7 @@ const handleOpenSlideSchedule = async () => {
             @task-delete="handleTaskDelete"
             @dependency-create="handleDependencyCreate"
             @dependency-click="handleDependencyClick"
+            @dependency-delete="handleDependencyDelete"
             @task-progress-change="handleTaskProgressChange"
             @zoom-change="handleZoomChange"
             @minimap-resize="handleMinimapResize"

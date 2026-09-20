@@ -2025,7 +2025,8 @@ export const useGanttChartView = () => {
     if (isReadOnly.value) return
     const detail = getDetail<moguchart.DependencyClickEventDetail>(e)
     const event = detail.event
-    if (event) {
+    // 右クリック時のみコンテキストメニューを表示（左クリック時はコアの選択/削除UIを使用）
+    if (event && event.button === 2) {
       event.preventDefault()
       dependencyContextMenu.value = {
         visible: true,
@@ -2037,10 +2038,8 @@ export const useGanttChartView = () => {
     }
   }
 
-  const handleDeleteDependencyFromContextMenu = async () => {
-    dependencyContextMenu.value.visible = false
-    const { sourceTaskId, targetTaskId } = dependencyContextMenu.value
-    if (!sourceTaskId || !targetTaskId) return
+  const removeDependency = async (sourceTaskId: string, targetTaskId: string) => {
+    if (isReadOnly.value) return
 
     const targetRow = rows.value.find((r) => r.tasks.some((t) => t.id === targetTaskId))
     const targetTask = targetRow?.tasks.find((t) => t.id === targetTaskId)
@@ -2082,6 +2081,20 @@ export const useGanttChartView = () => {
       isNew: false,
       taskId: String(targetTask.id),
     })
+  }
+
+  const handleDependencyDelete = async (e: any) => {
+    if (isReadOnly.value) return
+    const detail = getDetail<moguchart.DependencyDeleteEventDetail>(e)
+    if (!detail) return
+    await removeDependency(detail.sourceTaskId, detail.targetTaskId)
+  }
+
+  const handleDeleteDependencyFromContextMenu = async () => {
+    dependencyContextMenu.value.visible = false
+    const { sourceTaskId, targetTaskId } = dependencyContextMenu.value
+    if (!sourceTaskId || !targetTaskId) return
+    await removeDependency(sourceTaskId, targetTaskId)
   }
 
   // --- ドラッグ＆ドロップ関連 ---
@@ -5028,6 +5041,7 @@ export const useGanttChartView = () => {
     commentSidebarWidth,
     effectiveCommentSidebarWidth,
     handleDependencyCreate,
+    handleDependencyDelete,
     handleTaskProgressChange,
     handleSlideSchedule,
     handleZoomChange,
