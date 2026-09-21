@@ -481,9 +481,6 @@ const handleOpenSlideSchedule = async () => {
         <div style="flex: 1; min-height: 0">
           <GanttChart
             ref="ganttChartRef"
-            :style="{
-              '--moguchart-font-scale': fontScale,
-            }"
             :rows="displayRows"
             :selected-row-ids="selectedRowIds"
             :option="chartOption"

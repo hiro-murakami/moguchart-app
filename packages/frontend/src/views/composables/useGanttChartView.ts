@@ -345,9 +345,15 @@ export const useGanttChartView = () => {
     500,
   )
 
-  // zoomPercent変更時に保存
+  // zoomPercent変更時に保存 & coreチャートに反映
   watch(zoomPercent, (newValue) => {
     if (isExporting.value) return
+    const chart = ganttChartRef.value
+    if (chart && typeof chart.getZoomPercent === 'function') {
+      if (chart.getZoomPercent() !== newValue) {
+        chart.zoomToPercent(newValue)
+      }
+    }
     saveProjectSettings({
       zoomPercent: newValue,
       pxPerDay: pxPerDay.value,
@@ -833,12 +839,12 @@ export const useGanttChartView = () => {
     const isMonthly = currentProject.value?.attribute?.granularity === 'monthly'
     // 時間単位表示かどうか
     const isHourly = currentProject.value?.attribute?.granularity === 'hourly'
-    // 1時間あたりのpx数をpxPerDayに換算
-    const pxPerDayFromHour = pxPerHour.value * 24
+    // 1時間あたりのpx数をpxPerDayに換算（基準値）
+    const pxPerDayFromHour = basePxPerHour.value * 24
 
     return {
       bar: {
-        height: barHeight.value,
+        height: baseBarHeight.value,
         margin: barMargin.value,
         cornerRadius: barCornerRadius.value,
       },
@@ -848,11 +854,11 @@ export const useGanttChartView = () => {
       calendar: {
         start: toLocalDate(chartStartStr.value),
         end: toLocalDate(chartEndStr.value),
-        pxPerDay: isHourly ? pxPerDayFromHour : pxPerDay.value,
+        pxPerDay: isHourly ? pxPerDayFromHour : basePxPerDay.value,
         ...(isMonthly
           ? {
-              // 月単位表示: pxPerMonth を直接使用
-              pxPerMonth: pxPerMonth.value,
+              // 月単位表示: basePxPerMonth を直接使用
+              pxPerMonth: basePxPerMonth.value,
               showDays: false,
               showWeeks: false,
               showMonthsRow: true,
@@ -879,7 +885,7 @@ export const useGanttChartView = () => {
       },
       rowHeader: {
         maxWidth: 400,
-        width: rowHeaderWidth.value,
+        width: baseRowHeaderWidth.value,
       },
       tree: {
         enabled: true,
@@ -925,23 +931,12 @@ export const useGanttChartView = () => {
           },
         })),
       },
-      fontScale: fontScale.value,
       zoom: {
         enabled: true,
-        ...(isMonthly
-          ? {
-              min: Math.round(basePxPerMonth.value * (ZOOM_PERCENT.min / 100)),
-              max: Math.round(basePxPerMonth.value * (ZOOM_PERCENT.max / 100)),
-            }
-          : isHourly
-            ? {
-                min: Math.round(basePxPerHour.value * (ZOOM_PERCENT.min / 100)) * 24,
-                max: Math.round(basePxPerHour.value * (ZOOM_PERCENT.max / 100)) * 24,
-              }
-            : {
-                min: Math.round(basePxPerDay.value * (ZOOM_PERCENT.min / 100)),
-                max: Math.round(basePxPerDay.value * (ZOOM_PERCENT.max / 100)),
-              }),
+        initialPercent: zoomPercent.value,
+        minPercent: ZOOM_PERCENT.min,
+        maxPercent: ZOOM_PERCENT.max,
+        levels: moguchart.CHROME_ZOOM_LEVELS,
       },
       dependency: {
         showCriticalPath: showCriticalPath.value,
@@ -971,11 +966,16 @@ export const useGanttChartView = () => {
 
   /**
    * zoom-change イベントハンドラ
-   * ホイールズームで変更された値を zoomPercent に反映し、
-   * ガントチャート全体（行ヘッダー幅、フォントサイズ、バー高さ等）と同期する。
+   * core側でホイールズームやAPIにより変更された値を zoomPercent に反映する。
    */
   const handleZoomChange = (e: any) => {
-    const detail = getDetail(e) as { pxPerDay: number; pxPerMonth?: number }
+    const detail = getDetail(e) as { pxPerDay: number; pxPerMonth?: number; zoomPercent?: number }
+    if (typeof detail?.zoomPercent === 'number') {
+      zoomPercent.value = detail.zoomPercent
+      return
+    }
+
+    // フォールバック（万が一 zoomPercent がない場合）
     const granularity = currentProject.value?.attribute?.granularity
     let newScale = 1.0
 
@@ -1028,40 +1028,17 @@ export const useGanttChartView = () => {
   const { setIsLoading } = useLoading()
 
   /**
-   * エクスポート時に表示倍率を一時的に100%（等倍）にしてキャプチャを実行し、
-   * 完了後に元の倍率に復元するラッパー関数
+   * エクスポート処理用ラッパー関数
+   * ズームの100%正規化・復元は @mogura/moguchart-plugin-export が自動で行うため、
+   * ここではローディング状態の管理のみを行う。
    */
   const withNormalizedZoomForExport = async (exportFn: () => Promise<void>) => {
-    const chart = ganttChartRef.value
-    if (!chart) return
-
-    const originalZoom = zoomPercent.value
-    const needResetZoom = originalZoom !== ZOOM_PERCENT.default
-
     setIsLoading(true)
     isExporting.value = true
 
     try {
-      if (needResetZoom) {
-        zoomPercent.value = ZOOM_PERCENT.default
-      }
-      await nextTick()
-      if (chart.updateComplete) {
-        await chart.updateComplete
-      }
-      // Shadow DOM 内のレイアウトとコンポーネント再描画の安定（および影の消失）を待つ
-      await new Promise((resolve) => setTimeout(resolve, needResetZoom ? 200 : 50))
-
       await exportFn()
     } finally {
-      if (needResetZoom) {
-        zoomPercent.value = originalZoom
-        await nextTick()
-        if (chart.updateComplete) {
-          await chart.updateComplete
-        }
-        await new Promise((resolve) => setTimeout(resolve, 50))
-      }
       isExporting.value = false
       setIsLoading(false)
     }
