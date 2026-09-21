@@ -9,7 +9,8 @@
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
     "build-only": "vite build",
-    "type-check": "vue-tsc --build --force"
+    "type-check": "vue-tsc --build --force",
+    "chrome:debug": "node ../../scripts/launch-chrome-debug.mjs"
   },
   "dependencies": {
     "@fontsource/roboto": "5.2.7",
