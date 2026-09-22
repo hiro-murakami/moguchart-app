@@ -14,6 +14,7 @@
 | 🌐 [REST API 仕様書](docs/openapi.yaml) | OpenAPI 3.1 形式による REST API エンドポイント仕様 |
 | ☁️ [Terraform ガイド](terraform/README.md) | GCP / Firebase インフラリソースの IaC 管理設定 |
 | 📑 [GAS 連携テンプレート](docs/gas-template/) | Google スプレッドシート等とのデータ連携スクリプト（Clasp 対応） |
+| 🎮 [サンプルプロジェクト](docs/samples/) | 日・時間・月単位の標準サンプルおよび歴史年表サンプルデータ（JSON） |
 
 ---
 
@@ -187,6 +188,7 @@ node scripts/debug-chrome.mjs eval "document.title"
 | `pnpm run chrome:debug` | Chrome をリモートデバッグ用ポート（9222）で起動 |
 | `pnpm run gas:push` | Google Apps Script のコードを Clasp 経由でリモートへプッシュ |
 | `pnpm run gas:pull` | Google Apps Script のコードをリモートからプル |
+| `pnpm run gas:open` | Google Apps Script エディタをブラウザで開く |
 
 ---
 

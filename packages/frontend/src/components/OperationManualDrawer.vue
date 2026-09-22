@@ -22,10 +22,10 @@ function generateAnchorId(text: string): string {
     .replace(/\s+/g, '-')
 }
 
-// カスタム renderer で h2 見出しにマークダウンのリンクと一致する id を付与
+// カスタム renderer で h2, h3 見出しにマークダウンのリンクと一致する id を付与
 const renderer = new Renderer()
 renderer.heading = ({ text, depth }: { text: string; depth: number }) => {
-  if (depth === 2) {
+  if (depth <= 3) {
     const id = generateAnchorId(text)
     return `<h${depth} id="${id}">${text}</h${depth}>\n`
   }
