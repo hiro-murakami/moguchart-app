@@ -73,17 +73,40 @@ const isLocked = computed({
 })
 
 const isMonthly = computed(() => props.granularity === 'monthly')
+const isHourly = computed(() => props.granularity === 'hourly')
 
 const displayEnd = computed({
   get: () => {
-    if (isMonthly.value && localTask.value.end) {
+    if (!localTask.value.end) return ''
+    if (isMonthly.value) {
       return dayjs(localTask.value.end).subtract(1, 'day').startOf('month').format('YYYY-MM-DD')
+    }
+    if (!isHourly.value) {
+      // 日単位の場合、ガントバーの終了日時が0時0分の時は前日の日付で表示
+      const endDate = dayjs(localTask.value.end)
+      const startDate = localTask.value.start ? dayjs(localTask.value.start) : null
+      if (
+        endDate.isValid() &&
+        endDate.hour() === 0 &&
+        endDate.minute() === 0 &&
+        (!startDate || startDate.isBefore(endDate))
+      ) {
+        return endDate.subtract(1, 'day').format('YYYY-MM-DD')
+      }
+      return endDate.format('YYYY-MM-DD')
     }
     return localTask.value.end
   },
   set: (val: string) => {
-    if (isMonthly.value && val) {
+    if (!val) {
+      localTask.value.end = ''
+      return
+    }
+    if (isMonthly.value) {
       localTask.value.end = dayjs(val).add(1, 'month').startOf('month').format('YYYY-MM-DD')
+    } else if (!isHourly.value) {
+      // 日単位の場合、ユーザーが入力した終了日（その日いっぱい）の翌日0時0分（半開区間の終端）として格納
+      localTask.value.end = dayjs(val).add(1, 'day').startOf('day').format('YYYY-MM-DDTHH:mm:ss')
     } else {
       localTask.value.end = val
     }

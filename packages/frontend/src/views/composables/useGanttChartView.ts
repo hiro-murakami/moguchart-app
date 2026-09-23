@@ -1122,17 +1122,29 @@ export const useGanttChartView = () => {
       const startDate = chartStartStr.value ? toLocalDate(chartStartStr.value) : undefined
       const endDate = chartEndStr.value ? toLocalDate(chartEndStr.value) : undefined
 
+      // プロジェクト設定のスナップ単位（分）
+      const snapDurationMinutes =
+        currentProject.value?.attribute?.snapDurationMinutes ?? (granularity === 'hourly' ? 60 : 1440)
+
+      let columnsPerUnit = 1
+      if (timelineScale === 'day' && snapDurationMinutes > 0) {
+        columnsPerUnit = Math.max(1, Math.round(1440 / snapDurationMinutes))
+      } else if (timelineScale === 'hour' && snapDurationMinutes > 0) {
+        columnsPerUnit = Math.max(1, Math.round(60 / snapDurationMinutes))
+      }
+
       // 画面の現在の列幅（ピクセル幅）を取得して Excel の列幅に換算
       let currentPxWidth: number | undefined
       if (granularity === 'monthly') {
         currentPxWidth = pxPerMonth.value
       } else if (granularity === 'hourly') {
-        currentPxWidth = pxPerHour.value
+        currentPxWidth = pxPerHour.value ? pxPerHour.value / columnsPerUnit : undefined
       } else {
-        currentPxWidth = pxPerDay.value
+        currentPxWidth = pxPerDay.value ? pxPerDay.value / columnsPerUnit : undefined
       }
 
-      const minColWidth = granularity === 'monthly' ? 6 : granularity === 'hourly' ? 4.5 : 3.5
+      const minColWidth =
+        granularity === 'monthly' ? 6 : columnsPerUnit > 1 ? 3.5 : granularity === 'hourly' ? 4.5 : 3.5
       const timelineColumnWidth = currentPxWidth
         ? Math.max(minColWidth, Math.round((currentPxWidth / 7.5) * 10) / 10)
         : undefined
@@ -1142,9 +1154,11 @@ export const useGanttChartView = () => {
         sheetName: sanitizedProjectName,
         mode: 'both',
         timelineScale,
+        snapDurationMinutes,
         timelineColumnWidth,
         startDate,
         endDate,
+        isHoliday: (chartOption.value.calendar as any)?.isHoliday,
         download: true,
       })
       snackbar({ message: 'Excelファイルをエクスポートしました。', color: 'success' })

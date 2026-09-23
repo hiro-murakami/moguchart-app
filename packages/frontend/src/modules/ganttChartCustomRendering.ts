@@ -744,8 +744,14 @@ export const tooltip = (task: moguchart.GanttTask, isHourly?: boolean) => {
     const hoursStr = Number.isInteger(diffHours) ? diffHours.toString() : diffHours.toFixed(1)
     dateSpan.textContent = `${start.format('YYYY/MM/DD HH:mm')} - ${end.format('YYYY/MM/DD HH:mm')} (${hoursStr}時間)`
   } else {
-    const days = end.diff(start, 'day') + 1
-    dateSpan.textContent = `${toDateString(task.start, 'YYYY/MM/DD')} - ${toDateString(task.end, 'YYYY/MM/DD')} (${days}日)`
+    let displayEnd = end
+    let days = Math.max(1, end.diff(start, 'day'))
+    if (start.isBefore(end) && end.hour() === 0 && end.minute() === 0) {
+      displayEnd = end.subtract(1, 'day')
+    } else {
+      days = Math.max(1, Math.round(end.diff(start, 'day', true)))
+    }
+    dateSpan.textContent = `${start.format('YYYY/MM/DD')} - ${displayEnd.format('YYYY/MM/DD')} (${days}日)`
   }
   container.appendChild(dateSpan)
 
