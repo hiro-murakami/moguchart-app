@@ -279,9 +279,9 @@ const handleExportCsv = () => {
   }
 }
 
-const handleExportExcel = () => {
+const handleExportExcel = async () => {
   if (currentProject.value) {
-    exportAsExcel(filteredRows.value, currentProject.value.name)
+    await exportAsExcel(currentProject.value.name)
   }
 }
 

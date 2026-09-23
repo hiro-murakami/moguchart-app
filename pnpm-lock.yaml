@@ -32,6 +32,9 @@ importers:
       '@mogura/moguchart-core':
         specifier: link:../../../moguchart-core/packages/core
         version: link:../../../moguchart-core/packages/core
+      '@mogura/moguchart-plugin-excel':
+        specifier: link:../../../moguchart-core/packages/plugin-excel
+        version: link:../../../moguchart-core/packages/plugin-excel
       '@mogura/moguchart-plugin-export':
         specifier: link:../../../moguchart-core/packages/plugin-export
         version: link:../../../moguchart-core/packages/plugin-export

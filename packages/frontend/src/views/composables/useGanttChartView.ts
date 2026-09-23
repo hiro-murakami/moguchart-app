@@ -35,6 +35,7 @@ import type { ActivityLogEntry } from '@/composables/useCollaboration'
 import { useConfirm } from '@/composables/useConfirm'
 import { usePrompt } from '@/composables/usePrompt'
 import { useLoading } from '@/composables/useLoading'
+import { useSnackbar } from '@/composables/useSnackbar'
 import { useExportData } from '@/composables/useExportData'
 import { toDateString, toDateTimeString, toLocalDate, getContrastColor } from '@/modules/utils'
 import {
@@ -1024,7 +1025,8 @@ export const useGanttChartView = () => {
   }
 
   const alert = useAlert()
-  const { exportAsCsv, exportAsExcel } = useExportData()
+  const snackbar = useSnackbar()
+  const { exportAsCsv } = useExportData()
   const { setIsLoading } = useLoading()
 
   /**
@@ -1087,6 +1089,75 @@ export const useGanttChartView = () => {
         })
       }
     })
+  }
+
+  /**
+   * Excelプラグインを遅延読み込みしてチャートインスタンスに登録する
+   */
+  const ensureExcelPlugin = async (chart: GanttChartInstance) => {
+    const isAlreadyInstalled = chart.element?.pluginManager?.hasPlugin('excel') ?? false
+    if (!isAlreadyInstalled) {
+      const { excelPlugin } = await import('@mogura/moguchart-plugin-excel')
+      chart.use(excelPlugin())
+    }
+  }
+
+  const exportAsExcel = async (projectName: string) => {
+    const chart = ganttChartRef.value
+    if (!chart) return
+    setIsLoading(true)
+    isExporting.value = true
+    try {
+      await ensureExcelPlugin(chart)
+      const sanitizedProjectName = projectName.replace(/[*?:\\/\[\]]/g, '').trim() || '工程表'
+      const filename = `${sanitizedProjectName}_${dayjs().format('YYYYMMDD_HHmmss')}.xlsx`
+      const granularity = currentProject.value?.attribute?.granularity
+      let timelineScale: 'day' | 'month' | 'hour' | 'week' = 'day'
+      if (granularity === 'monthly') {
+        timelineScale = 'month'
+      } else if (granularity === 'hourly') {
+        timelineScale = 'hour'
+      }
+
+      const startDate = chartStartStr.value ? toLocalDate(chartStartStr.value) : undefined
+      const endDate = chartEndStr.value ? toLocalDate(chartEndStr.value) : undefined
+
+      // 画面の現在の列幅（ピクセル幅）を取得して Excel の列幅に換算
+      let currentPxWidth: number | undefined
+      if (granularity === 'monthly') {
+        currentPxWidth = pxPerMonth.value
+      } else if (granularity === 'hourly') {
+        currentPxWidth = pxPerHour.value
+      } else {
+        currentPxWidth = pxPerDay.value
+      }
+
+      const minColWidth = granularity === 'monthly' ? 6 : granularity === 'hourly' ? 4.5 : 3.5
+      const timelineColumnWidth = currentPxWidth
+        ? Math.max(minColWidth, Math.round((currentPxWidth / 7.5) * 10) / 10)
+        : undefined
+
+      await chart.exportExcel?.({
+        filename,
+        sheetName: sanitizedProjectName,
+        mode: 'both',
+        timelineScale,
+        timelineColumnWidth,
+        startDate,
+        endDate,
+        download: true,
+      })
+      snackbar({ message: 'Excelファイルをエクスポートしました。', color: 'success' })
+    } catch (e) {
+      console.error('Excel export failed:', e)
+      alert({
+        title: 'エラー',
+        message: 'Excelのエクスポートに失敗しました。',
+      })
+    } finally {
+      isExporting.value = false
+      setIsLoading(false)
+    }
   }
 
   const exportAsZip = async (projectId: string, projectName: string) => {

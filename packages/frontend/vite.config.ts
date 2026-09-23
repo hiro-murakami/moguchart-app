@@ -57,7 +57,9 @@ export default defineConfig({
   },
   optimizeDeps: {
     // リンクされたパッケージを事前バンドルから除外する（これで dedupe が効くようになります）
-    exclude: ['@mogura/moguchart-core', '@mogura/moguchart-plugin-export', '@mogura/moguchart-vue'],
+    exclude: ['@mogura/moguchart-core', '@mogura/moguchart-plugin-export', '@mogura/moguchart-plugin-excel', '@mogura/moguchart-vue'],
+    // 動的インポートされるライブラリを事前バンドル対象にして、初動時の full reload を防止する
+    include: ['exceljs', 'html2canvas-pro', 'jspdf'],
   },
   server: {
     proxy: {
