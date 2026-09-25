@@ -1,5 +1,4 @@
 import dayjs from 'dayjs'
-import * as XLSX from 'xlsx'
 import type { GanttRow, GanttTask, TaskAttribute, RowAttribute, Project } from '@functions/types/shared'
 import { useSnackbar } from '@/composables/useSnackbar'
 
@@ -15,7 +14,7 @@ interface ExportRow {
 }
 
 /**
- * ガントチャートデータのCSV/Excelエクスポート機能を提供するcomposable
+ * ガントチャートデータのCSVエクスポート機能を提供するcomposable
  */
 export const useExportData = () => {
   const snackbar = useSnackbar()
@@ -139,6 +138,30 @@ export const useExportData = () => {
   }
 
   /**
+   * CSVフィールドの値をエスケープする (RFC 4180 準拠)
+   */
+  const escapeCsvField = (field: string | number | null | undefined): string => {
+    if (field === null || field === undefined) return ''
+    const str = String(field)
+    if (/[",\r\n]/.test(str)) {
+      return `"${str.replace(/"/g, '""')}"`
+    }
+    return str
+  }
+
+  /**
+   * エクスポート用行データをCSV文字列に変換する
+   */
+  const convertToCsv = (data: ExportRow[]): string => {
+    const headers: (keyof ExportRow)[] = ['行名', 'タスク名', '開始日', '終了日', '日数', 'ラベル', '説明']
+    const headerLine = headers.map(escapeCsvField).join(',')
+    const dataLines = data.map((row) =>
+      headers.map((key) => escapeCsvField(row[key])).join(',')
+    )
+    return [headerLine, ...dataLines].join('\r\n')
+  }
+
+  /**
    * CSVとしてエクスポート
    */
   const exportAsCsv = (rows: any[], projectName: string) => {
@@ -149,8 +172,7 @@ export const useExportData = () => {
         return
       }
 
-      const ws = XLSX.utils.json_to_sheet(data)
-      const csv = XLSX.utils.sheet_to_csv(ws)
+      const csv = convertToCsv(data)
 
       // BOM付きUTF-8でCSVを出力（Excelでの文字化け防止）
       const bom = '\ufeff'
@@ -165,63 +187,7 @@ export const useExportData = () => {
     }
   }
 
-  /**
-   * Excelシート名として安全な文字列に変換する
-   * Excelのシート名には : \ / ? * [ ] を使用できない
-   */
-  const sanitizeSheetName = (name: string): string => {
-    // 禁止文字を除去
-    const sanitized = name.replace(/[:\\/?*[\]]/g, '').trim()
-    // 空文字になった場合はデフォルト名
-    if (!sanitized) return 'Sheet1'
-    // 31文字制限
-    return sanitized.substring(0, 31)
-  }
-
-  /**
-   * Excelとしてエクスポート
-   */
-  const exportAsExcel = (rows: any[], projectName: string) => {
-    try {
-      const data = buildExportRows(rows)
-      if (data.length === 0) {
-        snackbar({ message: 'エクスポートするデータがありません。', color: 'warning' })
-        return
-      }
-
-      const wb = XLSX.utils.book_new()
-      const ws = XLSX.utils.json_to_sheet(data)
-
-      // カラム幅の自動調整
-      const colWidths = [
-        { wch: 20 }, // 行名
-        { wch: 30 }, // タスク名
-        { wch: 12 }, // 開始日
-        { wch: 12 }, // 終了日
-        { wch: 6 },  // 日数
-        { wch: 20 }, // ラベル
-        { wch: 40 }, // 説明
-      ]
-      ws['!cols'] = colWidths
-
-      const sheetName = sanitizeSheetName(projectName)
-      XLSX.utils.book_append_sheet(wb, ws, sheetName)
-
-      const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' })
-      // ArrayBuffer を Uint8Array に変換して確実に Blob が作れるようにする
-      const blob = new Blob([new Uint8Array(wbout)], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
-      const filename = `${projectName}_${dayjs().format('YYYYMMDD_HHmmss')}.xlsx`
-      downloadBlob(blob, filename)
-
-      snackbar({ message: 'Excelファイルをエクスポートしました。', color: 'success' })
-    } catch (e) {
-      console.error('Excel export failed:', e)
-      snackbar({ message: 'Excelのエクスポートに失敗しました。', color: 'error' })
-    }
-  }
-
   return {
     exportAsCsv,
-    exportAsExcel,
   }
 }
