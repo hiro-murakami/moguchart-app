@@ -67,6 +67,7 @@ import type {
 import * as holiday_jp from '@holiday-jp/holiday_jp'
 import * as moguchart from '@mogura/moguchart-core'
 import type { GanttChartInstance } from '@mogura/moguchart-vue'
+import type { ExcelExportColumn } from '@mogura/moguchart-plugin-excel'
 import { debounce } from 'lodash'
 import { storeToRefs } from 'pinia'
 import { computed, inject, nextTick, ref, watch, type Ref } from 'vue'
@@ -863,7 +864,7 @@ export const useGanttChartView = () => {
               showDays: false,
               showWeeks: false,
               showMonthsRow: true,
-              monthTextAlign: 'left' as const,
+              monthTextAlign: 'center' as const,
             }
           : isHourly
             ? {
@@ -1133,21 +1134,36 @@ export const useGanttChartView = () => {
         columnsPerUnit = Math.max(1, Math.round(60 / snapDurationMinutes))
       }
 
-      // 画面の現在の列幅（ピクセル幅）を取得して Excel の列幅に換算
-      let currentPxWidth: number | undefined
-      if (granularity === 'monthly') {
-        currentPxWidth = pxPerMonth.value
-      } else if (granularity === 'hourly') {
-        currentPxWidth = pxPerHour.value ? pxPerHour.value / columnsPerUnit : undefined
-      } else {
-        currentPxWidth = pxPerDay.value ? pxPerDay.value / columnsPerUnit : undefined
-      }
+      // カレンダー幅（基準ピクセル幅）を取得して Excel の列幅に換算
+      // 表示倍率には依存せず「カレンダー幅」の設定値のみを基準とし、「中」の幅を維持しつつ、小さくする方はより狭く、大きくする方はより広くメリハリをつける
+      let timelineColumnWidth: number | undefined
+      const EXPONENT = 1.3 // メリハリをつける指数（ratio > 1 でより広く、ratio < 1 でより狭く）
 
-      const minColWidth =
-        granularity === 'monthly' ? 6 : columnsPerUnit > 1 ? 3.5 : granularity === 'hourly' ? 4.5 : 3.5
-      const timelineColumnWidth = currentPxWidth
-        ? Math.max(minColWidth, Math.round((currentPxWidth / 7.5) * 10) / 10)
-        : undefined
+      if (granularity === 'monthly') {
+        const midBase = DEFAULT_PX_PER_MONTH // 40
+        const currentBase = basePxPerMonth.value || midBase
+        const ratio = currentBase / midBase
+        const midExcelWidth = 6.0
+        const calculatedWidth = midExcelWidth * Math.pow(ratio, EXPONENT)
+        const minColWidth = 2.0
+        timelineColumnWidth = Math.max(minColWidth, Math.round(calculatedWidth * 10) / 10)
+      } else if (granularity === 'hourly') {
+        const midBase = DEFAULT_PX_PER_HOUR // 140
+        const currentBase = basePxPerHour.value || midBase
+        const ratio = currentBase / midBase
+        const midHourlyExcelWidth = 140 / 7.5 // 約18.7
+        const calculatedUnitWidth = (midHourlyExcelWidth / columnsPerUnit) * Math.pow(ratio, EXPONENT)
+        const minColWidth = columnsPerUnit > 1 ? 1.0 : 3.0
+        timelineColumnWidth = Math.max(minColWidth, Math.round(calculatedUnitWidth * 10) / 10)
+      } else {
+        const midBase = DEFAULT_PX_PER_DAY // 28
+        const currentBase = basePxPerDay.value || midBase
+        const ratio = currentBase / midBase
+        const midDailyExcelWidth = 28 / 7.5 // 約3.73
+        const calculatedUnitWidth = (midDailyExcelWidth / columnsPerUnit) * Math.pow(ratio, EXPONENT)
+        const minColWidth = columnsPerUnit > 1 ? 1.0 : 1.5
+        timelineColumnWidth = Math.max(minColWidth, Math.round(calculatedUnitWidth * 10) / 10)
+      }
 
       await chart.exportExcel?.({
         filename,
@@ -1160,6 +1176,32 @@ export const useGanttChartView = () => {
         endDate,
         isHoliday: (chartOption.value.calendar as any)?.isHoliday,
         download: true,
+        columns: (defaultColumns) => {
+          // タスク名(taskName)の直後に担当者カラムを挿入
+          const taskNameIndex = defaultColumns.findIndex((col) => col.key === 'taskName')
+          const assigneeCol: ExcelExportColumn = {
+            key: 'assignees',
+            header: '担当者',
+            width: 20,
+            align: 'left',
+            getValue: (task: any) => {
+              const assignees = task?.attribute?.assignees
+              if (Array.isArray(assignees)) {
+                return assignees.filter(Boolean).join(', ')
+              }
+              if (typeof assignees === 'string') {
+                return assignees
+              }
+              return ''
+            },
+          }
+          if (taskNameIndex !== -1) {
+            const nextCols = [...defaultColumns]
+            nextCols.splice(taskNameIndex + 1, 0, assigneeCol)
+            return nextCols
+          }
+          return [...defaultColumns, assigneeCol]
+        },
       })
       snackbar({ message: 'Excelファイルをエクスポートしました。', color: 'success' })
     } catch (e) {
