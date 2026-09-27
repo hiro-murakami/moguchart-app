@@ -1176,7 +1176,7 @@ export const useGanttChartView = () => {
         endDate,
         isHoliday: (chartOption.value.calendar as any)?.isHoliday,
         download: true,
-        columns: (defaultColumns) => {
+        columns: (defaultColumns: ExcelExportColumn[]) => {
           // タスク名(taskName)の直後に担当者カラムを挿入
           const taskNameIndex = defaultColumns.findIndex((col) => col.key === 'taskName')
           const assigneeCol: ExcelExportColumn = {
