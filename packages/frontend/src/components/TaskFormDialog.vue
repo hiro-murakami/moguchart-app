@@ -15,6 +15,7 @@ const props = defineProps<{
   labels?: Label[]
   description?: string
   saveDisabled?: boolean
+  readonly?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -75,12 +76,13 @@ watch(
                 variant="outlined"
                 hide-details="auto"
                 :rules="[inputRules.required, inputRules.within(191)]"
+                :readonly="readonly"
                 autocomplete="off"
                 class="mb-3"
               ></v-text-field>
             </v-col>
             <slot name="extra-fields"></slot>
-            <v-col cols="12" class="mb-3">
+            <v-col v-if="!readonly" cols="12" class="mb-3">
               <div class="d-flex align-center mb-1">
                 <span class="text-caption font-weight-bold mr-2">色設定</span>
                 <ColorPaletteSelect :palettes="colorPalettes" :text-sample="name" @select="onSelectPalette" />
@@ -93,7 +95,7 @@ watch(
                 @delete="emit('update:colorPalette', undefined)"
               />
             </v-col>
-            <v-col cols="12" class="mb-3">
+            <v-col v-if="!readonly" cols="12" class="mb-3">
               <LabelSelect
                 :model-value="labels || []"
                 @update:model-value="emit('update:labels', $event)"
@@ -111,6 +113,7 @@ watch(
                 variant="outlined"
                 hide-details="auto"
                 :rules="[inputRules.within(1024)]"
+                :readonly="readonly"
                 autocomplete="off"
               ></v-textarea>
             </v-col>

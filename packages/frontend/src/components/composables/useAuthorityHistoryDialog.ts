@@ -16,10 +16,10 @@ export function useAuthorityHistoryDialog(
   /** ダイアログが開かれたときの初期値 */
   const initialText = ref('')
 
-  /** 現在の履歴を改行区切りテキストとして取得 */
+  /** 現在の履歴を改行区切りテキストとして取得（メールアドレスのみ抽出） */
   const currentHistoryText = computed(() => {
     const history = userStore.currentUser?.attribute?.authorityInputHistory ?? []
-    return history.join('\n')
+    return history.filter((val) => typeof val === 'string' && val.includes('@')).join('\n')
   })
 
   watch(
@@ -34,14 +34,14 @@ export function useAuthorityHistoryDialog(
 
   const hasChanges = computed(() => localText.value !== initialText.value)
 
-  /** テキストからメールアドレスの配列に変換（空行・重複を除去） */
+  /** テキストからメールアドレスの配列に変換（空行・重複・非メールアドレスを除去） */
   function parseEmails(text: string): string[] {
     return Array.from(
       new Set(
         text
           .split('\n')
           .map((line) => line.trim())
-          .filter((line) => line.length > 0),
+          .filter((line) => line.length > 0 && line.includes('@')),
       ),
     )
   }

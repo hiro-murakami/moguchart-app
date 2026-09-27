@@ -12,7 +12,7 @@ import upsertGanttTasks from './scripts/upsertGanttTasks.js'
 import upsertProject from './scripts/upsertProject.js'
 import duplicateProject from './scripts/duplicateProject.js'
 import selectUser from './scripts/selectUser.js'
-
+import selectProjectUsers from './scripts/selectProjectUsers.js'
 import upsertUser from './scripts/upsertUser.js'
 import getGanttDataJson from './scripts/getGanttDataJson.js'
 import downloadProjectZip from './scripts/downloadProjectZip.js'
@@ -51,7 +51,7 @@ const functions: FirebaseFunction = {
   upsertProject,
   duplicateProject,
   selectUser,
-
+  selectProjectUsers,
   upsertUser,
   getGanttDataJson,
   downloadProjectZip,

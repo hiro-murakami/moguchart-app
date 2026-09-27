@@ -39,7 +39,7 @@ const upsertGanttTasks: UpsertGanttTasks = async (tasks, email?: string) => {
     try {
       await checkProjectPermission(row.projectId, email, 'editor')
     } catch (err) {
-      // editor 権限がない場合: viewer かつ 全タスクの担当者 (assignees) に email が含まれているか検証
+      // editor 権限がない場合: viewer かつ 全タスクの担当者 (assignees) に含まれているか検証
       await checkProjectPermission(row.projectId, email, 'viewer')
       if (!email) throw new Error('Permission denied')
 
@@ -47,6 +47,29 @@ const upsertGanttTasks: UpsertGanttTasks = async (tasks, email?: string) => {
       if (taskIds.length !== tasks.length) {
         // 新規タスク作成は担当者権限では不可
         throw new Error('Permission denied')
+      }
+
+      // ユーザーの UID と Email の両方を解決
+      let authUid: string | undefined
+      let authEmail: string | undefined
+      if (email.includes('@')) {
+        authEmail = email
+        const user = await prisma.user.findFirst({
+          where: { email },
+          select: { id: true },
+        })
+        authUid = user?.id
+      } else {
+        authUid = email
+        const user = await prisma.user.findUnique({
+          where: { id: email },
+          select: { email: true },
+        })
+        authEmail = user?.email || undefined
+      }
+
+      const isUserAssignee = (assignees: string[]) => {
+        return (!!authUid && assignees.includes(authUid)) || (!!authEmail && assignees.includes(authEmail))
       }
 
       const existingTasks = await prisma.ganttTask.findMany({
@@ -60,7 +83,7 @@ const upsertGanttTasks: UpsertGanttTasks = async (tasks, email?: string) => {
         if (!existing) throw new Error('Task not found')
         const attr = (existing.attribute as any) || {}
         const assignees: string[] = attr.assignees || []
-        if (!assignees.includes(email)) {
+        if (!isUserAssignee(assignees)) {
           throw new Error('Permission denied')
         }
 

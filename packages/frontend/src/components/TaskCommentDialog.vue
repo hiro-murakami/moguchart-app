@@ -79,7 +79,9 @@ const formatTime = (dateStr?: string) => {
 const canDeleteComment = (comment: Comment) => {
   if (props.isReadOnly) return false
   if (props.userRole === 'owner') return true
-  return comment.createdBy === userStore.currentUser?.email
+  const uid = userStore.currentUser?.id
+  const email = userStore.currentUser?.email
+  return (!!uid && comment.createdBy === uid) || (!!email && comment.createdBy === email)
 }
 
 watch(

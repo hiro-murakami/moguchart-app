@@ -172,7 +172,9 @@ const removeComment = async (commentId: number) => {
 const canDeleteComment = (comment: Comment) => {
   if (!props.canComment) return false
   if (props.isOwner) return true
-  return comment.createdBy === userStore.currentUser?.email
+  const uid = userStore.currentUser?.id
+  const email = userStore.currentUser?.email
+  return (!!uid && comment.createdBy === uid) || (!!email && comment.createdBy === email)
 }
 
 const formatTime = (dateStr?: string) => {

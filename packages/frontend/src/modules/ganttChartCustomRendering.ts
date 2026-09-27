@@ -9,6 +9,13 @@ import { getCachedImageUrl, setImageSrc } from '@/modules/imageCache'
 const commentsCache = new Map<number, { data: Comment[]; fetchedAt: number }>()
 const rowCommentsCache = new Map<number, { data: Comment[]; fetchedAt: number }>()
 
+let userDisplayNameResolver: ((identifier: string) => string) | null = null
+
+/** 担当者などのユーザー表示名を解決するリゾルバーを登録する */
+export const setUserDisplayNameResolver = (resolver: ((identifier: string) => string) | null) => {
+  userDisplayNameResolver = resolver
+}
+
 /** ガントバー・行ヘッダーのツールチップと同じ表示遅延時間 (ms) - moguchart-core のデフォルト値 */
 const IMAGE_POPUP_DELAY = 500
 
@@ -820,11 +827,15 @@ export const tooltip = (task: moguchart.GanttTask, isHourly?: boolean) => {
     titleSpan.textContent = '担当:'
     assigneesDiv.appendChild(titleSpan)
 
-    assignees.forEach((email) => {
+    assignees.forEach((identifier) => {
       const chip = document.createElement('span')
       chip.style.cssText =
         'background-color: rgba(128, 128, 128, 0.2); padding: 1px 6px; border-radius: 10px; font-size: 11px;'
-      chip.textContent = email
+      const displayName = userDisplayNameResolver ? userDisplayNameResolver(identifier) : identifier
+      chip.textContent = displayName
+      if (displayName !== identifier) {
+        chip.title = identifier
+      }
       assigneesDiv.appendChild(chip)
     })
     container.appendChild(assigneesDiv)

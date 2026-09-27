@@ -12,13 +12,6 @@ import {
 import { auth } from '@/firebase'
 import { toDateTimeString } from '@/modules/utils'
 
-/**
- * ユーザーの識別子を取得する。
- * Googleログインユーザーはemail、匿名ユーザーはuidを返す。
- */
-const getUserIdentifier = (firebaseUser: FirebaseUser): string => {
-  return firebaseUser.email || firebaseUser.uid
-}
 
 export const useUserStore = defineStore('user', {
   state: () => ({
@@ -100,22 +93,41 @@ export const useUserStore = defineStore('user', {
       onAuthStateChanged(auth, async (firebaseUser) => {
         this.firebaseUser = firebaseUser
         if (firebaseUser) {
-          const identifier = getUserIdentifier(firebaseUser)
-          await this.fetchUser(identifier)
+          // まず uid で検索
+          await this.fetchUser(firebaseUser.uid)
+
+          // uid で見つからず、email がある場合は既存ユーザー移行のため email でも検索
+          if (!this.user && firebaseUser.email) {
+            await this.fetchUser(firebaseUser.email)
+          }
 
           if (this.user) {
             const previousVersion = this.user.attribute?.appVersion
             // 新規ユーザーでなく、前回バージョンが現在と異なる場合はリリースノートを表示
             this.versionUpdated = !!previousVersion && previousVersion !== VERSION
-            this.user.attribute = {
-              ...this.user.attribute,
-              lastLoginAt: toDateTimeString(),
-              photoURL: firebaseUser.photoURL,
-              appVersion: VERSION,
+            // 過去に入り込んだ非メールアドレス文字列（UIDなど）をクリーンアップ
+            const cleanHistory = (this.user.attribute?.authorityInputHistory ?? []).filter(
+              (val) => typeof val === 'string' && val.includes('@'),
+            )
+            this.user = {
+              ...this.user,
+              id: firebaseUser.uid,
+              email: firebaseUser.email || this.user.email || undefined,
+              // 既存の displayName が設定されている場合は保持し、未設定の場合のみ初期値を設定
+              displayName:
+                this.user.displayName || firebaseUser.displayName || (firebaseUser.isAnonymous ? 'ゲスト' : ''),
+              attribute: {
+                ...this.user.attribute,
+                authorityInputHistory: cleanHistory,
+                lastLoginAt: toDateTimeString(),
+                photoURL: firebaseUser.photoURL,
+                appVersion: VERSION,
+              },
             }
           } else {
             this.user = {
-              email: identifier,
+              id: firebaseUser.uid,
+              email: firebaseUser.email || undefined,
               displayName: firebaseUser.displayName || (firebaseUser.isAnonymous ? 'ゲスト' : ''),
               attribute: {
                 lastLoginAt: toDateTimeString(),

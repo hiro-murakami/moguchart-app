@@ -87,7 +87,7 @@ export const setupFirebaseFunction = (targetFunctions: FirebaseFunction): Functi
 
       const requestData = data.data as FunctionParam
 
-      // 匿名ログインユーザーはemailを持たないため、uidをフォールバック識別子として使用
+      // ユーザー識別子: メールアドレスが存在する場合はメールアドレス、匿名ユーザー等はuidを使用
       const userIdentifier = data.auth.token.email || data.auth.uid
 
       await targetFunctions[requestData.name](requestData.param, userIdentifier)
@@ -146,7 +146,7 @@ export const getCreateCommonColumns = (email?: string) => ({
  */
 export const checkProjectPermission = async (
   projectId: string,
-  email: string | undefined,
+  userIdentifier: string | undefined,
   requiredRole: Role,
 ): Promise<void> => {
   const project = await prisma.project.findUnique({
@@ -163,7 +163,7 @@ export const checkProjectPermission = async (
     return
   }
 
-  if (!email) {
+  if (!userIdentifier) {
     throw new Error('Permission denied')
   }
 
@@ -172,16 +172,45 @@ export const checkProjectPermission = async (
   const editors: string[] = authority.editors || []
   const viewers: string[] = authority.viewers || []
 
+  // userIdentifier (UID または Email) が直接マッチするか判定
+  let isOwner = owners.includes(userIdentifier)
+  let isEditor = editors.includes(userIdentifier)
+  let isViewer = viewers.includes(userIdentifier)
+
+  // 直接マッチしない場合、ユーザーレコードから対になる識別子（UIDならemail、emailならUID）を検索して再判定
+  if (!isOwner && !isEditor && !isViewer) {
+    let otherIdentifier: string | undefined
+    if (userIdentifier.includes('@')) {
+      const user = await prisma.user.findFirst({
+        where: { email: userIdentifier },
+        select: { id: true },
+      })
+      otherIdentifier = user?.id
+    } else {
+      const user = await prisma.user.findUnique({
+        where: { id: userIdentifier },
+        select: { email: true },
+      })
+      otherIdentifier = user?.email || undefined
+    }
+
+    if (otherIdentifier) {
+      isOwner = owners.includes(otherIdentifier)
+      isEditor = editors.includes(otherIdentifier)
+      isViewer = viewers.includes(otherIdentifier)
+    }
+  }
+
   let hasAccess = false
   switch (requiredRole) {
     case 'owner':
-      hasAccess = owners.includes(email)
+      hasAccess = isOwner
       break
     case 'editor':
-      hasAccess = owners.includes(email) || editors.includes(email)
+      hasAccess = isOwner || isEditor
       break
     case 'viewer':
-      hasAccess = owners.includes(email) || editors.includes(email) || viewers.includes(email)
+      hasAccess = isOwner || isEditor || isViewer
       break
   }
 

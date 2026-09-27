@@ -58,12 +58,17 @@ export const fromGanttRow = (row: GanttRow): Omit<PrismaGanttRow, CommonColumns>
 }
 
 export const toProject =
-  (email: string) =>
+  (userIdentifier: string, fallbackEmail?: string) =>
   (project: PrismaProject & { _count?: { comments: number } }): Project => {
-    const getRole = (authority: Authority, email: string): Role => {
-      if (authority.owners?.includes(email)) {
+    const getRole = (authority: Authority, id: string, email?: string): Role => {
+      const matches = (list?: string[]) => {
+        if (!list) return false
+        return list.includes(id) || (!!email && list.includes(email))
+      }
+
+      if (matches(authority.owners)) {
         return 'owner'
-      } else if (authority.editors?.includes(email)) {
+      } else if (matches(authority.editors)) {
         return 'editor'
       }
 
@@ -76,7 +81,8 @@ export const toProject =
       end: toDateTimeString(project.end),
       attribute: (project.attribute ?? {}) as ProjectAttribute,
       authority: (project.authority ?? {}) as Authority,
-      role: getRole(project.authority as Authority, email),
+      role: getRole(project.authority as Authority, userIdentifier, fallbackEmail),
       commentCount: project._count?.comments ?? 0,
     }
   }
+

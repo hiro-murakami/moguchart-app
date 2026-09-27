@@ -1,5 +1,5 @@
 import type { ColorPalette, Label, Milestone, Project, User, ProjectGranularity } from '@functions/types/shared'
-import { upsertUser } from '@/modules/scripts'
+import { upsertUser, selectProjectUsers } from '@/modules/scripts'
 import { useUserStore } from '@/stores/useUserStore'
 import { DEFAULT_COLOR_PALETTES } from '@functions/types/shared'
 import { isEqual, debounce } from 'lodash'
@@ -54,10 +54,42 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
   /** 複製モード時: 進捗率をクリアするかどうか */
   const localClearProgress = ref(true)
 
-  /** 過去に入力したことのあるメールアドレスを User[] 形式で返す（補完候補用） */
+  /** プロジェクト関係者のユーザー一覧 */
+  const projectUsers = ref<User[]>([])
+
+  const loadProjectUsers = async (pId: string) => {
+    if (!pId) return
+    try {
+      const users = await selectProjectUsers(pId)
+      projectUsers.value = users || []
+    } catch (e) {
+      console.warn('[useProjectDetailDialog] Failed to load project users:', e)
+    }
+  }
+
+  /** 過去に入力したことのあるメールアドレス + プロジェクトメンバーを User[] 形式で返す（補完候補用） */
   const authorityHistoryUsers = computed<User[]>(() => {
     const history = userStore.currentUser?.attribute?.authorityInputHistory ?? []
-    return history.map((email) => ({ email, attribute: {} }))
+    const historyList = history
+      .filter((entry) => typeof entry === 'string' && entry.includes('@'))
+      .map((entry) => ({
+        id: entry,
+        email: entry,
+        attribute: {},
+      }))
+
+    const userMap = new Map<string, User>()
+    for (const u of projectUsers.value) {
+      if (u.email) userMap.set(u.email, u)
+      if (u.id) userMap.set(u.id, u)
+    }
+    for (const u of historyList) {
+      const key = u.email || u.id
+      if (key && !userMap.has(key)) {
+        userMap.set(key, u)
+      }
+    }
+    return Array.from(new Set(userMap.values()))
   })
 
   const isEdit = computed(() => !!props.project)
@@ -71,6 +103,9 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
     async (isVisible) => {
       if (isVisible) {
         if (props.project) {
+          if (props.project.id) {
+            loadProjectUsers(props.project.id)
+          }
           if (props.isDuplicate) {
             // 複製モード
             localName.value = `${props.project.name}のコピー`
@@ -165,7 +200,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
           localStart.value = ''
           localEnd.value = ''
           localPublic.value = false
-          localOwners.value = []
+          localOwners.value = userStore.currentUser?.email ? [userStore.currentUser.email] : []
           localEditors.value = []
           localViewers.value = []
           localColorPalettes.value = DEFAULT_COLOR_PALETTES.map((p) => ({ ...p }))
@@ -311,11 +346,15 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
       projectData.id = props.project.id
     }
 
-    // 入力されたメールアドレスを履歴に追記して永続化
+    // 入力されたメールアドレスを履歴に追記して永続化（メールアドレスのみを対象としUIDを除外）
     if (userStore.currentUser) {
-      const inputEmails = [...localOwners.value, ...localEditors.value, ...localViewers.value]
+      const inputEmails = [...localOwners.value, ...localEditors.value, ...localViewers.value].filter(
+        (val) => typeof val === 'string' && val.includes('@'),
+      )
       if (inputEmails.length > 0) {
-        const existingHistory = userStore.currentUser.attribute?.authorityInputHistory ?? []
+        const existingHistory = (userStore.currentUser.attribute?.authorityInputHistory ?? []).filter((val) =>
+          val.includes('@'),
+        )
         const merged = Array.from(new Set([...existingHistory, ...inputEmails]))
         const updatedUser = {
           ...userStore.currentUser,

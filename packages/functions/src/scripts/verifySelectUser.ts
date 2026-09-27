@@ -2,22 +2,37 @@ import { prisma } from './common/commonFunctions'
 import selectUser from './selectUser'
 
 async function main() {
+  const id = `uid-${Date.now()}`
   const email = `test-${Date.now()}@example.com`
   const displayName = 'Test User'
 
-  console.log(`Creating test user: ${email}`)
+  console.log(`Creating test user: ${email} (id: ${id})`)
   await prisma.user.create({
     data: {
+      id,
       email,
       displayName,
     },
   })
 
-  console.log('Testing selectUser...')
+  console.log('Testing selectUser by id...')
+  const userById = await selectUser(id)
+
+  if (!userById) {
+    console.error('Test failed: User not found by id')
+    process.exit(1)
+  }
+
+  console.log('Testing selectUser by email...')
   const user = await selectUser(email)
 
   if (!user) {
     console.error('Test failed: User not found')
+    process.exit(1)
+  }
+
+  if (user.id !== id) {
+    console.error(`Test failed: Expected id ${id}, got ${user.id}`)
     process.exit(1)
   }
 
@@ -36,7 +51,7 @@ async function main() {
 
   // Clean up
   await prisma.user.delete({
-    where: { email },
+    where: { id },
   })
 }
 

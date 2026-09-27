@@ -108,6 +108,9 @@ const {
   handleTaskDrop,
   handleTaskProgressChange,
   authorityHistoryUsers,
+  taskUsers,
+  isEditingTaskProgressOnly,
+  isTaskContextMenuEditable,
   handleChartContextMenu,
   handleCreateNewTask,
   handleCreateNewMarker,
@@ -202,12 +205,15 @@ const barShadowCssVar = computed(() => {
  */
 const canComment = computed(() => {
   if (isSnapshotMode.value) return false
+  const userId = userStore.currentUser?.id
   const email = userStore.currentUser?.email
-  if (!email || !currentProject.value) return false
+  if ((!userId && !email) || !currentProject.value) return false
   const auth = currentProject.value.authority
-  return (
-    (auth.owners ?? []).includes(email) || (auth.editors ?? []).includes(email) || (auth.viewers ?? []).includes(email)
-  )
+  const matches = (list?: string[]) => {
+    if (!list) return false
+    return (!!userId && list.includes(userId)) || (!!email && list.includes(email))
+  }
+  return matches(auth.owners) || matches(auth.editors) || matches(auth.viewers)
 })
 
 
@@ -605,6 +611,7 @@ const handleOpenSlideSchedule = async () => {
       :task-id="taskContextMenu.taskId"
       :selected-task-ids="selectedTaskIds"
       :is-read-only="isReadOnly"
+      :can-edit="isTaskContextMenuEditable"
       :disabled-delete="hasLockedTaskInContextMenu"
       @edit="handleEditTaskFromContextMenu"
       @comment="handleAddCommentFromContextMenu"
@@ -679,7 +686,8 @@ const handleOpenSlideSchedule = async () => {
       :rows="rows"
       :granularity="currentProject?.attribute?.granularity"
       :enable-progress="currentProject?.attribute?.enableProgress !== false"
-      :users="authorityHistoryUsers"
+      :users="taskUsers"
+      :progress-only="isEditingTaskProgressOnly"
       @save="saveTask"
       @delete="deleteTask"
     />

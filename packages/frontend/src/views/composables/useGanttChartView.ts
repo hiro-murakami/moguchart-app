@@ -25,6 +25,7 @@ import {
   selectComments,
   downloadProjectZip,
   upsertUser,
+  selectProjectUsers,
 } from '@/modules/scripts'
 import { db } from '@/firebase'
 import { doc, getDoc, setDoc } from 'firebase/firestore'
@@ -46,6 +47,7 @@ import {
   preloadCommentsCache,
   preloadRowCommentsCache,
   createCornerContent,
+  setUserDisplayNameResolver,
 } from '@/modules/ganttChartCustomRendering'
 import { useProjectStore } from '@/stores/useProjectStore'
 import { useUserStore } from '@/stores/useUserStore'
@@ -70,7 +72,7 @@ import type { GanttChartInstance } from '@mogura/moguchart-vue'
 import type { ExcelExportColumn } from '@mogura/moguchart-plugin-excel'
 import { debounce } from 'lodash'
 import { storeToRefs } from 'pinia'
-import { computed, inject, nextTick, ref, watch, type Ref } from 'vue'
+import { computed, inject, nextTick, ref, watch, watchEffect, type Ref } from 'vue'
 
 const getDetail = <T>(e: T | { detail: T }): T => {
   return e && typeof e === 'object' && 'detail' in e ? (e as any).detail : e
@@ -98,10 +100,68 @@ export const useGanttChartView = () => {
   /** App.vue から inject: 公開閲覧モード用テーマオーバーライド */
   const publicThemeOverride = inject<Ref<'light' | 'dark' | 'system' | null>>('publicThemeOverride', ref(null))
 
+  /** プロジェクト関係者（権限者およびタスク担当者）のユーザー一覧 */
+  const projectUsers = ref<User[]>([])
+
+  const loadProjectUsers = async (pId: string) => {
+    if (!pId || isPublicViewMode.value) return
+    try {
+      const users = await selectProjectUsers(pId)
+      projectUsers.value = users || []
+    } catch (e) {
+      console.warn('[useGanttChartView] Failed to load project users:', e)
+    }
+  }
+
   /** 過去に入力したことのあるメールアドレスを User[] 形式で返す（補完候補用） */
   const authorityHistoryUsers = computed<User[]>(() => {
     const history = userStore.currentUser?.attribute?.authorityInputHistory ?? []
-    return history.map((email) => ({ email, attribute: {} }))
+    return history
+      .filter((entry) => typeof entry === 'string' && entry.includes('@'))
+      .map((entry) => ({
+        id: entry,
+        email: entry,
+        attribute: {},
+      }))
+  })
+
+  /** タスク編集ダイアログや担当者補完で使用するユーザー一覧（プロジェクトメンバー＋入力履歴） */
+  const taskUsers = computed<User[]>(() => {
+    const userMap = new Map<string, User>()
+    for (const u of projectUsers.value) {
+      if (u.email) userMap.set(u.email, u)
+      if (u.id) userMap.set(u.id, u)
+    }
+    for (const u of authorityHistoryUsers.value) {
+      const key = u.email || u.id
+      if (key && !userMap.has(key)) {
+        userMap.set(key, u)
+      }
+    }
+    return Array.from(new Set(userMap.values()))
+  })
+
+  /** UID や Email から表示名（displayName）を解決する関数 */
+  const resolveUserDisplayName = (identifier: string): string => {
+    if (!identifier) return ''
+    if (
+      userStore.currentUser &&
+      (userStore.currentUser.id === identifier || userStore.currentUser.email === identifier)
+    ) {
+      return userStore.currentUser.displayName || userStore.currentUser.email || identifier
+    }
+    const member = projectUsers.value.find((u) => u.id === identifier || u.email === identifier)
+    if (member?.displayName) return member.displayName
+    if (member?.email) return member.email
+
+    const matched = authorityHistoryUsers.value.find((u) => u.id === identifier || u.email === identifier)
+    if (matched?.displayName && matched.displayName !== matched.email) return matched.displayName
+
+    return identifier
+  }
+
+  watchEffect(() => {
+    setUserDisplayNameResolver(resolveUserDisplayName)
   })
 
   // --- 設定値 ---
@@ -1187,10 +1247,10 @@ export const useGanttChartView = () => {
             getValue: (task: any) => {
               const assignees = task?.attribute?.assignees
               if (Array.isArray(assignees)) {
-                return assignees.filter(Boolean).join(', ')
+                return assignees.filter(Boolean).map(resolveUserDisplayName).join(', ')
               }
               if (typeof assignees === 'string') {
-                return assignees
+                return resolveUserDisplayName(assignees)
               }
               return ''
             },
@@ -1486,10 +1546,12 @@ export const useGanttChartView = () => {
 
     // 進捗率変更時の権限チェック
     if (cmd.type === 'task-progress') {
+      const userId = userStore.currentUser?.id
       const userEmail = userStore.currentUser?.email
       const canEdit = afterTasks.every((t) => {
         const assignees = t.attribute?.assignees || []
-        return !isReadOnly.value || (!!userEmail && assignees.includes(userEmail))
+        const isAssignee = (!!userId && assignees.includes(userId)) || (!!userEmail && assignees.includes(userEmail))
+        return !isReadOnly.value || isAssignee
       })
       if (!canEdit) {
         await loadData(projectId.value, { silent: true })
@@ -1563,9 +1625,10 @@ export const useGanttChartView = () => {
 
     // 進捗編集可否:
     // プロジェクトが進捗管理有効 かつ (編集権限あり または 担当者) かつ ロックされていない
+    const userId = userStore.currentUser?.id
     const userEmail = userStore.currentUser?.email
     const assignees = attribute?.assignees || []
-    const isAssignee = !!userEmail && assignees.includes(userEmail)
+    const isAssignee = (!!userId && assignees.includes(userId)) || (!!userEmail && assignees.includes(userEmail))
     const canEditProgress =
       (!isReadOnly.value || isAssignee) &&
       !isLocked &&
@@ -1595,6 +1658,31 @@ export const useGanttChartView = () => {
           : undefined,
     }
   }
+
+  // ユーザー認証状態や権限状態の確定時にタスクの進捗編集可否（progressResizable）を再評価
+  watch([() => userStore.currentUser, isReadOnly], () => {
+    if (rows.value.length > 0) {
+      rows.value = rows.value.map((r) => ({
+        ...r,
+        tasks: r.tasks.map((t: any) => {
+          const attribute = t.attribute as TaskAttribute | undefined
+          const isLocked = attribute?.lock === true
+          const userId = userStore.currentUser?.id
+          const userEmail = userStore.currentUser?.email
+          const assignees = attribute?.assignees || []
+          const isAssignee = (!!userId && assignees.includes(userId)) || (!!userEmail && assignees.includes(userEmail))
+          const canEditProgress =
+            (!isReadOnly.value || isAssignee) &&
+            !isLocked &&
+            currentProject.value?.attribute?.enableProgress !== false
+          return {
+            ...t,
+            progressResizable: canEditProgress,
+          }
+        }),
+      }))
+    }
+  })
 
   /**
    * 編集イベント受信時の差分データ反映。
@@ -1726,6 +1814,8 @@ export const useGanttChartView = () => {
         data = publicData
       } else {
         data = await selectGanttChart(pId)
+        // プロジェクト関係者のユーザー情報を取得（名前解決用）
+        loadProjectUsers(pId)
       }
       rows.value = data.map((row: GanttRow) => ({
         ...row,
@@ -1894,7 +1984,7 @@ export const useGanttChartView = () => {
     if (pId && userStore.user) {
       await joinProject(
         pId,
-        userStore.user.email,
+        userStore.user.email || userStore.user.id,
         userStore.user.displayName,
         userStore.firebaseUser?.photoURL || undefined,
       )
@@ -2389,26 +2479,37 @@ export const useGanttChartView = () => {
     progress: undefined,
   })
 
+  const isEditingTaskProgressOnly = ref(false)
+
   const startEditingTask = (taskId: string) => {
     const row = rows.value.find((r) => r.tasks.some((t) => t.id === taskId))
     const task = row?.tasks.find((t) => t.id === taskId)
 
     if (row && task) {
       const taskWithAttr = task as unknown as { attribute?: TaskAttribute }
+      const attr = taskWithAttr.attribute
+      const userId = userStore.currentUser?.id
+      const userEmail = userStore.currentUser?.email
+      const assignees = attr?.assignees || []
+      const isAssignee = (!!userId && assignees.includes(userId)) || (!!userEmail && assignees.includes(userEmail))
+
+      // 閲覧権限モードだが担当者の場合は、進捗率のみ編集可能フラグを立てる
+      isEditingTaskProgressOnly.value = isReadOnly.value && isAssignee
+
       editingTask.value = {
         id: task.id,
         rowId: row.id,
         name: task.name || '',
         start: toDateTimeString(task.start),
         end: toDateTimeString(task.end),
-        description: taskWithAttr.attribute?.description || '',
-        colorPalette: taskWithAttr.attribute?.colorPalette ? { ...taskWithAttr.attribute.colorPalette } : undefined,
-        labels: taskWithAttr.attribute?.labels ? [...taskWithAttr.attribute.labels] : [],
-        lock: taskWithAttr.attribute?.lock,
-        progress: taskWithAttr.attribute?.progress,
-        assignees: taskWithAttr.attribute?.assignees ? [...taskWithAttr.attribute.assignees] : undefined,
-        dependencies: taskWithAttr.attribute?.dependencies ? [...taskWithAttr.attribute.dependencies] : undefined,
-        imageUrls: taskWithAttr.attribute?.imageUrls ? [...taskWithAttr.attribute.imageUrls] : undefined,
+        description: attr?.description || '',
+        colorPalette: attr?.colorPalette ? { ...attr.colorPalette } : undefined,
+        labels: attr?.labels ? [...attr.labels] : [],
+        lock: attr?.lock,
+        progress: attr?.progress,
+        assignees: attr?.assignees ? [...attr.assignees] : undefined,
+        dependencies: attr?.dependencies ? [...attr.dependencies] : undefined,
+        imageUrls: attr?.imageUrls ? [...attr.imageUrls] : undefined,
       }
       isDialogVisible.value = true
       // 他ユーザーにこのタスクを編集中であることを通知
@@ -2417,13 +2518,13 @@ export const useGanttChartView = () => {
   }
 
   const handleTaskDblClick = (e: any) => {
-    if (isReadOnly.value) return
     const detail = getDetail<moguchart.TaskClickEventDetail>(e)
     const task = detail.task
     const taskId = String(task.id)
 
     // サマリータスクの場合は対応する親行の編集ダイアログを開く
     if (task.type === 'summary' || isSummaryTaskId(taskId)) {
+      if (isReadOnly.value) return
       const rowId = Number(taskId.replace('-summary', ''))
       const row = rows.value.find((r) => Number(r.id) === rowId)
       if (row) {
@@ -2437,6 +2538,20 @@ export const useGanttChartView = () => {
         }
         isRowEditDialogVisible.value = true
       }
+      return
+    }
+
+    // 担当者判定
+    const row = rows.value.find((r) => r.tasks.some((t) => t.id === taskId))
+    const targetTask = row?.tasks.find((t) => t.id === taskId)
+    const attr = (targetTask as any)?.attribute as TaskAttribute | undefined
+    const userId = userStore.currentUser?.id
+    const userEmail = userStore.currentUser?.email
+    const assignees = attr?.assignees || []
+    const isAssignee = (!!userId && assignees.includes(userId)) || (!!userEmail && assignees.includes(userEmail))
+
+    // 閲覧権限モードの場合、自分が担当者 かつ プロジェクトで進捗管理が有効な場合のみ編集を許可
+    if (isReadOnly.value && (!isAssignee || currentProject.value?.attribute?.enableProgress === false)) {
       return
     }
 
@@ -2487,7 +2602,7 @@ export const useGanttChartView = () => {
       })
     }
 
-    const data = {
+    const data: GanttTask = {
       id: Number(taskData.id),
       rowId: Number(taskData.rowId),
       name: taskData.name,
@@ -2505,19 +2620,45 @@ export const useGanttChartView = () => {
       },
     }
 
-    // 担当者のメールアドレスを履歴に追記して永続化
-    if (userStore.currentUser && taskData.assignees && taskData.assignees.length > 0) {
-      const existingHistory = userStore.currentUser.attribute?.authorityInputHistory ?? []
-      const merged = Array.from(new Set([...existingHistory, ...taskData.assignees]))
-      const updatedUser = {
-        ...userStore.currentUser,
-        attribute: {
-          ...userStore.currentUser.attribute,
-          authorityInputHistory: merged,
-        },
+    let dataToSave: GanttTask = data
+    if (isEditingTaskProgressOnly.value && taskData.id) {
+      const taskIdStr = String(taskData.id)
+      const existingRow = rows.value.find((r) => r.tasks.some((t) => t.id === taskIdStr))
+      const existingTask = existingRow?.tasks.find((t) => t.id === taskIdStr)
+      if (existingTask) {
+        const existingAttr = ((existingTask as any).attribute as TaskAttribute) || {}
+        dataToSave = {
+          id: Number(taskData.id),
+          rowId: Number(existingRow!.id),
+          name: existingTask.name || '',
+          start: toDateTimeString(existingTask.start),
+          end: toDateTimeString(existingTask.end),
+          attribute: {
+            ...existingAttr,
+            progress: taskData.progress != null ? taskData.progress : undefined,
+          },
+        }
       }
-      await upsertUser(updatedUser)
-      userStore.user = updatedUser
+    }
+
+    // 担当者のメールアドレスを履歴に追記して永続化（UID等の識別子は除外）
+    if (userStore.currentUser && taskData.assignees && taskData.assignees.length > 0) {
+      const validEmails = taskData.assignees.filter((val) => typeof val === 'string' && val.includes('@'))
+      if (validEmails.length > 0) {
+        const existingHistory = (userStore.currentUser.attribute?.authorityInputHistory ?? []).filter((val) =>
+          val.includes('@'),
+        )
+        const merged = Array.from(new Set([...existingHistory, ...validEmails]))
+        const updatedUser = {
+          ...userStore.currentUser,
+          attribute: {
+            ...userStore.currentUser.attribute,
+            authorityInputHistory: merged,
+          },
+        }
+        await upsertUser(updatedUser)
+        userStore.user = updatedUser
+      }
     }
 
     // ダイアログを閉じる
@@ -2528,7 +2669,7 @@ export const useGanttChartView = () => {
     let affectedTaskId = String(taskData.id)
     if (!taskData.id) {
       // 新規作成
-      const result = await upsertGanttTasks([data])
+      const result = await upsertGanttTasks([dataToSave])
       const newTaskId = result[0]!
       affectedTaskId = String(newTaskId)
       pushAction({
@@ -2538,7 +2679,7 @@ export const useGanttChartView = () => {
           await loadData(projectId.value, { silent: true })
         },
         redo: async () => {
-          await upsertGanttTasks([{ ...data, id: 0 }])
+          await upsertGanttTasks([{ ...dataToSave, id: 0 }])
           await loadData(projectId.value, { silent: true })
         },
       })
@@ -2565,18 +2706,18 @@ export const useGanttChartView = () => {
           },
         }
         pushAction({
-          description: 'タスク編集',
+          description: isEditingTaskProgressOnly.value ? '進捗率変更' : 'タスク編集',
           undo: async () => {
             await upsertGanttTasks([beforeData])
             await loadData(projectId.value, { silent: true })
           },
           redo: async () => {
-            await upsertGanttTasks([data])
+            await upsertGanttTasks([dataToSave])
             await loadData(projectId.value, { silent: true })
           },
         })
       }
-      await upsertGanttTasks([data])
+      await upsertGanttTasks([dataToSave])
     }
     await loadData(projectId.value, { silent: true })
     publishEditEvent('task_upsert', {
@@ -3208,12 +3349,11 @@ export const useGanttChartView = () => {
     const { task, event } = detail
     event.preventDefault()
 
-    if (isReadOnly.value) return
-
     const taskId = String(task.id)
 
     // サマリータスクの場合は親行のコンテキストメニューを開く
     if (task.type === 'summary' || isSummaryTaskId(taskId)) {
+      if (isReadOnly.value) return
       const rowId = Number(taskId.replace('-summary', ''))
       const row = rows.value.find((r) => Number(r.id) === rowId)
       if (row) {
@@ -3230,6 +3370,20 @@ export const useGanttChartView = () => {
       return
     }
 
+    // 担当者判定
+    const row = rows.value.find((r) => r.tasks.some((t) => t.id === taskId))
+    const targetTask = row?.tasks.find((t) => t.id === taskId)
+    const attr = (targetTask as any)?.attribute as TaskAttribute | undefined
+    const userId = userStore.currentUser?.id
+    const userEmail = userStore.currentUser?.email
+    const assignees = attr?.assignees || []
+    const isAssignee = (!!userId && assignees.includes(userId)) || (!!userEmail && assignees.includes(userEmail))
+
+    // 閲覧権限モードの場合、自分が担当者 かつ プロジェクトで進捗管理が有効な場合のみコンテキストメニューを開く
+    if (isReadOnly.value && (!isAssignee || currentProject.value?.attribute?.enableProgress === false)) {
+      return
+    }
+
     taskContextMenu.value = {
       visible: true,
       x: event.clientX,
@@ -3237,6 +3391,21 @@ export const useGanttChartView = () => {
       taskId,
     }
   }
+
+  /** コンテキストメニュー対象のタスクが編集可能（進捗率のみ含む）かどうか */
+  const isTaskContextMenuEditable = computed(() => {
+    if (!isReadOnly.value) return true
+    const menuTaskId = taskContextMenu.value.taskId
+    if (!menuTaskId) return false
+    const row = rows.value.find((r) => r.tasks.some((t) => t.id === menuTaskId))
+    const targetTask = row?.tasks.find((t) => t.id === menuTaskId)
+    const attr = (targetTask as any)?.attribute as TaskAttribute | undefined
+    const userId = userStore.currentUser?.id
+    const userEmail = userStore.currentUser?.email
+    const assignees = attr?.assignees || []
+    const isAssignee = (!!userId && assignees.includes(userId)) || (!!userEmail && assignees.includes(userEmail))
+    return isAssignee && currentProject.value?.attribute?.enableProgress !== false
+  })
 
   /** コンテキストメニュー対象のタスク群にロック済みのものが含まれているか */
   const hasLockedTaskInContextMenu = computed(() => {
@@ -5142,6 +5311,10 @@ export const useGanttChartView = () => {
     handleImageFromRowContextMenu,
     handleSaveImages,
     authorityHistoryUsers,
+    taskUsers,
+    projectUsers,
+    isEditingTaskProgressOnly,
+    isTaskContextMenuEditable,
 
     // WBS / 階層ツリー関連
     canIndent,

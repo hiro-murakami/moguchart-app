@@ -39,7 +39,7 @@ export type FunctionName =
   | 'upsertProject'
   | 'duplicateProject'
   | 'selectUser'
-
+  | 'selectProjectUsers'
   | 'upsertUser'
   | 'getGanttDataJson'
   | 'downloadProjectZip'
@@ -374,8 +374,10 @@ export type Authority = {
 
 /** ユーザー情報 */
 export interface User {
-  /** メールアドレス（一意識別子） */
-  email: string
+  /** ユーザーID（Firebase Auth UID） */
+  id: string
+  /** メールアドレス */
+  email?: string
   /** 表示名 */
   displayName?: string
   /** ユーザー固有の設定 */
@@ -490,11 +492,14 @@ export type DuplicateProject = (
   email?: string,
 ) => Promise<string>
 
-/** ユーザー情報を取得する関数の型 */
-export type SelectUser = (email: string) => Promise<User | null>
+/** ユーザー情報を取得する関数の型（IDまたはemailで検索） */
+export type SelectUser = (identifier: string) => Promise<User | null>
+
+/** プロジェクトに関係するユーザー一覧（権限者およびタスク担当者）を取得する関数の型 */
+export type SelectProjectUsers = (projectId: string, email?: string) => Promise<User[]>
 
 /** ユーザー情報を作成または更新する関数の型 */
-export type UpsertUser = (user: User, email?: string) => Promise<void>
+export type UpsertUser = (user: User, authUid?: string) => Promise<void>
 
 /** JSONとして出力・入力するガントチャートデータの型 */
 export interface GanttDataJson {

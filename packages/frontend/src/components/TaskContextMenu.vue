@@ -8,6 +8,7 @@ const props = defineProps<{
   taskId?: string | null
   selectedTaskIds?: string[]
   isReadOnly?: boolean
+  canEdit?: boolean
   disabledDelete?: boolean
 }>()
 
@@ -56,7 +57,12 @@ const copyTitle = computed(() => {
   >
     <v-menu v-model="isVisible" activator="parent">
       <v-list density="compact">
-        <v-list-item v-if="!isReadOnly" prepend-icon="mdi-pencil" title="編集" @click="emit('edit')" />
+        <v-list-item
+          v-if="!isReadOnly || canEdit"
+          prepend-icon="mdi-pencil"
+          :title="isReadOnly ? '進捗率の編集' : '編集'"
+          @click="emit('edit')"
+        />
         <v-list-item prepend-icon="mdi-comment-text-outline" title="コメント" @click="emit('comment')" />
         <v-list-item v-if="!isReadOnly" prepend-icon="mdi-image" title="画像" @click="emit('image')" />
         <v-list-item prepend-icon="mdi-content-copy" @click="emit('copy')">

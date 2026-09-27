@@ -75,18 +75,18 @@ export const cleanupAnonymousData = onSchedule(
         where: {
           updatedAt: { lt: cutoff },
         },
-        select: { email: true },
+        select: { id: true, email: true },
       })
 
-      // email に '@' が含まれておらず、'system' でもないものを匿名ユーザーとみなす
-      const userEmails = oldUsers
-        .filter((u) => u.email && !u.email.includes('@') && u.email !== 'system')
-        .map((u) => u.email)
+      // email が null、または email に '@' が含まれておらず、id が 'system' でもないものを匿名ユーザーとみなす
+      const anonymousUserIds = oldUsers
+        .filter((u) => (!u.email || !u.email.includes('@')) && u.id !== 'system')
+        .map((u) => u.id)
 
-      if (userEmails.length > 0) {
+      if (anonymousUserIds.length > 0) {
         const deletedUsers = await prisma.user.deleteMany({
           where: {
-            email: { in: userEmails },
+            id: { in: anonymousUserIds },
           },
         })
         functions.logger.info(`[cleanupAnonymousData] Deleted ${deletedUsers.count} anonymous users.`)

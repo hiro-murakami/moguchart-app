@@ -12,8 +12,10 @@ datasource db {
 
 /// ユーザー
 model User {
+  /// ユーザーID（Firebase Auth UID）
+  id          String    @id @db.VarChar(128)
   /// メールアドレス
-  email       String    @id
+  email       String?   @unique
   /// 表示名
   displayName String?
   /// 属性

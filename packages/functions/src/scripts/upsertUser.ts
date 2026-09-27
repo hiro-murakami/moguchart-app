@@ -27,31 +27,51 @@ const cleanupDeletedProjectSettings = async (
   return cleaned
 }
 
-const upsertUser: UpsertUser = async (user, email) => {
+const upsertUser: UpsertUser = async (user, authUid) => {
   // セキュリティ: 自分自身のデータのみ更新可能
-  if (user.email !== email) {
+  if (authUid && user.id !== authUid && user.email !== authUid) {
     throw new Error('Permission denied: cannot modify other user data')
   }
 
   // 更新前に削除済みプロジェクトの設定をクリーンアップ
-  const attribute = user.attribute as UserAttribute
+  const attribute = (user.attribute || {}) as UserAttribute
   if (attribute.projectSettings && Object.keys(attribute.projectSettings).length > 0) {
     attribute.projectSettings = (await cleanupDeletedProjectSettings(
       attribute.projectSettings as Record<string, unknown>,
     )) as UserAttribute['projectSettings']
   }
 
+  // 移行支援: email が同一で id が異なる既存レコードがあれば重複防止のためクリーンアップ
+  if (user.email) {
+    const existingByEmail = await prisma.user.findFirst({
+      where: { email: user.email },
+    })
+    if (existingByEmail && existingByEmail.id !== user.id) {
+      await prisma.user.delete({
+        where: { id: existingByEmail.id },
+      })
+    }
+  }
+
+  const actor = user.email || user.id
+
   await prisma.user.upsert({
-    where: { email: user.email },
+    where: { id: user.id },
     update: {
-      ...user,
-      ...getUpdateCommonColumns(email),
+      email: user.email ?? null,
+      displayName: user.displayName ?? null,
+      attribute: attribute as any,
+      ...getUpdateCommonColumns(actor),
     },
     create: {
-      ...user,
-      ...getCreateCommonColumns(email),
+      id: user.id,
+      email: user.email ?? null,
+      displayName: user.displayName ?? null,
+      attribute: attribute as any,
+      ...getCreateCommonColumns(actor),
     },
   })
 }
 
 export default upsertUser
+
