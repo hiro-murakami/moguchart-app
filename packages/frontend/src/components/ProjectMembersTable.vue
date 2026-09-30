@@ -1,0 +1,400 @@
+<script setup lang="ts">
+import { ref, computed } from 'vue'
+import { useUserStore } from '@/stores/useUserStore'
+import inputRules from '@/modules/inputRules'
+import type { User, Role } from '@functions/types/shared'
+
+const props = defineProps<{
+  owners: string[]
+  editors: string[]
+  viewers: string[]
+  users?: User[]
+  disabled?: boolean
+}>()
+
+const emit = defineEmits<{
+  (e: 'update:owners', value: string[]): void
+  (e: 'update:editors', value: string[]): void
+  (e: 'update:viewers', value: string[]): void
+}>()
+
+const userStore = useUserStore()
+
+const newMemberInput = ref('')
+const newMemberRole = ref<Role>('editor')
+const errorMessage = ref('')
+
+const roleOptions: { title: string; value: Role }[] = [
+  { title: 'オーナー', value: 'owner' },
+  { title: '編集者', value: 'editor' },
+  { title: '閲覧者', value: 'viewer' },
+]
+
+interface MemberItem {
+  id: string
+  role: Role
+  displayName?: string
+  email?: string
+  isCurrentUser: boolean
+}
+
+/** ユーザー情報を補完・解決したメンバーリスト */
+const memberItems = computed<MemberItem[]>(() => {
+  const list: MemberItem[] = []
+
+  const resolveUserInfo = (id: string, role: Role): MemberItem => {
+    const isCurrentUser =
+      !!userStore.currentUser &&
+      (userStore.currentUser.id === id || userStore.currentUser.email === id)
+
+    if (isCurrentUser && userStore.currentUser) {
+      return {
+        id,
+        role,
+        displayName: userStore.currentUser.displayName || undefined,
+        email: userStore.currentUser.email || (id.includes('@') ? id : undefined),
+        isCurrentUser: true,
+      }
+    }
+
+    const matchedUser = (props.users ?? []).find(
+      (u) => u.id === id || u.email === id,
+    )
+    if (matchedUser) {
+      return {
+        id,
+        role,
+        displayName: matchedUser.displayName || undefined,
+        email: matchedUser.email || (id.includes('@') ? id : undefined),
+        isCurrentUser: false,
+      }
+    }
+
+    return {
+      id,
+      role,
+      email: id.includes('@') ? id : undefined,
+      isCurrentUser: false,
+    }
+  }
+
+  for (const id of props.owners) {
+    list.push(resolveUserInfo(id, 'owner'))
+  }
+  for (const id of props.editors) {
+    list.push(resolveUserInfo(id, 'editor'))
+  }
+  for (const id of props.viewers) {
+    list.push(resolveUserInfo(id, 'viewer'))
+  }
+
+  return list
+})
+
+/** 現在のオーナー人数 */
+const ownerCount = computed(() => props.owners.length)
+
+/** 入力補完候補 */
+const suggestionItems = computed(() => {
+  const currentIds = new Set([
+    ...props.owners,
+    ...props.editors,
+    ...props.viewers,
+  ])
+
+  const candidates: { title: string; value: string }[] = []
+
+  // 1. 履歴ユーザー
+  const history = userStore.currentUser?.attribute?.authorityInputHistory ?? []
+  for (const email of history) {
+    if (typeof email === 'string' && email.includes('@') && !currentIds.has(email)) {
+      candidates.push({ title: email, value: email })
+    }
+  }
+
+  // 2. プロジェクト関係者
+  for (const u of props.users ?? []) {
+    const val = u.email || u.id
+    if (val && !currentIds.has(val) && !currentIds.has(u.id)) {
+      const title = u.displayName
+        ? u.email
+          ? `${u.displayName} (${u.email})`
+          : u.displayName
+        : u.email || u.id
+      if (!candidates.some((c) => c.value === val)) {
+        candidates.push({ title, value: val })
+      }
+    }
+  }
+
+  return candidates
+})
+
+/** メンバーのロールを変更する */
+function changeRole(member: MemberItem, newRole: Role) {
+  if (props.disabled) return
+  if (member.role === newRole) return
+
+  // 最後の1人のオーナーのロールは変更不可
+  if (member.role === 'owner' && ownerCount.value <= 1) {
+    errorMessage.value = 'プロジェクトには最低1人のオーナーが必要です'
+    return
+  }
+  errorMessage.value = ''
+
+  const newOwners = props.owners.filter((id) => id !== member.id)
+  const newEditors = props.editors.filter((id) => id !== member.id)
+  const newViewers = props.viewers.filter((id) => id !== member.id)
+
+  if (newRole === 'owner') newOwners.push(member.id)
+  else if (newRole === 'editor') newEditors.push(member.id)
+  else if (newRole === 'viewer') newViewers.push(member.id)
+
+  emit('update:owners', newOwners)
+  emit('update:editors', newEditors)
+  emit('update:viewers', newViewers)
+}
+
+/** メンバーを削除する */
+function removeMember(member: MemberItem) {
+  if (props.disabled) return
+
+  // 最後の1人のオーナーは削除不可
+  if (member.role === 'owner' && ownerCount.value <= 1) {
+    errorMessage.value = 'プロジェクトには最低1人のオーナーが必要です'
+    return
+  }
+  errorMessage.value = ''
+
+  if (member.role === 'owner') {
+    emit(
+      'update:owners',
+      props.owners.filter((id) => id !== member.id),
+    )
+  } else if (member.role === 'editor') {
+    emit(
+      'update:editors',
+      props.editors.filter((id) => id !== member.id),
+    )
+  } else if (member.role === 'viewer') {
+    emit(
+      'update:viewers',
+      props.viewers.filter((id) => id !== member.id),
+    )
+  }
+}
+
+/** 新規メンバーを追加する */
+function addMember() {
+  if (props.disabled) return
+  const rawValue = newMemberInput.value
+  const target = typeof rawValue === 'object' && rawValue !== null
+    ? (rawValue as any).value || (rawValue as any).title || ''
+    : String(rawValue || '').trim()
+
+  if (!target) {
+    errorMessage.value = 'メールアドレスを入力してください'
+    return
+  }
+
+  // 既存重複チェック
+  const exists = memberItems.value.some(
+    (m) => m.id === target || (m.email && m.email === target),
+  )
+  if (exists) {
+    errorMessage.value = '既にプロジェクトのメンバーに含まれています'
+    return
+  }
+
+  errorMessage.value = ''
+
+  if (newMemberRole.value === 'owner') {
+    emit('update:owners', [...props.owners, target])
+  } else if (newMemberRole.value === 'editor') {
+    emit('update:editors', [...props.editors, target])
+  } else if (newMemberRole.value === 'viewer') {
+    emit('update:viewers', [...props.viewers, target])
+  }
+
+  newMemberInput.value = ''
+}
+
+/** 頭文字アバター用文字列 */
+function getAvatarInitial(member: MemberItem): string {
+  if (member.displayName) {
+    return member.displayName.charAt(0).toUpperCase()
+  }
+  if (member.email) {
+    return member.email.charAt(0).toUpperCase()
+  }
+  return member.id.charAt(0).toUpperCase()
+}
+
+/** ロールに応じたバッジ色 */
+function getRoleColor(role: Role): string {
+  switch (role) {
+    case 'owner':
+      return 'primary'
+    case 'editor':
+      return 'secondary'
+    case 'viewer':
+      return 'grey'
+  }
+}
+</script>
+
+<template>
+  <div class="project-members-table w-100">
+    <!-- エラーメッセージ表示 -->
+    <v-alert
+      v-if="errorMessage"
+      type="warning"
+      density="compact"
+      variant="tonal"
+      class="mb-3"
+      closable
+      @click:close="errorMessage = ''"
+    >
+      {{ errorMessage }}
+    </v-alert>
+
+    <!-- 新規メンバー追加エリア -->
+    <v-card variant="outlined" class="mb-4 pa-3 rounded-lg" :disabled="disabled">
+      <div class="text-subtitle-2 mb-2 font-weight-medium">
+        <v-icon icon="mdi-account-plus" size="small" class="mr-1" />
+        メンバーを追加
+      </div>
+      <v-row density="compact" align="center">
+        <v-col cols="12" sm="7">
+          <v-combobox
+            v-model="newMemberInput"
+            :items="suggestionItems"
+            label="メールアドレスを入力または選択"
+            placeholder="user@example.com"
+            density="compact"
+            variant="outlined"
+            hide-details
+            clearable
+            autocomplete="off"
+            :rules="[inputRules.isMailAddress]"
+            @keydown.enter.prevent="addMember"
+          />
+        </v-col>
+        <v-col cols="7" sm="3">
+          <v-select
+            v-model="newMemberRole"
+            :items="roleOptions"
+            label="ロール"
+            density="compact"
+            variant="outlined"
+            hide-details
+          />
+        </v-col>
+        <v-col cols="5" sm="2" class="d-flex justify-end">
+          <v-btn
+            color="primary"
+            variant="flat"
+            block
+            prepend-icon="mdi-plus"
+            :disabled="!newMemberInput || disabled"
+            @click="addMember"
+          >
+            追加
+          </v-btn>
+        </v-col>
+      </v-row>
+    </v-card>
+
+    <!-- メンバー一覧テーブル -->
+    <v-card variant="outlined" class="rounded-lg">
+      <v-table density="compact" class="members-table">
+        <thead>
+          <tr>
+            <th class="text-left font-weight-bold" style="width: 55%">メンバー</th>
+            <th class="text-left font-weight-bold" style="width: 33%">権限ロール</th>
+            <th class="text-center font-weight-bold" style="width: 12%">操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="item in memberItems" :key="item.id">
+            <!-- メンバー情報（アバター＋名前＋メール） -->
+            <td class="py-2">
+              <div class="d-flex align-center">
+                <v-avatar
+                  size="32"
+                  :color="getRoleColor(item.role)"
+                  class="text-white text-caption font-weight-bold mr-3"
+                >
+                  {{ getAvatarInitial(item) }}
+                </v-avatar>
+                <div class="d-flex flex-column text-truncate">
+                  <div class="d-flex align-center">
+                    <span class="font-weight-medium text-body-2 text-truncate">
+                      {{ item.displayName || item.email || item.id }}
+                    </span>
+                    <v-chip
+                      v-if="item.isCurrentUser"
+                      size="x-small"
+                      color="primary"
+                      variant="tonal"
+                      class="ml-2"
+                    >
+                      あなた
+                    </v-chip>
+                  </div>
+                  <span
+                    v-if="item.displayName && item.email"
+                    class="text-caption text-medium-emphasis text-truncate"
+                  >
+                    {{ item.email }}
+                  </span>
+                </div>
+              </div>
+            </td>
+
+            <!-- ロール変更セレクター -->
+            <td class="py-2">
+              <v-select
+                :model-value="item.role"
+                @update:model-value="(val) => changeRole(item, val)"
+                :items="roleOptions"
+                density="compact"
+                variant="outlined"
+                hide-details
+                :disabled="disabled || (item.role === 'owner' && ownerCount <= 1)"
+                style="max-width: 160px"
+              />
+            </td>
+
+            <!-- 削除ボタン -->
+            <td class="text-center py-2">
+              <v-btn
+                icon="mdi-trash-can-outline"
+                variant="text"
+                color="error"
+                size="small"
+                :disabled="disabled || (item.role === 'owner' && ownerCount <= 1)"
+                @click="removeMember(item)"
+              />
+            </td>
+          </tr>
+          <tr v-if="memberItems.length === 0">
+            <td colspan="3" class="text-center py-4 text-medium-emphasis">
+              メンバーが登録されていません
+            </td>
+          </tr>
+        </tbody>
+      </v-table>
+    </v-card>
+
+    <div class="text-caption text-medium-emphasis mt-2 px-1">
+      ※ プロジェクトには必ず最低1人のオーナーが必要です。
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.members-table :deep(td) {
+  height: 56px !important;
+}
+</style>
