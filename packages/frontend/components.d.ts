@@ -42,6 +42,7 @@ declare module 'vue' {
     ProjectCommentPanel: typeof import('./src/components/ProjectCommentPanel.vue')['default']
     ProjectDetailDialog: typeof import('./src/components/ProjectDetailDialog.vue')['default']
     ProjectListDialog: typeof import('./src/components/ProjectListDialog.vue')['default']
+    ProjectMembersTable: typeof import('./src/components/ProjectMembersTable.vue')['default']
     PromptDialog: typeof import('./src/components/common/PromptDialog.vue')['default']
     ReleaseNotesDialog: typeof import('./src/components/ReleaseNotesDialog.vue')['default']
     RoleChip: typeof import('./src/components/RoleChip.vue')['default']
