@@ -28,6 +28,10 @@ model User {
   updatedBy   String?   @default("system")
   /// 更新日時
   updatedAt   DateTime? @default(now()) @db.Timestamp(3)
+  /// プロジェクトメンバーシップ
+  members     ProjectMember[]
+  /// タスク担当
+  assignees   TaskAssignee[]
 }
 
 /// プロジェクト
@@ -58,6 +62,8 @@ model Project {
   rows      GanttRow[]
   /// コメント配列
   comments  Comment[]
+  /// プロジェクトメンバー配列
+  members   ProjectMember[]
 }
 
 /// ガント行
@@ -118,6 +124,8 @@ model GanttTask {
   row      GanttRow   @relation(fields: [rowId], references: [id], onDelete: Cascade)
   /// コメント配列
   comments Comment[]
+  /// 担当者配列
+  assignees TaskAssignee[]
 }
 
 /// コメント（タスク・行・プロジェクト共通）
@@ -169,4 +177,54 @@ model ApiKey {
   lastUsedAt DateTime? @db.Timestamp(3)
   /// 作成日時
   createdAt  DateTime  @default(now()) @db.Timestamp(3)
+}
+
+/// プロジェクトメンバー（権限管理）
+model ProjectMember {
+  /// ID
+  id        String   @id @default(uuid()) @db.Char(36)
+  /// プロジェクトID
+  projectId String   @db.Char(36)
+  /// ユーザーID（登録済みユーザーの場合）
+  userId    String?  @db.VarChar(128)
+  /// メールアドレス（未登録ユーザー招待時または識別用）
+  email     String?  @db.VarChar(255)
+  /// ロール ('owner' | 'editor' | 'viewer')
+  role      String   @db.VarChar(20)
+  /// 作成日時
+  createdAt DateTime @default(now()) @db.Timestamp(3)
+  /// 更新日時
+  updatedAt DateTime @default(now()) @db.Timestamp(3)
+
+  /// プロジェクト
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  /// ユーザー
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([userId])
+  @@index([email])
+}
+
+/// タスク担当者
+model TaskAssignee {
+  /// ID
+  id        String    @id @default(uuid()) @db.Char(36)
+  /// タスクID
+  taskId    Int
+  /// ユーザーID（登録済みユーザーの場合）
+  userId    String?   @db.VarChar(128)
+  /// メールアドレス（未登録ユーザー時または識別用）
+  email     String?   @db.VarChar(255)
+  /// 作成日時
+  createdAt DateTime  @default(now()) @db.Timestamp(3)
+
+  /// タスク
+  task      GanttTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  /// ユーザー
+  user      User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@index([userId])
+  @@index([email])
 }
