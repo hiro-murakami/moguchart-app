@@ -4,6 +4,29 @@ import { checkProjectPermission, prisma } from './common/commonFunctions.js'
 const selectProjectUsers: SelectProjectUsers = async (projectId: string, userIdentifier?: string) => {
   await checkProjectPermission(projectId, userIdentifier, 'viewer')
 
+  const identifierSet = new Set<string>()
+
+  // 1. ProjectMember テーブルから抽出
+  const members = await prisma.projectMember.findMany({
+    where: { projectId },
+    select: { userId: true, email: true },
+  })
+  for (const m of members) {
+    if (m.userId) identifierSet.add(m.userId)
+    if (m.email) identifierSet.add(m.email)
+  }
+
+  // 2. TaskAssignee テーブルから抽出
+  const assignees = await prisma.taskAssignee.findMany({
+    where: { task: { row: { projectId } } },
+    select: { userId: true, email: true },
+  })
+  for (const a of assignees) {
+    if (a.userId) identifierSet.add(a.userId)
+    if (a.email) identifierSet.add(a.email)
+  }
+
+  // 3. 互換性フォールバック: 既存 JSON (authority & tasks.attribute.assignees) からも抽出
   const project = await prisma.project.findUnique({
     where: { id: projectId },
     select: {
@@ -20,29 +43,23 @@ const selectProjectUsers: SelectProjectUsers = async (projectId: string, userIde
     },
   })
 
-  if (!project) {
-    return []
-  }
-
-  const identifierSet = new Set<string>()
-
-  // 1. プロジェクト権限者から抽出
-  const auth = (project.authority as Authority) || {}
-  const authIdentifiers = [...(auth.owners || []), ...(auth.editors || []), ...(auth.viewers || [])]
-  for (const id of authIdentifiers) {
-    if (typeof id === 'string' && id.trim()) {
-      identifierSet.add(id.trim())
+  if (project) {
+    const auth = (project.authority as Authority) || {}
+    const authIdentifiers = [...(auth.owners || []), ...(auth.editors || []), ...(auth.viewers || [])]
+    for (const id of authIdentifiers) {
+      if (typeof id === 'string' && id.trim()) {
+        identifierSet.add(id.trim())
+      }
     }
-  }
 
-  // 2. 全タスクの担当者（assignees）から抽出
-  for (const row of project.rows || []) {
-    for (const task of row.tasks || []) {
-      const attr = (task.attribute as TaskAttribute) || {}
-      if (Array.isArray(attr.assignees)) {
-        for (const assignee of attr.assignees) {
-          if (typeof assignee === 'string' && assignee.trim()) {
-            identifierSet.add(assignee.trim())
+    for (const row of project.rows || []) {
+      for (const task of row.tasks || []) {
+        const attr = (task.attribute as TaskAttribute) || {}
+        if (Array.isArray(attr.assignees)) {
+          for (const assignee of attr.assignees) {
+            if (typeof assignee === 'string' && assignee.trim()) {
+              identifierSet.add(assignee.trim())
+            }
           }
         }
       }
