@@ -4,6 +4,7 @@ import type { Project, ColorPalette, Label, Milestone, ProjectGranularity } from
 import inputRules from '@/modules/inputRules'
 import { granularityToInputType } from '@/modules/utils'
 import { useProjectDetailDialog } from './composables/useProjectDetailDialog'
+import ProjectMembersTable from './ProjectMembersTable.vue'
 import dayjs from 'dayjs'
 
 const props = defineProps<{
@@ -45,6 +46,7 @@ const {
   localEnableProgress,
   localSummaryTaskColor,
   authorityHistoryUsers,
+  projectUsers,
   title,
   localClearProgress,
   close,
@@ -393,26 +395,15 @@ watch(
                 </v-window-item>
                 <v-window-item value="permissions">
                   <v-row density="compact" class="pt-2">
-                    <UsersInput
-                      v-model="localOwners"
-                      label="オーナー"
-                      help-text="プロジェクトに対する全権限を持つユーザーのリスト"
-                      :users="authorityHistoryUsers"
-                      :rules="[inputRules.required]"
-                    />
-                    <UsersInput
-                      v-model="localEditors"
-                      label="編集者"
-                      help-text="閲覧・編集権限を持つユーザーのリスト"
-                      :users="authorityHistoryUsers"
-                    />
-                    <UsersInput
-                      v-model="localViewers"
-                      label="閲覧者"
-                      help-text="閲覧権限のみを持つユーザーのリスト"
-                      :users="authorityHistoryUsers"
-                    />
                     <v-col cols="12">
+                      <ProjectMembersTable
+                        v-model:owners="localOwners"
+                        v-model:editors="localEditors"
+                        v-model:viewers="localViewers"
+                        :users="projectUsers"
+                      />
+                    </v-col>
+                    <v-col cols="12" class="pt-2">
                       <v-btn
                         variant="text"
                         prepend-icon="mdi-history"

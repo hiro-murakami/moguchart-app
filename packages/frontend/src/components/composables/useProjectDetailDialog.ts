@@ -397,6 +397,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
     localEnableProgress,
     localSummaryTaskColor,
     authorityHistoryUsers,
+    projectUsers,
     title,
     localClearProgress,
     close,
