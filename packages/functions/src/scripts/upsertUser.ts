@@ -71,6 +71,29 @@ const upsertUser: UpsertUser = async (user, authUid) => {
       ...getCreateCommonColumns(actor),
     },
   })
+
+  // 未登録メールアドレスで招待・割り当てされていたメンバー・担当者レコードに自身の UID を自動紐付け
+  if (user.email) {
+    await prisma.projectMember.updateMany({
+      where: {
+        email: user.email,
+        userId: null,
+      },
+      data: {
+        userId: user.id,
+      },
+    })
+
+    await prisma.taskAssignee.updateMany({
+      where: {
+        email: user.email,
+        userId: null,
+      },
+      data: {
+        userId: user.id,
+      },
+    })
+  }
 }
 
 export default upsertUser
