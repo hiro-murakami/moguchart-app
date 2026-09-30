@@ -18,13 +18,13 @@
 
 ## 全体フェーズ
 
-- [ ] **Task 1: ブランチ作成と Prisma スキーマ更新・マイグレーション生成**
-- [ ] **Task 2: 既存データ（JSON）から中間テーブルへの初期データ移行スクリプト**
-- [ ] **Task 3: プロジェクト権限チェック & API の中間テーブル対応 (`checkProjectPermission`, `selectProjects`, `upsertProject`)**
-- [ ] **Task 4: タスク担当者 API の中間テーブル対応 (`upsertGanttTasks`, `toGanttTask`, `selectGanttChart`)**
-- [ ] **Task 5: ユーザー初回ログイン時の未登録メンバー UID 自動紐付け (`upsertUser`)**
-- [ ] **Task 6: プロジェクト関係者取得 API (`selectProjectUsers`) のリファクタリング**
-- [ ] **Task 7: ビルド検証 & 総合テスト**
+- [x] **Task 1: ブランチ作成と Prisma スキーマ更新・マイグレーション生成**
+- [x] **Task 2: 既存データ（JSON）から中間テーブルへの初期データ移行スクリプト**
+- [x] **Task 3: プロジェクト権限チェック & API の中間テーブル対応 (`checkProjectPermission`, `selectProjects`, `upsertProject`)**
+- [x] **Task 4: タスク担当者 API の中間テーブル対応 (`upsertGanttTasks`, `toGanttTask`, `selectGanttChart`)**
+- [x] **Task 5: ユーザー初回ログイン時の未登録メンバー UID 自動紐付け (`upsertUser`)**
+- [x] **Task 6: プロジェクト関係者取得 API (`selectProjectUsers`) のリファクタリング**
+- [x] **Task 7: ビルド検証 & 総合テスト**
 
 ---
 
