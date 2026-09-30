@@ -3,6 +3,52 @@ import type { UpsertGanttTasks, GanttTask, TaskAttribute } from '../types/shared
 import { checkProjectPermission, getCreateCommonColumns, getUpdateCommonColumns, prisma } from './common/commonFunctions'
 import { fromGanttTask, toGanttTask } from './common/converters'
 
+const syncTaskAssignees = async (
+  tx: Prisma.TransactionClient,
+  taskId: number,
+  assignees?: string[],
+) => {
+  // 既存の担当者レコードを削除して再投入
+  await tx.taskAssignee.deleteMany({
+    where: { taskId },
+  })
+
+  if (!assignees || !Array.isArray(assignees) || assignees.length === 0) {
+    return
+  }
+
+  for (const identifier of assignees) {
+    if (typeof identifier !== 'string' || !identifier.trim()) continue
+    const trimmed = identifier.trim()
+    let userId: string | null = null
+    let email: string | null = null
+
+    if (trimmed.includes('@')) {
+      email = trimmed
+      const user = await tx.user.findFirst({
+        where: { email: trimmed },
+        select: { id: true },
+      })
+      if (user) userId = user.id
+    } else {
+      userId = trimmed
+      const user = await tx.user.findUnique({
+        where: { id: trimmed },
+        select: { email: true },
+      })
+      if (user?.email) email = user.email
+    }
+
+    await tx.taskAssignee.create({
+      data: {
+        taskId,
+        userId,
+        email,
+      },
+    })
+  }
+}
+
 const executeUpsert = async (tx: Prisma.TransactionClient, task: GanttTask, email?: string) => {
   const data = fromGanttTask(task)
   const { id, ...createData } = data
@@ -23,6 +69,10 @@ const executeUpsert = async (tx: Prisma.TransactionClient, task: GanttTask, emai
       ...getCreateCommonColumns(email),
     },
   })
+
+  if (task.attribute && Array.isArray(task.attribute.assignees)) {
+    await syncTaskAssignees(tx, result.id, task.attribute.assignees)
+  }
 
   return result.id
 }
@@ -74,6 +124,7 @@ const upsertGanttTasks: UpsertGanttTasks = async (tasks, email?: string) => {
 
       const existingTasks = await prisma.ganttTask.findMany({
         where: { id: { in: taskIds } },
+        include: { assignees: true },
       })
 
       // 担当者は進捗率（progress）のみ変更可能
@@ -82,7 +133,11 @@ const upsertGanttTasks: UpsertGanttTasks = async (tasks, email?: string) => {
         const existing = existingTasks.find((et) => et.id === t.id)
         if (!existing) throw new Error('Task not found')
         const attr = (existing.attribute as any) || {}
-        const assignees: string[] = attr.assignees || []
+        const jsonAssignees: string[] = attr.assignees || []
+        const tableAssignees: string[] = (existing.assignees || [])
+          .map((a) => a.userId || a.email)
+          .filter((id): id is string => Boolean(id))
+        const assignees = Array.from(new Set([...jsonAssignees, ...tableAssignees]))
         if (!isUserAssignee(assignees)) {
           throw new Error('Permission denied')
         }

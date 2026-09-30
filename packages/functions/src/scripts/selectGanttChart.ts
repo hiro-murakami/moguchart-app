@@ -11,6 +11,7 @@ const selectGanttChart: SelectGanttChart = async (projectId, email) => {
       tasks: {
         include: {
           _count: { select: { comments: true } },
+          assignees: true,
         },
       },
       _count: { select: { comments: true } },

@@ -18,12 +18,25 @@ import { toDateTimeString } from './commonFunctions'
 
 type CommonColumns = 'createdBy' | 'createdAt' | 'updatedBy' | 'updatedAt'
 
-export const toGanttTask = (task: PrismaGanttTask, commentCount?: number): GanttTask => {
+export const toGanttTask = (
+  task: PrismaGanttTask & {
+    assignees?: Array<{ userId: string | null; email: string | null }>
+  },
+  commentCount?: number,
+): GanttTask => {
+  const attr = { ...((task.attribute ?? {}) as TaskAttribute) }
+  if (task.assignees && task.assignees.length > 0) {
+    const list = task.assignees
+      .map((a) => a.userId || a.email)
+      .filter((id): id is string => Boolean(id))
+    attr.assignees = Array.from(new Set([...(attr.assignees || []), ...list]))
+  }
+
   return {
-    ...omit(task, ['createdBy', 'createdAt', 'updatedBy', 'updatedAt']),
+    ...omit(task, ['createdBy', 'createdAt', 'updatedBy', 'updatedAt', 'assignees']),
     start: toDateTimeString(task.start),
     end: toDateTimeString(task.end),
-    attribute: (task.attribute ?? {}) as TaskAttribute,
+    attribute: attr,
     commentCount: commentCount ?? 0,
   }
 }
@@ -38,7 +51,10 @@ export const fromGanttTask = (task: GanttTask): Omit<PrismaGanttTask, CommonColu
 
 export const toGanttRow = (
   row: PrismaGanttRow & {
-    tasks: (PrismaGanttTask & { _count?: { comments: number } })[]
+    tasks: (PrismaGanttTask & {
+      _count?: { comments: number }
+      assignees?: Array<{ userId: string | null; email: string | null }>
+    })[]
     _count?: { comments: number }
   },
 ): GanttRow => {

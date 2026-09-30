@@ -18,6 +18,7 @@ const selectGanttRows: SelectGanttRows = async ({ projectId, rowIds }, email) =>
       tasks: {
         include: {
           _count: { select: { comments: true } },
+          assignees: true,
         },
       },
       _count: { select: { comments: true } },
