@@ -9,6 +9,7 @@ const selectProject: SelectProject = async (projectId, userIdentifier) => {
     where: { id: projectId },
     include: {
       _count: { select: { comments: true } },
+      members: true,
     },
   })
 

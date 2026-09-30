@@ -32,6 +32,20 @@ const selectProjects: SelectProjects = async (_, userIdentifier) => {
         { public: true },
         ...(identifiers.length > 0
           ? [
+              // ProjectMember テーブルでの一致
+              {
+                members: {
+                  some: {
+                    OR: [
+                      ...(userId ? [{ userId }] : []),
+                      ...(userEmail ? [{ email: userEmail }] : []),
+                      { userId: userIdentifier },
+                      { email: userIdentifier },
+                    ],
+                  },
+                },
+              },
+              // 移行用フォールバック: authority JSON での一致
               ...identifiers.map((id) => ({
                 authority: {
                   path: '$.owners',
@@ -59,6 +73,7 @@ const selectProjects: SelectProjects = async (_, userIdentifier) => {
     },
     include: {
       _count: { select: { comments: true } },
+      members: true,
     },
   })
 
@@ -73,6 +88,17 @@ const selectProjects: SelectProjects = async (_, userIdentifier) => {
 
   const filtered = data.filter((project) => {
     if (project.public) return true
+    // 1. members に含まれるか
+    if (project.members && project.members.length > 0) {
+      const isMember = project.members.some(
+        (m) =>
+          identifiers.some((id) => id === m.userId || id === m.email) ||
+          (userIdentifier && (m.userId === userIdentifier || m.email === userIdentifier)) ||
+          (userEmail && (m.email === userEmail || m.userId === userEmail)),
+      )
+      if (isMember) return true
+    }
+    // 2. authority JSON に含まれるか
     const authority = (project.authority ?? {}) as Authority
     const owners = authority.owners ?? []
     const editors = authority.editors ?? []

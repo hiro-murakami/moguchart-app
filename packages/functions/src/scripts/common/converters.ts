@@ -59,29 +59,69 @@ export const fromGanttRow = (row: GanttRow): Omit<PrismaGanttRow, CommonColumns>
 
 export const toProject =
   (userIdentifier: string, fallbackEmail?: string) =>
-  (project: PrismaProject & { _count?: { comments: number } }): Project => {
-    const getRole = (authority: Authority, id: string, email?: string): Role => {
+  (
+    project: PrismaProject & {
+      _count?: { comments: number }
+      members?: Array<{ role: string; userId: string | null; email: string | null }>
+    },
+  ): Project => {
+    let role: Role = 'viewer'
+
+    if (project.members && project.members.length > 0) {
+      // 1. members から判定
+      const myMember = project.members.find(
+        (m) =>
+          (!!userIdentifier && (m.userId === userIdentifier || m.email === userIdentifier)) ||
+          (!!fallbackEmail && (m.email === fallbackEmail || m.userId === fallbackEmail)),
+      )
+      if (myMember) {
+        if (myMember.role === 'owner') role = 'owner'
+        else if (myMember.role === 'editor') role = 'editor'
+        else role = 'viewer'
+      }
+    } else {
+      // 2. 既存 authority (JSON) から判定
+      const authority = (project.authority as Authority) || {}
       const matches = (list?: string[]) => {
         if (!list) return false
-        return list.includes(id) || (!!email && list.includes(email))
+        return list.includes(userIdentifier) || (!!fallbackEmail && list.includes(fallbackEmail))
       }
-
       if (matches(authority.owners)) {
-        return 'owner'
+        role = 'owner'
       } else if (matches(authority.editors)) {
-        return 'editor'
+        role = 'editor'
+      } else {
+        role = 'viewer'
       }
+    }
 
-      return 'viewer'
+    // authority オブジェクトも members があれば合成・補完
+    let authority = (project.authority ?? {}) as Authority
+    if (project.members && project.members.length > 0) {
+      const owners: string[] = []
+      const editors: string[] = []
+      const viewers: string[] = []
+      for (const m of project.members) {
+        const id = m.userId || m.email
+        if (!id) continue
+        if (m.role === 'owner') owners.push(id)
+        else if (m.role === 'editor') editors.push(id)
+        else if (m.role === 'viewer') viewers.push(id)
+      }
+      authority = {
+        owners: Array.from(new Set([...(authority.owners || []), ...owners])),
+        editors: Array.from(new Set([...(authority.editors || []), ...editors])),
+        viewers: Array.from(new Set([...(authority.viewers || []), ...viewers])),
+      }
     }
 
     return {
-      ...omit(project, ['createdBy', 'createdAt', 'updatedBy', 'updatedAt']),
+      ...omit(project, ['createdBy', 'createdAt', 'updatedBy', 'updatedAt', 'members']),
       start: toDateTimeString(project.start),
       end: toDateTimeString(project.end),
       attribute: (project.attribute ?? {}) as ProjectAttribute,
-      authority: (project.authority ?? {}) as Authority,
-      role: getRole(project.authority as Authority, userIdentifier, fallbackEmail),
+      authority,
+      role,
       commentCount: project._count?.comments ?? 0,
     }
   }

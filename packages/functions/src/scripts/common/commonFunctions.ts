@@ -167,38 +167,56 @@ export const checkProjectPermission = async (
     throw new Error('Permission denied')
   }
 
-  const authority = (project.authority as any) || {}
-  const owners: string[] = authority.owners || []
-  const editors: string[] = authority.editors || []
-  const viewers: string[] = authority.viewers || []
+  // 1. まず ProjectMember テーブルをチェック
+  let authUid: string | undefined
+  let authEmail: string | undefined
+  if (userIdentifier.includes('@')) {
+    authEmail = userIdentifier
+    const user = await prisma.user.findFirst({
+      where: { email: userIdentifier },
+      select: { id: true },
+    })
+    authUid = user?.id
+  } else {
+    authUid = userIdentifier
+    const user = await prisma.user.findUnique({
+      where: { id: userIdentifier },
+      select: { email: true },
+    })
+    authEmail = user?.email || undefined
+  }
 
-  // userIdentifier (UID または Email) が直接マッチするか判定
-  let isOwner = owners.includes(userIdentifier)
-  let isEditor = editors.includes(userIdentifier)
-  let isViewer = viewers.includes(userIdentifier)
+  const member = await prisma.projectMember.findFirst({
+    where: {
+      projectId,
+      OR: [
+        ...(authUid ? [{ userId: authUid }] : []),
+        ...(authEmail ? [{ email: authEmail }] : []),
+        { userId: userIdentifier },
+        { email: userIdentifier },
+      ],
+    },
+  })
 
-  // 直接マッチしない場合、ユーザーレコードから対になる識別子（UIDならemail、emailならUID）を検索して再判定
-  if (!isOwner && !isEditor && !isViewer) {
-    let otherIdentifier: string | undefined
-    if (userIdentifier.includes('@')) {
-      const user = await prisma.user.findFirst({
-        where: { email: userIdentifier },
-        select: { id: true },
-      })
-      otherIdentifier = user?.id
-    } else {
-      const user = await prisma.user.findUnique({
-        where: { id: userIdentifier },
-        select: { email: true },
-      })
-      otherIdentifier = user?.email || undefined
-    }
+  let isOwner = false
+  let isEditor = false
+  let isViewer = false
 
-    if (otherIdentifier) {
-      isOwner = owners.includes(otherIdentifier)
-      isEditor = editors.includes(otherIdentifier)
-      isViewer = viewers.includes(otherIdentifier)
-    }
+  if (member) {
+    isOwner = member.role === 'owner'
+    isEditor = member.role === 'editor'
+    isViewer = member.role === 'viewer'
+  } else {
+    // 2. フォールバック: 既存 authority (JSON) のチェック
+    const authority = (project.authority as any) || {}
+    const owners: string[] = authority.owners || []
+    const editors: string[] = authority.editors || []
+    const viewers: string[] = authority.viewers || []
+
+    const identifiers = [userIdentifier, authUid, authEmail].filter(Boolean) as string[]
+    isOwner = identifiers.some((id) => owners.includes(id))
+    isEditor = identifiers.some((id) => editors.includes(id))
+    isViewer = identifiers.some((id) => viewers.includes(id))
   }
 
   let hasAccess = false
