@@ -139,3 +139,14 @@ export const migrateJsonToRelational = async () => {
   console.log(`Migrated ${assigneeCount} task assignee records.`)
   console.log('--- Migration completed successfully ---')
 }
+
+if (process.argv[1]?.includes('migrateJsonToRelational')) {
+  migrateJsonToRelational()
+    .catch((e) => {
+      console.error(e)
+      process.exit(1)
+    })
+    .finally(async () => {
+      await prisma.$disconnect()
+    })
+}
