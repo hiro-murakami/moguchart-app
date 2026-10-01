@@ -111,8 +111,9 @@ export const toProject =
       }
     }
 
-    // authority オブジェクトも members があれば合成・補完
-    let authority = (project.authority ?? {}) as Authority
+    // members がある場合は ProjectMember テーブルを正（Source of Truth）として authority を再構築
+    // （旧 authority JSON と安易にマージすると、UID とメールアドレスが両方入って二重表示になるのを防止）
+    let authority: Authority
     if (project.members && project.members.length > 0) {
       const owners: string[] = []
       const editors: string[] = []
@@ -125,10 +126,12 @@ export const toProject =
         else if (m.role === 'viewer') viewers.push(id)
       }
       authority = {
-        owners: Array.from(new Set([...(authority.owners || []), ...owners])),
-        editors: Array.from(new Set([...(authority.editors || []), ...editors])),
-        viewers: Array.from(new Set([...(authority.viewers || []), ...viewers])),
+        owners: Array.from(new Set(owners)),
+        editors: Array.from(new Set(editors)),
+        viewers: Array.from(new Set(viewers)),
       }
+    } else {
+      authority = (project.authority ?? {}) as Authority
     }
 
     return {

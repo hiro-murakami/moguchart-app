@@ -78,21 +78,53 @@ const memberItems = computed<MemberItem[]>(() => {
     }
   }
 
+  const addUnique = (item: MemberItem) => {
+    const existingIndex = list.findIndex((m) => {
+      if (m.id === item.id) return true
+      if (m.email && item.email && m.email === item.email) return true
+      if (m.isCurrentUser && item.isCurrentUser) return true
+      return false
+    })
+    if (existingIndex === -1) {
+      list.push(item)
+    } else {
+      const existing = list[existingIndex]
+      if (existing) {
+        if (!existing.email && item.email) existing.email = item.email
+        if (!existing.displayName && item.displayName) existing.displayName = item.displayName
+      }
+    }
+  }
+
   for (const id of props.owners) {
-    list.push(resolveUserInfo(id, 'owner'))
+    addUnique(resolveUserInfo(id, 'owner'))
   }
   for (const id of props.editors) {
-    list.push(resolveUserInfo(id, 'editor'))
+    addUnique(resolveUserInfo(id, 'editor'))
   }
   for (const id of props.viewers) {
-    list.push(resolveUserInfo(id, 'viewer'))
+    addUnique(resolveUserInfo(id, 'viewer'))
   }
 
   return list
 })
 
-/** 現在のオーナー人数 */
-const ownerCount = computed(() => props.owners.length)
+/** 現在のオーナー人数（重複排除後） */
+const ownerCount = computed(
+  () => memberItems.value.filter((m) => m.role === 'owner').length,
+)
+
+/** ユーザーに関連するID（UIDとメール）をリストから除外するヘルパー */
+function cleanIdentifiers(list: string[], member: MemberItem): string[] {
+  return list.filter((id) => {
+    if (id === member.id) return false
+    if (member.email && id === member.email) return false
+    if (member.isCurrentUser && userStore.currentUser) {
+      if (id === userStore.currentUser.id || id === userStore.currentUser.email) return false
+    }
+    return true
+  })
+}
 
 /** 入力補完候補 */
 const suggestionItems = computed(() => {
@@ -142,9 +174,9 @@ function changeRole(member: MemberItem, newRole: Role) {
   }
   errorMessage.value = ''
 
-  const newOwners = props.owners.filter((id) => id !== member.id)
-  const newEditors = props.editors.filter((id) => id !== member.id)
-  const newViewers = props.viewers.filter((id) => id !== member.id)
+  const newOwners = cleanIdentifiers(props.owners, member)
+  const newEditors = cleanIdentifiers(props.editors, member)
+  const newViewers = cleanIdentifiers(props.viewers, member)
 
   if (newRole === 'owner') newOwners.push(member.id)
   else if (newRole === 'editor') newEditors.push(member.id)
@@ -166,22 +198,9 @@ function removeMember(member: MemberItem) {
   }
   errorMessage.value = ''
 
-  if (member.role === 'owner') {
-    emit(
-      'update:owners',
-      props.owners.filter((id) => id !== member.id),
-    )
-  } else if (member.role === 'editor') {
-    emit(
-      'update:editors',
-      props.editors.filter((id) => id !== member.id),
-    )
-  } else if (member.role === 'viewer') {
-    emit(
-      'update:viewers',
-      props.viewers.filter((id) => id !== member.id),
-    )
-  }
+  emit('update:owners', cleanIdentifiers(props.owners, member))
+  emit('update:editors', cleanIdentifiers(props.editors, member))
+  emit('update:viewers', cleanIdentifiers(props.viewers, member))
 }
 
 /** 新規メンバーを追加する */

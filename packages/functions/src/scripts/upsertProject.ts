@@ -109,12 +109,25 @@ export const syncProjectMembers = async (
     }
   }
 
+  // 同一ユーザー（userId または email が一致）の重複を排除
+  const uniqueMembers: Array<{ role: string; userId: string | null; email: string | null }> = []
+  for (const m of newMembers) {
+    const isDuplicate = uniqueMembers.some((existing) => {
+      if (m.userId && existing.userId && m.userId === existing.userId) return true
+      if (m.email && existing.email && m.email === existing.email) return true
+      return false
+    })
+    if (!isDuplicate) {
+      uniqueMembers.push(m)
+    }
+  }
+
   // 既存のメンバーレコードを削除して再投入
   await prismaClient.projectMember.deleteMany({
     where: { projectId },
   })
 
-  for (const m of newMembers) {
+  for (const m of uniqueMembers) {
     await prismaClient.projectMember.create({
       data: {
         projectId,
