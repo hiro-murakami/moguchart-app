@@ -5,16 +5,22 @@ import { useUserStore } from '@/stores/useUserStore'
 import UserAvatar from '@/components/common/UserAvatar.vue'
 import type { User } from '@functions/types/shared'
 
-const props = defineProps<{
-  modelValue: string[]
-  label: string
-  helpText: string
-  /** 入力補完の候補となるユーザー一覧（省略可） */
-  users?: User[]
-  /** 追加のバリデーションルール（省略可） */
-  rules?: ((value: any) => string | boolean)[]
-  disabled?: boolean
-}>()
+const props = withDefaults(
+  defineProps<{
+    modelValue: string[]
+    label: string
+    helpText: string
+    /** 入力補完の候補となるユーザー一覧（省略可） */
+    users?: User[]
+    /** 追加のバリデーションルール（省略可） */
+    rules?: ((value: any) => string | boolean)[]
+    disabled?: boolean
+    density?: 'default' | 'comfortable' | 'compact'
+  }>(),
+  {
+    density: 'comfortable',
+  },
+)
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: string[]): void
@@ -120,7 +126,13 @@ function getUserInfo(rawVal: any) {
   }
 
   const initial = val.charAt(0).toUpperCase()
-  return { displayName: undefined, email: val.includes('@') ? val : undefined, photoURL: undefined, initial, isSelf: false }
+  return {
+    displayName: undefined,
+    email: val.includes('@') ? val : undefined,
+    photoURL: undefined,
+    initial,
+    isSelf: false,
+  }
 }
 
 /**
@@ -149,7 +161,7 @@ function handleUpdate(rawValues: (string | { title: string; value: string })[]) 
       chips
       deletable-chips
       closable-chips
-      density="compact"
+      :density="density"
       variant="outlined"
       hide-details="auto"
       class="mb-3 mr-2"

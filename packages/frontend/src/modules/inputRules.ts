@@ -19,8 +19,21 @@ const inputRules = {
     const num = Number(value)
     return (!isNaN(num) && num >= min) || message.ERROR_INPUT_MIN(min)
   },
-  isMailAddress: (value: string) =>
-    !value || /^[\w\-._]+@[\w\-._]+\.[A-Za-z]+$/.test(value) || message.ERROR_INVALID_MAIL_ADDRESS,
+  isMailAddress: (value: any) => {
+    if (!value) return true
+    let email = ''
+    if (typeof value === 'object' && value !== null) {
+      email = value.value || value.email || value.id || value.title || ''
+    } else if (typeof value === 'string') {
+      const emailMatch = value.match(/<([^>]+)>|\(([^)]+@[^)]+)\)/)
+      email = emailMatch ? (emailMatch[1] || emailMatch[2] || value) : value
+    } else {
+      email = String(value)
+    }
+    email = email.trim()
+    if (!email) return true
+    return isEmailFormat(email) || message.ERROR_INVALID_MAIL_ADDRESS
+  },
   areMailAddresses: (values: (string | { value: string })[]) => {
     if (!values || values.length === 0) return true
     const emails = values.map((v) => (typeof v === 'string' ? v : v?.value ?? ''))

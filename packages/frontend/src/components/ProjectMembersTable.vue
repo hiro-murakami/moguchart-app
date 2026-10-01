@@ -367,13 +367,49 @@ function removeMember(member: MemberItem) {
   emit('update:viewers', cleanIdentifiers(props.viewers, member))
 }
 
+/** 新規メンバー入力値の更新ハンドラー（候補選択時のオブジェクトや表示名付き文字列をメールアドレスに正規化） */
+function onUpdateNewMemberInput(val: any) {
+  if (val == null) {
+    newMemberInput.value = ''
+    return
+  }
+  if (typeof val === 'object') {
+    newMemberInput.value = val.value || val.email || val.id || val.title || ''
+  } else {
+    const str = String(val).trim()
+    const emailMatch = str.match(/<([^>]+)>|\(([^)]+@[^)]+)\)/)
+    if (emailMatch) {
+      newMemberInput.value = (emailMatch[1] || emailMatch[2] || str).trim()
+    } else {
+      newMemberInput.value = str
+    }
+  }
+}
+
+/** 候補アイテムのカスタムフィルター（表示名、メールアドレス、タイトルいずれでも検索可能にする） */
+function filterCandidate(itemTitle: string, queryText: string, item?: any): boolean {
+  if (!queryText) return true
+  const q = queryText.toLowerCase().trim()
+  const raw = item?.raw || item || {}
+  const name = (raw.displayName || '').toLowerCase()
+  const email = (raw.email || raw.value || itemTitle || '').toLowerCase()
+  const title = (raw.title || '').toLowerCase()
+  return name.includes(q) || email.includes(q) || title.includes(q)
+}
+
 /** 新規メンバーを追加する */
 function addMember() {
   if (props.disabled) return
   const rawValue = newMemberInput.value
-  const target = typeof rawValue === 'object' && rawValue !== null
-    ? (rawValue as any).value || (rawValue as any).title || ''
-    : String(rawValue || '').trim()
+  let target = ''
+  if (typeof rawValue === 'object' && rawValue !== null) {
+    target = (rawValue as any).value || (rawValue as any).email || (rawValue as any).id || (rawValue as any).title || ''
+  } else {
+    const str = String(rawValue || '').trim()
+    const match = str.match(/<([^>]+)>|\(([^)]+@[^)]+)\)/)
+    target = match ? (match[1] || match[2] || str).trim() : str
+  }
+  target = target.trim()
 
   if (!target) {
     errorMessage.value = 'メールアドレスを入力してください'
@@ -428,11 +464,15 @@ function getRoleColor(role: Role): string {
 /** 現在入力または選択されている値に対応するユーザー情報 */
 const currentInputUser = computed(() => {
   const raw = newMemberInput.value
-  const val = (
-    typeof raw === 'object' && raw !== null
-      ? (raw as any).value || (raw as any).email || (raw as any).id || (raw as any).title || ''
-      : String(raw || '')
-  ).trim()
+  let val = ''
+  if (typeof raw === 'object' && raw !== null) {
+    val = (raw as any).value || (raw as any).email || (raw as any).id || (raw as any).title || ''
+  } else {
+    const str = String(raw || '').trim()
+    const match = str.match(/<([^>]+)>|\(([^)]+@[^)]+)\)/)
+    val = match ? (match[1] || match[2] || str).trim() : str
+  }
+  val = val.trim()
 
   if (!val) return null
 
@@ -499,10 +539,13 @@ const currentInputUser = computed(() => {
       <v-row density="compact" align="center">
         <v-col cols="12" sm="7">
           <v-combobox
-            v-model="newMemberInput"
+            :model-value="newMemberInput"
+            @update:model-value="onUpdateNewMemberInput"
             :items="suggestionItems"
-            item-title="title"
+            item-title="value"
             item-value="value"
+            :custom-filter="filterCandidate"
+            :return-object="false"
             label="メールアドレスを入力または選択"
             placeholder="user@example.com"
             density="compact"

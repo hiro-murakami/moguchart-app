@@ -88,6 +88,50 @@ try {
     const expr = args.join(' ');
     const result = await sendCdp(page.webSocketDebuggerUrl, 'Runtime.evaluate', { expression: expr, returnByValue: true });
     console.log(result);
+  } else if (command === 'open-task') {
+    const page = await getMoguchartPage();
+    if (!page) {
+      console.error('No moguchart tab found.');
+      process.exit(1);
+    }
+    const result = await sendCdp(page.webSocketDebuggerUrl, 'Runtime.evaluate', {
+      expression: `
+        (() => {
+          const gc = document.querySelector('gantt-chart');
+          if (!gc) return 'no gantt-chart';
+          // Find task in rows if accessible, or find task in DOM
+          const root = gc.shadowRoot || gc;
+          // Look for any rect or g in svg that has data or click handler
+          // Or dispatch CustomEvent
+          // Check if gc has rows property
+          console.log('gc properties:', Object.keys(gc));
+          const rows = gc.rows || [];
+          let task = null;
+          for (const r of rows) {
+            if (r.tasks && r.tasks.length > 0) {
+              task = r.tasks[0];
+              break;
+            }
+          }
+          if (task) {
+            gc.dispatchEvent(new CustomEvent('task-dblclick', {
+              bubbles: true,
+              composed: true,
+              detail: { task }
+            }));
+            return 'Dispatched task-dblclick for task ' + task.name;
+          }
+          // fallback: find svg elements
+          const rects = Array.from(root.querySelectorAll('rect'));
+          for (const rect of rects) {
+            rect.dispatchEvent(new MouseEvent('dblclick', { bubbles: true, composed: true, cancelable: true }));
+          }
+          return 'Dispatched dblclick on ' + rects.length + ' rects';
+        })()
+      `,
+      returnByValue: true
+    });
+    console.log(result);
   } else {
     console.log('Unknown command:', command);
   }
