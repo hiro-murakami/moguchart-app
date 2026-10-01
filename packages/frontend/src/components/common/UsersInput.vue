@@ -54,8 +54,22 @@ const suggestionItems = computed(() => {
 /** 内部ルール + 外部から渡されたルールをマージ */
 const mergedRules = computed(() => [inputRules.areMailAddresses, ...(props.rules ?? [])])
 
+/** item から文字列値（ユーザーIDまたはメールアドレス）を安全に解決する */
+function resolveItemValue(item: any): string {
+  if (item == null) return ''
+  if (typeof item === 'string') return item
+  if (typeof item.value === 'string' && item.value) return item.value
+  if (typeof item.raw === 'string' && item.raw) return item.raw
+  if (item.raw && typeof item.raw === 'object' && typeof item.raw.value === 'string') return item.raw.value
+  if (typeof item.title === 'string' && item.title) return item.title
+  return String(item.value ?? item.raw ?? item.title ?? '')
+}
+
 /** チップに表示するテキストを名前解決する */
-function getDisplayText(val: string): string {
+function getDisplayText(rawVal: any): string {
+  const val = typeof rawVal === 'string' ? rawVal : resolveItemValue(rawVal)
+  if (!val) return ''
+
   // 自分自身と一致する場合
   if (userStore.currentUser && (userStore.currentUser.id === val || userStore.currentUser.email === val)) {
     if (userStore.currentUser.displayName) {
@@ -79,7 +93,12 @@ function getDisplayText(val: string): string {
 }
 
 /** ユーザー情報の詳細（表示名、メール、頭文字）を取得する */
-function getUserInfo(val: string) {
+function getUserInfo(rawVal: any) {
+  const val = typeof rawVal === 'string' ? rawVal : resolveItemValue(rawVal)
+  if (!val) {
+    return { displayName: undefined, email: undefined, initial: '?', isSelf: false }
+  }
+
   // 自分自身と一致する場合
   if (userStore.currentUser && (userStore.currentUser.id === val || userStore.currentUser.email === val)) {
     const displayName = userStore.currentUser.displayName || undefined
@@ -138,10 +157,10 @@ function handleUpdate(rawValues: (string | { title: string; value: string })[]) 
         <v-chip v-bind="chipProps" size="small" variant="tonal" class="font-weight-medium">
           <template #prepend>
             <v-avatar size="20" color="primary" class="text-white text-caption mr-1">
-              {{ getUserInfo(item.value).initial }}
+              {{ getUserInfo(item).initial }}
             </v-avatar>
           </template>
-          {{ getDisplayText(item.value) }}
+          {{ getDisplayText(item) }}
         </v-chip>
       </template>
 
@@ -149,17 +168,17 @@ function handleUpdate(rawValues: (string | { title: string; value: string })[]) 
         <v-list-item v-bind="itemProps" :title="undefined">
           <template #prepend>
             <v-avatar size="28" color="primary" class="text-white text-caption mr-2 font-weight-bold">
-              {{ getUserInfo(item.value).initial }}
+              {{ getUserInfo(item).initial }}
             </v-avatar>
           </template>
           <v-list-item-title class="font-weight-medium">
-            {{ getUserInfo(item.value).displayName || getUserInfo(item.value).email || item.value }}
-            <v-chip v-if="getUserInfo(item.value).isSelf" size="x-small" color="primary" variant="tonal" class="ml-1">
+            {{ getUserInfo(item).displayName || getUserInfo(item).email || resolveItemValue(item) }}
+            <v-chip v-if="getUserInfo(item).isSelf" size="x-small" color="primary" variant="tonal" class="ml-1">
               あなた
             </v-chip>
           </v-list-item-title>
-          <v-list-item-subtitle v-if="getUserInfo(item.value).displayName && getUserInfo(item.value).email" class="text-caption">
-            {{ getUserInfo(item.value).email }}
+          <v-list-item-subtitle v-if="getUserInfo(item).displayName && getUserInfo(item).email" class="text-caption">
+            {{ getUserInfo(item).email }}
           </v-list-item-subtitle>
         </v-list-item>
       </template>
