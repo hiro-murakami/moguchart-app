@@ -652,7 +652,7 @@ const currentInputUser = computed(() => {
       </v-table>
     </v-card>
 
-    <div class="text-caption text-medium-emphasis mt-2 px-1">
+    <div class="text-medium-emphasis mt-2 px-1 owner-note">
       ※ プロジェクトには必ず最低1人のオーナーが必要です。
     </div>
   </div>
@@ -661,5 +661,8 @@ const currentInputUser = computed(() => {
 <style scoped>
 .members-table :deep(td) {
   height: 56px !important;
+}
+.owner-note {
+  font-size: 11px;
 }
 </style>
