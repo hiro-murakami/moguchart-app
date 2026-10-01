@@ -40,6 +40,7 @@ export type FunctionName =
   | 'duplicateProject'
   | 'selectUser'
   | 'selectProjectUsers'
+  | 'selectCollaborators'
   | 'upsertUser'
   | 'getGanttDataJson'
   | 'downloadProjectZip'
@@ -497,6 +498,9 @@ export type SelectUser = (identifier: string) => Promise<User | null>
 
 /** プロジェクトに関係するユーザー一覧（権限者およびタスク担当者）を取得する関数の型 */
 export type SelectProjectUsers = (projectId: string, email?: string) => Promise<User[]>
+
+/** ユーザーが過去に関わったコラボレーター（プロジェクトメンバー・担当者）一覧を取得する関数の型 */
+export type SelectCollaborators = (param?: any, userIdentifier?: string) => Promise<User[]>
 
 /** ユーザー情報を作成または更新する関数の型 */
 export type UpsertUser = (user: User, authUid?: string) => Promise<void>

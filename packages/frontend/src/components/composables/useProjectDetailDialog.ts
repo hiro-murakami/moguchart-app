@@ -67,30 +67,35 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
     }
   }
 
-  /** 過去に入力したことのあるメールアドレス + プロジェクトメンバーを User[] 形式で返す（補完候補用） */
+  /** プロジェクトメンバー + コラボレーターを User[] 形式で返す（補完候補用） */
   const authorityHistoryUsers = computed<User[]>(() => {
-    const history = userStore.currentUser?.attribute?.authorityInputHistory ?? []
-    const historyList = history
-      .filter((entry) => typeof entry === 'string' && entry.includes('@'))
-      .map((entry) => ({
-        id: entry,
-        email: entry,
-        attribute: {},
-      }))
-
     const userMap = new Map<string, User>()
+    // 1. プロジェクトメンバー
     for (const u of projectUsers.value) {
       if (u.email) userMap.set(u.email, u)
       if (u.id) userMap.set(u.id, u)
     }
-    for (const u of historyList) {
+    // 2. 過去に関わったコラボレーター
+    for (const u of userStore.collaborators) {
       const key = u.email || u.id
       if (key && !userMap.has(key)) {
         userMap.set(key, u)
       }
     }
+    // 3. 過去の履歴フォールバック
+    const history = userStore.currentUser?.attribute?.authorityInputHistory ?? []
+    for (const entry of history) {
+      if (typeof entry === 'string' && entry.includes('@') && !userMap.has(entry)) {
+        userMap.set(entry, {
+          id: entry,
+          email: entry,
+          attribute: {},
+        })
+      }
+    }
     return Array.from(new Set(userMap.values()))
   })
+
 
   const isEdit = computed(() => !!props.project)
   const title = computed(() => {
@@ -346,29 +351,11 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
       projectData.id = props.project.id
     }
 
-    // 入力されたメールアドレスを履歴に追記して永続化（メールアドレスのみを対象としUIDを除外）
-    if (userStore.currentUser) {
-      const inputEmails = [...localOwners.value, ...localEditors.value, ...localViewers.value].filter(
-        (val) => typeof val === 'string' && val.includes('@'),
-      )
-      if (inputEmails.length > 0) {
-        const existingHistory = (userStore.currentUser.attribute?.authorityInputHistory ?? []).filter((val) =>
-          val.includes('@'),
-        )
-        const merged = Array.from(new Set([...existingHistory, ...inputEmails]))
-        const updatedUser = {
-          ...userStore.currentUser,
-          attribute: {
-            ...userStore.currentUser.attribute,
-            authorityInputHistory: merged,
-          },
-        }
-        await upsertUser(updatedUser)
-        userStore.user = updatedUser
-      }
-    }
+    // コラボレーター一覧をバックグラウンドで最新化
+    userStore.fetchCollaborators().catch(() => {})
 
     emit('save', projectData, props.isDuplicate ? { clearProgress: localClearProgress.value } : undefined)
+
   }
 
   /** 連打防止: 最初のクリックのみ即実行、300ms以内の再クリックは無視 */

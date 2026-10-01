@@ -15,8 +15,6 @@ const props = defineProps<{
   isDuplicate?: boolean
 }>()
 
-const showAuthorityHistoryDialog = ref(false)
-
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
   (e: 'save', project: Partial<Project>, options?: { clearProgress?: boolean }): void
@@ -403,20 +401,9 @@ watch(
                         :users="projectUsers"
                       />
                     </v-col>
-                    <v-col cols="12" class="pt-2">
-                      <v-btn
-                        variant="text"
-                        prepend-icon="mdi-history"
-                        color="primary"
-                        size="small"
-                        @click="showAuthorityHistoryDialog = true"
-                      >
-                        メールアドレス履歴を管理
-                      </v-btn>
-                    </v-col>
                   </v-row>
-                  <AuthorityHistoryDialog v-model="showAuthorityHistoryDialog" />
                 </v-window-item>
+
                 <v-window-item value="colorPalettes">
                   <v-row density="compact">
                     <v-col cols="12">

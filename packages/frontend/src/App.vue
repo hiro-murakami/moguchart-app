@@ -18,7 +18,6 @@ const router = useRouter()
 const { firebaseUser, currentTheme, versionUpdated } = storeToRefs(userStore)
 const showUserDetail = ref(false)
 const showManual = ref(false)
-const showAuthorityHistory = ref(false)
 const showReleaseNotes = ref(false)
 const showApiKeyManage = ref(false)
 
@@ -144,7 +143,6 @@ const shouldShowLoginPrompt = computed(() => {
         <AppUserMenu
           v-else
           v-model:show-user-detail="showUserDetail"
-          v-model:show-authority-history="showAuthorityHistory"
           v-model:show-release-notes="showReleaseNotes"
           v-model:show-api-key-manage="showApiKeyManage"
         />
@@ -153,11 +151,11 @@ const shouldShowLoginPrompt = computed(() => {
         <router-view v-if="shouldShowRouterView" />
         <LoginPrompt v-else-if="shouldShowLoginPrompt" />
         <UserDetailDialog v-model="showUserDetail" />
-        <AuthorityHistoryDialog v-model="showAuthorityHistory" />
         <OperationManualDrawer v-model="showManual" />
         <ReleaseNotesDialog v-model="showReleaseNotes" />
         <ApiKeyManageDialog v-model="showApiKeyManage" />
       </v-main>
+
       <v-overlay v-model="isLoading" class="align-center justify-center" persistent>
         <v-progress-circular indeterminate size="64" />
       </v-overlay>

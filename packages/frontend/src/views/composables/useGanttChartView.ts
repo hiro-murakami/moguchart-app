@@ -125,13 +125,22 @@ export const useGanttChartView = () => {
       }))
   })
 
-  /** タスク編集ダイアログや担当者補完で使用するユーザー一覧（プロジェクトメンバー＋入力履歴） */
+  /** タスク編集ダイアログや担当者補完で使用するユーザー一覧（プロジェクトメンバー＋過去のコラボレーター） */
   const taskUsers = computed<User[]>(() => {
     const userMap = new Map<string, User>()
+    // 1. 現在のプロジェクトメンバー
     for (const u of projectUsers.value) {
       if (u.email) userMap.set(u.email, u)
       if (u.id) userMap.set(u.id, u)
     }
+    // 2. 過去に関わったコラボレーター
+    for (const u of userStore.collaborators) {
+      const key = u.email || u.id
+      if (key && !userMap.has(key)) {
+        userMap.set(key, u)
+      }
+    }
+    // 3. 過去の履歴フォールバック
     for (const u of authorityHistoryUsers.value) {
       const key = u.email || u.id
       if (key && !userMap.has(key)) {
@@ -140,6 +149,7 @@ export const useGanttChartView = () => {
     }
     return Array.from(new Set(userMap.values()))
   })
+
 
   /** UID や Email から表示名（displayName）を解決する関数 */
   const resolveUserDisplayName = (identifier: string): string => {
@@ -2641,28 +2651,12 @@ export const useGanttChartView = () => {
       }
     }
 
-    // 担当者のメールアドレスを履歴に追記して永続化（UID等の識別子は除外）
-    if (userStore.currentUser && taskData.assignees && taskData.assignees.length > 0) {
-      const validEmails = taskData.assignees.filter((val) => typeof val === 'string' && val.includes('@'))
-      if (validEmails.length > 0) {
-        const existingHistory = (userStore.currentUser.attribute?.authorityInputHistory ?? []).filter((val) =>
-          val.includes('@'),
-        )
-        const merged = Array.from(new Set([...existingHistory, ...validEmails]))
-        const updatedUser = {
-          ...userStore.currentUser,
-          attribute: {
-            ...userStore.currentUser.attribute,
-            authorityInputHistory: merged,
-          },
-        }
-        await upsertUser(updatedUser)
-        userStore.user = updatedUser
-      }
-    }
+    // コラボレーター一覧をバックグラウンドで最新化
+    userStore.fetchCollaborators().catch(() => {})
 
     // ダイアログを閉じる
     isDialogVisible.value = false
+
     // 編集中タスクの通知を解除
     updateEditingTasks([])
 

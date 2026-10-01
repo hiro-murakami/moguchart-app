@@ -8,7 +8,6 @@ const projectStore = useProjectStore()
 const { user: appUser, firebaseUser } = storeToRefs(userStore)
 
 const showUserDetail = defineModel<boolean>('showUserDetail', { required: true })
-const showAuthorityHistory = defineModel<boolean>('showAuthorityHistory', { required: true })
 const showReleaseNotes = defineModel<boolean>('showReleaseNotes', { required: true })
 const showApiKeyManage = defineModel<boolean>('showApiKeyManage', { required: true })
 </script>
@@ -65,12 +64,10 @@ const showApiKeyManage = defineModel<boolean>('showApiKeyManage', { required: tr
         <v-list-item prepend-icon="mdi-account-cog" @click="showUserDetail = true">
           <v-list-item-title>ユーザー設定</v-list-item-title>
         </v-list-item>
-        <v-list-item prepend-icon="mdi-history" @click="showAuthorityHistory = true">
-          <v-list-item-title>メールアドレス履歴</v-list-item-title>
-        </v-list-item>
         <v-list-item prepend-icon="mdi-note-text-outline" @click="showReleaseNotes = true">
           <v-list-item-title>リリースノート</v-list-item-title>
         </v-list-item>
+
         <v-list-item prepend-icon="mdi-key-variant" @click="showApiKeyManage = true">
           <v-list-item-title>APIキー管理</v-list-item-title>
         </v-list-item>

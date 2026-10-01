@@ -135,7 +135,7 @@ function cleanIdentifiers(list: string[], member: MemberItem): string[] {
   })
 }
 
-/** 入力補完候補 */
+/** 入力補完候補（過去に関わったコラボレーターおよびプロジェクト関係者から自動抽出） */
 const suggestionItems = computed(() => {
   const currentIds = new Set([
     ...props.owners,
@@ -151,37 +151,49 @@ const suggestionItems = computed(() => {
     photoURL?: string | null
   }[] = []
 
-  // 1. 履歴ユーザー
-  const history = userStore.currentUser?.attribute?.authorityInputHistory ?? []
-  for (const email of history) {
-    if (typeof email === 'string' && email.includes('@') && !currentIds.has(email)) {
-      candidates.push({ title: email, value: email })
-    }
+  const addCandidate = (u: { id?: string; email?: string; displayName?: string; photoURL?: string | null }) => {
+    const val = u.email || u.id
+    if (!val || currentIds.has(val) || (u.id && currentIds.has(u.id))) return
+    if (candidates.some((c) => c.value === val || (u.id && c.value === u.id))) return
+
+    const title = u.displayName
+      ? u.email
+        ? `${u.displayName} (${u.email})`
+        : u.displayName
+      : u.email || u.id || ''
+
+    candidates.push({
+      title,
+      value: val,
+      displayName: u.displayName || undefined,
+      email: u.email || (val.includes('@') ? val : undefined),
+      photoURL: u.photoURL || undefined,
+    })
   }
 
-  // 2. プロジェクト関係者
+  // 1. 過去に関わったコラボレーター（自動サジェスト）
+  for (const c of userStore.collaborators) {
+    addCandidate({
+      id: c.id,
+      email: c.email,
+      displayName: c.displayName,
+      photoURL: c.attribute?.photoURL,
+    })
+  }
+
+  // 2. 現在のプロジェクト関係者
   for (const u of props.users ?? []) {
-    const val = u.email || u.id
-    if (val && !currentIds.has(val) && !currentIds.has(u.id)) {
-      const title = u.displayName
-        ? u.email
-          ? `${u.displayName} (${u.email})`
-          : u.displayName
-        : u.email || u.id
-      if (!candidates.some((c) => c.value === val)) {
-        candidates.push({
-          title,
-          value: val,
-          displayName: u.displayName || undefined,
-          email: u.email || (u.id?.includes('@') ? u.id : undefined),
-          photoURL: u.attribute?.photoURL || undefined,
-        })
-      }
-    }
+    addCandidate({
+      id: u.id,
+      email: u.email,
+      displayName: u.displayName,
+      photoURL: u.attribute?.photoURL,
+    })
   }
 
   return candidates
 })
+
 
 /** 候補アイテムの情報を安全に取得する */
 function getCandidateInfo(item: any) {

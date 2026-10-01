@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { VERSION, type User, type TutorialKey } from '@functions/types/shared'
-import { selectUser, upsertUser } from '@/modules/scripts'
+import { selectUser, upsertUser, selectCollaborators } from '@/modules/scripts'
 import {
   signInWithPopup,
   signInAnonymously,
@@ -17,6 +17,8 @@ export const useUserStore = defineStore('user', {
   state: () => ({
     user: null as User | null,
     firebaseUser: null as FirebaseUser | null,
+    /** 過去に関わったコラボレーター（補完候補用） */
+    collaborators: [] as User[],
     /** バージョンが更新されたかどうか（初回ログイン時はfalse） */
     versionUpdated: false,
     /** プロジェクト一覧ダイアログの自動表示を抑制するフラグ（匿名ログイン後の案内ダイアログ表示中に使用） */
@@ -139,15 +141,51 @@ export const useUserStore = defineStore('user', {
           if (this.user) {
             await this.saveUser(this.user)
           }
+          // コラボレーター一覧を自動取得
+          await this.fetchCollaborators()
         } else {
           this.clear()
         }
       })
     },
 
+    /** 過去に関わったコラボレーター一覧を取得（過去の入力履歴もフォールバック統合） */
+    async fetchCollaborators() {
+      if (!this.firebaseUser) return
+      try {
+        const fetched = await selectCollaborators()
+        const userMap = new Map<string, User>()
+
+        // 1. バックエンドから取得した本物のコラボレーター
+        for (const u of fetched || []) {
+          const key = u.email || u.id
+          if (key) {
+            userMap.set(key, u)
+          }
+        }
+
+        // 2. 過去の authorityInputHistory にあるメールアドレスのフォールバック
+        const history = this.user?.attribute?.authorityInputHistory ?? []
+        for (const item of history) {
+          if (typeof item === 'string' && item.includes('@') && !userMap.has(item)) {
+            userMap.set(item, {
+              id: item,
+              email: item,
+              attribute: {},
+            })
+          }
+        }
+
+        this.collaborators = Array.from(userMap.values())
+      } catch (e) {
+        console.warn('[useUserStore] Failed to fetch collaborators:', e)
+      }
+    },
+
     clear() {
       this.user = null
       this.firebaseUser = null
+      this.collaborators = []
     },
 
     setSuppressProjectList(value: boolean) {
@@ -155,3 +193,4 @@ export const useUserStore = defineStore('user', {
     },
   },
 })
+

@@ -13,6 +13,7 @@ import type {
   SelectProjects,
   SelectUser,
   SelectProjectUsers,
+  SelectCollaborators,
   UpdateGanttRowOrder,
   UpsertGanttRow,
   UpsertGanttTasks,
@@ -118,6 +119,10 @@ export const selectUser: SelectUser = (email) => {
 
 export const selectProjectUsers: SelectProjectUsers = (projectId) => {
   return callFunction<User[]>('selectProjectUsers', projectId)
+}
+
+export const selectCollaborators: SelectCollaborators = () => {
+  return callFunction<User[]>('selectCollaborators')
 }
 
 export const upsertUser: UpsertUser = (user) => {
