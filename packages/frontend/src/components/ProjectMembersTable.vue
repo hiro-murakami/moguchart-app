@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { useUserStore } from '@/stores/useUserStore'
 import inputRules from '@/modules/inputRules'
+import UserAvatar from '@/components/common/UserAvatar.vue'
 import type { User, Role } from '@functions/types/shared'
 
 const props = defineProps<{
@@ -35,6 +36,7 @@ interface MemberItem {
   role: Role
   displayName?: string
   email?: string
+  photoURL?: string | null
   isCurrentUser: boolean
 }
 
@@ -53,6 +55,10 @@ const memberItems = computed<MemberItem[]>(() => {
         role,
         displayName: userStore.currentUser.displayName || undefined,
         email: userStore.currentUser.email || (id.includes('@') ? id : undefined),
+        photoURL:
+          userStore.currentUser.attribute?.photoURL ||
+          userStore.firebaseUser?.photoURL ||
+          undefined,
         isCurrentUser: true,
       }
     }
@@ -66,6 +72,7 @@ const memberItems = computed<MemberItem[]>(() => {
         role,
         displayName: matchedUser.displayName || undefined,
         email: matchedUser.email || (id.includes('@') ? id : undefined),
+        photoURL: matchedUser.attribute?.photoURL || undefined,
         isCurrentUser: false,
       }
     }
@@ -74,6 +81,7 @@ const memberItems = computed<MemberItem[]>(() => {
       id,
       role,
       email: id.includes('@') ? id : undefined,
+      photoURL: undefined,
       isCurrentUser: false,
     }
   }
@@ -92,6 +100,7 @@ const memberItems = computed<MemberItem[]>(() => {
       if (existing) {
         if (!existing.email && item.email) existing.email = item.email
         if (!existing.displayName && item.displayName) existing.displayName = item.displayName
+        if (!existing.photoURL && item.photoURL) existing.photoURL = item.photoURL
       }
     }
   }
@@ -134,7 +143,13 @@ const suggestionItems = computed(() => {
     ...props.viewers,
   ])
 
-  const candidates: { title: string; value: string }[] = []
+  const candidates: {
+    title: string
+    value: string
+    displayName?: string
+    email?: string
+    photoURL?: string | null
+  }[] = []
 
   // 1. 履歴ユーザー
   const history = userStore.currentUser?.attribute?.authorityInputHistory ?? []
@@ -154,13 +169,29 @@ const suggestionItems = computed(() => {
           : u.displayName
         : u.email || u.id
       if (!candidates.some((c) => c.value === val)) {
-        candidates.push({ title, value: val })
+        candidates.push({
+          title,
+          value: val,
+          displayName: u.displayName || undefined,
+          email: u.email || (u.id?.includes('@') ? u.id : undefined),
+          photoURL: u.attribute?.photoURL || undefined,
+        })
       }
     }
   }
 
   return candidates
 })
+
+/** 候補アイテムの情報を安全に取得する */
+function getCandidateInfo(item: any) {
+  const raw = item?.raw || item || {}
+  const displayName = raw.displayName || undefined
+  const email = raw.email || (typeof raw.value === 'string' && raw.value.includes('@') ? raw.value : undefined)
+  const photoURL = raw.photoURL || undefined
+  const title = displayName || email || raw.title || raw.value || ''
+  return { displayName, email, photoURL, title }
+}
 
 /** メンバーのロールを変更する */
 function changeRole(member: MemberItem, newRole: Role) {
@@ -288,6 +319,8 @@ function getRoleColor(role: Role): string {
           <v-combobox
             v-model="newMemberInput"
             :items="suggestionItems"
+            item-title="title"
+            item-value="value"
             label="メールアドレスを入力または選択"
             placeholder="user@example.com"
             density="compact"
@@ -297,7 +330,27 @@ function getRoleColor(role: Role): string {
             autocomplete="off"
             :rules="[inputRules.isMailAddress]"
             @keydown.enter.prevent="addMember"
-          />
+          >
+            <template #item="{ props: itemProps, item }">
+              <v-list-item v-bind="itemProps" :title="undefined">
+                <template #prepend>
+                  <UserAvatar
+                    size="28"
+                    color="primary"
+                    class="mr-2"
+                    :url="getCandidateInfo(item).photoURL"
+                    :name="getCandidateInfo(item).title"
+                  />
+                </template>
+                <v-list-item-title class="font-weight-medium">
+                  {{ getCandidateInfo(item).title }}
+                </v-list-item-title>
+                <v-list-item-subtitle v-if="getCandidateInfo(item).displayName && getCandidateInfo(item).email" class="text-caption">
+                  {{ getCandidateInfo(item).email }}
+                </v-list-item-subtitle>
+              </v-list-item>
+            </template>
+          </v-combobox>
         </v-col>
         <v-col cols="7" sm="3">
           <v-select
@@ -339,13 +392,13 @@ function getRoleColor(role: Role): string {
             <!-- メンバー情報（アバター＋名前＋メール） -->
             <td class="py-2">
               <div class="d-flex align-center">
-                <v-avatar
+                <UserAvatar
                   size="32"
                   :color="getRoleColor(item.role)"
-                  class="text-white text-caption font-weight-bold mr-3"
-                >
-                  {{ getAvatarInitial(item) }}
-                </v-avatar>
+                  class="mr-3"
+                  :url="item.photoURL"
+                  :name="item.displayName || item.email || item.id"
+                />
                 <div class="d-flex flex-column text-truncate">
                   <div class="d-flex align-center">
                     <span class="font-weight-medium text-body-2 text-truncate">
