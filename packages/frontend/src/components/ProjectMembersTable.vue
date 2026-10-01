@@ -45,42 +45,67 @@ const memberItems = computed<MemberItem[]>(() => {
   const list: MemberItem[] = []
 
   const resolveUserInfo = (id: string, role: Role): MemberItem => {
-    const isCurrentUser =
-      !!userStore.currentUser &&
-      (userStore.currentUser.id === id || userStore.currentUser.email === id)
+    const cleanId = id.trim()
+    const lowerId = cleanId.toLowerCase()
 
-    if (isCurrentUser && userStore.currentUser) {
+    const myUid = userStore.firebaseUser?.uid || userStore.currentUser?.id
+    const myEmail = (userStore.firebaseUser?.email || userStore.currentUser?.email)?.toLowerCase().trim()
+
+    const isCurrentUser =
+      (!!myUid && myUid.toLowerCase() === lowerId) ||
+      (!!myEmail && myEmail === lowerId)
+
+    if (isCurrentUser) {
       return {
-        id,
+        id: cleanId,
         role,
-        displayName: userStore.currentUser.displayName || undefined,
-        email: userStore.currentUser.email || (id.includes('@') ? id : undefined),
+        displayName: userStore.currentUser?.displayName || userStore.firebaseUser?.displayName || undefined,
+        email: userStore.currentUser?.email || userStore.firebaseUser?.email || (cleanId.includes('@') ? cleanId : undefined),
         photoURL:
-          userStore.currentUser.attribute?.photoURL ||
           userStore.firebaseUser?.photoURL ||
+          userStore.currentUser?.attribute?.photoURL ||
           undefined,
         isCurrentUser: true,
       }
     }
 
     const matchedUser = (props.users ?? []).find(
-      (u) => u.id === id || u.email === id,
+      (u) =>
+        (u.id && u.id.toLowerCase().trim() === lowerId) ||
+        (u.email && u.email.toLowerCase().trim() === lowerId),
     )
     if (matchedUser) {
       return {
-        id,
+        id: cleanId,
         role,
         displayName: matchedUser.displayName || undefined,
-        email: matchedUser.email || (id.includes('@') ? id : undefined),
-        photoURL: matchedUser.attribute?.photoURL || undefined,
+        email: matchedUser.email || (cleanId.includes('@') ? cleanId : undefined),
+        photoURL: matchedUser.attribute?.photoURL || (matchedUser as any).photoURL || undefined,
+        isCurrentUser: false,
+      }
+    }
+
+    // コラボレーター一覧からもフォールバック検索
+    const matchedCollaborator = userStore.collaborators.find(
+      (c) =>
+        (c.id && c.id.toLowerCase().trim() === lowerId) ||
+        (c.email && c.email.toLowerCase().trim() === lowerId),
+    )
+    if (matchedCollaborator) {
+      return {
+        id: cleanId,
+        role,
+        displayName: matchedCollaborator.displayName || undefined,
+        email: matchedCollaborator.email || (cleanId.includes('@') ? cleanId : undefined),
+        photoURL: matchedCollaborator.attribute?.photoURL || (matchedCollaborator as any).photoURL || undefined,
         isCurrentUser: false,
       }
     }
 
     return {
-      id,
+      id: cleanId,
       role,
-      email: id.includes('@') ? id : undefined,
+      email: cleanId.includes('@') ? cleanId : undefined,
       photoURL: undefined,
       isCurrentUser: false,
     }
@@ -89,7 +114,7 @@ const memberItems = computed<MemberItem[]>(() => {
   const addUnique = (item: MemberItem) => {
     const existingIndex = list.findIndex((m) => {
       if (m.id === item.id) return true
-      if (m.email && item.email && m.email === item.email) return true
+      if (m.email && item.email && m.email.toLowerCase() === item.email.toLowerCase()) return true
       if (m.isCurrentUser && item.isCurrentUser) return true
       return false
     })
@@ -125,11 +150,18 @@ const ownerCount = computed(
 
 /** ユーザーに関連するID（UIDとメール）をリストから除外するヘルパー */
 function cleanIdentifiers(list: string[], member: MemberItem): string[] {
-  return list.filter((id) => {
-    if (id === member.id) return false
-    if (member.email && id === member.email) return false
-    if (member.isCurrentUser && userStore.currentUser) {
-      if (id === userStore.currentUser.id || id === userStore.currentUser.email) return false
+  const memberEmail = member.email?.toLowerCase().trim()
+  const memberId = member.id.toLowerCase().trim()
+  const myUid = (userStore.firebaseUser?.uid || userStore.currentUser?.id)?.toLowerCase().trim()
+  const myEmail = (userStore.firebaseUser?.email || userStore.currentUser?.email)?.toLowerCase().trim()
+
+  return list.filter((rawId) => {
+    const id = rawId.toLowerCase().trim()
+    if (id === memberId) return false
+    if (memberEmail && id === memberEmail) return false
+    if (member.isCurrentUser) {
+      if (myUid && id === myUid) return false
+      if (myEmail && id === myEmail) return false
     }
     return true
   })
@@ -137,11 +169,18 @@ function cleanIdentifiers(list: string[], member: MemberItem): string[] {
 
 /** 入力補完候補（過去に関わったコラボレーターおよびプロジェクト関係者から自動抽出） */
 const suggestionItems = computed(() => {
-  const currentIds = new Set([
-    ...props.owners,
-    ...props.editors,
-    ...props.viewers,
-  ])
+  // すでにテーブルに登録されているメンバーの識別子セット（小文字）
+  const memberIdentifierSet = new Set<string>()
+  for (const item of memberItems.value) {
+    if (item.id) memberIdentifierSet.add(item.id.toLowerCase().trim())
+    if (item.email) memberIdentifierSet.add(item.email.toLowerCase().trim())
+  }
+  for (const id of [...props.owners, ...props.editors, ...props.viewers]) {
+    if (id) memberIdentifierSet.add(id.toLowerCase().trim())
+  }
+
+  const myUid = userStore.firebaseUser?.uid || userStore.currentUser?.id
+  const myEmail = (userStore.firebaseUser?.email || userStore.currentUser?.email)?.toLowerCase().trim()
 
   const candidates: {
     title: string
@@ -152,22 +191,73 @@ const suggestionItems = computed(() => {
   }[] = []
 
   const addCandidate = (u: { id?: string; email?: string; displayName?: string; photoURL?: string | null }) => {
-    const val = u.email || u.id
-    if (!val || currentIds.has(val) || (u.id && currentIds.has(u.id))) return
-    if (candidates.some((c) => c.value === val || (u.id && c.value === u.id))) return
+    const val = (u.email || u.id || '').trim()
+    if (!val) return
 
-    const title = u.displayName
-      ? u.email
-        ? `${u.displayName} (${u.email})`
-        : u.displayName
-      : u.email || u.id || ''
+    const lowerVal = val.toLowerCase()
+    const lowerId = u.id?.toLowerCase().trim()
+    const lowerEmail = u.email?.toLowerCase().trim()
+
+    // 既にプロジェクトのメンバーに含まれている場合は候補に出さない
+    if (memberIdentifierSet.has(lowerVal)) return
+    if (lowerId && memberIdentifierSet.has(lowerId)) return
+    if (lowerEmail && memberIdentifierSet.has(lowerEmail)) return
+
+    // 候補リスト内の重複防止
+    if (
+      candidates.some((c) => {
+        const cVal = c.value.toLowerCase().trim()
+        const cEmail = c.email?.toLowerCase().trim()
+        return cVal === lowerVal || (lowerEmail && cVal === lowerEmail) || (cEmail && cEmail === lowerVal)
+      })
+    ) {
+      return
+    }
+
+    // 自分自身と一致するか判定
+    const isSelf =
+      (!!myUid && (lowerId === myUid.toLowerCase() || lowerVal === myUid.toLowerCase())) ||
+      (!!myEmail && (lowerEmail === myEmail || lowerVal === myEmail))
+
+    let displayName = u.displayName || undefined
+    let email = u.email || (val.includes('@') ? val : undefined)
+    let photoURL = u.photoURL || undefined
+
+    if (isSelf) {
+      displayName = userStore.currentUser?.displayName || userStore.firebaseUser?.displayName || displayName
+      email = userStore.currentUser?.email || userStore.firebaseUser?.email || email
+      photoURL = userStore.firebaseUser?.photoURL || userStore.currentUser?.attribute?.photoURL || photoURL
+    }
+
+    // 他ユーザーでも、より詳細な情報（props.users または userStore.collaborators）があればマージ
+    if (!photoURL || !displayName) {
+      const allKnown = [...(props.users ?? []), ...userStore.collaborators]
+      const found = allKnown.find((other) => {
+        const oId = other.id?.toLowerCase().trim()
+        const oEmail = other.email?.toLowerCase().trim()
+        if (oId && (oId === lowerVal || (lowerId && oId === lowerId))) return true
+        if (oEmail && (oEmail === lowerVal || (lowerEmail && oEmail === lowerEmail))) return true
+        return false
+      })
+      if (found) {
+        if (!displayName && found.displayName) displayName = found.displayName
+        if (!email && found.email) email = found.email
+        if (!photoURL && found.attribute?.photoURL) photoURL = found.attribute.photoURL
+      }
+    }
+
+    const title = displayName
+      ? email
+        ? `${displayName} (${email})`
+        : displayName
+      : email || val
 
     candidates.push({
       title,
-      value: val,
-      displayName: u.displayName || undefined,
-      email: u.email || (val.includes('@') ? val : undefined),
-      photoURL: u.photoURL || undefined,
+      value: email || val,
+      displayName,
+      email,
+      photoURL,
     })
   }
 
@@ -177,7 +267,7 @@ const suggestionItems = computed(() => {
       id: c.id,
       email: c.email,
       displayName: c.displayName,
-      photoURL: c.attribute?.photoURL,
+      photoURL: c.attribute?.photoURL || (c as any).photoURL,
     })
   }
 
@@ -187,21 +277,52 @@ const suggestionItems = computed(() => {
       id: u.id,
       email: u.email,
       displayName: u.displayName,
-      photoURL: u.attribute?.photoURL,
+      photoURL: u.attribute?.photoURL || (u as any).photoURL,
     })
   }
 
   return candidates
 })
 
-
 /** 候補アイテムの情報を安全に取得する */
 function getCandidateInfo(item: any) {
   const raw = item?.raw || item || {}
-  const displayName = raw.displayName || undefined
-  const email = raw.email || (typeof raw.value === 'string' && raw.value.includes('@') ? raw.value : undefined)
-  const photoURL = raw.photoURL || undefined
+  let displayName = raw.displayName || undefined
+  let email = raw.email || (typeof raw.value === 'string' && raw.value.includes('@') ? raw.value : undefined)
+  let photoURL = raw.photoURL || raw.attribute?.photoURL || undefined
   const title = displayName || email || raw.title || raw.value || ''
+
+  const myUid = userStore.firebaseUser?.uid || userStore.currentUser?.id
+  const myEmail = (userStore.firebaseUser?.email || userStore.currentUser?.email)?.toLowerCase().trim()
+
+  const rawVal = typeof raw.value === 'string' ? raw.value.toLowerCase().trim() : ''
+  const rawEmail = typeof email === 'string' ? email.toLowerCase().trim() : ''
+  const isSelf =
+    (!!myUid && (rawVal === myUid.toLowerCase() || (raw.id && String(raw.id).toLowerCase() === myUid.toLowerCase()))) ||
+    (!!myEmail && (rawEmail === myEmail || rawVal === myEmail))
+
+  if (isSelf) {
+    displayName = userStore.currentUser?.displayName || userStore.firebaseUser?.displayName || displayName
+    email = userStore.currentUser?.email || userStore.firebaseUser?.email || email
+    photoURL = userStore.firebaseUser?.photoURL || userStore.currentUser?.attribute?.photoURL || photoURL
+  }
+
+  // 他ユーザーでも photoURL が空なら既知のリストから補完
+  if (!photoURL) {
+    const allKnown = [...(props.users ?? []), ...userStore.collaborators]
+    const found = allKnown.find((other) => {
+      const oId = other.id?.toLowerCase().trim()
+      const oEmail = other.email?.toLowerCase().trim()
+      if (rawVal && oId && oId === rawVal) return true
+      if (rawEmail && oEmail && oEmail === rawEmail) return true
+      if (rawVal && oEmail && oEmail === rawVal) return true
+      return false
+    })
+    if (found?.attribute?.photoURL) {
+      photoURL = found.attribute.photoURL
+    }
+  }
+
   return { displayName, email, photoURL, title }
 }
 
@@ -303,6 +424,55 @@ function getRoleColor(role: Role): string {
       return 'grey'
   }
 }
+
+/** 現在入力または選択されている値に対応するユーザー情報 */
+const currentInputUser = computed(() => {
+  const raw = newMemberInput.value
+  const val = (
+    typeof raw === 'object' && raw !== null
+      ? (raw as any).value || (raw as any).email || (raw as any).id || (raw as any).title || ''
+      : String(raw || '')
+  ).trim()
+
+  if (!val) return null
+
+  const lowerVal = val.toLowerCase()
+  const myUid = (userStore.firebaseUser?.uid || userStore.currentUser?.id)?.toLowerCase().trim()
+  const myEmail = (userStore.firebaseUser?.email || userStore.currentUser?.email)?.toLowerCase().trim()
+
+  if ((myUid && lowerVal === myUid) || (myEmail && lowerVal === myEmail)) {
+    return {
+      displayName: userStore.currentUser?.displayName || userStore.firebaseUser?.displayName,
+      email: userStore.currentUser?.email || userStore.firebaseUser?.email,
+      photoURL: userStore.firebaseUser?.photoURL || userStore.currentUser?.attribute?.photoURL || undefined,
+    }
+  }
+
+  const allKnown = [...(props.users ?? []), ...userStore.collaborators]
+  const found = allKnown.find((u) => {
+    if (u.id && u.id.toLowerCase().trim() === lowerVal) return true
+    if (u.email && u.email.toLowerCase().trim() === lowerVal) return true
+    return false
+  })
+
+  if (found) {
+    return {
+      displayName: found.displayName,
+      email: found.email,
+      photoURL: found.attribute?.photoURL || (found as any).photoURL || undefined,
+    }
+  }
+
+  if (val.includes('@')) {
+    return {
+      displayName: undefined,
+      email: val,
+      photoURL: undefined,
+    }
+  }
+
+  return null
+})
 </script>
 
 <template>
@@ -343,6 +513,17 @@ function getRoleColor(role: Role): string {
             :rules="[inputRules.isMailAddress]"
             @keydown.enter.prevent="addMember"
           >
+            <template #prepend-inner>
+              <UserAvatar
+                v-if="currentInputUser"
+                size="22"
+                color="primary"
+                class="mr-1"
+                :url="currentInputUser.photoURL"
+                :name="currentInputUser.displayName || currentInputUser.email"
+              />
+              <v-icon v-else icon="mdi-email-outline" size="small" class="mr-1 text-medium-emphasis" />
+            </template>
             <template #item="{ props: itemProps, item }">
               <v-list-item v-bind="itemProps" :title="undefined">
                 <template #prepend>

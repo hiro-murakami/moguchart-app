@@ -115,6 +115,25 @@ const selectCollaborators: SelectCollaborators = async (_, userIdentifier?: stri
     }
   }
 
+  // 5. ログインユーザー自身の authorityInputHistory に含まれるメールアドレスも追加（DBから最新ユーザー情報を解決するため）
+  const currentUserRecord = await prisma.user.findFirst({
+    where: {
+      OR: [
+        ...(userId ? [{ id: userId }] : []),
+        ...(userEmail ? [{ email: userEmail }] : []),
+        { id: userIdentifier },
+        { email: userIdentifier },
+      ],
+    },
+    select: { attribute: true },
+  })
+  const history = (currentUserRecord?.attribute as UserAttribute)?.authorityInputHistory || []
+  for (const item of history) {
+    if (typeof item === 'string' && item.includes('@')) {
+      candidateIdentifierSet.add(item.trim())
+    }
+  }
+
   // 自分自身を除外
   for (const id of identifiers) {
     candidateIdentifierSet.delete(id)

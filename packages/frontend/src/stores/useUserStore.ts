@@ -156,8 +156,15 @@ export const useUserStore = defineStore('user', {
         const fetched = await selectCollaborators()
         const userMap = new Map<string, User>()
 
+        const myEmail = this.firebaseUser.email?.toLowerCase().trim()
+        const myUid = this.firebaseUser.uid
+
         // 1. バックエンドから取得した本物のコラボレーター
         for (const u of fetched || []) {
+          const lowerEmail = u.email?.toLowerCase().trim()
+          if (u.id === myUid || (lowerEmail && lowerEmail === myEmail)) {
+            continue
+          }
           const key = u.email || u.id
           if (key) {
             userMap.set(key, u)
@@ -167,12 +174,18 @@ export const useUserStore = defineStore('user', {
         // 2. 過去の authorityInputHistory にあるメールアドレスのフォールバック
         const history = this.user?.attribute?.authorityInputHistory ?? []
         for (const item of history) {
-          if (typeof item === 'string' && item.includes('@') && !userMap.has(item)) {
-            userMap.set(item, {
-              id: item,
-              email: item,
-              attribute: {},
-            })
+          if (typeof item === 'string' && item.includes('@')) {
+            const lowerItem = item.toLowerCase().trim()
+            if (lowerItem === myEmail || item === myUid) {
+              continue
+            }
+            if (!userMap.has(item) && !userMap.has(lowerItem)) {
+              userMap.set(item, {
+                id: item,
+                email: item,
+                attribute: {},
+              })
+            }
           }
         }
 
