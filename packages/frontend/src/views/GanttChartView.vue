@@ -805,6 +805,7 @@ const handleOpenSlideSchedule = async () => {
   background: rgb(var(--v-theme-surface));
   color: rgb(var(--v-theme-on-surface));
   border: 1px solid #007bff;
+  border-radius: 4px;
   padding: 0 6px;
   z-index: 1000;
   font-size: 14px;

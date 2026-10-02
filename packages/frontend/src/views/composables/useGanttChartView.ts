@@ -3272,15 +3272,26 @@ export const useGanttChartView = () => {
       editingRowName.value = row.name
 
       if (target) {
-        const targetRect = (target as HTMLElement).getBoundingClientRect()
+        const targetEl = target as HTMLElement
+        const targetRect = targetEl.getBoundingClientRect()
+        const contentEl =
+          (detail as any).contentTarget ||
+          targetEl.querySelector?.('.row-header-content') ||
+          targetEl
+        const contentRect = (contentEl as HTMLElement).getBoundingClientRect()
+
+        // 行名コンテンツ（インデント後）の領域にテキストボックスを上寄せで配置
+        const left = contentRect.left
+        const width = Math.max(targetRect.right - left - 4, 100)
+        const top = targetRect.top + 2
+        const inputHeight = Math.min(barHeight.value, 30)
 
         // Use fixed positioning relative to the viewport
         editingInputStyle.value = {
-          top: `${targetRect.top}px`,
-          left: `${targetRect.left}px`,
-          // Ensure minimum dimensions for better UX
-          width: `${Math.max(targetRect.width, 140)}px`,
-          height: `${Math.min(barHeight.value, 30)}px`,
+          top: `${top}px`,
+          left: `${left}px`,
+          width: `${width}px`,
+          height: `${inputHeight}px`,
         }
 
         // Focus the input next tick
