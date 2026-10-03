@@ -109,7 +109,10 @@ const {
   handleTaskProgressChange,
   authorityHistoryUsers,
   taskUsers,
-  isEditingTaskProgressOnly,
+  isProgressDialogVisible,
+  editingProgressTask,
+  saveTaskProgress,
+  closeProgressDialog,
   isTaskContextMenuEditable,
   handleChartContextMenu,
   handleCreateNewTask,
@@ -687,9 +690,15 @@ const handleOpenSlideSchedule = async () => {
       :granularity="currentProject?.attribute?.granularity"
       :enable-progress="currentProject?.attribute?.enableProgress !== false"
       :users="taskUsers"
-      :progress-only="isEditingTaskProgressOnly"
       @save="saveTask"
       @delete="deleteTask"
+    />
+
+    <TaskProgressDialog
+      v-model="isProgressDialogVisible"
+      :task="editingProgressTask"
+      @save="saveTaskProgress"
+      @close="closeProgressDialog"
     />
 
     <MarkerFormDialog

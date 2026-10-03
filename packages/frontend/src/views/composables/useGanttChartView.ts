@@ -2489,7 +2489,100 @@ export const useGanttChartView = () => {
     progress: undefined,
   })
 
-  const isEditingTaskProgressOnly = ref(false)
+  // --- 進捗率変更ダイアログ（閲覧権限用） ---
+  const isProgressDialogVisible = ref(false)
+  const editingProgressTask = ref<{ id: string; name: string; progress: number } | null>(null)
+
+  const openProgressDialog = (taskId: string) => {
+    const row = rows.value.find((r) => r.tasks.some((t) => t.id === taskId))
+    const task = row?.tasks.find((t) => t.id === taskId)
+    if (!row || !task) return
+
+    const attr = (task as any)?.attribute as TaskAttribute | undefined
+    editingProgressTask.value = {
+      id: task.id,
+      name: task.name || '',
+      progress: attr?.progress ?? 0,
+    }
+    isProgressDialogVisible.value = true
+    // 他ユーザーにこのタスクを編集中であることを通知
+    updateEditingTasks([task.id])
+  }
+
+  const closeProgressDialog = () => {
+    isProgressDialogVisible.value = false
+    editingProgressTask.value = null
+    updateEditingTasks([])
+  }
+
+  const saveTaskProgress = async (newProgress: number) => {
+    if (!editingProgressTask.value) return
+    const taskIdStr = editingProgressTask.value.id
+    const row = rows.value.find((r) => r.tasks.some((t) => t.id === taskIdStr))
+    const task = row?.tasks.find((t) => t.id === taskIdStr)
+    if (!row || !task) {
+      closeProgressDialog()
+      return
+    }
+
+    const attr = ((task as any).attribute as TaskAttribute) || {}
+    const oldProgress = attr.progress ?? 0
+
+    // ダイアログを閉じる & 編集中通知解除
+    isProgressDialogVisible.value = false
+    editingProgressTask.value = null
+    updateEditingTasks([])
+
+    // 値に変更がなければ終了
+    if (oldProgress === newProgress) return
+
+    await maybeAutoSnapshot()
+
+    const beforeData = {
+      id: Number(task.id),
+      rowId: Number(row.id),
+      name: task.name || '',
+      start: toDateTimeString(task.start),
+      end: toDateTimeString(task.end),
+      attribute: {
+        description: attr.description || undefined,
+        colorPalette: attr.colorPalette ? { ...attr.colorPalette } : undefined,
+        labels: attr.labels ? [...attr.labels] : undefined,
+        lock: attr.lock,
+        progress: attr.progress,
+        dependencies: attr.dependencies ? [...attr.dependencies] : undefined,
+      },
+    }
+
+    const afterData = {
+      ...beforeData,
+      attribute: {
+        ...beforeData.attribute,
+        progress: newProgress,
+      },
+    }
+
+    pushAction({
+      description: '進捗率変更',
+      undo: async () => {
+        await upsertGanttTasks([beforeData])
+        await loadData(projectId.value, { silent: true })
+      },
+      redo: async () => {
+        await upsertGanttTasks([afterData])
+        await loadData(projectId.value, { silent: true })
+      },
+    })
+
+    await upsertGanttTasks([afterData])
+    await loadData(projectId.value, { silent: true })
+    publishEditEvent('task_upsert', {
+      rowIds: [Number(row.id)],
+      targetName: task.name || '',
+      isNew: false,
+      taskId: String(task.id),
+    })
+  }
 
   const startEditingTask = (taskId: string) => {
     const row = rows.value.find((r) => r.tasks.some((t) => t.id === taskId))
@@ -2498,13 +2591,6 @@ export const useGanttChartView = () => {
     if (row && task) {
       const taskWithAttr = task as unknown as { attribute?: TaskAttribute }
       const attr = taskWithAttr.attribute
-      const userId = userStore.currentUser?.id
-      const userEmail = userStore.currentUser?.email
-      const assignees = attr?.assignees || []
-      const isAssignee = (!!userId && assignees.includes(userId)) || (!!userEmail && assignees.includes(userEmail))
-
-      // 閲覧権限モードだが担当者の場合は、進捗率のみ編集可能フラグを立てる
-      isEditingTaskProgressOnly.value = isReadOnly.value && isAssignee
 
       editingTask.value = {
         id: task.id,
@@ -2560,8 +2646,11 @@ export const useGanttChartView = () => {
     const assignees = attr?.assignees || []
     const isAssignee = (!!userId && assignees.includes(userId)) || (!!userEmail && assignees.includes(userEmail))
 
-    // 閲覧権限モードの場合、自分が担当者 かつ プロジェクトで進捗管理が有効な場合のみ編集を許可
-    if (isReadOnly.value && (!isAssignee || currentProject.value?.attribute?.enableProgress === false)) {
+    // 閲覧権限モードの場合、自分が担当者 かつ プロジェクトで進捗管理が有効な場合に進捗率ダイアログを開く
+    if (isReadOnly.value) {
+      if (isAssignee && currentProject.value?.attribute?.enableProgress !== false) {
+        openProgressDialog(taskId)
+      }
       return
     }
 
@@ -2630,26 +2719,7 @@ export const useGanttChartView = () => {
       },
     }
 
-    let dataToSave: GanttTask = data
-    if (isEditingTaskProgressOnly.value && taskData.id) {
-      const taskIdStr = String(taskData.id)
-      const existingRow = rows.value.find((r) => r.tasks.some((t) => t.id === taskIdStr))
-      const existingTask = existingRow?.tasks.find((t) => t.id === taskIdStr)
-      if (existingTask) {
-        const existingAttr = ((existingTask as any).attribute as TaskAttribute) || {}
-        dataToSave = {
-          id: Number(taskData.id),
-          rowId: Number(existingRow!.id),
-          name: existingTask.name || '',
-          start: toDateTimeString(existingTask.start),
-          end: toDateTimeString(existingTask.end),
-          attribute: {
-            ...existingAttr,
-            progress: taskData.progress != null ? taskData.progress : undefined,
-          },
-        }
-      }
-    }
+    const dataToSave: GanttTask = data
 
     // コラボレーター一覧をバックグラウンドで最新化
     userStore.fetchCollaborators().catch(() => {})
@@ -2700,7 +2770,7 @@ export const useGanttChartView = () => {
           },
         }
         pushAction({
-          description: isEditingTaskProgressOnly.value ? '進捗率変更' : 'タスク編集',
+          description: 'タスク編集',
           undo: async () => {
             await upsertGanttTasks([beforeData])
             await loadData(projectId.value, { silent: true })
@@ -3437,6 +3507,12 @@ export const useGanttChartView = () => {
 
     taskContextMenu.value.visible = false
     await new Promise((resolve) => setTimeout(resolve, 200))
+
+    if (isReadOnly.value) {
+      openProgressDialog(taskId)
+      return
+    }
+
     startEditingTask(taskId)
   }
 
@@ -5318,7 +5394,11 @@ export const useGanttChartView = () => {
     authorityHistoryUsers,
     taskUsers,
     projectUsers,
-    isEditingTaskProgressOnly,
+    isProgressDialogVisible,
+    editingProgressTask,
+    openProgressDialog,
+    closeProgressDialog,
+    saveTaskProgress,
     isTaskContextMenuEditable,
 
     // WBS / 階層ツリー関連

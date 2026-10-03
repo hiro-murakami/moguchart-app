@@ -14,11 +14,9 @@ const props = withDefaults(
     granularity?: ProjectGranularity
     enableProgress?: boolean
     users?: User[]
-    progressOnly?: boolean
   }>(),
   {
     enableProgress: true,
-    progressOnly: false,
   },
 )
 
@@ -122,8 +120,7 @@ const inputType = computed(() => granularityToInputType(props.granularity))
   <TaskFormDialog
     :model-value="modelValue"
     @update:model-value="emit('update:modelValue', $event)"
-    :title="props.progressOnly ? 'タスク進捗率の編集' : 'タスク編集'"
-    :readonly="props.progressOnly"
+    title="タスク編集"
     v-model:name="localTask.name"
     :color-palette="localTask.colorPalette"
     @update:color-palette="onUpdateColorPalette"
@@ -134,11 +131,6 @@ const inputType = computed(() => granularityToInputType(props.granularity))
     @close="close"
   >
     <template #extra-fields>
-      <v-col v-if="props.progressOnly" cols="12">
-        <v-alert type="info" variant="tonal" density="compact" class="mb-2">
-          閲覧権限のため、進捗率のみ変更できます。
-        </v-alert>
-      </v-col>
       <v-col cols="12">
         <v-select
           v-model="localTask.rowId"
@@ -150,7 +142,6 @@ const inputType = computed(() => granularityToInputType(props.granularity))
           variant="outlined"
           hide-details
           autocomplete="off"
-          :disabled="props.progressOnly"
           class="mb-3"
         ></v-select>
       </v-col>
@@ -159,7 +150,6 @@ const inputType = computed(() => granularityToInputType(props.granularity))
         label="担当者"
         help-text="指定されたユーザーは、進捗率を変更できるようになります"
         :users="props.users"
-        :disabled="props.progressOnly"
       />
       <v-col :cols="props.enableProgress ? 4 : 6">
         <DateInput
@@ -171,7 +161,6 @@ const inputType = computed(() => granularityToInputType(props.granularity))
           :compare-target="displayEnd"
           compare-rule="before"
           hide-details="auto"
-          :disabled="props.progressOnly"
           class="mb-3"
         />
       </v-col>
@@ -185,7 +174,6 @@ const inputType = computed(() => granularityToInputType(props.granularity))
           :compare-target="localTask.start"
           compare-rule="after"
           hide-details="auto"
-          :disabled="props.progressOnly"
           class="mb-3"
         />
       </v-col>
@@ -213,7 +201,6 @@ const inputType = computed(() => granularityToInputType(props.granularity))
           density="compact"
           hide-details
           color="primary"
-          :disabled="props.progressOnly"
         ></v-switch>
       </v-col>
     </template>
