@@ -1,5 +1,5 @@
 import type { DuplicateProject, Milestone } from '../types/shared'
-import { prisma } from './common/commonFunctions'
+import { checkProjectPermission, prisma } from './common/commonFunctions'
 import { _upsertProject } from './upsertProject'
 
 /**
@@ -49,6 +49,9 @@ const duplicateProject: DuplicateProject = async (
   { originalProjectId, newProjectData, newStartDate, clearProgress },
   email?,
 ) => {
+  // 権限チェック（元プロジェクトの閲覧権限が必要）
+  await checkProjectPermission(originalProjectId, email, 'viewer')
+
   // プロジェクト情報の取得
   const project = await prisma.project.findUnique({
     where: { id: originalProjectId },
@@ -56,24 +59,6 @@ const duplicateProject: DuplicateProject = async (
 
   if (!project) {
     throw new Error('Project not found')
-  }
-
-  // 権限チェック
-  if (!project.public) {
-    if (!email) {
-      throw new Error('Permission denied')
-    }
-
-    const authority = (project.authority as any) || {}
-    const owners = authority.owners || []
-    const editors = authority.editors || []
-    const viewers = authority.viewers || []
-
-    const hasAccess = owners.includes(email) || editors.includes(email) || viewers.includes(email)
-
-    if (!hasAccess) {
-      throw new Error('Permission denied')
-    }
   }
 
   // 元のプロジェクトの情報を取得

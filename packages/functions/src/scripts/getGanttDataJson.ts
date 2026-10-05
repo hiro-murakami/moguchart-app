@@ -1,5 +1,5 @@
 import { VERSION, type GetGanttDataJson } from '../types/shared'
-import { prisma, toDateTimeString } from './common/commonFunctions'
+import { checkProjectPermission, prisma, toDateTimeString } from './common/commonFunctions'
 
 const convertDatesToIsoString = (obj: any): any => {
   if (obj === null || obj === undefined) {
@@ -36,6 +36,9 @@ const getGanttDataJson: GetGanttDataJson = async (projectId, email) => {
     throw new Error('Project ID is required')
   }
 
+  // 権限チェック（viewerロール以上）
+  await checkProjectPermission(projectId, email, 'viewer')
+
   // プロジェクト情報の取得（プロジェクトコメントも含む）
   const project = await prisma.project.findUnique({
     where: { id: projectId },
@@ -46,24 +49,6 @@ const getGanttDataJson: GetGanttDataJson = async (projectId, email) => {
 
   if (!project) {
     throw new Error('Project not found')
-  }
-
-  // 権限チェック
-  if (!project.public) {
-    if (!email) {
-      throw new Error('Permission denied')
-    }
-
-    const authority = (project.authority as any) || {}
-    const owners = authority.owners || []
-    const editors = authority.editors || []
-    const viewers = authority.viewers || []
-
-    const hasAccess = owners.includes(email) || editors.includes(email) || viewers.includes(email)
-
-    if (!hasAccess) {
-      throw new Error('Permission denied')
-    }
   }
 
   // ガントチャートデータの取得（行コメント・タスクコメントも含む）
