@@ -8,6 +8,7 @@ dayjs.extend(utc)
 dayjs.extend(timezone)
 import type { CreateSnapshot, ProjectAttribute } from '../types/shared.js'
 import { checkProjectPermission, getStorageBucket } from './common/commonFunctions.js'
+import { embedImagesAsBase64 } from './common/imageHelpers.js'
 import getGanttDataJson from './getGanttDataJson.js'
 
 const createSnapshot: CreateSnapshot = async (params, email) => {
@@ -21,9 +22,12 @@ const createSnapshot: CreateSnapshot = async (params, email) => {
 
   // ガントチャート情報の取得（権限チェック含む）
   const ganttData = await getGanttDataJson(projectId, email)
-  
+
+  // 画像URLをBase64 Data URLに変換して埋め込む
+  await embedImagesAsBase64(ganttData)
+
   const projectName = ganttData.project?.name || 'project'
-  
+
   // JSON文字列化
   const jsonString = JSON.stringify(ganttData, null, 2)
   

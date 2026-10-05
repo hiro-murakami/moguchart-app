@@ -150,6 +150,56 @@ const updateImageUrls = (imageUrls: any[], urlMap: Map<string, string>): string[
   })
 }
 
+// Base64 Data URL (data:image/...;base64,...) をCloud Storageに保存し、Data URL → 新ダウンロードURL のマッピングを返すヘルパー
+const restoreDataUrlImages = async (
+  projectId: string,
+  dataUrls: Set<string>,
+): Promise<Map<string, string>> => {
+  const urlMap = new Map<string, string>()
+  if (dataUrls.size === 0) return urlMap
+
+  const bucket = getStorageBucket()
+
+  for (const dataUrl of dataUrls) {
+    const commaIndex = dataUrl.indexOf(',')
+    if (commaIndex === -1) continue
+
+    const metaPart = dataUrl.slice(0, commaIndex)
+    const base64Data = dataUrl.slice(commaIndex + 1)
+    if (!base64Data) continue
+
+    const match = metaPart.match(/^data:([^;,]+)/)
+    const contentType = match?.[1] || 'image/png'
+
+    const buffer = Buffer.from(base64Data, 'base64')
+
+    // 拡張子の判定（image/png -> png, image/jpeg -> jpg, etc.）
+    let ext = contentType.split('/')[1]?.toLowerCase() || 'png'
+    if (ext === 'jpeg') ext = 'jpg'
+    if (ext.includes('+')) ext = ext.split('+')[0]
+    if (!/^[a-z0-9]+$/.test(ext)) ext = 'png'
+
+    const fileName = `${crypto.randomUUID()}.${ext}`
+    const storagePath = `images/${projectId}/${fileName}`
+    const file = bucket.file(storagePath)
+
+    const downloadToken = crypto.randomUUID()
+    await file.save(buffer, {
+      metadata: {
+        contentType,
+        metadata: {
+          firebaseStorageDownloadTokens: downloadToken,
+        },
+      },
+    })
+
+    const downloadUrl = buildDownloadUrl(bucket.name, storagePath, downloadToken)
+    urlMap.set(dataUrl, downloadUrl)
+  }
+
+  return urlMap
+}
+
 // UUID v4 形式かどうかを判定するヘルパー
 const isUUID = (value: string): boolean => {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)
@@ -171,7 +221,7 @@ const restoreProject: RestoreProject = async (data, email) => {
         !e.entryName.startsWith('snapshots/') &&
         !e.entryName.startsWith('snapshots\\') &&
         !e.entryName.startsWith('images/') &&
-        !e.entryName.startsWith('images\\')
+        !e.entryName.startsWith('images\\'),
     )
     if (!jsonEntry) {
       throw new Error('zipファイル内にJSONファイルが見つかりませんでした')
@@ -188,108 +238,167 @@ const restoreProject: RestoreProject = async (data, email) => {
 
   const { project, rows, force, newId } = { ...projectData, force: data.force, newId: (data as any).newId }
 
-  const newProjectId = await prisma.$transaction(async (tx) => {
-    // 1. プロジェクトの作成または更新
-    const { id: oldProjectId, ...projectData } = project
+  const { id: oldProjectId, ...projectDataBody } = project
+  const isValidUUID = isUUID(oldProjectId)
 
-    // メタデータの更新
-    const commonColumns = getCreateCommonColumns(email)
+  // 既存プロジェクトのチェック（UUID形式の場合のみ）
+  const existingProject = isValidUUID
+    ? await prisma.project.findUnique({
+        where: { id: oldProjectId },
+      })
+    : null
 
-    // 権限設定: 実行ユーザーをオーナーにする
-    const newAuthority = {
-      owners: [email!],
-      editors: [],
-      viewers: [],
+  if (existingProject && !force && !newId) {
+    throw new Error('PROJECT_EXISTS')
+  }
+
+  // 復元先のプロジェクトIDを確定
+  let targetProjectId: string
+  if (existingProject) {
+    targetProjectId = newId ? crypto.randomUUID() : oldProjectId
+  } else {
+    targetProjectId = isValidUUID ? oldProjectId : crypto.randomUUID()
+  }
+
+  // JSON内に埋め込まれたBase64 Data URL画像を抽出し、StorageにアップロードしてStorage URLに置換
+  const dataUrls = new Set<string>()
+  if (rows && Array.isArray(rows)) {
+    for (const row of rows) {
+      const rowAttr = row.attribute
+      if (rowAttr?.imageUrls && Array.isArray(rowAttr.imageUrls)) {
+        for (const url of rowAttr.imageUrls) {
+          if (typeof url === 'string' && url.startsWith('data:')) {
+            dataUrls.add(url)
+          }
+        }
+      }
+      if (row.tasks && Array.isArray(row.tasks)) {
+        for (const task of row.tasks) {
+          const taskAttr = task.attribute
+          if (taskAttr?.imageUrls && Array.isArray(taskAttr.imageUrls)) {
+            for (const url of taskAttr.imageUrls) {
+              if (typeof url === 'string' && url.startsWith('data:')) {
+                dataUrls.add(url)
+              }
+            }
+          }
+        }
+      }
     }
+  }
 
-    // oldProjectIdがUUID形式でない場合は新しいUUIDを採番
-    const isValidUUID = isUUID(oldProjectId)
+  if (dataUrls.size > 0) {
+    try {
+      const dataUrlMap = await restoreDataUrlImages(targetProjectId, dataUrls)
+      for (const row of rows) {
+        if (row.attribute?.imageUrls && Array.isArray(row.attribute.imageUrls)) {
+          row.attribute.imageUrls = row.attribute.imageUrls.map((u: string) => dataUrlMap.get(u) || u)
+        }
+        if (row.tasks && Array.isArray(row.tasks)) {
+          for (const task of row.tasks) {
+            if (task.attribute?.imageUrls && Array.isArray(task.attribute.imageUrls)) {
+              task.attribute.imageUrls = task.attribute.imageUrls.map((u: string) => dataUrlMap.get(u) || u)
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to restore data URL images:', e)
+    }
+  }
 
-    // 既存プロジェクトのチェック（UUID形式の場合のみ）
-    let newProjectId: string
-    const existingProject = isValidUUID
-      ? await tx.project.findUnique({
-          where: { id: oldProjectId },
-        })
-      : null // UUID形式でない場合は既存チェックをスキップ
+  const newProjectId = await prisma.$transaction(
+    async (tx) => {
+      // 1. プロジェクトの作成または更新
+      // メタデータの更新
+      const commonColumns = getCreateCommonColumns(email)
 
-    if (existingProject) {
-      if (newId) {
-        // 別のIDで新規作成（IDを自動生成）
+      // 権限設定: 実行ユーザーをオーナーにする
+      const newAuthority = {
+        owners: [email!],
+        editors: [],
+        viewers: [],
+      }
+
+      let newProjectId: string
+
+      if (existingProject) {
+        if (newId) {
+          // 別のIDで新規作成（IDを指定）
+          const newProject = await tx.project.create({
+            data: {
+              id: targetProjectId,
+              name: `${projectDataBody.name}のコピー`,
+              start: new Date(projectDataBody.start),
+              end: new Date(projectDataBody.end),
+              attribute: projectDataBody.attribute ?? {},
+              public: false,
+              authority: newAuthority,
+              ...commonColumns,
+            },
+          })
+          newProjectId = newProject.id
+        } else if (force) {
+          // 既存プロジェクトを上書き
+          await tx.project.update({
+            where: { id: oldProjectId },
+            data: {
+              name: projectDataBody.name,
+              start: new Date(projectDataBody.start),
+              end: new Date(projectDataBody.end),
+              attribute: projectDataBody.attribute ?? {},
+              public: false,
+              authority: newAuthority,
+              ...getUpdateCommonColumns(email),
+            },
+          })
+          newProjectId = oldProjectId
+
+          // 既存データを依存関係の順序で削除
+          // 1. プロジェクトコメントを削除
+          await tx.comment.deleteMany({
+            where: { projectId: newProjectId },
+          })
+          // 2. タスクに紐づくコメントを削除
+          await tx.comment.deleteMany({
+            where: {
+              task: { row: { projectId: newProjectId } },
+            },
+          })
+          // 3. 行に紐づくコメントを削除
+          await tx.comment.deleteMany({
+            where: {
+              row: { projectId: newProjectId },
+            },
+          })
+          // 4. タスクを削除
+          await tx.ganttTask.deleteMany({
+            where: { row: { projectId: newProjectId } },
+          })
+          // 5. 行を削除
+          await tx.ganttRow.deleteMany({
+            where: { projectId: newProjectId },
+          })
+        } else {
+          throw new Error('PROJECT_EXISTS')
+        }
+      } else {
+        // 新規作成
         const newProject = await tx.project.create({
           data: {
-            name: `${projectData.name}のコピー`,
-            start: new Date(projectData.start),
-            end: new Date(projectData.end),
-            attribute: projectData.attribute ?? {},
+            id: targetProjectId,
+            name: projectDataBody.name,
+            start: new Date(projectDataBody.start),
+            end: new Date(projectDataBody.end),
+            attribute: projectDataBody.attribute ?? {},
             public: false,
             authority: newAuthority,
             ...commonColumns,
           },
         })
         newProjectId = newProject.id
-      } else if (force) {
-        // 既存プロジェクトを上書き
-        await tx.project.update({
-          where: { id: oldProjectId },
-          data: {
-            name: projectData.name,
-            start: new Date(projectData.start),
-            end: new Date(projectData.end),
-            attribute: projectData.attribute ?? {},
-            public: false,
-            authority: newAuthority,
-            ...getUpdateCommonColumns(email),
-          },
-        })
-        newProjectId = oldProjectId
-
-        // 既存データを依存関係の順序で削除
-        // 1. プロジェクトコメントを削除
-        await tx.comment.deleteMany({
-          where: { projectId: newProjectId },
-        })
-        // 2. タスクに紐づくコメントを削除
-        await tx.comment.deleteMany({
-          where: {
-            task: { row: { projectId: newProjectId } },
-          },
-        })
-        // 3. 行に紐づくコメントを削除
-        await tx.comment.deleteMany({
-          where: {
-            row: { projectId: newProjectId },
-          },
-        })
-        // 4. タスクを削除
-        await tx.ganttTask.deleteMany({
-          where: { row: { projectId: newProjectId } },
-        })
-        // 5. 行を削除
-        await tx.ganttRow.deleteMany({
-          where: { projectId: newProjectId },
-        })
-      } else {
-        throw new Error('PROJECT_EXISTS')
       }
-    } else {
-      // 新規作成
-      // UUID形式の場合は元のIDを使用、そうでない場合は新しいUUIDを採番
-      const projectId = isValidUUID ? oldProjectId : crypto.randomUUID()
-      const newProject = await tx.project.create({
-        data: {
-          id: projectId,
-          name: projectData.name,
-          start: new Date(projectData.start),
-          end: new Date(projectData.end),
-          attribute: projectData.attribute ?? {},
-          public: false,
-          authority: newAuthority,
-          ...commonColumns,
-        },
-      })
-      newProjectId = newProject.id
-    }
+
 
     const taskIdMap = new Map<string, string>()
     const createdTasks: { newId: number; attribute: any }[] = []
