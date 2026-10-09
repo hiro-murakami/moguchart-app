@@ -798,7 +798,9 @@ const handleOpenSlideSchedule = async () => {
   --task-box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   padding: 8px;
   font-family: sans-serif;
+  box-sizing: border-box;
   height: calc(100vh - 54px);
+  height: calc(100dvh - 54px);
   display: flex;
   flex-direction: column;
   transition: padding-right 0.3s ease;
