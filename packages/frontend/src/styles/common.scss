@@ -1,6 +1,5 @@
 html {
   overflow-y: auto;
-  scrollbar-gutter: stable;
 }
 
 body {
@@ -9,6 +8,8 @@ body {
 
 /* Windows環境等でのスクロールバー表示によるガタつきを抑制（Macはネイティブの自動非表示を優先） */
 html:not(.is-mac) {
+  scrollbar-gutter: stable;
+
   &::-webkit-scrollbar,
   *::-webkit-scrollbar {
     width: 10px;
