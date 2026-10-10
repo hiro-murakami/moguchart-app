@@ -123,7 +123,13 @@ const handleJumpToTask = (taskId: string) => {
 </script>
 
 <template>
-  <v-dialog :model-value="modelValue" @update:model-value="emit('update:modelValue', $event)" max-width="960px" scrollable>
+  <v-dialog
+    :model-value="modelValue"
+    @update:model-value="emit('update:modelValue', $event)"
+    max-width="960px"
+    height="85vh"
+    scrollable
+  >
     <v-card v-draggable-dialog class="diff-dialog-card">
       <v-card-title class="d-flex justify-space-between align-center pt-5 px-6 pb-3">
         <div class="d-flex align-center gap-2">
@@ -135,96 +141,103 @@ const handleJumpToTask = (taskId: string) => {
 
       <v-divider />
 
-      <v-card-text class="pa-6" v-if="diffSummary">
-        <!-- 比較対象ヘッダー -->
-        <div class="comparison-header mb-4 pa-3 rounded-lg">
-          <div class="d-flex align-center justify-space-between flex-wrap gap-2">
-            <div>
-              <span class="text-caption text-medium-emphasis">比較対象スナップショット:</span>
-              <div class="d-flex align-center gap-2 mt-1">
-                <v-icon
-                  :icon="diffSummary.snapshotDisplayName.startsWith('自動履歴') ? 'mdi-history' : 'mdi-camera'"
-                  size="small"
-                  class="text-medium-emphasis"
-                />
-                <span class="font-weight-bold">{{ diffSummary.snapshotDisplayName }}</span>
-                <span v-if="diffSummary.snapshotCreatedAt" class="text-caption text-medium-emphasis">
-                  ({{ formatDateWithTime(diffSummary.snapshotCreatedAt) }})
-                </span>
+      <v-card-text
+        class="pa-6 diff-card-text d-flex flex-column"
+        style="overflow: hidden !important; height: 100%; min-height: 0; flex: 1 1 auto;"
+        v-if="diffSummary"
+      >
+        <!-- 固定ヘッダーセクション -->
+        <div class="diff-header-section flex-shrink-0">
+          <!-- 比較対象ヘッダー -->
+          <div class="comparison-header mb-4 pa-3 rounded-lg">
+            <div class="d-flex align-center justify-space-between flex-wrap gap-2">
+              <div>
+                <span class="text-caption text-medium-emphasis">比較対象スナップショット:</span>
+                <div class="d-flex align-center gap-2 mt-1">
+                  <v-icon
+                    :icon="diffSummary.snapshotDisplayName.startsWith('自動履歴') ? 'mdi-history' : 'mdi-camera'"
+                    size="small"
+                    class="text-medium-emphasis"
+                  />
+                  <span class="font-weight-bold">{{ diffSummary.snapshotDisplayName }}</span>
+                  <span v-if="diffSummary.snapshotCreatedAt" class="text-caption text-medium-emphasis">
+                    ({{ formatDateWithTime(diffSummary.snapshotCreatedAt) }})
+                  </span>
+                </div>
+              </div>
+              <div class="text-caption text-medium-emphasis">
+                現在: <strong>{{ diffSummary.totalCurrentTasks }}</strong> 件 / スナップショット: <strong>{{ diffSummary.totalSnapshotTasks }}</strong> 件
               </div>
             </div>
-            <div class="text-caption text-medium-emphasis">
-              現在: <strong>{{ diffSummary.totalCurrentTasks }}</strong> 件 / スナップショット: <strong>{{ diffSummary.totalSnapshotTasks }}</strong> 件
-            </div>
+          </div>
+
+          <!-- 統計カード -->
+          <v-row class="mb-4" density="compact">
+            <v-col cols="6" sm="4" md="2">
+              <v-card variant="tonal" color="error" class="pa-2 text-center stat-card" @click="selectedTab = 'delayed'">
+                <div class="text-h5 font-weight-bold">{{ diffSummary.delayedCount }}</div>
+                <div class="text-caption font-weight-medium">遅延タスク</div>
+              </v-card>
+            </v-col>
+            <v-col cols="6" sm="4" md="2">
+              <v-card variant="tonal" color="success" class="pa-2 text-center stat-card" @click="selectedTab = 'ahead'">
+                <div class="text-h5 font-weight-bold">{{ diffSummary.aheadCount }}</div>
+                <div class="text-caption font-weight-medium">前倒しタスク</div>
+              </v-card>
+            </v-col>
+            <v-col cols="6" sm="4" md="2">
+              <v-card variant="tonal" color="secondary" class="pa-2 text-center stat-card" @click="selectedTab = 'changed'">
+                <div class="text-h5 font-weight-bold">{{ diffSummary.shiftedCount }}</div>
+                <div class="text-caption font-weight-medium">日程スライド</div>
+              </v-card>
+            </v-col>
+            <v-col cols="6" sm="4" md="2">
+              <v-card variant="tonal" color="teal" class="pa-2 text-center stat-card" @click="selectedTab = 'added'">
+                <div class="text-h5 font-weight-bold">{{ diffSummary.addedCount }}</div>
+                <div class="text-caption font-weight-medium">新規追加</div>
+              </v-card>
+            </v-col>
+            <v-col cols="6" sm="4" md="2">
+              <v-card variant="tonal" color="warning" class="pa-2 text-center stat-card" @click="selectedTab = 'deleted'">
+                <div class="text-h5 font-weight-bold">{{ diffSummary.deletedCount }}</div>
+                <div class="text-caption font-weight-medium">削除タスク</div>
+              </v-card>
+            </v-col>
+            <v-col cols="6" sm="4" md="2">
+              <v-card variant="tonal" class="pa-2 text-center stat-card" @click="selectedTab = 'all'">
+                <div class="text-h5 font-weight-bold">{{ diffSummary.unchangedCount }}</div>
+                <div class="text-caption font-weight-medium">一致タスク</div>
+              </v-card>
+            </v-col>
+          </v-row>
+
+          <!-- タブ & 検索バー -->
+          <div class="d-flex align-center justify-space-between flex-wrap gap-2 mb-3">
+            <v-tabs v-model="selectedTab" density="compact" color="primary">
+              <v-tab value="all">すべて ({{ diffSummary.items.length }})</v-tab>
+              <v-tab value="changed">変更あり ({{ changedCount }})</v-tab>
+              <v-tab value="delayed">遅延 ({{ diffSummary.delayedCount }})</v-tab>
+              <v-tab value="ahead">前倒し ({{ diffSummary.aheadCount }})</v-tab>
+              <v-tab value="added">新規追加 ({{ diffSummary.addedCount }})</v-tab>
+              <v-tab value="deleted">削除 ({{ diffSummary.deletedCount }})</v-tab>
+            </v-tabs>
+
+            <v-text-field
+              v-model="searchQuery"
+              density="compact"
+              variant="outlined"
+              placeholder="タスク名や行名で検索..."
+              prepend-inner-icon="mdi-magnify"
+              hide-details
+              clearable
+              style="max-width: 250px"
+            />
           </div>
         </div>
 
-        <!-- 統計カード -->
-        <v-row class="mb-4" density="compact">
-          <v-col cols="6" sm="4" md="2">
-            <v-card variant="tonal" color="error" class="pa-2 text-center stat-card" @click="selectedTab = 'delayed'">
-              <div class="text-h5 font-weight-bold">{{ diffSummary.delayedCount }}</div>
-              <div class="text-caption font-weight-medium">遅延タスク</div>
-            </v-card>
-          </v-col>
-          <v-col cols="6" sm="4" md="2">
-            <v-card variant="tonal" color="success" class="pa-2 text-center stat-card" @click="selectedTab = 'ahead'">
-              <div class="text-h5 font-weight-bold">{{ diffSummary.aheadCount }}</div>
-              <div class="text-caption font-weight-medium">前倒しタスク</div>
-            </v-card>
-          </v-col>
-          <v-col cols="6" sm="4" md="2">
-            <v-card variant="tonal" color="secondary" class="pa-2 text-center stat-card" @click="selectedTab = 'changed'">
-              <div class="text-h5 font-weight-bold">{{ diffSummary.shiftedCount }}</div>
-              <div class="text-caption font-weight-medium">日程スライド</div>
-            </v-card>
-          </v-col>
-          <v-col cols="6" sm="4" md="2">
-            <v-card variant="tonal" color="teal" class="pa-2 text-center stat-card" @click="selectedTab = 'added'">
-              <div class="text-h5 font-weight-bold">{{ diffSummary.addedCount }}</div>
-              <div class="text-caption font-weight-medium">新規追加</div>
-            </v-card>
-          </v-col>
-          <v-col cols="6" sm="4" md="2">
-            <v-card variant="tonal" color="warning" class="pa-2 text-center stat-card" @click="selectedTab = 'deleted'">
-              <div class="text-h5 font-weight-bold">{{ diffSummary.deletedCount }}</div>
-              <div class="text-caption font-weight-medium">削除タスク</div>
-            </v-card>
-          </v-col>
-          <v-col cols="6" sm="4" md="2">
-            <v-card variant="tonal" class="pa-2 text-center stat-card" @click="selectedTab = 'all'">
-              <div class="text-h5 font-weight-bold">{{ diffSummary.unchangedCount }}</div>
-              <div class="text-caption font-weight-medium">一致タスク</div>
-            </v-card>
-          </v-col>
-        </v-row>
-
-        <!-- タブ & 検索バー -->
-        <div class="d-flex align-center justify-space-between flex-wrap gap-2 mb-3">
-          <v-tabs v-model="selectedTab" density="compact" color="primary">
-            <v-tab value="all">すべて ({{ diffSummary.items.length }})</v-tab>
-            <v-tab value="changed">変更あり ({{ changedCount }})</v-tab>
-            <v-tab value="delayed">遅延 ({{ diffSummary.delayedCount }})</v-tab>
-            <v-tab value="ahead">前倒し ({{ diffSummary.aheadCount }})</v-tab>
-            <v-tab value="added">新規追加 ({{ diffSummary.addedCount }})</v-tab>
-            <v-tab value="deleted">削除 ({{ diffSummary.deletedCount }})</v-tab>
-          </v-tabs>
-
-          <v-text-field
-            v-model="searchQuery"
-            density="compact"
-            variant="outlined"
-            placeholder="タスク名や行名で検索..."
-            prepend-inner-icon="mdi-magnify"
-            hide-details
-            clearable
-            style="max-width: 250px"
-          />
-        </div>
-
-        <!-- 差分テーブル -->
-        <div class="table-responsive border rounded-lg overflow-hidden">
-          <v-table density="compact" hover class="diff-table">
+        <!-- 差分テーブル（スクロール領域） -->
+        <div class="diff-table-wrapper flex-grow-1 border rounded-lg">
+          <v-table density="compact" hover class="diff-table" fixed-header height="100%">
             <thead>
               <tr>
                 <th style="width: 100px">状態</th>
@@ -317,17 +330,53 @@ const handleJumpToTask = (taskId: string) => {
           </v-table>
         </div>
       </v-card-text>
-
-      <v-divider />
-
-      <v-card-actions class="px-6 py-3 justify-end">
-        <v-btn variant="text" @click="close">閉じる</v-btn>
-      </v-card-actions>
     </v-card>
   </v-dialog>
 </template>
 
 <style scoped>
+.diff-dialog-card {
+  height: 85vh;
+  min-height: 85vh;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.diff-card-text {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden !important;
+}
+
+.diff-header-section {
+  flex-shrink: 0;
+}
+
+.diff-table-wrapper {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.diff-table-wrapper :deep(.v-table) {
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+}
+
+.diff-table-wrapper :deep(.v-table__wrapper) {
+  flex: 1 1 auto !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+}
+
 .comparison-header {
   background-color: rgba(var(--v-theme-surface-variant), 0.35);
   border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
@@ -349,7 +398,8 @@ const handleJumpToTask = (taskId: string) => {
 .diff-table th {
   white-space: nowrap;
   font-weight: 600;
-  background-color: rgba(var(--v-theme-surface-variant), 0.2);
+  background-color: rgb(var(--v-theme-surface)) !important;
+  z-index: 2;
 }
 
 .diff-table td {
