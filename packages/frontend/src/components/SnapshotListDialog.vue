@@ -13,6 +13,7 @@ const emit = defineEmits<{
   (e: 'restored'): void
   (e: 'compare', item: any): void
   (e: 'clearCompare'): void
+  (e: 'renamed', payload: { name: string; displayName: string }): void
 }>()
 
 const {
@@ -21,10 +22,12 @@ const {
   headers,
   copiedName,
   downloadingName,
+  renamingName,
   restoringName,
   deletingName,
   copyUrl,
   downloadSnapshot,
+  renameSnapshotItem,
   restoreFromSnapshot,
   deleteSnapshotItem,
   compareSnapshot,
@@ -83,6 +86,16 @@ const {
                 size="small"
                 density="comfortable"
                 @click="(e: Event) => compareSnapshot(item, e)"
+              />
+              <TooltipBtn
+                :icon="renamingName === item.name ? 'mdi-loading' : 'mdi-pencil'"
+                :class="{ 'spin-animation': renamingName === item.name }"
+                :disabled="renamingName !== null"
+                tooltip="名前を変更"
+                variant="text"
+                size="small"
+                density="comfortable"
+                @click="(e: Event) => renameSnapshotItem(item, e)"
               />
               <TooltipBtn
                 :icon="copiedName === item.name ? 'mdi-check' : 'mdi-content-copy'"

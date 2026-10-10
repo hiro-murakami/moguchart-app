@@ -90,6 +90,7 @@ const {
   diffHighlightOnly,
   handleCompareSnapshot,
   handleClearCompareSnapshot,
+  handleSnapshotRenamed,
   handleJumpToTask,
 
   // methods
@@ -775,6 +776,7 @@ const handleOpenSlideSchedule = async () => {
       :comparing-snapshot-name="comparingSnapshotInfo?.name"
       @compare="handleCompareSnapshot"
       @clear-compare="handleClearCompareSnapshot"
+      @renamed="handleSnapshotRenamed"
       @restored="refresh"
     />
 

@@ -160,7 +160,7 @@ const handleJumpToTask = (taskId: string) => {
         </div>
 
         <!-- 統計カード -->
-        <v-row class="mb-4" dense>
+        <v-row class="mb-4" density="compact">
           <v-col cols="6" sm="4" md="2">
             <v-card variant="tonal" color="error" class="pa-2 text-center stat-card" @click="selectedTab = 'delayed'">
               <div class="text-h5 font-weight-bold">{{ diffSummary.delayedCount }}</div>

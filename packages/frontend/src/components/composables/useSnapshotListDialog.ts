@@ -1,10 +1,11 @@
 import type { SnapshotInfo } from '@functions/types/shared'
-import { listSnapshots, getSnapshotDownloadUrl, deleteSnapshot, loadSnapshot, restoreProject } from '@/modules/scripts'
+import { listSnapshots, getSnapshotDownloadUrl, deleteSnapshot, loadSnapshot, restoreProject, updateSnapshot } from '@/modules/scripts'
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAlert } from '@/composables/useAlert'
 import { useConfirm } from '@/composables/useConfirm'
 import { useSnackbar } from '@/composables/useSnackbar'
+import { usePrompt } from '@/composables/usePrompt'
 
 export const useSnapshotListDialog = (
   props: { modelValue: boolean; projectId: string; comparingSnapshotName?: string | null },
@@ -13,12 +14,14 @@ export const useSnapshotListDialog = (
     (e: 'restored'): void
     (e: 'compare', item: SnapshotInfo & { displayName: string }): void
     (e: 'clearCompare'): void
+    (e: 'renamed', payload: { name: string; displayName: string }): void
   },
 ) => {
   const router = useRouter()
   const alert = useAlert()
   const confirm = useConfirm()
   const snackbar = useSnackbar()
+  const prompt = usePrompt()
 
   const snapshots = ref<(SnapshotInfo & { displayName: string; displayCreatedAt: string })[]>([])
   const loading = ref(false)
@@ -26,7 +29,7 @@ export const useSnapshotListDialog = (
   const headers = [
     { title: 'スナップショット', key: 'displayName', sortable: false },
     { title: '作成日時', key: 'displayCreatedAt', sortable: false },
-    { title: '操作', key: 'actions', sortable: false, width: '210px' },
+    { title: '操作', key: 'actions', sortable: false, width: '240px' },
   ]
 
   const copiedName = ref<string | null>(null)
@@ -80,6 +83,53 @@ export const useSnapshotListDialog = (
       })
     } finally {
       downloadingName.value = null
+    }
+  }
+
+  const renamingName = ref<string | null>(null)
+
+  const renameSnapshotItem = async (item: SnapshotInfo & { displayName: string }, event: Event) => {
+    event.stopPropagation()
+    if (renamingName.value) return
+
+    const newName = await prompt({
+      title: 'スナップショット名の変更',
+      message: 'スナップショットの新しい名前を入力してください',
+      label: 'スナップショット名',
+      defaultValue: item.displayName || item.name,
+      confirmText: '変更',
+    })
+
+    if (newName === null) return
+    const trimmed = newName.trim()
+    if (trimmed === item.displayName) return
+
+    renamingName.value = item.name
+    try {
+      const updated = await updateSnapshot({
+        projectId: props.projectId,
+        snapshotName: item.name,
+        displayName: trimmed,
+      })
+      const finalDisplayName = updated.displayName || updated.name
+      item.displayName = finalDisplayName
+      const target = snapshots.value.find((s) => s.name === item.name)
+      if (target) {
+        target.displayName = finalDisplayName
+      }
+      emit('renamed', { name: item.name, displayName: finalDisplayName })
+      snackbar({
+        message: 'スナップショット名を変更しました。',
+        color: 'success',
+      })
+    } catch (err) {
+      console.error('Failed to rename snapshot:', err)
+      await alert({
+        title: 'エラー',
+        message: 'スナップショット名の変更に失敗しました。',
+      })
+    } finally {
+      renamingName.value = null
     }
   }
 
@@ -215,10 +265,12 @@ export const useSnapshotListDialog = (
     headers,
     copiedName,
     downloadingName,
+    renamingName,
     restoringName,
     deletingName,
     copyUrl,
     downloadSnapshot,
+    renameSnapshotItem,
     restoreFromSnapshot,
     deleteSnapshotItem,
     compareSnapshot,

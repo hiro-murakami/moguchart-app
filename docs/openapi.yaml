@@ -1096,6 +1096,36 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
+    patch:
+      operationId: updateSnapshot
+      summary: スナップショット更新
+      description: 指定されたスナップショットの表示名を更新します。`read-write` スコープが必要です。
+      tags: [Snapshots]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                displayName:
+                  type: string
+                  description: 新しいスナップショットの表示名
+                  example: 'v1.1 リリース後'
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse_Snapshot'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
     delete:
       operationId: deleteSnapshot
       summary: スナップショット削除
@@ -1518,6 +1548,16 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SnapshotInfo'
+
+    SuccessResponse_Snapshot:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [succeeded]
+        data:
+          $ref: '#/components/schemas/SnapshotInfo'
 
     # --- ドメインモデル ---
     ColorPalette:

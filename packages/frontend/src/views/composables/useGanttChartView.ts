@@ -713,6 +713,7 @@ export const useGanttChartView = () => {
     applyBaselineToRows,
     startSnapshotDiff,
     stopSnapshotDiff,
+    updateSnapshotDisplayName,
   } = useSnapshotDiff(rows)
 
   const handleCompareSnapshot = async (item: any) => {
@@ -722,6 +723,10 @@ export const useGanttChartView = () => {
 
   const handleClearCompareSnapshot = () => {
     stopSnapshotDiff()
+  }
+
+  const handleSnapshotRenamed = ({ name, displayName }: { name: string; displayName: string }) => {
+    updateSnapshotDisplayName(name, displayName)
   }
 
   const handleJumpToTask = async (taskId: string) => {
@@ -5424,6 +5429,7 @@ export const useGanttChartView = () => {
     diffHighlightOnly,
     handleCompareSnapshot,
     handleClearCompareSnapshot,
+    handleSnapshotRenamed,
     handleJumpToTask,
 
     // methods

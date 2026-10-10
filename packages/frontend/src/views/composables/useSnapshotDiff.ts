@@ -427,6 +427,15 @@ export const useSnapshotDiff = (currentRows: Ref<moguchart.GanttRow[]>) => {
     isDiffSummaryDialogVisible.value = false
   }
 
+  /**
+   * スナップショット表示名を更新
+   */
+  const updateSnapshotDisplayName = (name: string, displayName: string) => {
+    if (comparingSnapshotInfo.value && comparingSnapshotInfo.value.name === name) {
+      comparingSnapshotInfo.value.displayName = displayName
+    }
+  }
+
   return {
     comparingSnapshotData,
     comparingSnapshotInfo,
@@ -440,5 +449,6 @@ export const useSnapshotDiff = (currentRows: Ref<moguchart.GanttRow[]>) => {
     applyBaselineToRows,
     startSnapshotDiff,
     stopSnapshotDiff,
+    updateSnapshotDisplayName,
   }
 }

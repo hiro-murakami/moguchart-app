@@ -5,6 +5,7 @@ import loadSnapshot from '../../scripts/loadSnapshot.js'
 import listSnapshots from '../../scripts/listSnapshots.js'
 import getSnapshotDownloadUrl from '../../scripts/getSnapshotDownloadUrl.js'
 import deleteSnapshot from '../../scripts/deleteSnapshot.js'
+import updateSnapshot from '../../scripts/updateSnapshot.js'
 
 const router = Router()
 
@@ -75,6 +76,24 @@ router.delete(
       const params = { projectId: id, snapshotName: name }
       await deleteSnapshot(params, req.apiKeyUser)
       res.json({ status: 'succeeded' })
+    } catch (e) {
+      next(e)
+    }
+  },
+)
+
+// PATCH /projects/:id/snapshots/:name — スナップショット更新（表示名変更）
+router.patch(
+  '/:id/snapshots/:name',
+  requireWriteScope,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const id = req.params.id as string
+      const name = req.params.name as string
+      const { displayName } = req.body
+      const params = { projectId: id, snapshotName: name, displayName }
+      const data = await updateSnapshot(params, req.apiKeyUser)
+      res.json({ status: 'succeeded', data })
     } catch (e) {
       next(e)
     }

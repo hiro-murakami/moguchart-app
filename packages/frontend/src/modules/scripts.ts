@@ -38,6 +38,7 @@ import type {
   SnapshotInfo,
   GetSnapshotDownloadUrl,
   DeleteSnapshot,
+  UpdateSnapshot,
 } from '@functions/types/shared'
 import { VERSION } from '@functions/types/shared'
 import { httpsCallable } from 'firebase/functions'
@@ -183,4 +184,8 @@ export const getSnapshotDownloadUrl: GetSnapshotDownloadUrl = (params) => {
 
 export const deleteSnapshot: DeleteSnapshot = (params) => {
   return callFunction<void>('deleteSnapshot', params)
+}
+
+export const updateSnapshot: UpdateSnapshot = (params) => {
+  return callFunction<SnapshotInfo>('updateSnapshot', params)
 }
