@@ -7,10 +7,12 @@ import { useConfirm } from '@/composables/useConfirm'
 import { useSnackbar } from '@/composables/useSnackbar'
 
 export const useSnapshotListDialog = (
-  props: { modelValue: boolean; projectId: string },
+  props: { modelValue: boolean; projectId: string; comparingSnapshotName?: string | null },
   emit: {
     (e: 'update:modelValue', value: boolean): void
     (e: 'restored'): void
+    (e: 'compare', item: SnapshotInfo & { displayName: string }): void
+    (e: 'clearCompare'): void
   },
 ) => {
   const router = useRouter()
@@ -24,7 +26,7 @@ export const useSnapshotListDialog = (
   const headers = [
     { title: 'スナップショット', key: 'displayName', sortable: false },
     { title: '作成日時', key: 'displayCreatedAt', sortable: false },
-    { title: '操作', key: 'actions', sortable: false, width: '170px' },
+    { title: '操作', key: 'actions', sortable: false, width: '210px' },
   ]
 
   const copiedName = ref<string | null>(null)
@@ -190,6 +192,19 @@ export const useSnapshotListDialog = (
     }
   }
 
+  const compareSnapshot = (item: SnapshotInfo & { displayName: string }, event: Event) => {
+    event.stopPropagation()
+    if (props.comparingSnapshotName === item.name) {
+      emit('clearCompare')
+      snackbar({
+        message: '差分比較を解除しました。',
+        color: 'info',
+      })
+    } else {
+      emit('compare', item)
+    }
+  }
+
   const close = () => {
     emit('update:modelValue', false)
   }
@@ -206,6 +221,7 @@ export const useSnapshotListDialog = (
     downloadSnapshot,
     restoreFromSnapshot,
     deleteSnapshotItem,
+    compareSnapshot,
     fetchSnapshots,
     openSnapshot,
     close,

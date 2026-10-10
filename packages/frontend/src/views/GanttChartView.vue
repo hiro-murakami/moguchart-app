@@ -7,6 +7,8 @@ import { useTheme } from 'vuetify'
 import ProjectCommentPanel from '@/components/ProjectCommentPanel.vue'
 import SlideScheduleDialog from '@/components/SlideScheduleDialog.vue'
 import ImageManageDialog from '@/components/ImageManageDialog.vue'
+import SnapshotDiffBanner from '@/components/SnapshotDiffBanner.vue'
+import SnapshotDiffDialog from '@/components/SnapshotDiffDialog.vue'
 import { useUserStore } from '@/stores/useUserStore'
 
 const {
@@ -78,6 +80,17 @@ const {
   editingMarker,
   editingMarkerDefaultDate,
   projectId,
+
+  // スナップショット差分比較
+  isDiffActive,
+  comparingSnapshotInfo,
+  diffSummary,
+  isDiffSummaryDialogVisible,
+  baselinePosition,
+  diffHighlightOnly,
+  handleCompareSnapshot,
+  handleClearCompareSnapshot,
+  handleJumpToTask,
 
   // methods
   handleTaskUpdate,
@@ -360,9 +373,18 @@ const handleOpenSlideSchedule = async () => {
             <TooltipBtn
               v-if="!isSnapshotMode"
               icon="mdi-image-multiple"
+              :color="isDiffActive ? 'info' : undefined"
               variant="text"
               @click="isSnapshotListDialogVisible = true"
-              tooltip="スナップショット一覧"
+              :tooltip="isDiffActive ? 'スナップショット一覧（差分比較中）' : 'スナップショット一覧'"
+            />
+            <TooltipBtn
+              v-if="!isSnapshotMode && isDiffActive"
+              icon="mdi-file-document-outline"
+              color="info"
+              variant="text"
+              @click="isDiffSummaryDialogVisible = true"
+              tooltip="差分詳細サマリー"
             />
             <ExportMenu
               @export-csv="handleExportCsv"
@@ -473,6 +495,15 @@ const handleOpenSlideSchedule = async () => {
           :granularity="currentProject?.attribute?.granularity"
         />
       </div>
+
+      <SnapshotDiffBanner
+        v-if="isDiffActive"
+        :diff-summary="diffSummary"
+        v-model:baseline-position="baselinePosition"
+        v-model:diff-highlight-only="diffHighlightOnly"
+        @open-detail="isDiffSummaryDialogVisible = true"
+        @close="handleClearCompareSnapshot"
+      />
 
       <div
         class="chart-container"
@@ -741,7 +772,17 @@ const handleOpenSlideSchedule = async () => {
       v-if="projectId"
       v-model="isSnapshotListDialogVisible"
       :project-id="projectId"
+      :comparing-snapshot-name="comparingSnapshotInfo?.name"
+      @compare="handleCompareSnapshot"
+      @clear-compare="handleClearCompareSnapshot"
       @restored="refresh"
+    />
+
+    <!-- Snapshot Diff Dialog -->
+    <SnapshotDiffDialog
+      v-model="isDiffSummaryDialogVisible"
+      :diff-summary="diffSummary"
+      @select-task="handleJumpToTask"
     />
 
     <!-- Project Comment Sidebar -->

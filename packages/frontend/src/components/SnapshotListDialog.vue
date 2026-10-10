@@ -5,11 +5,14 @@ import { useSnapshotListDialog } from './composables/useSnapshotListDialog'
 const props = defineProps<{
   modelValue: boolean
   projectId: string
+  comparingSnapshotName?: string | null
 }>()
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
   (e: 'restored'): void
+  (e: 'compare', item: any): void
+  (e: 'clearCompare'): void
 }>()
 
 const {
@@ -24,6 +27,7 @@ const {
   downloadSnapshot,
   restoreFromSnapshot,
   deleteSnapshotItem,
+  compareSnapshot,
   openSnapshot,
   close,
 } = useSnapshotListDialog(props, emit)
@@ -55,6 +59,15 @@ const {
                 class="mr-2 text-medium-emphasis"
               />
               <span class="font-weight-medium">{{ item.displayName }}</span>
+              <v-chip
+                v-if="comparingSnapshotName === item.name"
+                size="x-small"
+                color="info"
+                variant="flat"
+                class="ml-2 font-weight-bold"
+              >
+                差分比較中
+              </v-chip>
             </div>
           </template>
           <template #item.displayCreatedAt="{ item }">
@@ -62,6 +75,15 @@ const {
           </template>
           <template #item.actions="{ item }">
             <div class="d-flex justify-space-between">
+              <TooltipBtn
+                :icon="comparingSnapshotName === item.name ? 'mdi-close-circle-outline' : 'mdi-compare'"
+                :color="comparingSnapshotName === item.name ? 'info' : undefined"
+                :tooltip="comparingSnapshotName === item.name ? '差分比較を解除' : '差分を比較（ベースライン表示）'"
+                variant="text"
+                size="small"
+                density="comfortable"
+                @click="(e: Event) => compareSnapshot(item, e)"
+              />
               <TooltipBtn
                 :icon="copiedName === item.name ? 'mdi-check' : 'mdi-content-copy'"
                 :color="copiedName === item.name ? 'success' : undefined"

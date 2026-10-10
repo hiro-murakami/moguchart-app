@@ -762,6 +762,53 @@ export const tooltip = (task: moguchart.GanttTask, isHourly?: boolean) => {
   }
   container.appendChild(dateSpan)
 
+  // ベースライン（スナップショット計画）情報
+  if (task.baseline && task.baseline.start && task.baseline.end) {
+    const bStart = dayjs(task.baseline.start)
+    const bEnd = dayjs(task.baseline.end)
+    let bDisplayEnd = bEnd
+    let bDays = Math.max(1, bEnd.diff(bStart, 'day'))
+    if (!isHourly && bStart.isBefore(bEnd) && bEnd.hour() === 0 && bEnd.minute() === 0) {
+      bDisplayEnd = bEnd.subtract(1, 'day')
+    } else if (!isHourly) {
+      bDays = Math.max(1, Math.round(bEnd.diff(bStart, 'day', true)))
+    }
+
+    const baselineDiv = document.createElement('div')
+    baselineDiv.style.fontSize = '11px'
+    baselineDiv.style.marginTop = '2px'
+    baselineDiv.style.marginBottom = '2px'
+    baselineDiv.style.padding = '3px 6px'
+    baselineDiv.style.borderRadius = '4px'
+    baselineDiv.style.backgroundColor = 'rgba(128, 128, 128, 0.15)'
+    baselineDiv.style.display = 'flex'
+    baselineDiv.style.alignItems = 'center'
+    baselineDiv.style.justifyContent = 'space-between'
+    baselineDiv.style.gap = '6px'
+
+    const { isDelayed, delayDays, isAhead, aheadDays } = moguchart.calculateTaskDelay(task)
+
+    let statusText = '計画通り'
+    let statusColor = '#94a3b8'
+    if (isDelayed) {
+      statusText = `+${delayDays}日遅れ`
+      statusColor = '#ef4444'
+    } else if (isAhead) {
+      statusText = `-${aheadDays}日前倒し`
+      statusColor = '#10b981'
+    }
+
+    const bDateText = isHourly
+      ? `${bStart.format('MM/DD HH:mm')} - ${bEnd.format('MM/DD HH:mm')}`
+      : `${bStart.format('YYYY/MM/DD')} - ${bDisplayEnd.format('YYYY/MM/DD')} (${bDays}日)`
+
+    baselineDiv.innerHTML = `
+      <span style="opacity: 0.85;">計画: ${bDateText}</span>
+      <span style="color: ${statusColor}; font-weight: bold; white-space: nowrap;">${statusText}</span>
+    `
+    container.appendChild(baselineDiv)
+  }
+
   // タスク名
   const nameSpan = document.createElement('div')
   nameSpan.style.fontWeight = 'bold'
@@ -859,7 +906,11 @@ export const tooltip = (task: moguchart.GanttTask, isHourly?: boolean) => {
     progressTitle.textContent = '進捗'
     const progressValue = document.createElement('span')
     progressValue.style.fontWeight = 'bold'
-    progressValue.textContent = `${clampedProgress}%`
+    if (task.baseline && typeof task.baseline.progress === 'number') {
+      progressValue.innerHTML = `${clampedProgress}% <span style="font-size: 11px; font-weight: normal; opacity: 0.75;">(計画: ${task.baseline.progress}%)</span>`
+    } else {
+      progressValue.textContent = `${clampedProgress}%`
+    }
     progressHeader.appendChild(progressTitle)
     progressHeader.appendChild(progressValue)
     progressDiv.appendChild(progressHeader)

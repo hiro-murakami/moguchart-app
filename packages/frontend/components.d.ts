@@ -52,6 +52,8 @@ declare module 'vue' {
     SlideScheduleDialog: typeof import('./src/components/SlideScheduleDialog.vue')['default']
     Snackbar: typeof import('./src/components/common/Snackbar.vue')['default']
     SnapDurationInput: typeof import('./src/components/SnapDurationInput.vue')['default']
+    SnapshotDiffBanner: typeof import('./src/components/SnapshotDiffBanner.vue')['default']
+    SnapshotDiffDialog: typeof import('./src/components/SnapshotDiffDialog.vue')['default']
     SnapshotListDialog: typeof import('./src/components/SnapshotListDialog.vue')['default']
     TaskCommentDialog: typeof import('./src/components/TaskCommentDialog.vue')['default']
     TaskContextMenu: typeof import('./src/components/TaskContextMenu.vue')['default']

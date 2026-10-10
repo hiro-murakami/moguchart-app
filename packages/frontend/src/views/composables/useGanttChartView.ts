@@ -82,6 +82,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { fetchPublicGanttChart } from '@/modules/publicApi'
 import { preloadImages } from '@/modules/imageCache'
 import { deleteImagesFromStorage } from '@/modules/storageUtils'
+import { useSnapshotDiff } from './useSnapshotDiff'
 
 const getBorderStyle = (type?: string, color?: string) => {
   if (!type || type === 'none') return ''
@@ -699,6 +700,99 @@ export const useGanttChartView = () => {
   )
 
   const rows = ref<moguchart.GanttRow[]>([])
+  const {
+    comparingSnapshotData,
+    comparingSnapshotInfo,
+    isSnapshotDiffLoading,
+    isDiffSummaryDialogVisible,
+    baselinePosition,
+    diffHighlightOnly,
+    isDiffActive,
+    diffSummary,
+    diffTaskIds,
+    applyBaselineToRows,
+    startSnapshotDiff,
+    stopSnapshotDiff,
+  } = useSnapshotDiff(rows)
+
+  const handleCompareSnapshot = async (item: any) => {
+    if (!projectId.value) return
+    await startSnapshotDiff(projectId.value, item)
+  }
+
+  const handleClearCompareSnapshot = () => {
+    stopSnapshotDiff()
+  }
+
+  const handleJumpToTask = async (taskId: string) => {
+    if (!taskId) return
+    const targetTaskId = String(taskId)
+
+    // 1. 対象タスクが存在する行を探し、親行が折りたたまれていれば展開する
+    let targetRow: moguchart.GanttRow | undefined
+    for (const row of rows.value) {
+      const foundTask = row.tasks?.find((t) => String(t.id) === targetTaskId)
+      if (foundTask) {
+        targetRow = row
+        break
+      }
+    }
+
+    if (targetRow) {
+      let currentParentId = (targetRow as any).parentId
+      let needUpdate = false
+      while (currentParentId != null) {
+        const parentRow = rows.value.find((r) => String(r.id) === String(currentParentId))
+        if (parentRow) {
+          if ((parentRow as any).collapsed) {
+            ;(parentRow as any).collapsed = false
+            needUpdate = true
+          }
+          currentParentId = (parentRow as any).parentId
+        } else {
+          break
+        }
+      }
+      if (needUpdate) {
+        rows.value = [...rows.value]
+      }
+    }
+
+    // 2. ダイアログのクローズとDOM更新を待機
+    await nextTick()
+    setTimeout(async () => {
+      const chartInstance = ganttChartRef.value
+      const chartEl =
+        (chartInstance?.element as any) ||
+        (chartInstance as any)?.$el ||
+        (document.querySelector('gantt-chart') as any)
+
+      if (!chartEl) return
+
+      // レンダリング更新完了を待機
+      if (chartEl.updateComplete) {
+        await chartEl.updateComplete
+      }
+
+      // タスクを選択状態にしてハイライト
+      if (typeof chartEl.selectTask === 'function') {
+        chartEl.selectTask(targetTaskId)
+      } else if (typeof (chartInstance as any)?.selectTask === 'function') {
+        ;(chartInstance as any).selectTask(targetTaskId)
+      }
+
+      // スクロール実行
+      if (typeof chartEl.scrollToTask === 'function') {
+        chartEl.scrollToTask(targetTaskId)
+      } else {
+        const barEl = chartEl.shadowRoot?.querySelector(`gantt-bar[task-id="${targetTaskId}"]`) as HTMLElement | null
+        if (barEl) {
+          barEl.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' })
+        }
+      }
+    }, 120)
+  }
+
   const selectedRowIds = ref<string[]>([])
   const selectedTaskIds = ref<string[]>([])
 
@@ -765,13 +859,14 @@ export const useGanttChartView = () => {
     const hasKeywordFilter = trimmed !== ''
     const editingMap = remoteEditingTaskMap.value
     const hasRemoteEditing = editingMap.size > 0
+    const hasDiffFilter = isDiffActive.value && diffHighlightOnly.value
 
-    if (!hasLabelFilter && !hasRowLabelFilter && !hasKeywordFilter && !hasRemoteEditing) {
+    if (!hasLabelFilter && !hasRowLabelFilter && !hasKeywordFilter && !hasRemoteEditing && !hasDiffFilter) {
       return rows.value
     }
 
     // フィルタ不要だが他ユーザー編集中のタスクだけハイライトする場合
-    if (!hasLabelFilter && !hasRowLabelFilter && !hasKeywordFilter && hasRemoteEditing) {
+    if (!hasLabelFilter && !hasRowLabelFilter && !hasKeywordFilter && !hasDiffFilter && hasRemoteEditing) {
       return rows.value.map((row) => ({
         ...row,
         tasks: row.tasks.map((task) => applyRemoteEditingHighlight(task, editingMap)),
@@ -822,16 +917,21 @@ export const useGanttChartView = () => {
             }
           }
 
+          let isDiffMatch = true
+          if (hasDiffFilter) {
+            isDiffMatch = diffTaskIds.value.has(String(task.id))
+          }
+
           let isSearchMatch = true
           if (hasKeywordFilter) {
             const attr = (task as any).attribute as TaskAttribute | undefined
             isSearchMatch = matchesAnyKw(task.name) || matchesAnyKw(attr?.description)
           }
 
-          let isTaskMatch = isLabelMatch
+          let isTaskMatch = isLabelMatch && isDiffMatch
           if (hasKeywordFilter) {
             if (searchIncludeRows.value && rowLevelMatch) {
-              // 行レベルでマッチしている場合、その行のタスクは（ラベル条件を満たしていれば）マッチとみなす
+              // 行レベルでマッチしている場合、その行のタスクは（ラベル条件・差分条件を満たしていれば）マッチとみなす
             } else {
               isTaskMatch = isTaskMatch && isSearchMatch
             }
@@ -880,13 +980,19 @@ export const useGanttChartView = () => {
       .filter(Boolean) as typeof rows.value
   })
 
-  /** filteredRows に選択中マーカーの情報を付与した表示用行データ */
+  /** filteredRows に選択中マーカーの情報を付与した表示用行データ（差分比較時はベースラインを付加） */
   const displayRows = computed(() => {
+    let resultRows = filteredRows.value
+
+    if (isDiffActive.value) {
+      resultRows = applyBaselineToRows(resultRows)
+    }
+
     const selRowId = isMarkerDialogVisible.value ? editingMarkerRowId.value : null
     const selMarkerId = isMarkerDialogVisible.value ? editingMarker.value?.id : null
-    if (!selRowId || !selMarkerId) return filteredRows.value
+    if (!selRowId || !selMarkerId) return resultRows
 
-    return filteredRows.value.map((row) => {
+    return resultRows.map((row) => {
       if (String(row.id) === selRowId) {
         return { ...row, selectedMarkerId: selMarkerId }
       }
@@ -1032,6 +1138,14 @@ export const useGanttChartView = () => {
         enabled: true,
         keyboard: false,
         maxDepth: 50,
+      },
+      baseline: {
+        enabled: isDiffActive.value,
+        position: baselinePosition.value,
+        highlightDelay: true,
+        delayColor: '#ef4444',
+        showTooltip: true,
+        autoSummary: true,
       },
     }
   })
@@ -2004,6 +2118,7 @@ export const useGanttChartView = () => {
   }
 
   watch(storeProjectId, async (newProjectId, oldProjectId) => {
+    stopSnapshotDiff()
     if (isSnapshotMode.value) return // スナップショットモード時はストアの監視を無視
     isMinimapReady.value = false
 
@@ -5299,6 +5414,17 @@ export const useGanttChartView = () => {
     editingMarker,
     editingMarkerRowId,
     editingMarkerDefaultDate,
+
+    // スナップショット差分比較
+    isDiffActive,
+    comparingSnapshotInfo,
+    diffSummary,
+    isDiffSummaryDialogVisible,
+    baselinePosition,
+    diffHighlightOnly,
+    handleCompareSnapshot,
+    handleClearCompareSnapshot,
+    handleJumpToTask,
 
     // methods
     handleCreateSnapshot,
