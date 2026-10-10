@@ -252,6 +252,7 @@ export const useSnapshotListDialog = (
       })
     } else {
       emit('compare', item)
+      close()
     }
   }
 

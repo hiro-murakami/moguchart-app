@@ -718,6 +718,7 @@ export const useGanttChartView = () => {
 
   const handleCompareSnapshot = async (item: any) => {
     if (!projectId.value) return
+    isSnapshotListDialogVisible.value = false
     await startSnapshotDiff(projectId.value, item)
   }
 
