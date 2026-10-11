@@ -547,7 +547,7 @@ export type LoadSnapshot = (
 
 /** スナップショット情報 */
 export interface SnapshotInfo {
-  /** スナップショット名（タイムスタンプ） */
+  /** スナップショットID（UUID） */
   name: string
   /** 作成日時（ISO 8601形式） */
   createdAt: string
@@ -571,7 +571,7 @@ export type DeleteSnapshot = (params: { projectId: string; snapshotName: string 
 export interface UpdateSnapshotParams {
   /** プロジェクトID */
   projectId: string
-  /** スナップショット名（タイムスタンプ） */
+  /** スナップショットID（UUID） */
   snapshotName: string
   /** スナップショット表示名 */
   displayName?: string

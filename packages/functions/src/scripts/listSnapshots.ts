@@ -16,8 +16,8 @@ const listSnapshots: ListSnapshots = async (projectId, email) => {
   const snapshots = files
     .filter((file) => file.name.endsWith('.json.zip'))
     .map((file) => {
-      // ファイル名からタイムスタンプ（スナップショット名）を抽出
-      // 例: snapshots/{projectId}/20260313_180000.json.zip → 20260313_180000
+      // ファイル名からスナップショットIDを抽出
+      // 例: snapshots/{projectId}/{snapshotId}.json.zip → {snapshotId}
       const fileName = file.name.replace(prefix, '').replace('.json.zip', '')
       const metadata = file.metadata
 
@@ -29,8 +29,8 @@ const listSnapshots: ListSnapshots = async (projectId, email) => {
         displayName: customMetadata?.displayName || undefined,
       }
     })
-    // 新しいものが先頭に来るよう降順ソート
-    .sort((a, b) => b.name.localeCompare(a.name))
+    // 新しいものが先頭に来るよう作成日時で降順ソート
+    .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))
 
   return snapshots
 }

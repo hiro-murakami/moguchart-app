@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { SnapshotDiffSummary } from '@/views/composables/useSnapshotDiff'
 import TooltipBtn from './common/TooltipBtn.vue'
+import { ref } from 'vue'
+import { useSnackbar } from '@/composables/useSnackbar'
 
 const props = withDefaults(
   defineProps<{
@@ -19,6 +21,28 @@ const emit = defineEmits<{
   (e: 'openDetail'): void
   (e: 'close'): void
 }>()
+
+const snackbar = useSnackbar()
+const isCopied = ref(false)
+let copyTimer: ReturnType<typeof setTimeout> | null = null
+
+const copyCompareUrl = async () => {
+  const url = window.location.href
+  try {
+    await navigator.clipboard.writeText(url)
+    isCopied.value = true
+    snackbar({
+      message: '差分比較URLをクリップボードにコピーしました',
+      color: 'success',
+    })
+    if (copyTimer) clearTimeout(copyTimer)
+    copyTimer = setTimeout(() => {
+      isCopied.value = false
+    }, 2000)
+  } catch (err) {
+    console.error('Failed to copy compare url:', err)
+  }
+}
 
 const getPositionLabel = (pos: 'bottom' | 'top' | 'overlay') => {
   switch (pos) {
@@ -165,6 +189,17 @@ const getPositionLabel = (pos: 'bottom' | 'top' | 'overlay') => {
         >
           差分詳細
         </v-btn>
+
+        <!-- 差分比較URLコピーボタン -->
+        <TooltipBtn
+          :icon="isCopied ? 'mdi-check' : 'mdi-link-variant'"
+          :color="isCopied ? 'success' : undefined"
+          size="small"
+          density="comfortable"
+          variant="text"
+          :tooltip="isCopied ? 'コピーしました' : '差分比較URLをコピー'"
+          @click="copyCompareUrl"
+        />
 
         <!-- 解除ボタン -->
         <TooltipBtn

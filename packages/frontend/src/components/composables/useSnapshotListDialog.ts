@@ -6,6 +6,7 @@ import { useAlert } from '@/composables/useAlert'
 import { useConfirm } from '@/composables/useConfirm'
 import { useSnackbar } from '@/composables/useSnackbar'
 import { usePrompt } from '@/composables/usePrompt'
+import dayjs from 'dayjs'
 
 export const useSnapshotListDialog = (
   props: { modelValue: boolean; projectId: string; comparingSnapshotName?: string | null },
@@ -172,7 +173,7 @@ export const useSnapshotListDialog = (
       const data = await listSnapshots(props.projectId)
       snapshots.value = data.map((s) => ({
         ...s,
-        displayName: s.displayName || s.name,
+        displayName: s.displayName || (s.createdAt ? dayjs(s.createdAt).format('YYYYMMDD_HHmmss') : s.name),
         displayCreatedAt: s.createdAt ? new Date(s.createdAt).toLocaleString('ja-JP') : '',
       }))
     } catch (err) {

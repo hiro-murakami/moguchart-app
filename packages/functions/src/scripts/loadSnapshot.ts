@@ -14,12 +14,16 @@ const loadSnapshot: LoadSnapshot = async (params, email) => {
   const storagePath = `snapshots/${projectId}/${snapshotName}.json.zip`
   const file = bucket.file(storagePath)
 
-  const [exists] = await file.exists()
-  if (!exists) {
-    throw new Error('Snapshot not found')
+  let fileBuffer: Buffer
+  try {
+    const [downloaded] = await file.download()
+    fileBuffer = downloaded
+  } catch (err: any) {
+    if (err?.code === 404) {
+      throw new Error('Snapshot not found')
+    }
+    throw err
   }
-
-  const [fileBuffer] = await file.download()
   const zip = new AdmZip(fileBuffer)
   const zipEntries = zip.getEntries()
 

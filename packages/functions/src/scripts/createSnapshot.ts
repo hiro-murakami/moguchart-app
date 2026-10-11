@@ -44,22 +44,24 @@ const createSnapshot: CreateSnapshot = async (params, email) => {
   // Storageへアップロード
   const bucket = getStorageBucket()
   
-  const timestamp = dayjs().tz('Asia/Tokyo').format('YYYYMMDD_HHmmss')
-  const storagePath = `snapshots/${projectId}/${timestamp}.json.zip`
+  const snapshotId = crypto.randomUUID()
+  const storagePath = `snapshots/${projectId}/${snapshotId}.json.zip`
   const file = bucket.file(storagePath)
 
   const downloadToken = crypto.randomUUID()
 
+  // 表示名: 指定があればトリムして利用、なければ日時のタイムスタンプをデフォルトとする
+  const trimmedDisplayName = displayName?.trim()
+  const finalDisplayName = trimmedDisplayName || dayjs().tz('Asia/Tokyo').format('YYYYMMDD_HHmmss')
+
   const customMetadata: Record<string, string> = {
     firebaseStorageDownloadTokens: downloadToken,
-  }
-  if (displayName) {
-    customMetadata.displayName = displayName
+    displayName: finalDisplayName,
   }
 
   // 自動履歴の場合、保持期間に基づいてcustomTimeを設定（GCSライフサイクルで自動削除）
   let customTime: string | undefined
-  if (displayName?.startsWith('自動履歴')) {
+  if (finalDisplayName.startsWith('自動履歴')) {
     const attribute = (ganttData.project?.attribute ?? {}) as ProjectAttribute
     const retentionDays = attribute.historyRetentionDays
     if (retentionDays && retentionDays > 0) {
@@ -75,8 +77,7 @@ const createSnapshot: CreateSnapshot = async (params, email) => {
     },
   })
 
-  // return downloadUrl
-  return timestamp
+  return snapshotId
 }
 
 export default createSnapshot

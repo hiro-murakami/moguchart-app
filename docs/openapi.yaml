@@ -1064,7 +1064,7 @@ paths:
                   example: 'v1.0 リリース前'
       responses:
         '201':
-          description: 作成成功（Storage URLを返す）
+          description: 作成成功（スナップショットIDを返す）
           content:
             application/json:
               schema:
@@ -1385,10 +1385,10 @@ components:
       name: snapshotName
       in: path
       required: true
-      description: スナップショット名（タイムスタンプ）
+      description: スナップショットID（UUID）
       schema:
         type: string
-        example: '2026-06-20T000000'
+        example: '3fa85f64-5717-4562-b3fc-2c963f66afa6'
 
   # ──────────────────────────────────────────────
   # Responses
@@ -2055,8 +2055,8 @@ components:
       properties:
         name:
           type: string
-          description: スナップショット名（タイムスタンプ）
-          example: '2026-06-20T000000'
+          description: スナップショットID（UUID）
+          example: '3fa85f64-5717-4562-b3fc-2c963f66afa6'
         createdAt:
           type: string
           format: date-time

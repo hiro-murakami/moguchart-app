@@ -389,29 +389,53 @@ export const useSnapshotDiff = (currentRows: Ref<moguchart.GanttRow[]>) => {
   const startSnapshotDiff = async (
     projectId: string,
     snapshotItem: SnapshotInfo & { displayName?: string },
+    options?: { silent?: boolean },
   ): Promise<boolean> => {
     if (!projectId || !snapshotItem.name) return false
 
     isSnapshotDiffLoading.value = true
+    // データ取得前に対象スナップショット情報を先行設定（並行して行われる表示名解決等を受け入れられるようにする）
+    comparingSnapshotInfo.value = {
+      name: snapshotItem.name,
+      displayName: snapshotItem.displayName || snapshotItem.name,
+      createdAt: snapshotItem.createdAt,
+    }
+
     try {
       const data = await loadSnapshot({ projectId, snapshotName: snapshotItem.name })
       comparingSnapshotData.value = data
+      // loadSnapshot 待機中に並行して updateSnapshotDisplayName 等で表示名・日時が解決されている場合はそれを保持
+      const currentInfo = comparingSnapshotInfo.value
       comparingSnapshotInfo.value = {
         name: snapshotItem.name,
-        displayName: snapshotItem.displayName || snapshotItem.name,
-        createdAt: snapshotItem.createdAt,
+        displayName:
+          currentInfo?.name === snapshotItem.name && currentInfo.displayName && currentInfo.displayName !== snapshotItem.name
+            ? currentInfo.displayName
+            : snapshotItem.displayName || snapshotItem.name,
+        createdAt: currentInfo?.createdAt || snapshotItem.createdAt,
       }
-      snackbar({
-        message: `スナップショット「${snapshotItem.displayName || snapshotItem.name}」との差分比較を表示しました`,
-        color: 'info',
-      })
+      if (!options?.silent) {
+        snackbar({
+          message: `スナップショット「${comparingSnapshotInfo.value.displayName}」との差分比較を表示しました`,
+          color: 'info',
+        })
+      }
       return true
     } catch (err) {
       console.error('[useSnapshotDiff] Failed to load snapshot for diff:', err)
-      await alert({
-        title: 'エラー',
-        message: 'スナップショットの差分データの読み込みに失敗しました。',
-      })
+      comparingSnapshotData.value = null
+      comparingSnapshotInfo.value = null
+      if (options?.silent) {
+        snackbar({
+          message: '指定されたスナップショットの差分データの読み込みに失敗しました。',
+          color: 'error',
+        })
+      } else {
+        await alert({
+          title: 'エラー',
+          message: 'スナップショットの差分データの読み込みに失敗しました。',
+        })
+      }
       return false
     } finally {
       isSnapshotDiffLoading.value = false
@@ -428,11 +452,15 @@ export const useSnapshotDiff = (currentRows: Ref<moguchart.GanttRow[]>) => {
   }
 
   /**
-   * スナップショット表示名を更新
+   * スナップショット表示名を更新（リアクティビティを保証するためオブジェクト参照を更新）
    */
-  const updateSnapshotDisplayName = (name: string, displayName: string) => {
+  const updateSnapshotDisplayName = (name: string, displayName: string, createdAt?: string) => {
     if (comparingSnapshotInfo.value && comparingSnapshotInfo.value.name === name) {
-      comparingSnapshotInfo.value.displayName = displayName
+      comparingSnapshotInfo.value = {
+        ...comparingSnapshotInfo.value,
+        displayName,
+        ...(createdAt ? { createdAt } : {}),
+      }
     }
   }
 

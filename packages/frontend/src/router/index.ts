@@ -1,7 +1,7 @@
 // Composables
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 
-const routes = [
+const routes: RouteRecordRaw[] = [
   {
     path: '/',
     component: () => import('@/views/GanttChartView.vue'),
@@ -9,6 +9,13 @@ const routes = [
   {
     path: '/:projectId/snapshot/:snapshotName',
     component: () => import('@/views/GanttChartView.vue'),
+  },
+  {
+    path: '/:id/compare/:snapshotName',
+    redirect: (to) => ({
+      path: `/${to.params.id}`,
+      query: { ...to.query, compare: to.params.snapshotName },
+    }),
   },
   {
     path: '/:id',

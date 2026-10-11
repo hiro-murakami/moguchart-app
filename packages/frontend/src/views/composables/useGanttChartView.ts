@@ -22,6 +22,7 @@ import {
   upsertGanttTasks,
   createSnapshot,
   loadSnapshot,
+  listSnapshots,
   selectComments,
   downloadProjectZip,
   upsertUser,
@@ -65,6 +66,7 @@ import type {
   Label,
   Comment,
   User,
+  SnapshotInfo,
 } from '@functions/types/shared'
 import * as holiday_jp from '@holiday-jp/holiday_jp'
 import * as moguchart from '@mogura/moguchart-core'
@@ -96,6 +98,7 @@ export const useGanttChartView = () => {
   const route = useRoute()
   const router = useRouter()
   const userStore = useUserStore()
+  const { isLoading, setIsLoading } = useLoading()
   /** App.vue から inject: 未ログインで公開プロジェクトを閲覧中かどうか */
   const isPublicViewMode = inject<Ref<boolean>>('isPublicViewMode', ref(false))
   /** App.vue から inject: 公開閲覧モード用テーマオーバーライド */
@@ -719,16 +722,101 @@ export const useGanttChartView = () => {
   const handleCompareSnapshot = async (item: any) => {
     if (!projectId.value) return
     isSnapshotListDialogVisible.value = false
-    await startSnapshotDiff(projectId.value, item)
+    const success = await startSnapshotDiff(projectId.value, item)
+    if (success && item.name) {
+      router.replace({
+        query: {
+          ...route.query,
+          compare: item.name,
+        },
+      })
+    }
   }
 
   const handleClearCompareSnapshot = () => {
     stopSnapshotDiff()
+    const query = { ...route.query }
+    delete query.compare
+    delete query.diff
+    router.replace({ query })
   }
 
   const handleSnapshotRenamed = ({ name, displayName }: { name: string; displayName: string }) => {
     updateSnapshotDisplayName(name, displayName)
   }
+
+  // URLクエリ (?compare=xxx または ?diff=xxx) で指定された差分比較スナップショットID
+  const compareQueryId = computed(() => {
+    const q = route.query.compare || route.query.diff
+    return (Array.isArray(q) ? q[0] : q) as string | undefined
+  })
+
+  // URLから差分比較対象のプロジェクトIDを即座に特定
+  const targetCompareProjectId = computed(() => {
+    const id = route.params.id || route.params.projectId
+    const routeId = (Array.isArray(id) ? id[0] : id) as string | undefined
+    return routeId || projectId.value
+  })
+
+  // URLクエリに差分比較パラメータがある場合、認証完了後に即時フェッチ開始（プロジェクトデータ読み込みと並列で実行）
+  let isInitiatingCompareFromQuery = false
+  watch(
+    [() => targetCompareProjectId.value, () => compareQueryId.value, () => userStore.user],
+    async ([pId, compareId, user]) => {
+      if (!pId || !compareId || isSnapshotMode.value) return
+      // ユーザー認証が完了するまで Callable Functions を実行できないため待機
+      if (!user && !isPublicViewMode.value) return
+      // 既に同じスナップショットを差分比較中、または現在開始処理中であればスキップ
+      if (comparingSnapshotInfo.value?.name === compareId || isInitiatingCompareFromQuery) return
+
+      isInitiatingCompareFromQuery = true
+      try {
+        // 1. スナップショット一覧取得（表示名・日時の特定用）を並行開始
+        const listPromise = listSnapshots(pId).catch((err) => {
+          console.warn('[useGanttChartView] Failed to fetch snapshot list for displayName:', err)
+          return [] as SnapshotInfo[]
+        })
+
+        // 2. スナップショットデータ（ZIP）の取得を並行で即時開始
+        const diffPromise = startSnapshotDiff(pId, { name: compareId, createdAt: '' }, { silent: true })
+
+        // 3. 一覧が先に取得でき次第、即時表示名・作成日時を反映
+        listPromise.then((snapshots) => {
+          const found = snapshots.find((s) => s.name === compareId)
+          if (found) {
+            updateSnapshotDisplayName(compareId, found.displayName || found.name, found.createdAt)
+          }
+        })
+
+        const success = await diffPromise
+
+        // 4. データ取得完了時にも念のため最新の一覧データから表示名を確実に反映
+        const snapshots = await listPromise
+        const found = snapshots.find((s) => s.name === compareId)
+        if (found) {
+          updateSnapshotDisplayName(compareId, found.displayName || found.name, found.createdAt)
+        }
+
+        if (!success) {
+          // 該当スナップショットが存在しない等で失敗した場合はクエリを解除
+          const query = { ...route.query }
+          delete query.compare
+          delete query.diff
+          router.replace({ query })
+        }
+      } finally {
+        isInitiatingCompareFromQuery = false
+      }
+    },
+    { immediate: true },
+  )
+
+  // ブラウザの戻る・進む操作で URL から compare クエリが消えたら差分比較を解除
+  watch(compareQueryId, (newCompareId) => {
+    if (!newCompareId && isDiffActive.value) {
+      stopSnapshotDiff()
+    }
+  })
 
   const handleJumpToTask = async (taskId: string) => {
     if (!taskId) return
@@ -1218,7 +1306,6 @@ export const useGanttChartView = () => {
   const alert = useAlert()
   const snackbar = useSnackbar()
   const { exportAsCsv } = useExportData()
-  const { setIsLoading } = useLoading()
 
   /**
    * エクスポート処理用ラッパー関数
@@ -2124,11 +2211,15 @@ export const useGanttChartView = () => {
   }
 
   watch(storeProjectId, async (newProjectId, oldProjectId) => {
-    stopSnapshotDiff()
+    // 別のプロジェクトに切り替わった場合のみ差分比較を解除（初回ロード時は解除しない）
+    if (oldProjectId && oldProjectId !== newProjectId) {
+      stopSnapshotDiff()
+    }
     if (isSnapshotMode.value) return // スナップショットモード時はストアの監視を無視
     isMinimapReady.value = false
 
     if (!newProjectId) {
+      stopSnapshotDiff()
       clearHistory()
       rows.value = []
       const currentRouteId = Array.isArray(route.params.id) ? route.params.id[0] : route.params.id
@@ -2150,7 +2241,7 @@ export const useGanttChartView = () => {
 
     const currentRouteId = Array.isArray(route.params.id) ? route.params.id[0] : route.params.id
     if (newProjectId && currentRouteId !== newProjectId) {
-      router.push(`/${newProjectId}`)
+      router.push({ path: `/${newProjectId}`, query: route.query })
     }
 
     // コラボレーション: プロジェクト切替時にプレゼンスを更新（公開閲覧モードでは不要）
