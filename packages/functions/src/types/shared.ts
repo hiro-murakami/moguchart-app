@@ -162,6 +162,18 @@ export type ProjectSettings = {
   minimapOpacity?: number
   /** ミニマップが最小化（折りたたみ）されているかどうか */
   minimapCollapsed?: boolean
+  /** マルチカラムグリッドを表示するかどうか */
+  gridEnabled?: boolean
+  /** マルチカラムグリッドのインライン編集を有効にするかどうか */
+  gridEditable?: boolean
+  /** マルチカラムグリッドで表示するカラムIDの配列 */
+  gridColumns?: string[]
+  /** マルチカラムグリッドの各カラム幅 (columnId -> px) */
+  gridColumnWidths?: Record<string, number>
+  /** マルチカラムグリッド有効時の行ヘッダー全体幅 (px) */
+  gridRowHeaderWidth?: number
+  /** マルチカラムグリッド有効時の基準行ヘッダー全体幅 (px)（倍率100%基準） */
+  baseGridRowHeaderWidth?: number
   /** @deprecated barShadowLevel に移行済み。後方互換のため残存 */
   showBarShadow?: boolean
 }

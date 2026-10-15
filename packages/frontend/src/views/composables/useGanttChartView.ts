@@ -196,7 +196,15 @@ export const useGanttChartView = () => {
   const basePxPerMonth = ref(DEFAULT_PX_PER_MONTH)
   const basePxPerHour = ref(DEFAULT_PX_PER_HOUR)
   const baseRowHeaderWidth = ref(DEFAULT_ROW_HEADER_WIDTH)
+  const baseGridRowHeaderWidth = ref(600)
   const baseBarHeight = ref(DEFAULT_BAR_HEIGHT)
+
+  // マルチカラムグリッド設定
+  const DEFAULT_GRID_COLUMNS = ['wbs', 'name', 'startDate', 'endDate', 'duration', 'progress']
+  const gridEnabled = ref(false)
+  const gridEditable = ref(true)
+  const gridColumns = ref<string[]>([...DEFAULT_GRID_COLUMNS])
+  const gridColumnWidths = ref<Record<string, number>>({})
 
   // 実効値（ズーム連動）
   const pxPerDay = computed(() => Math.max(8, Math.round(basePxPerDay.value * zoomScale.value)))
@@ -204,6 +212,9 @@ export const useGanttChartView = () => {
   const pxPerHour = computed(() => Math.max(30, Math.round(basePxPerHour.value * zoomScale.value)))
   const effectiveRowHeaderWidth = computed(() =>
     Math.max(60, Math.min(600, Math.round(baseRowHeaderWidth.value * zoomScale.value))),
+  )
+  const effectiveGridRowHeaderWidth = computed(() =>
+    Math.max(120, Math.min(1600, Math.round(baseGridRowHeaderWidth.value * zoomScale.value))),
   )
   const effectiveBarHeight = computed(() =>
     Math.max(16, Math.round(baseBarHeight.value * Math.max(0.7, Math.min(1.5, 1 + (zoomScale.value - 1) * 0.7)))),
@@ -390,6 +401,8 @@ export const useGanttChartView = () => {
       barShadowLevel?: 'none' | 'small' | 'medium' | 'large'
       rowHeaderWidth?: number
       baseRowHeaderWidth?: number
+      gridRowHeaderWidth?: number
+      baseGridRowHeaderWidth?: number
       barHeight?: number
       baseBarHeight?: number
       commentSidebarOpen?: boolean
@@ -401,6 +414,10 @@ export const useGanttChartView = () => {
       minimapWidth?: number
       minimapOpacity?: number
       minimapCollapsed?: boolean
+      gridEnabled?: boolean
+      gridEditable?: boolean
+      gridColumns?: string[]
+      gridColumnWidths?: Record<string, number>
     }) => {
       // 公開閲覧モードではユーザー設定を保存しない
       if (isPublicViewMode.value) return
@@ -467,6 +484,31 @@ export const useGanttChartView = () => {
       rowHeaderWidth: effectiveRowHeaderWidth.value,
     })
   })
+
+  // グリッド行ヘッダー基準幅変更時に保存
+  watch(baseGridRowHeaderWidth, (newValue) => {
+    saveProjectSettings({
+      baseGridRowHeaderWidth: newValue,
+      gridRowHeaderWidth: effectiveGridRowHeaderWidth.value,
+    })
+  })
+
+  // マルチカラムグリッド設定変更時に保存
+  watch([gridEnabled, gridEditable, gridColumns], ([enabled, editable, cols]) => {
+    saveProjectSettings({
+      gridEnabled: enabled,
+      gridEditable: editable,
+      gridColumns: [...cols],
+    })
+  })
+
+  watch(
+    gridColumnWidths,
+    (newWidths) => {
+      saveProjectSettings({ gridColumnWidths: { ...newWidths } })
+    },
+    { deep: true },
+  )
 
   // 選択ラベル変更時に保存
   watch(
@@ -589,6 +631,28 @@ export const useGanttChartView = () => {
         } else {
           baseRowHeaderWidth.value = DEFAULT_ROW_HEADER_WIDTH
         }
+
+        // baseGridRowHeaderWidthの復元
+        if (settings?.baseGridRowHeaderWidth) {
+          baseGridRowHeaderWidth.value = settings.baseGridRowHeaderWidth
+        } else if (settings?.gridRowHeaderWidth) {
+          baseGridRowHeaderWidth.value = settings.gridRowHeaderWidth
+        } else {
+          baseGridRowHeaderWidth.value = 600
+        }
+
+        // マルチカラムグリッド設定の復元
+        gridEnabled.value = settings?.gridEnabled ?? false
+        gridEditable.value = settings?.gridEditable ?? true
+        if (Array.isArray(settings?.gridColumns) && settings.gridColumns.length > 0) {
+          const cols = settings.gridColumns.includes('name')
+            ? [...settings.gridColumns]
+            : ['name', ...settings.gridColumns]
+          gridColumns.value = cols
+        } else {
+          gridColumns.value = [...DEFAULT_GRID_COLUMNS]
+        }
+        gridColumnWidths.value = settings?.gridColumnWidths ? { ...settings.gridColumnWidths } : {}
 
         // selectedFilterLabelNamesの復元
         if (settings?.selectedLabels) {
@@ -1156,8 +1220,27 @@ export const useGanttChartView = () => {
         milestones: milestones.length > 0 ? milestones : undefined,
       },
       rowHeader: {
-        maxWidth: 400,
-        width: baseRowHeaderWidth.value,
+        maxWidth: gridEnabled.value ? 1600 : 400,
+        width: gridEnabled.value ? baseGridRowHeaderWidth.value : baseRowHeaderWidth.value,
+      },
+      grid: {
+        enabled: gridEnabled.value,
+        editable: !isReadOnly.value && gridEditable.value,
+        editTrigger: 'dblclick',
+        width: gridEnabled.value ? baseGridRowHeaderWidth.value : undefined,
+        columns: (['wbs', 'name', 'startDate', 'endDate', 'duration', 'progress'] as const)
+          .filter((id) => id !== 'progress' || currentProject.value?.attribute?.enableProgress !== false)
+          .map((id) => ({
+            id,
+            visible: id === 'name' ? true : gridColumns.value.includes(id),
+            ...(gridColumnWidths.value[id] ? { width: gridColumnWidths.value[id] } : {}),
+            ...(id === 'name'
+              ? {
+                  renderCell: (_val: unknown, row: moguchart.GanttRow) =>
+                    rowHeaderContent(row, barHeight.value, true),
+                }
+              : {}),
+          })),
       },
       tree: {
         enabled: true,
@@ -1198,6 +1281,7 @@ export const useGanttChartView = () => {
         cornerContent: createCornerContent(() => ({
           availableLabels: availableRowLabels.value,
           selectedLabels: selectedRowFilterLabelNames.value,
+          gridEnabled: gridEnabled.value,
           onSelectionChange: (labels: string[]) => {
             selectedRowFilterLabelNames.value = labels
           },
@@ -3255,7 +3339,76 @@ export const useGanttChartView = () => {
 
   const handleRowHeaderResize = (e: any) => {
     const detail = getDetail<moguchart.RowHeaderResizeEventDetail>(e)
-    baseRowHeaderWidth.value = Math.max(60, Math.round(detail.width / zoomScale.value))
+    if (gridEnabled.value) {
+      baseGridRowHeaderWidth.value = Math.max(120, Math.round(detail.width / zoomScale.value))
+    } else {
+      baseRowHeaderWidth.value = Math.max(60, Math.round(detail.width / zoomScale.value))
+    }
+  }
+
+  const handleColumnResize = (e: any) => {
+    const detail = getDetail<moguchart.ColumnResizeEventDetail>(e)
+    if (!detail?.columnId || typeof detail.width !== 'number') return
+    const canonicalId =
+      detail.columnId === 'startMonth' || detail.columnId === 'startDateTime'
+        ? 'startDate'
+        : detail.columnId === 'endMonth' || detail.columnId === 'endDateTime'
+          ? 'endDate'
+          : detail.columnId
+    gridColumnWidths.value = {
+      ...gridColumnWidths.value,
+      [canonicalId]: Math.round(detail.width),
+      [detail.columnId]: Math.round(detail.width),
+    }
+  }
+
+  const handleCellEdit = async (e: any) => {
+    const detail = getDetail<moguchart.CellEditEventDetail>(e)
+    if (!detail) return
+
+    if (detail.columnId === 'name') {
+      if (isReadOnly.value) {
+        await loadData(projectId.value, { silent: true })
+        return
+      }
+      const nextName = String(detail.newValue ?? '').trim()
+      if (!nextName) {
+        await loadData(projectId.value, { silent: true })
+        return
+      }
+      await maybeAutoSnapshot()
+      await updateRowName(Number(detail.rowId), nextName)
+      return
+    }
+
+    if (!detail.previousRow || !detail.row) return
+
+    const { beforeTasks, afterTasks, affectedRowIds } = extractTaskChanges(
+      [detail.previousRow],
+      [detail.row],
+    )
+    if (afterTasks.length === 0) return
+
+    if (detail.columnId === 'progress') {
+      const userId = userStore.currentUser?.id
+      const userEmail = userStore.currentUser?.email
+      const canEdit = afterTasks.every((t) => {
+        const assignees = t.attribute?.assignees || []
+        const isAssignee = (!!userId && assignees.includes(userId)) || (!!userEmail && assignees.includes(userEmail))
+        return !isReadOnly.value || isAssignee
+      })
+      if (!canEdit) {
+        await loadData(projectId.value, { silent: true })
+        return
+      }
+    } else if (isReadOnly.value) {
+      await loadData(projectId.value, { silent: true })
+      return
+    }
+
+    await maybeAutoSnapshot()
+    const colTitle = detail.column?.title ?? detail.columnId
+    await syncTasksWithUndo(`${colTitle} の編集`, beforeTasks, afterTasks, affectedRowIds)
   }
 
   // --- 行追加関連 ---
@@ -3342,6 +3495,12 @@ export const useGanttChartView = () => {
 
   const startEditingRowByName = async (rowId: number, name: string) => {
     await nextTick()
+    if (gridEnabled.value && gridEditable.value && !isReadOnly.value) {
+      setTimeout(() => {
+        ganttChartRef.value?.startCellEdit?.(String(rowId), 'name')
+      }, 100)
+      return
+    }
     // DOM描画完了を待つために少し遅延させる
     setTimeout(() => {
       // 名前を含む要素を探す (XPath)
@@ -3550,6 +3709,11 @@ export const useGanttChartView = () => {
     if (!row) return
 
     if (event.shiftKey) {
+      if (gridEnabled.value && gridEditable.value) {
+        const started = ganttChartRef.value?.startCellEdit?.(String(row.id), 'name')
+        if (started) return
+      }
+
       editingRowId.value = Number(row.id)
       editingRowName.value = row.name
 
@@ -5478,6 +5642,11 @@ export const useGanttChartView = () => {
     isExporting,
     baseBarHeight,
     baseRowHeaderWidth,
+    baseGridRowHeaderWidth,
+    gridEnabled,
+    gridEditable,
+    gridColumns,
+    gridColumnWidths,
     addRowCount,
     manualAddRowCount,
     isUnassignedTasksOpen,
@@ -5576,6 +5745,8 @@ export const useGanttChartView = () => {
     saveRow,
     updateProject,
     handleRowHeaderResize,
+    handleColumnResize,
+    handleCellEdit,
     undo,
     redo,
     refresh,

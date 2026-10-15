@@ -962,7 +962,7 @@ export const tooltip = (task: moguchart.GanttTask, isHourly?: boolean) => {
   return container
 }
 
-export const rowHeaderContent = (row: moguchart.GanttRow, barHeight: number = 38) => {
+export const rowHeaderContent = (row: moguchart.GanttRow, barHeight: number = 38, isGridMode: boolean = false) => {
   const rowWithAttr = row as any
   const description = rowWithAttr.attribute?.description as string | undefined
   const commentCount = rowWithAttr.commentCount as number | undefined
@@ -974,7 +974,7 @@ export const rowHeaderContent = (row: moguchart.GanttRow, barHeight: number = 38
   container.style.flexDirection = 'column'
   container.style.justifyContent = 'start'
   container.style.height = '100%'
-  container.style.padding = '4px 8px'
+  container.style.padding = isGridMode ? '4px 2px' : '4px 8px'
   container.style.overflow = 'hidden'
   container.style.width = '100%'
   container.style.boxSizing = 'border-box'
@@ -1442,6 +1442,8 @@ export interface CornerContentOptions {
   selectedLabels: string[]
   /** 選択変更時のコールバック */
   onSelectionChange: (labels: string[]) => void
+  /** マルチカラムグリッドが有効かどうか（2段表示の上段に収めるためのコンパクト化） */
+  gridEnabled?: boolean
 }
 
 /**
@@ -1450,10 +1452,11 @@ export interface CornerContentOptions {
  */
 export const createCornerContent = (getOptions: () => CornerContentOptions) => {
   return () => {
-    const { selectedLabels: initSelectedLabels } = getOptions()
+    const { selectedLabels: initSelectedLabels, gridEnabled } = getOptions()
     const isDark = !!document.querySelector('.v-theme--dark')
 
     const hasFilter = initSelectedLabels.length > 0
+    const isCompact = Boolean(gridEnabled)
 
     // --- フィルタアイコンボタン ---
     const btn = document.createElement('button')
@@ -1461,10 +1464,11 @@ export const createCornerContent = (getOptions: () => CornerContentOptions) => {
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 38px;
-      height: 38px;
+      width: ${isCompact ? '26px' : '38px'};
+      height: ${isCompact ? '20px' : '38px'};
+      max-height: 100%;
       border: none;
-      border-radius: 6px;
+      border-radius: ${isCompact ? '4px' : '6px'};
       cursor: pointer;
       background: ${hasFilter ? (isDark ? 'rgba(99,102,241,0.25)' : 'rgba(99,102,241,0.15)') : 'transparent'};
       color: ${hasFilter ? (isDark ? '#a5b4fc' : '#4f46e5') : isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)'};
@@ -1475,8 +1479,8 @@ export const createCornerContent = (getOptions: () => CornerContentOptions) => {
 
     // フィルタアイコン（SVG）
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
-    svg.setAttribute('width', '20')
-    svg.setAttribute('height', '20')
+    svg.setAttribute('width', isCompact ? '16' : '20')
+    svg.setAttribute('height', isCompact ? '16' : '20')
     svg.setAttribute('viewBox', '0 0 24 24')
     svg.setAttribute('fill', 'currentColor')
     const path = document.createElementNS('http://www.w3.org/2000/svg', 'path')
@@ -1488,10 +1492,10 @@ export const createCornerContent = (getOptions: () => CornerContentOptions) => {
     const badge = document.createElement('span')
     badge.style.cssText = `
       position: absolute;
-      top: 4px;
-      right: 4px;
-      width: 7px;
-      height: 7px;
+      top: ${isCompact ? '2px' : '4px'};
+      right: ${isCompact ? '2px' : '4px'};
+      width: ${isCompact ? '5px' : '7px'};
+      height: ${isCompact ? '5px' : '7px'};
       border-radius: 50%;
       background: ${isDark ? '#818cf8' : '#4f46e5'};
       display: ${hasFilter ? 'block' : 'none'};

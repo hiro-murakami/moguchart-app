@@ -27,6 +27,10 @@ const props = defineProps<{
   barHeight: number
   baseBarHeight?: number
   granularity?: 'daily' | 'monthly' | 'hourly'
+  gridEnabled?: boolean
+  gridEditable?: boolean
+  gridColumns?: string[]
+  enableProgress?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -47,7 +51,44 @@ const emit = defineEmits<{
   'update:basePxPerHour': [value: number]
   'update:barHeight': [value: number]
   'update:baseBarHeight': [value: number]
+  'update:gridEnabled': [value: boolean]
+  'update:gridEditable': [value: boolean]
+  'update:gridColumns': [value: string[]]
 }>()
+
+const DEFAULT_GRID_COLUMNS = ['wbs', 'name', 'startDate', 'endDate', 'duration', 'progress']
+
+const selectableGridColumns = computed(() => {
+  const g = props.granularity || 'daily'
+  const startLabel = g === 'monthly' ? '開始月' : g === 'hourly' ? '開始日時' : '開始日'
+  const endLabel = g === 'monthly' ? '終了月' : g === 'hourly' ? '終了日時' : '終了日'
+  const cols = [
+    { id: 'wbs', label: 'WBS' },
+    { id: 'startDate', label: startLabel },
+    { id: 'endDate', label: endLabel },
+    { id: 'duration', label: '期間' },
+  ]
+  if (props.enableProgress !== false) {
+    cols.push({ id: 'progress', label: '進捗' })
+  }
+  return cols
+})
+
+const isGridColumnSelected = (colId: string): boolean => {
+  const current = props.gridColumns ?? DEFAULT_GRID_COLUMNS
+  return current.includes(colId)
+}
+
+const toggleGridColumn = (colId: string) => {
+  const current = props.gridColumns ? [...props.gridColumns] : [...DEFAULT_GRID_COLUMNS]
+  const next = current.includes(colId)
+    ? current.filter((id) => id !== colId)
+    : [...current, colId]
+  if (!next.includes('name')) {
+    next.unshift('name')
+  }
+  emit('update:gridColumns', next)
+}
 
 // --- Chrome風 ズームステップ設定 ---
 const CHROME_ZOOM_LEVELS = [50, 67, 75, 80, 90, 100, 110, 125, 150, 175, 200]
@@ -364,6 +405,62 @@ const currentTheme = computed({
                 aria-label="不透明度を上げる"
                 @click="handleMinimapOpacityIncrease"
               />
+            </div>
+          </div>
+        </transition>
+
+        <!-- マルチカラムグリッドを表示 -->
+        <div class="setting-row">
+          <div class="setting-label-group">
+            <v-icon size="20" color="medium-emphasis" class="setting-icon">mdi-table-column</v-icon>
+            <span class="setting-title">マルチカラムグリッドを表示</span>
+          </div>
+          <v-switch
+            :model-value="gridEnabled ?? false"
+            color="primary"
+            hide-details
+            density="compact"
+            class="setting-switch"
+            @update:model-value="emit('update:gridEnabled', $event as boolean)"
+          />
+        </div>
+
+        <!-- グリッド詳細設定（グリッドON時のみインデント表示） -->
+        <transition name="expand">
+          <div v-if="gridEnabled" class="d-flex flex-column" style="gap: 3px">
+            <div v-if="canEdit" class="setting-row sub-row">
+              <div class="setting-label-group">
+                <v-icon size="18" color="medium-emphasis" class="setting-icon">mdi-pencil-outline</v-icon>
+                <span class="setting-title sub-title text-medium-emphasis">セルのインライン編集</span>
+              </div>
+              <v-switch
+                :model-value="gridEditable ?? true"
+                color="primary"
+                hide-details
+                density="compact"
+                class="setting-switch"
+                @update:model-value="emit('update:gridEditable', $event as boolean)"
+              />
+            </div>
+            <div class="setting-row sub-row flex-column align-start py-2" style="gap: 6px">
+              <div class="setting-label-group">
+                <v-icon size="18" color="medium-emphasis" class="setting-icon">mdi-view-column-outline</v-icon>
+                <span class="setting-title sub-title text-medium-emphasis">表示カラム（名前は常時表示）</span>
+              </div>
+              <div class="d-flex flex-wrap" style="gap: 6px; padding-left: 28px">
+                <v-chip
+                  v-for="col in selectableGridColumns"
+                  :key="col.id"
+                  size="small"
+                  :color="isGridColumnSelected(col.id) ? 'primary' : undefined"
+                  :variant="isGridColumnSelected(col.id) ? 'flat' : 'outlined'"
+                  class="cursor-pointer font-weight-medium"
+                  @click="toggleGridColumn(col.id)"
+                >
+                  <v-icon v-if="isGridColumnSelected(col.id)" start size="14">mdi-check</v-icon>
+                  {{ col.label }}
+                </v-chip>
+              </div>
             </div>
           </div>
         </transition>

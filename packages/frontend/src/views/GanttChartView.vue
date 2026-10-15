@@ -39,6 +39,9 @@ const {
   barShadowLevel,
   isExporting,
   readonlyMode,
+  gridEnabled,
+  gridEditable,
+  gridColumns,
   currentRole,
   pxPerDay,
   basePxPerDay,
@@ -144,6 +147,8 @@ const {
   saveRow,
   updateProject,
   handleRowHeaderResize,
+  handleColumnResize,
+  handleCellEdit,
   undo,
   redo,
   handleCommand,
@@ -494,6 +499,10 @@ const handleOpenSlideSchedule = async () => {
           v-model:readonly-mode="readonlyMode"
           :can-edit="currentRole !== 'viewer'"
           :granularity="currentProject?.attribute?.granularity"
+          v-model:grid-enabled="gridEnabled"
+          v-model:grid-editable="gridEditable"
+          v-model:grid-columns="gridColumns"
+          :enable-progress="currentProject?.attribute?.enableProgress !== false"
         />
       </div>
 
@@ -536,6 +545,8 @@ const handleOpenSlideSchedule = async () => {
             @task-drop="handleTaskDrop"
             @chart-contextmenu="handleChartContextMenu"
             @row-header-resize="handleRowHeaderResize"
+            @column-resize="handleColumnResize"
+            @cell-edit="handleCellEdit"
             @task-delete="handleTaskDelete"
             @dependency-create="handleDependencyCreate"
             @dependency-click="handleDependencyClick"
