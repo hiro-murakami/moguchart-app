@@ -250,7 +250,7 @@
       "order": 2,
       "visible": true,
       "attribute": {
-        "description": "アラート受信から第一報発出までの対応フェーズ。",
+        "description": "アラート受信から初動対応・体制召集。",
         "parentId": 200
       },
       "createdBy": "system",
@@ -314,10 +314,28 @@
           "updatedBy": "system",
           "updatedAt": "2026-05-06T00:19:48.922Z",
           "comments": []
-        },
+        }
+      ]
+    },
+    {
+      "id": 231,
+      "projectId": "c2a1b3d4-e5f6-7890-abcd-ef1234567890",
+      "name": "社内エスカレーション",
+      "order": 3,
+      "visible": true,
+      "attribute": {
+        "description": "関係各所・社内ステークホルダーへの迅速なエスカレーション。",
+        "parentId": 200
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
         {
           "id": 4193,
-          "rowId": 201,
+          "rowId": 231,
           "name": "第一報・社内エスカレーション",
           "start": "2026-05-10T09:45:00",
           "end": "2026-05-10T10:15:00",
@@ -347,10 +365,10 @@
       "id": 202,
       "projectId": "c2a1b3d4-e5f6-7890-abcd-ef1234567890",
       "name": "原因調査",
-      "order": 3,
+      "order": 4,
       "visible": true,
       "attribute": {
-        "description": "障害原因を特定するための調査フェーズ。",
+        "description": "各種ログの分析と障害原因の仮説検証。",
         "parentId": 200
       },
       "createdBy": "system",
@@ -417,10 +435,28 @@
           "updatedBy": "system",
           "updatedAt": "2026-05-06T00:19:49.223Z",
           "comments": []
-        },
+        }
+      ]
+    },
+    {
+      "id": 232,
+      "projectId": "c2a1b3d4-e5f6-7890-abcd-ef1234567890",
+      "name": "根本原因特定",
+      "order": 5,
+      "visible": true,
+      "attribute": {
+        "description": "障害の根本原因（ボトルネック・バグ）の特定。",
+        "parentId": 200
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
         {
           "id": 4196,
-          "rowId": 202,
+          "rowId": 232,
           "name": "根本原因特定",
           "start": "2026-05-10T11:30:00",
           "end": "2026-05-10T13:00:00",
@@ -453,7 +489,7 @@
       "id": 210,
       "projectId": "c2a1b3d4-e5f6-7890-abcd-ef1234567890",
       "name": "📁 フェーズ2: 復旧・暫定/恒久対処",
-      "order": 4,
+      "order": 6,
       "visible": true,
       "attribute": {
         "isSummary": true,
@@ -477,10 +513,10 @@
       "id": 203,
       "projectId": "c2a1b3d4-e5f6-7890-abcd-ef1234567890",
       "name": "インフラ・環境対応",
-      "order": 5,
+      "order": 7,
       "visible": true,
       "attribute": {
-        "description": "インフラ側の暫定・恒久対策フェーズ。",
+        "description": "切り戻しおよびインフラ設定・リソースの暫定調整。",
         "parentId": 210
       },
       "createdBy": "system",
@@ -551,10 +587,28 @@
           "updatedBy": "system",
           "updatedAt": "2026-05-06T00:19:49.523Z",
           "comments": []
-        },
+        }
+      ]
+    },
+    {
+      "id": 233,
+      "projectId": "c2a1b3d4-e5f6-7890-abcd-ef1234567890",
+      "name": "負荷分散・スケール確認",
+      "order": 8,
+      "visible": true,
+      "attribute": {
+        "description": "スケールアウトおよびトラフィック負荷分散の確認。",
+        "parentId": 210
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
         {
           "id": 4199,
-          "rowId": 203,
+          "rowId": 233,
           "name": "スケールアウト・負荷分散確認",
           "start": "2026-05-10T15:00:00",
           "end": "2026-05-10T16:00:00",
@@ -587,10 +641,10 @@
       "id": 204,
       "projectId": "c2a1b3d4-e5f6-7890-abcd-ef1234567890",
       "name": "アプリ修正・デプロイ",
-      "order": 6,
+      "order": 9,
       "visible": true,
       "attribute": {
-        "description": "アプリケーションコードの修正と本番反映。",
+        "description": "原因箇所へのパッチ作成およびコードレビュー。",
         "parentId": 210
       },
       "createdBy": "system",
@@ -657,10 +711,28 @@
           "updatedBy": "system",
           "updatedAt": "2026-05-06T00:19:49.822Z",
           "comments": []
-        },
+        }
+      ]
+    },
+    {
+      "id": 234,
+      "projectId": "c2a1b3d4-e5f6-7890-abcd-ef1234567890",
+      "name": "本番デプロイ",
+      "order": 10,
+      "visible": true,
+      "attribute": {
+        "description": "本番環境への緊急デプロイ実施。",
+        "parentId": 210
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
         {
           "id": 4202,
-          "rowId": 204,
+          "rowId": 234,
           "name": "本番デプロイ",
           "start": "2026-05-10T15:00:00",
           "end": "2026-05-10T16:00:00",
@@ -694,7 +766,7 @@
       "id": 220,
       "projectId": "c2a1b3d4-e5f6-7890-abcd-ef1234567890",
       "name": "📁 フェーズ3: 事後検証・報告・クローズ",
-      "order": 7,
+      "order": 11,
       "visible": true,
       "attribute": {
         "isSummary": true,
@@ -718,10 +790,10 @@
       "id": 205,
       "projectId": "c2a1b3d4-e5f6-7890-abcd-ef1234567890",
       "name": "動作確認・リリース後検証",
-      "order": 8,
+      "order": 12,
       "visible": true,
       "attribute": {
-        "description": "修正後の正常性確認と監視強化。",
+        "description": "本番環境でのスモークテストおよび集中メトリクス監視。",
         "parentId": 220
       },
       "createdBy": "system",
@@ -783,10 +855,28 @@
           "updatedBy": "system",
           "updatedAt": "2026-05-06T00:19:50.127Z",
           "comments": []
-        },
+        }
+      ]
+    },
+    {
+      "id": 235,
+      "projectId": "c2a1b3d4-e5f6-7890-abcd-ef1234567890",
+      "name": "インシデントクローズ判定",
+      "order": 13,
+      "visible": true,
+      "attribute": {
+        "description": "正常稼働の確認とインシデント収束・クローズ判定。",
+        "parentId": 220
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
         {
           "id": 4205,
-          "rowId": 205,
+          "rowId": 235,
           "name": "インシデントクローズ判定",
           "start": "2026-05-10T18:00:00",
           "end": "2026-05-10T18:30:00",
@@ -820,10 +910,10 @@
       "id": 206,
       "projectId": "c2a1b3d4-e5f6-7890-abcd-ef1234567890",
       "name": "コミュニケーション・報告",
-      "order": 9,
+      "order": 14,
       "visible": true,
       "attribute": {
-        "description": "社内外への状況共有・報告対応フェーズ。",
+        "description": "顧客向けステータス告知および経営層への進捗報告。",
         "parentId": 220
       },
       "createdBy": "system",
@@ -887,10 +977,28 @@
           "updatedBy": "system",
           "updatedAt": "2026-05-06T00:19:50.418Z",
           "comments": []
-        },
+        }
+      ]
+    },
+    {
+      "id": 236,
+      "projectId": "c2a1b3d4-e5f6-7890-abcd-ef1234567890",
+      "name": "事後対応・報告",
+      "order": 15,
+      "visible": true,
+      "attribute": {
+        "description": "障害対応完了の正式報告とポストモーテム（振り返り）開始。",
+        "parentId": 220
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
         {
           "id": 4208,
-          "rowId": 206,
+          "rowId": 236,
           "name": "復旧完了報告・ポストモーテム開始",
           "start": "2026-05-10T18:30:00",
           "end": "2026-05-10T19:30:00",

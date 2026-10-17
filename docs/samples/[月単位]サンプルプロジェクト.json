@@ -281,10 +281,27 @@
           "updatedBy": "system",
           "updatedAt": "2026-05-06T00:19:48.726Z",
           "comments": []
-        },
+        }
+      ]
+    },
+    {
+      "id": 121,
+      "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
+      "name": "長期ビジョン策定",
+      "order": 3,
+      "visible": true,
+      "attribute": {
+        "parentId": 1000
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
         {
           "id": 4133,
-          "rowId": 101,
+          "rowId": 121,
           "name": "長期ビジョン策定",
           "start": "2030-01-01T00:00:00",
           "end": "2030-09-30T00:00:00",
@@ -308,7 +325,7 @@
       "id": 102,
       "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
       "name": "市場調査・競合分析",
-      "order": 3,
+      "order": 4,
       "visible": true,
       "attribute": {
         "parentId": 1000
@@ -364,10 +381,27 @@
           "updatedBy": "system",
           "updatedAt": "2026-05-06T00:19:48.726Z",
           "comments": []
-        },
+        }
+      ]
+    },
+    {
+      "id": 122,
+      "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
+      "name": "市場トレンド調査",
+      "order": 5,
+      "visible": true,
+      "attribute": {
+        "parentId": 1000
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
         {
           "id": 4136,
-          "rowId": 102,
+          "rowId": 122,
           "name": "トレンド再調査",
           "start": "2028-01-01T00:00:00",
           "end": "2028-06-30T00:00:00",
@@ -397,7 +431,7 @@
       "id": 103,
       "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
       "name": "要件定義",
-      "order": 4,
+      "order": 6,
       "visible": true,
       "attribute": {
         "parentId": 1000
@@ -453,10 +487,27 @@
           "updatedBy": "system",
           "updatedAt": "2026-05-06T00:19:48.726Z",
           "comments": []
-        },
+        }
+      ]
+    },
+    {
+      "id": 123,
+      "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
+      "name": "第2フェーズ要件定義",
+      "order": 7,
+      "visible": true,
+      "attribute": {
+        "parentId": 1000
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
         {
           "id": 4139,
-          "rowId": 103,
+          "rowId": 123,
           "name": "第2フェーズ要件定義",
           "start": "2027-07-01T00:00:00",
           "end": "2027-12-31T00:00:00",
@@ -486,7 +537,7 @@
       "id": 104,
       "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
       "name": "UI/UXデザイン",
-      "order": 5,
+      "order": 8,
       "visible": true,
       "attribute": {
         "parentId": 1000
@@ -542,10 +593,27 @@
           "updatedBy": "system",
           "updatedAt": "2026-05-06T00:19:48.726Z",
           "comments": []
-        },
+        }
+      ]
+    },
+    {
+      "id": 124,
+      "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
+      "name": "UIデザイン刷新",
+      "order": 9,
+      "visible": true,
+      "attribute": {
+        "parentId": 1000
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
         {
           "id": 4142,
-          "rowId": 104,
+          "rowId": 124,
           "name": "UI全面刷新",
           "start": "2029-01-01T00:00:00",
           "end": "2029-06-30T00:00:00",
@@ -569,7 +637,7 @@
       "id": 2000,
       "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
       "name": "📁 コアシステム・サービス開発",
-      "order": 6,
+      "order": 10,
       "visible": true,
       "attribute": {
         "isSummary": true,
@@ -593,7 +661,7 @@
       "id": 105,
       "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
       "name": "アーキテクチャ設計",
-      "order": 7,
+      "order": 11,
       "visible": true,
       "attribute": {
         "parentId": 2000
@@ -649,10 +717,27 @@
           "updatedBy": "system",
           "updatedAt": "2026-05-06T00:19:48.726Z",
           "comments": []
-        },
+        }
+      ]
+    },
+    {
+      "id": 125,
+      "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
+      "name": "アーキテクチャ刷新",
+      "order": 12,
+      "visible": true,
+      "attribute": {
+        "parentId": 2000
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
         {
           "id": 4145,
-          "rowId": 105,
+          "rowId": 125,
           "name": "アーキテクチャ見直し",
           "start": "2030-01-01T00:00:00",
           "end": "2030-06-30T00:00:00",
@@ -682,7 +767,7 @@
       "id": 106,
       "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
       "name": "データ基盤構築",
-      "order": 8,
+      "order": 13,
       "visible": true,
       "attribute": {
         "parentId": 2000
@@ -738,10 +823,27 @@
           "updatedBy": "system",
           "updatedAt": "2026-05-06T00:19:48.726Z",
           "comments": []
-        },
+        }
+      ]
+    },
+    {
+      "id": 126,
+      "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
+      "name": "データレイク拡張",
+      "order": 14,
+      "visible": true,
+      "attribute": {
+        "parentId": 2000
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
         {
           "id": 4148,
-          "rowId": 106,
+          "rowId": 126,
           "name": "データレイク拡張",
           "start": "2029-07-01T00:00:00",
           "end": "2030-06-30T00:00:00",
@@ -771,7 +873,7 @@
       "id": 107,
       "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
       "name": "フロントエンド開発",
-      "order": 9,
+      "order": 15,
       "visible": true,
       "attribute": {
         "parentId": 2000
@@ -827,10 +929,27 @@
           "updatedBy": "system",
           "updatedAt": "2026-05-06T00:19:48.726Z",
           "comments": []
-        },
+        }
+      ]
+    },
+    {
+      "id": 127,
+      "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
+      "name": "フロントエンドv3.0開発",
+      "order": 16,
+      "visible": true,
+      "attribute": {
+        "parentId": 2000
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
         {
           "id": 4151,
-          "rowId": 107,
+          "rowId": 127,
           "name": "v3.0開発",
           "start": "2031-01-01T00:00:00",
           "end": "2031-12-31T00:00:00",
@@ -860,7 +979,7 @@
       "id": 108,
       "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
       "name": "バックエンド開発",
-      "order": 10,
+      "order": 17,
       "visible": true,
       "attribute": {
         "parentId": 2000
@@ -916,10 +1035,27 @@
           "updatedBy": "system",
           "updatedAt": "2026-05-06T00:19:48.726Z",
           "comments": []
-        },
+        }
+      ]
+    },
+    {
+      "id": 128,
+      "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
+      "name": "レガシーシステム移行",
+      "order": 18,
+      "visible": true,
+      "attribute": {
+        "parentId": 2000
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
         {
           "id": 4154,
-          "rowId": 108,
+          "rowId": 128,
           "name": "レガシー移行",
           "start": "2031-07-01T00:00:00",
           "end": "2032-12-31T00:00:00",
@@ -949,7 +1085,7 @@
       "id": 109,
       "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
       "name": "API・インテグレーション",
-      "order": 11,
+      "order": 19,
       "visible": true,
       "attribute": {
         "parentId": 2000
@@ -1005,10 +1141,27 @@
           "updatedBy": "system",
           "updatedAt": "2026-05-06T00:19:48.726Z",
           "comments": []
-        },
+        }
+      ]
+    },
+    {
+      "id": 129,
+      "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
+      "name": "グローバルAPI整備",
+      "order": 20,
+      "visible": true,
+      "attribute": {
+        "parentId": 2000
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
         {
           "id": 4157,
-          "rowId": 109,
+          "rowId": 129,
           "name": "グローバルAPI整備",
           "start": "2031-07-01T00:00:00",
           "end": "2032-06-30T00:00:00",
@@ -1038,7 +1191,7 @@
       "id": 3000,
       "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
       "name": "📁 プラットフォーム・信頼性・品質管理",
-      "order": 12,
+      "order": 21,
       "visible": true,
       "attribute": {
         "isSummary": true,
@@ -1062,7 +1215,7 @@
       "id": 110,
       "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
       "name": "インフラ・クラウド",
-      "order": 13,
+      "order": 22,
       "visible": true,
       "attribute": {
         "parentId": 3000
@@ -1118,10 +1271,27 @@
           "updatedBy": "system",
           "updatedAt": "2026-05-06T00:19:48.726Z",
           "comments": []
-        },
+        }
+      ]
+    },
+    {
+      "id": 130,
+      "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
+      "name": "クラウドインフラ最適化",
+      "order": 23,
+      "visible": true,
+      "attribute": {
+        "parentId": 3000
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
         {
           "id": 4160,
-          "rowId": 110,
+          "rowId": 130,
           "name": "インフラ最適化",
           "start": "2032-01-01T00:00:00",
           "end": "2032-12-31T00:00:00",
@@ -1151,7 +1321,7 @@
       "id": 111,
       "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
       "name": "セキュリティ対策",
-      "order": 14,
+      "order": 24,
       "visible": true,
       "attribute": {
         "parentId": 3000
@@ -1207,10 +1377,27 @@
           "updatedBy": "system",
           "updatedAt": "2026-05-06T00:19:48.726Z",
           "comments": []
-        },
+        }
+      ]
+    },
+    {
+      "id": 131,
+      "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
+      "name": "セキュリティ監査・強化",
+      "order": 25,
+      "visible": true,
+      "attribute": {
+        "parentId": 3000
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
         {
           "id": 4163,
-          "rowId": 111,
+          "rowId": 131,
           "name": "セキュリティ強化v3",
           "start": "2031-01-01T00:00:00",
           "end": "2031-12-31T00:00:00",
@@ -1240,7 +1427,7 @@
       "id": 112,
       "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
       "name": "QA・テスト",
-      "order": 15,
+      "order": 26,
       "visible": true,
       "attribute": {
         "parentId": 3000
@@ -1296,10 +1483,27 @@
           "updatedBy": "system",
           "updatedAt": "2026-05-06T00:19:48.726Z",
           "comments": []
-        },
+        }
+      ]
+    },
+    {
+      "id": 132,
+      "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
+      "name": "E2Eテスト自動化",
+      "order": 27,
+      "visible": true,
+      "attribute": {
+        "parentId": 3000
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
         {
           "id": 4166,
-          "rowId": 112,
+          "rowId": 132,
           "name": "E2Eテスト自動化",
           "start": "2031-07-01T00:00:00",
           "end": "2032-06-30T00:00:00",
@@ -1323,7 +1527,7 @@
       "id": 113,
       "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
       "name": "CI/CD・DevOps",
-      "order": 16,
+      "order": 28,
       "visible": true,
       "attribute": {
         "parentId": 3000
@@ -1379,10 +1583,27 @@
           "updatedBy": "system",
           "updatedAt": "2026-05-06T00:19:48.726Z",
           "comments": []
-        },
+        }
+      ]
+    },
+    {
+      "id": 133,
+      "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
+      "name": "GitOps運用移行",
+      "order": 29,
+      "visible": true,
+      "attribute": {
+        "parentId": 3000
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
         {
           "id": 4169,
-          "rowId": 113,
+          "rowId": 133,
           "name": "GitOps移行",
           "start": "2030-07-01T00:00:00",
           "end": "2031-03-31T00:00:00",
@@ -1412,7 +1633,7 @@
       "id": 114,
       "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
       "name": "ドキュメント整備",
-      "order": 17,
+      "order": 30,
       "visible": true,
       "attribute": {
         "parentId": 3000
@@ -1468,10 +1689,27 @@
           "updatedBy": "system",
           "updatedAt": "2026-05-06T00:19:48.726Z",
           "comments": []
-        },
+        }
+      ]
+    },
+    {
+      "id": 134,
+      "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
+      "name": "全社ナレッジベース構築",
+      "order": 31,
+      "visible": true,
+      "attribute": {
+        "parentId": 3000
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
         {
           "id": 4172,
-          "rowId": 114,
+          "rowId": 134,
           "name": "ナレッジベース構築",
           "start": "2031-01-01T00:00:00",
           "end": "2031-12-31T00:00:00",
@@ -1495,7 +1733,7 @@
       "id": 4000,
       "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
       "name": "📁 ビジネス・グローバル展開・運用",
-      "order": 18,
+      "order": 32,
       "visible": true,
       "attribute": {
         "isSummary": true,
@@ -1519,7 +1757,7 @@
       "id": 115,
       "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
       "name": "マーケティング",
-      "order": 19,
+      "order": 33,
       "visible": true,
       "attribute": {
         "parentId": 4000
@@ -1575,10 +1813,27 @@
           "updatedBy": "system",
           "updatedAt": "2026-05-06T00:19:48.726Z",
           "comments": []
-        },
+        }
+      ]
+    },
+    {
+      "id": 135,
+      "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
+      "name": "グローバルマーケティング",
+      "order": 34,
+      "visible": true,
+      "attribute": {
+        "parentId": 4000
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
         {
           "id": 4175,
-          "rowId": 115,
+          "rowId": 135,
           "name": "グローバルマーケティング",
           "start": "2031-04-01T00:00:00",
           "end": "2032-03-31T00:00:00",
@@ -1608,7 +1863,7 @@
       "id": 116,
       "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
       "name": "営業・パートナー開拓",
-      "order": 20,
+      "order": 35,
       "visible": true,
       "attribute": {
         "parentId": 4000
@@ -1670,10 +1925,27 @@
           "updatedBy": "system",
           "updatedAt": "2026-05-06T00:19:48.726Z",
           "comments": []
-        },
+        }
+      ]
+    },
+    {
+      "id": 136,
+      "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
+      "name": "海外販路開拓",
+      "order": 36,
+      "visible": true,
+      "attribute": {
+        "parentId": 4000
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
         {
           "id": 4178,
-          "rowId": 116,
+          "rowId": 136,
           "name": "海外販路開拓",
           "start": "2031-07-01T00:00:00",
           "end": "2032-12-31T00:00:00",
@@ -1697,7 +1969,7 @@
       "id": 117,
       "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
       "name": "カスタマーサポート体制",
-      "order": 21,
+      "order": 37,
       "visible": true,
       "attribute": {
         "parentId": 4000
@@ -1753,10 +2025,27 @@
           "updatedBy": "system",
           "updatedAt": "2026-05-06T00:19:48.726Z",
           "comments": []
-        },
+        }
+      ]
+    },
+    {
+      "id": 137,
+      "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
+      "name": "グローバルカスタマーサポート",
+      "order": 38,
+      "visible": true,
+      "attribute": {
+        "parentId": 4000
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
         {
           "id": 4181,
-          "rowId": 117,
+          "rowId": 137,
           "name": "グローバルサポート対応",
           "start": "2032-01-01T00:00:00",
           "end": "2032-12-31T00:00:00",
@@ -1786,7 +2075,7 @@
       "id": 118,
       "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
       "name": "法務・コンプライアンス",
-      "order": 22,
+      "order": 39,
       "visible": true,
       "attribute": {
         "parentId": 4000
@@ -1848,10 +2137,27 @@
           "updatedBy": "system",
           "updatedAt": "2026-05-06T00:19:48.726Z",
           "comments": []
-        },
+        }
+      ]
+    },
+    {
+      "id": 138,
+      "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
+      "name": "国際法規制・コンプライアンス",
+      "order": 40,
+      "visible": true,
+      "attribute": {
+        "parentId": 4000
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
         {
           "id": 4184,
-          "rowId": 118,
+          "rowId": 138,
           "name": "グローバル法規制対応",
           "start": "2032-07-01T00:00:00",
           "end": "2033-06-30T00:00:00",
@@ -1881,7 +2187,7 @@
       "id": 119,
       "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
       "name": "グローバル展開",
-      "order": 23,
+      "order": 41,
       "visible": true,
       "attribute": {
         "parentId": 4000
@@ -1943,10 +2249,27 @@
           "updatedBy": "system",
           "updatedAt": "2026-05-06T00:19:48.726Z",
           "comments": []
-        },
+        }
+      ]
+    },
+    {
+      "id": 139,
+      "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
+      "name": "欧州市場展開",
+      "order": 42,
+      "visible": true,
+      "attribute": {
+        "parentId": 4000
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
         {
           "id": 4187,
-          "rowId": 119,
+          "rowId": 139,
           "name": "欧州展開",
           "start": "2033-01-01T00:00:00",
           "end": "2034-06-30T00:00:00",
@@ -1976,7 +2299,7 @@
       "id": 120,
       "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
       "name": "保守・運用",
-      "order": 24,
+      "order": 43,
       "visible": true,
       "attribute": {
         "parentId": 4000
@@ -2040,10 +2363,27 @@
           "updatedBy": "system",
           "updatedAt": "2026-05-06T00:19:48.726Z",
           "comments": []
-        },
+        }
+      ]
+    },
+    {
+      "id": 140,
+      "projectId": "b7e4a2f1-c8d3-4e5a-9b0c-1f2e3d4a5b6c",
+      "name": "次世代システム構想",
+      "order": 44,
+      "visible": true,
+      "attribute": {
+        "parentId": 4000
+      },
+      "createdBy": "system",
+      "createdAt": "2026-05-06T00:19:46.633Z",
+      "updatedBy": "system",
+      "updatedAt": "2026-05-06T00:19:46.633Z",
+      "comments": [],
+      "tasks": [
         {
           "id": 4190,
-          "rowId": 120,
+          "rowId": 140,
           "name": "次世代システム検討",
           "start": "2033-07-01T00:00:00",
           "end": "2034-12-31T00:00:00",
