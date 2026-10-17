@@ -29,7 +29,7 @@ export const toGanttTask = (
     const list = task.assignees
       .map((a) => a.userId || a.email)
       .filter((id): id is string => Boolean(id))
-    attr.assignees = Array.from(new Set([...(attr.assignees || []), ...list]))
+    attr.assignees = Array.from(new Set(list))
   }
 
   return {

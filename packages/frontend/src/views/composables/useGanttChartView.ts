@@ -168,6 +168,10 @@ export const useGanttChartView = () => {
     if (member?.displayName) return member.displayName
     if (member?.email) return member.email
 
+    const collaborator = userStore.collaborators.find((u) => u.id === identifier || u.email === identifier)
+    if (collaborator?.displayName) return collaborator.displayName
+    if (collaborator?.email) return collaborator.email
+
     const matched = authorityHistoryUsers.value.find((u) => u.id === identifier || u.email === identifier)
     if (matched?.displayName && matched.displayName !== matched.email) return matched.displayName
 
@@ -1275,7 +1279,13 @@ export const useGanttChartView = () => {
         : {}),
       customRendering: {
         barContent,
-        tooltip: (task: moguchart.GanttTask) => tooltip(task, isHourly),
+        tooltip: (task: moguchart.GanttTask) => {
+          const latestTask =
+            displayRows.value.flatMap((r) => r.tasks).find((t) => String(t.id) === String(task.id)) ??
+            rows.value.flatMap((r) => r.tasks).find((t) => String(t.id) === String(task.id)) ??
+            task
+          return tooltip(latestTask as moguchart.GanttTask, isHourly)
+        },
         rowHeaderContent: (row: moguchart.GanttRow) => rowHeaderContent(row, barHeight.value),
         rowHeaderTooltip,
         cornerContent: createCornerContent(() => ({
@@ -2844,12 +2854,15 @@ export const useGanttChartView = () => {
       start: toDateTimeString(task.start),
       end: toDateTimeString(task.end),
       attribute: {
+        ...attr,
         description: attr.description || undefined,
         colorPalette: attr.colorPalette ? { ...attr.colorPalette } : undefined,
         labels: attr.labels ? [...attr.labels] : undefined,
         lock: attr.lock,
         progress: attr.progress,
+        assignees: attr.assignees ? [...attr.assignees] : undefined,
         dependencies: attr.dependencies ? [...attr.dependencies] : undefined,
+        imageUrls: attr.imageUrls ? [...attr.imageUrls] : undefined,
       },
     }
 
@@ -2871,6 +2884,21 @@ export const useGanttChartView = () => {
         await upsertGanttTasks([afterData])
         await loadData(projectId.value, { silent: true })
       },
+    })
+
+    // 楽観的UI更新：API完了前にローカルのrowsを即時反映
+    const updatedProgressTask = formatGanttTask({
+      ...afterData,
+      commentCount: (task as any)?.commentCount ?? 0,
+    })
+    rows.value = rows.value.map((r) => {
+      if (String(r.id) === String(row.id)) {
+        return {
+          ...r,
+          tasks: r.tasks.map((t) => (String(t.id) === String(task.id) ? (updatedProgressTask as any) : t)),
+        }
+      }
+      return r
     })
 
     await upsertGanttTasks([afterData])
@@ -3065,7 +3093,9 @@ export const useGanttChartView = () => {
             labels: beforeAttr?.labels ? [...beforeAttr.labels] : undefined,
             lock: beforeAttr?.lock,
             progress: beforeAttr?.progress,
+            assignees: beforeAttr?.assignees ? [...beforeAttr.assignees] : undefined,
             dependencies: beforeAttr?.dependencies ? [...beforeAttr.dependencies] : undefined,
+            imageUrls: beforeAttr?.imageUrls ? [...beforeAttr.imageUrls] : undefined,
           },
         }
         pushAction({
@@ -3080,6 +3110,37 @@ export const useGanttChartView = () => {
           },
         })
       }
+
+      // 楽観的UI更新：API完了前にローカルのrowsを即時反映
+      const updatedFormattedTask = formatGanttTask({
+        ...dataToSave,
+        commentCount: (beforeTask as any)?.commentCount ?? 0,
+      })
+      const targetRowIdStr = String(taskData.rowId)
+      rows.value = rows.value.map((r) => {
+        const hasTask = r.tasks.some((t) => String(t.id) === taskIdStr)
+        const isTargetRow = String(r.id) === targetRowIdStr
+        if (hasTask && isTargetRow) {
+          return {
+            ...r,
+            tasks: r.tasks.map((t) => (String(t.id) === taskIdStr ? (updatedFormattedTask as any) : t)),
+          }
+        }
+        if (hasTask && !isTargetRow) {
+          return {
+            ...r,
+            tasks: r.tasks.filter((t) => String(t.id) !== taskIdStr),
+          }
+        }
+        if (!hasTask && isTargetRow) {
+          return {
+            ...r,
+            tasks: [...r.tasks, updatedFormattedTask as any],
+          }
+        }
+        return r
+      })
+
       await upsertGanttTasks([dataToSave])
     }
     await loadData(projectId.value, { silent: true })

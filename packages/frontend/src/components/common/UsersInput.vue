@@ -28,29 +28,89 @@ const emit = defineEmits<{
 
 const userStore = useUserStore()
 
+/** 識別子（UIDまたはメール）から同一ユーザー判定用のキー配列を返す */
+function getUserKeys(rawVal: string): string[] {
+  const val = rawVal.trim().toLowerCase()
+  if (!val) return []
+
+  const keys = new Set<string>([val])
+  const currentUser = userStore.currentUser
+  if (
+    currentUser &&
+    ((currentUser.id && currentUser.id.toLowerCase() === val) ||
+      (currentUser.email && currentUser.email.toLowerCase() === val))
+  ) {
+    if (currentUser.id) keys.add(currentUser.id.toLowerCase())
+    if (currentUser.email) keys.add(currentUser.email.toLowerCase())
+  }
+
+  const user = (props.users ?? []).find(
+    (u) => (u.id && u.id.toLowerCase() === val) || (u.email && u.email.toLowerCase() === val),
+  )
+  if (user) {
+    if (user.id) keys.add(user.id.toLowerCase())
+    if (user.email) keys.add(user.email.toLowerCase())
+  }
+
+  return Array.from(keys)
+}
+
+/** 同一ユーザー（UIDとメールアドレスの混在）を重複排除する */
+function deduplicateIdentifiers(values: string[]): string[] {
+  const result: string[] = []
+  const seenKeys = new Set<string>()
+  for (const raw of values) {
+    const trimmed = raw.trim()
+    if (!trimmed) continue
+    const keys = getUserKeys(trimmed)
+    if (keys.some((k) => seenKeys.has(k))) continue
+    for (const k of keys) seenKeys.add(k)
+    result.push(trimmed)
+  }
+  return result
+}
+
+const deduplicatedModelValue = computed(() => deduplicateIdentifiers(props.modelValue ?? []))
+
 /** v-combobox に渡す補完候補アイテム */
 const suggestionItems = computed(() => {
+  const findSelectedValue = (id?: string, email?: string): string | undefined => {
+    return deduplicatedModelValue.value.find(
+      (v) =>
+        (!!id && v.toLowerCase() === id.toLowerCase()) ||
+        (!!email && v.toLowerCase() === email.toLowerCase()),
+    )
+  }
+
   // props.users から候補を作成。メールアドレスまたはdisplayNameが存在するもののみを対象にし、UID単体だけの無関係なものは候補に出さない
   const items = (props.users ?? [])
     .filter((u) => u.email || u.displayName)
     .map((u) => {
       const email = u.email || (u.id?.includes('@') ? u.id : '')
       const title = u.displayName ? (email ? `${u.displayName} (${email})` : u.displayName) : email
+      const selectedVal = findSelectedValue(u.id, email)
       return {
         title,
-        value: email || u.id,
+        value: selectedVal || email || u.id,
       }
     })
     .filter((item) => item.value && item.title)
 
   // 自分自身がまだ候補に含まれていなければ先頭に追加
   const currentUser = userStore.currentUser
-  if (currentUser?.email) {
-    const hasSelf = items.some((item) => item.value === currentUser.email || item.value === currentUser.id)
+  const selfEmail = currentUser?.email
+  if (currentUser && selfEmail) {
+    const hasSelf = items.some(
+      (item) =>
+        item.value === selfEmail ||
+        item.value === currentUser.id ||
+        getUserKeys(item.value).includes(selfEmail.toLowerCase()),
+    )
     if (!hasSelf) {
+      const selectedSelfVal = findSelectedValue(currentUser.id, selfEmail)
       items.unshift({
-        title: currentUser.displayName ? `${currentUser.displayName} (${currentUser.email})` : currentUser.email,
-        value: currentUser.email,
+        title: currentUser.displayName ? `${currentUser.displayName} (${selfEmail})` : selfEmail,
+        value: selectedSelfVal || selfEmail,
       })
     }
   }
@@ -143,14 +203,14 @@ function getUserInfo(rawVal: any) {
  */
 function handleUpdate(rawValues: (string | { title: string; value: string })[]) {
   const normalized = rawValues.map((v) => (typeof v === 'string' ? v : (v?.value ?? ''))).filter((v) => v !== '')
-  emit('update:modelValue', normalized)
+  emit('update:modelValue', deduplicateIdentifiers(normalized))
 }
 </script>
 
 <template>
   <v-col cols="12" class="d-flex align-center">
     <v-combobox
-      :model-value="modelValue"
+      :model-value="deduplicatedModelValue"
       @update:model-value="handleUpdate"
       :label="label"
       :items="suggestionItems"

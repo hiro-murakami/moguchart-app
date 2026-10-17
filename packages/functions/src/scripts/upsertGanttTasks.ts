@@ -17,6 +17,7 @@ const syncTaskAssignees = async (
     return
   }
 
+  const newAssignees: Array<{ userId: string | null; email: string | null }> = []
   for (const identifier of assignees) {
     if (typeof identifier !== 'string' || !identifier.trim()) continue
     const trimmed = identifier.trim()
@@ -39,11 +40,22 @@ const syncTaskAssignees = async (
       if (user?.email) email = user.email
     }
 
+    const isDuplicate = newAssignees.some((existing) => {
+      if (userId && existing.userId && userId === existing.userId) return true
+      if (email && existing.email && email.toLowerCase() === existing.email.toLowerCase()) return true
+      return false
+    })
+    if (!isDuplicate) {
+      newAssignees.push({ userId, email })
+    }
+  }
+
+  for (const a of newAssignees) {
     await tx.taskAssignee.create({
       data: {
         taskId,
-        userId,
-        email,
+        userId: a.userId,
+        email: a.email,
       },
     })
   }
@@ -70,9 +82,7 @@ const executeUpsert = async (tx: Prisma.TransactionClient, task: GanttTask, emai
     },
   })
 
-  if (task.attribute && Array.isArray(task.attribute.assignees)) {
-    await syncTaskAssignees(tx, result.id, task.attribute.assignees)
-  }
+  await syncTaskAssignees(tx, result.id, task.attribute?.assignees)
 
   return result.id
 }
