@@ -56,7 +56,7 @@ const emit = defineEmits<{
   'update:gridColumns': [value: string[]]
 }>()
 
-const DEFAULT_GRID_COLUMNS = ['wbs', 'name', 'startDate', 'endDate', 'duration', 'progress']
+const DEFAULT_GRID_COLUMNS = ['name', 'startDate', 'endDate', 'duration', 'progress']
 
 const selectableGridColumns = computed(() => {
   const g = props.granularity || 'daily'

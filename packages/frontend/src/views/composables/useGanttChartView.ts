@@ -204,7 +204,7 @@ export const useGanttChartView = () => {
   const baseBarHeight = ref(DEFAULT_BAR_HEIGHT)
 
   // マルチカラムグリッド設定
-  const DEFAULT_GRID_COLUMNS = ['wbs', 'name', 'startDate', 'endDate', 'duration', 'progress']
+  const DEFAULT_GRID_COLUMNS = ['name', 'startDate', 'endDate', 'duration', 'progress']
   const gridEnabled = ref(false)
   const gridEditable = ref(true)
   const gridColumns = ref<string[]>([...DEFAULT_GRID_COLUMNS])
