@@ -1444,10 +1444,12 @@ export interface CornerContentOptions {
   onSelectionChange: (labels: string[]) => void
   /** マルチカラムグリッドが有効かどうか（2段表示の上段に収めるためのコンパクト化） */
   gridEnabled?: boolean
+  /** マルチカラムグリッド表示切替時のコールバック */
+  onToggleGrid?: (enabled: boolean) => void
 }
 
 /**
- * ガントチャートの左上コーナーセルにラベルフィルタアイコンとポップアップを表示するコンテンツを生成する。
+ * ガントチャートの左上コーナーセルにマルチカラムグリッド切替ボタンとラベルフィルタアイコン・ポップアップを表示するコンテンツを生成する。
  * moguchart の customRendering.cornerContent に渡す関数を返す。
  */
 export const createCornerContent = (getOptions: () => CornerContentOptions) => {
@@ -1457,6 +1459,64 @@ export const createCornerContent = (getOptions: () => CornerContentOptions) => {
 
     const hasFilter = initSelectedLabels.length > 0
     const isCompact = Boolean(gridEnabled)
+
+    const container = document.createElement('div')
+    container.style.cssText = `
+      display: flex;
+      align-items: center;
+      gap: ${isCompact ? '2px' : '4px'};
+      max-height: 100%;
+    `
+
+    // --- マルチカラムグリッド表示切替ボタン ---
+    const gridBtn = document.createElement('button')
+    gridBtn.style.cssText = `
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: ${isCompact ? '26px' : '38px'};
+      height: ${isCompact ? '20px' : '38px'};
+      max-height: 100%;
+      border: none;
+      border-radius: ${isCompact ? '4px' : '6px'};
+      cursor: pointer;
+      background: ${gridEnabled ? (isDark ? 'rgba(99,102,241,0.25)' : 'rgba(99,102,241,0.15)') : 'transparent'};
+      color: ${gridEnabled ? (isDark ? '#a5b4fc' : '#4f46e5') : isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)'};
+      transition: background 0.15s, color 0.15s;
+      position: relative;
+    `
+    gridBtn.title = gridEnabled ? 'マルチカラムグリッドを非表示' : 'マルチカラムグリッドを表示'
+
+    // マルチカラムグリッドアイコン（SVG: mdi-table-column）
+    const gridSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+    gridSvg.setAttribute('width', isCompact ? '16' : '20')
+    gridSvg.setAttribute('height', isCompact ? '16' : '20')
+    gridSvg.setAttribute('viewBox', '0 0 24 24')
+    gridSvg.setAttribute('fill', 'currentColor')
+    const gridPath = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+    gridPath.setAttribute(
+      'd',
+      'M8,2H16A2,2 0 0,1 18,4V20A2,2 0 0,1 16,22H8A2,2 0 0,1 6,20V4A2,2 0 0,1 8,2M8,4V8H16V4H8M8,10V14H16V10H8M8,16V20H16V16H8Z',
+    )
+    gridSvg.appendChild(gridPath)
+    gridBtn.appendChild(gridSvg)
+
+    gridBtn.addEventListener('mouseenter', () => {
+      const { gridEnabled: currentGridEnabled } = getOptions()
+      if (!currentGridEnabled) {
+        gridBtn.style.background = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'
+      } else {
+        gridBtn.style.background = isDark ? 'rgba(99,102,241,0.35)' : 'rgba(99,102,241,0.22)'
+      }
+    })
+    gridBtn.addEventListener('mouseleave', () => {
+      const { gridEnabled: currentGridEnabled } = getOptions()
+      gridBtn.style.background = currentGridEnabled
+        ? isDark
+          ? 'rgba(99,102,241,0.25)'
+          : 'rgba(99,102,241,0.15)'
+        : 'transparent'
+    })
 
     // --- フィルタアイコンボタン ---
     const btn = document.createElement('button')
@@ -1740,6 +1800,13 @@ export const createCornerContent = (getOptions: () => CornerContentOptions) => {
       return p
     }
 
+    gridBtn.addEventListener('click', (e) => {
+      e.stopPropagation()
+      removePanel()
+      const { gridEnabled: currentGridEnabled, onToggleGrid } = getOptions()
+      onToggleGrid?.(!currentGridEnabled)
+    })
+
     btn.addEventListener('click', (e) => {
       e.stopPropagation()
       if (panel) {
@@ -1751,7 +1818,8 @@ export const createCornerContent = (getOptions: () => CornerContentOptions) => {
 
       // 外クリックで閉じる
       const onOutside = (ev: MouseEvent) => {
-        if (panel && !panel.contains(ev.target as Node) && ev.target !== btn) {
+        const path = typeof ev.composedPath === 'function' ? ev.composedPath() : []
+        if (panel && !panel.contains(ev.target as Node) && ev.target !== btn && !path.includes(btn)) {
           removePanel()
           document.removeEventListener('mousedown', onOutside)
         }
@@ -1760,6 +1828,9 @@ export const createCornerContent = (getOptions: () => CornerContentOptions) => {
       setTimeout(() => document.addEventListener('mousedown', onOutside), 0)
     })
 
-    return btn
+    container.appendChild(gridBtn)
+    container.appendChild(btn)
+
+    return container
   }
 }

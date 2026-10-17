@@ -1285,6 +1285,9 @@ export const useGanttChartView = () => {
           onSelectionChange: (labels: string[]) => {
             selectedRowFilterLabelNames.value = labels
           },
+          onToggleGrid: (enabled: boolean) => {
+            gridEnabled.value = enabled
+          },
         })),
       },
       zoom: {
