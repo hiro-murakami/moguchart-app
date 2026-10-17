@@ -49,6 +49,7 @@ import {
   preloadRowCommentsCache,
   createCornerContent,
   setUserDisplayNameResolver,
+  renderAssigneesGridCell,
 } from '@/modules/ganttChartCustomRendering'
 import { useProjectStore } from '@/stores/useProjectStore'
 import { useUserStore } from '@/stores/useUserStore'
@@ -204,7 +205,7 @@ export const useGanttChartView = () => {
   const baseBarHeight = ref(DEFAULT_BAR_HEIGHT)
 
   // マルチカラムグリッド設定
-  const DEFAULT_GRID_COLUMNS = ['name', 'startDate', 'endDate', 'duration', 'progress']
+  const DEFAULT_GRID_COLUMNS = ['name', 'assignees', 'startDate', 'endDate', 'duration', 'progress']
   const gridEnabled = ref(false)
   const gridEditable = ref(true)
   const gridColumns = ref<string[]>([...DEFAULT_GRID_COLUMNS])
@@ -1232,7 +1233,7 @@ export const useGanttChartView = () => {
         editable: !isReadOnly.value && gridEditable.value,
         editTrigger: 'dblclick',
         width: gridEnabled.value ? baseGridRowHeaderWidth.value : undefined,
-        columns: (['wbs', 'name', 'startDate', 'endDate', 'duration', 'progress'] as const)
+        columns: (['wbs', 'name', 'assignees', 'startDate', 'endDate', 'duration', 'progress'] as const)
           .filter((id) => id !== 'progress' || currentProject.value?.attribute?.enableProgress !== false)
           .map((id) => ({
             id,
@@ -1242,6 +1243,34 @@ export const useGanttChartView = () => {
               ? {
                   renderCell: (_val: unknown, row: moguchart.GanttRow) =>
                     rowHeaderContent(row, barHeight.value, true),
+                }
+              : {}),
+            ...(id === 'assignees'
+              ? {
+                  title: '担当者',
+                  width: gridColumnWidths.value[id] ?? 100,
+                  minWidth: 60,
+                  align: 'left' as const,
+                  editable: false,
+                  valueGetter: (_row: moguchart.GanttRow, tasks: moguchart.GanttTask[]) => {
+                    const names: string[] = []
+                    const seen = new Set<string>()
+                    for (const t of tasks ?? []) {
+                      if (t.type === 'summary') continue
+                      const raw = (t as any).attribute?.assignees
+                      const list = Array.isArray(raw) ? raw : typeof raw === 'string' && raw ? [raw] : []
+                      for (const identifier of list) {
+                        if (!identifier) continue
+                        const displayName = resolveUserDisplayName(identifier)
+                        if (displayName && !seen.has(displayName)) {
+                          seen.add(displayName)
+                          names.push(displayName)
+                        }
+                      }
+                    }
+                    return names.join(', ')
+                  },
+                  renderCell: (val: unknown) => renderAssigneesGridCell(String(val ?? '')),
                 }
               : {}),
           })),

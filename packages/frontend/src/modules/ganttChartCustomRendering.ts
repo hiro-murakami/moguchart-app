@@ -1836,3 +1836,81 @@ export const createCornerContent = (getOptions: () => CornerContentOptions) => {
     return container
   }
 }
+
+/**
+ * マルチカラムグリッドの担当者セルを描画し、テキストがセル幅を超えて省略表示されている場合のみ
+ * マウスオーバーで全文ツールチップを表示する。
+ */
+export const renderAssigneesGridCell = (text: string): HTMLElement => {
+  const cellEl = document.createElement('div')
+  cellEl.style.width = '100%'
+  cellEl.style.height = '100%'
+  cellEl.style.display = 'flex'
+  cellEl.style.alignItems = 'center'
+  cellEl.style.overflow = 'hidden'
+
+  const textSpan = document.createElement('span')
+  textSpan.style.overflow = 'hidden'
+  textSpan.style.textOverflow = 'ellipsis'
+  textSpan.style.whiteSpace = 'nowrap'
+  textSpan.style.width = '100%'
+  textSpan.textContent = text
+  cellEl.appendChild(textSpan)
+
+  if (!text) return cellEl
+
+  let tooltipEl: HTMLElement | null = null
+  let showTimer: ReturnType<typeof setTimeout> | null = null
+
+  const removeTooltip = () => {
+    if (showTimer) {
+      clearTimeout(showTimer)
+      showTimer = null
+    }
+    if (tooltipEl) {
+      tooltipEl.remove()
+      tooltipEl = null
+    }
+  }
+
+  cellEl.addEventListener('mouseenter', () => {
+    // 表示しきれている場合はツールチップを表示しない
+    if (textSpan.scrollWidth <= textSpan.clientWidth) return
+
+    removeTooltip()
+    showTimer = setTimeout(() => {
+      if (!cellEl.isConnected || textSpan.scrollWidth <= textSpan.clientWidth) return
+
+      document.querySelectorAll('[data-moguchart-assignees-tooltip]').forEach((el) => el.remove())
+
+      const colors = getTooltipColors()
+      tooltipEl = document.createElement('div')
+      tooltipEl.setAttribute('data-moguchart-assignees-tooltip', 'true')
+      tooltipEl.style.position = 'fixed'
+      tooltipEl.style.zIndex = '9999'
+      tooltipEl.style.backgroundColor = colors.bg
+      tooltipEl.style.color = colors.text
+      tooltipEl.style.border = `1px solid ${colors.border}`
+      tooltipEl.style.borderRadius = '8px'
+      tooltipEl.style.padding = '6px 10px'
+      tooltipEl.style.maxWidth = '320px'
+      tooltipEl.style.fontSize = '12px'
+      tooltipEl.style.lineHeight = '1.5'
+      tooltipEl.style.wordBreak = 'break-word'
+      tooltipEl.style.whiteSpace = 'normal'
+      tooltipEl.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)'
+      tooltipEl.style.pointerEvents = 'none'
+      tooltipEl.textContent = text
+
+      document.body.appendChild(tooltipEl)
+      const rect = cellEl.getBoundingClientRect()
+      adjustTooltipPosition(tooltipEl, rect)
+    }, 200)
+  })
+
+  cellEl.addEventListener('mouseleave', removeTooltip)
+  cellEl.addEventListener('mousedown', removeTooltip)
+
+  return cellEl
+}
+

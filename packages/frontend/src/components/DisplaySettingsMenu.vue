@@ -56,7 +56,7 @@ const emit = defineEmits<{
   'update:gridColumns': [value: string[]]
 }>()
 
-const DEFAULT_GRID_COLUMNS = ['name', 'startDate', 'endDate', 'duration', 'progress']
+const DEFAULT_GRID_COLUMNS = ['name', 'assignees', 'startDate', 'endDate', 'duration', 'progress']
 
 const selectableGridColumns = computed(() => {
   const g = props.granularity || 'daily'
@@ -64,6 +64,7 @@ const selectableGridColumns = computed(() => {
   const endLabel = g === 'monthly' ? '終了月' : g === 'hourly' ? '終了日時' : '終了日'
   const cols = [
     { id: 'wbs', label: 'WBS' },
+    { id: 'assignees', label: '担当者' },
     { id: 'startDate', label: startLabel },
     { id: 'endDate', label: endLabel },
     { id: 'duration', label: '期間' },
