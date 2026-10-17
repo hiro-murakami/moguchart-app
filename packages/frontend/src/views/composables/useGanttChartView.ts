@@ -1321,11 +1321,16 @@ export const useGanttChartView = () => {
           availableLabels: availableRowLabels.value,
           selectedLabels: selectedRowFilterLabelNames.value,
           gridEnabled: gridEnabled.value,
+          gridEditable: gridEditable.value,
+          canEditGrid: !isReadOnly.value,
           onSelectionChange: (labels: string[]) => {
             selectedRowFilterLabelNames.value = labels
           },
           onToggleGrid: (enabled: boolean) => {
             gridEnabled.value = enabled
+          },
+          onToggleGridEditable: (editable: boolean) => {
+            gridEditable.value = editable
           },
         })),
       },

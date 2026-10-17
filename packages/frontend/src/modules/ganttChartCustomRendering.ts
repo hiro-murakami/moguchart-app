@@ -1446,15 +1446,26 @@ export interface CornerContentOptions {
   gridEnabled?: boolean
   /** マルチカラムグリッド表示切替時のコールバック */
   onToggleGrid?: (enabled: boolean) => void
+  /** マルチカラムグリッドのインライン編集が有効かどうか */
+  gridEditable?: boolean
+  /** インライン編集が可能かどうか（閲覧専用モード時は非表示） */
+  canEditGrid?: boolean
+  /** マルチカラムグリッドのインライン編集切替時のコールバック */
+  onToggleGridEditable?: (editable: boolean) => void
 }
 
 /**
- * ガントチャートの左上コーナーセルにマルチカラムグリッド切替ボタンとラベルフィルタアイコン・ポップアップを表示するコンテンツを生成する。
+ * ガントチャートの左上コーナーセルにマルチカラムグリッド切替ボタン・インライン編集スイッチ・ラベルフィルタアイコンを表示するコンテンツを生成する。
  * moguchart の customRendering.cornerContent に渡す関数を返す。
  */
 export const createCornerContent = (getOptions: () => CornerContentOptions) => {
   return () => {
-    const { selectedLabels: initSelectedLabels, gridEnabled } = getOptions()
+    const {
+      selectedLabels: initSelectedLabels,
+      gridEnabled,
+      gridEditable = true,
+      canEditGrid = true,
+    } = getOptions()
     const isDark = !!document.querySelector('.v-theme--dark')
 
     const hasFilter = initSelectedLabels.length > 0
@@ -1467,6 +1478,64 @@ export const createCornerContent = (getOptions: () => CornerContentOptions) => {
       gap: ${isCompact ? '2px' : '4px'};
       max-height: 100%;
     `
+
+    // --- インライン編集 ON/OFF アイコンボタン（マルチカラムグリッド表示中かつ編集可能時のみ表示） ---
+    let editSwitchBtn: HTMLElement | null = null
+    if (gridEnabled && canEditGrid) {
+      const sw = document.createElement('button')
+      sw.type = 'button'
+      sw.style.cssText = `
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 26px;
+        height: 20px;
+        max-height: 100%;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        background: ${gridEditable ? (isDark ? 'rgba(99,102,241,0.25)' : 'rgba(99,102,241,0.15)') : 'transparent'};
+        color: ${gridEditable ? (isDark ? '#a5b4fc' : '#4f46e5') : isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)'};
+        transition: background 0.15s, color 0.15s;
+        position: relative;
+      `
+      sw.title = gridEditable
+        ? 'セルのインライン編集: ON（クリックでOFF）'
+        : 'セルのインライン編集: OFF（クリックでON）'
+
+      // 鉛筆アイコン (mdi-pencil-outline)
+      const editSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+      editSvg.setAttribute('width', '16')
+      editSvg.setAttribute('height', '16')
+      editSvg.setAttribute('viewBox', '0 0 24 24')
+      editSvg.setAttribute('fill', 'currentColor')
+      const editPath = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+      editPath.setAttribute(
+        'd',
+        'M14.06,9L15,9.94L5.92,19H5V18.08L14.06,9M17.66,3C17.41,3 17.15,3.1 16.96,3.29L15.13,5.12L18.88,8.87L20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18.17,3.09 17.92,3 17.66,3M14.06,6.19L3,17.25V21H6.75L17.81,9.94L14.06,6.19Z',
+      )
+      editSvg.appendChild(editPath)
+      sw.appendChild(editSvg)
+
+      sw.addEventListener('mouseenter', () => {
+        const { gridEditable: currentEditable = true } = getOptions()
+        if (!currentEditable) {
+          sw.style.background = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'
+        } else {
+          sw.style.background = isDark ? 'rgba(99,102,241,0.35)' : 'rgba(99,102,241,0.22)'
+        }
+      })
+      sw.addEventListener('mouseleave', () => {
+        const { gridEditable: currentEditable = true } = getOptions()
+        sw.style.background = currentEditable
+          ? isDark
+            ? 'rgba(99,102,241,0.25)'
+            : 'rgba(99,102,241,0.15)'
+          : 'transparent'
+      })
+
+      editSwitchBtn = sw
+    }
 
     // --- マルチカラムグリッド表示切替ボタン ---
     const gridBtn = document.createElement('button')
@@ -1802,6 +1871,15 @@ export const createCornerContent = (getOptions: () => CornerContentOptions) => {
       return p
     }
 
+    if (editSwitchBtn) {
+      editSwitchBtn.addEventListener('click', (e) => {
+        e.stopPropagation()
+        removePanel()
+        const { gridEditable: currentEditable, onToggleGridEditable } = getOptions()
+        onToggleGridEditable?.(!(currentEditable ?? true))
+      })
+    }
+
     gridBtn.addEventListener('click', (e) => {
       e.stopPropagation()
       removePanel()
@@ -1830,6 +1908,9 @@ export const createCornerContent = (getOptions: () => CornerContentOptions) => {
       setTimeout(() => document.addEventListener('mousedown', onOutside), 0)
     })
 
+    if (editSwitchBtn) {
+      container.appendChild(editSwitchBtn)
+    }
     container.appendChild(btn)
     container.appendChild(gridBtn)
 
