@@ -1487,7 +1487,7 @@ export const createCornerContent = (getOptions: () => CornerContentOptions) => {
     `
     gridBtn.title = gridEnabled ? 'マルチカラムグリッドを非表示' : 'マルチカラムグリッドを表示'
 
-    // マルチカラムグリッドアイコン（SVG: mdi-table-column）
+    // マルチカラムグリッド開閉アイコン（SVG: 開いている時は "<" mdi-chevron-left、閉じている時は ">" mdi-chevron-right）
     const gridSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
     gridSvg.setAttribute('width', isCompact ? '16' : '20')
     gridSvg.setAttribute('height', isCompact ? '16' : '20')
@@ -1496,7 +1496,9 @@ export const createCornerContent = (getOptions: () => CornerContentOptions) => {
     const gridPath = document.createElementNS('http://www.w3.org/2000/svg', 'path')
     gridPath.setAttribute(
       'd',
-      'M8,2H16A2,2 0 0,1 18,4V20A2,2 0 0,1 16,22H8A2,2 0 0,1 6,20V4A2,2 0 0,1 8,2M8,4V8H16V4H8M8,10V14H16V10H8M8,16V20H16V16H8Z',
+      gridEnabled
+        ? 'M15.41,16.58L10.83,12L15.41,7.41L14,6L8,12L14,18L15.41,16.58Z'
+        : 'M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z',
     )
     gridSvg.appendChild(gridPath)
     gridBtn.appendChild(gridSvg)
@@ -1828,8 +1830,8 @@ export const createCornerContent = (getOptions: () => CornerContentOptions) => {
       setTimeout(() => document.addEventListener('mousedown', onOutside), 0)
     })
 
-    container.appendChild(gridBtn)
     container.appendChild(btn)
+    container.appendChild(gridBtn)
 
     return container
   }
