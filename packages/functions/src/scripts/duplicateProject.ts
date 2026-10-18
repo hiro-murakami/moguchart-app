@@ -180,10 +180,23 @@ const duplicateProject: DuplicateProject = async (
       // 依存関係のIDを新しいタスクIDに書き換える（並列実行）
       await Promise.all(
         createdTasksWithDependencies.map(async ({ newId, attribute }) => {
-          // dependenciesはstring[]として保存されているため、文字列として検索する
-          const newDependencies = (attribute.dependencies as string[])
-            .map((oldId) => taskIdMap.get(String(oldId)))
-            .filter((newDepId): newDepId is string => newDepId !== undefined)
+          // dependenciesはstringまたはTaskDependencyLinkオブジェクトの配列として保存されるため両方に対応する
+          const newDependencies = (attribute.dependencies as any[])
+            .map((dep) => {
+              if (typeof dep === 'string' || typeof dep === 'number') {
+                return taskIdMap.get(String(dep))
+              }
+              if (dep && typeof dep === 'object' && dep.taskId != null) {
+                const newTaskId = taskIdMap.get(String(dep.taskId))
+                if (!newTaskId) return undefined
+                return {
+                  ...dep,
+                  taskId: newTaskId,
+                }
+              }
+              return undefined
+            })
+            .filter((newDep): newDep is NonNullable<typeof newDep> => newDep !== undefined)
 
           if (newDependencies.length > 0) {
             await tx.ganttTask.update({

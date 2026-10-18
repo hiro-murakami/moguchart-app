@@ -11,6 +11,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
+  (e: 'edit'): void
   (e: 'delete'): void
 }>()
 
@@ -18,6 +19,10 @@ const visible = computed({
   get: () => props.modelValue,
   set: (val) => emit('update:modelValue', val),
 })
+
+const handleEdit = () => {
+  emit('edit')
+}
 
 const handleDelete = () => {
   emit('delete')
@@ -37,6 +42,9 @@ const handleDelete = () => {
   >
     <v-menu v-model="visible" activator="parent">
       <v-list density="compact" class="py-1">
+        <v-list-item @click="handleEdit" prepend-icon="mdi-pencil">
+          <v-list-item-title>接続線を編集</v-list-item-title>
+        </v-list-item>
         <v-list-item @click="handleDelete" base-color="red" prepend-icon="mdi-delete">
           <v-list-item-title>接続線を削除</v-list-item-title>
         </v-list-item>

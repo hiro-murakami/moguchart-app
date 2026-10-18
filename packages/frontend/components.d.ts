@@ -23,6 +23,7 @@ declare module 'vue' {
     ConfirmDialog: typeof import('./src/components/common/ConfirmDialog.vue')['default']
     DateInput: typeof import('./src/components/common/DateInput.vue')['default']
     DependencyContextMenu: typeof import('./src/components/DependencyContextMenu.vue')['default']
+    DependencyEditDialog: typeof import('./src/components/DependencyEditDialog.vue')['default']
     DialogProvider: typeof import('./src/components/common/DialogProvider.vue')['default']
     DisplaySettingsMenu: typeof import('./src/components/DisplaySettingsMenu.vue')['default']
     ExportMenu: typeof import('./src/components/ExportMenu.vue')['default']

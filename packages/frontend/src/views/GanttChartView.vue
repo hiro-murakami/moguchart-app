@@ -180,7 +180,12 @@ const {
   handleDependencyCreate,
   handleDependencyDelete,
   dependencyContextMenu,
+  isDependencyEditDialogVisible,
+  editingDependency,
   handleDependencyClick,
+  handleEditDependencyFromContextMenu,
+  saveDependencyEdit,
+  handleDeleteDependencyFromEditDialog,
   handleDeleteDependencyFromContextMenu,
   handleSlideSchedule,
   handleZoomChange,
@@ -682,7 +687,21 @@ const handleOpenSlideSchedule = async () => {
       :y="dependencyContextMenu.y"
       :source-task-id="dependencyContextMenu.sourceTaskId"
       :target-task-id="dependencyContextMenu.targetTaskId"
+      @edit="handleEditDependencyFromContextMenu"
       @delete="handleDeleteDependencyFromContextMenu"
+    />
+
+    <!-- Dependency Edit Dialog -->
+    <DependencyEditDialog
+      v-if="editingDependency"
+      v-model="isDependencyEditDialogVisible"
+      :source-task-name="editingDependency.sourceTaskName"
+      :target-task-name="editingDependency.targetTaskName"
+      :dependency-type="editingDependency.type"
+      :lag-minutes="editingDependency.lag"
+      :granularity="currentProject?.attribute?.granularity"
+      @save="saveDependencyEdit"
+      @delete="handleDeleteDependencyFromEditDialog"
     />
 
     <!-- Comment Dialog -->

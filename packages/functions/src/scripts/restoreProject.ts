@@ -4,15 +4,28 @@ import AdmZip from 'adm-zip'
 import crypto from 'node:crypto'
 
 // 依存関係のIDを書き換えるためのヘルパー
-// dependenciesはstring[]として保存されているため、キー・値ともに文字列として扱う
+// dependenciesはstringまたはTaskDependencyLinkオブジェクトの配列として保存されるため両方に対応する
 const updateDependencies = (attribute: any, taskIdMap: Map<string, string>): any => {
   if (!attribute || !attribute.dependencies || !Array.isArray(attribute.dependencies)) {
     return attribute
   }
 
   const newDependencies = attribute.dependencies
-    .map((oldId: any) => taskIdMap.get(String(oldId)))
-    .filter((newId: string | undefined): newId is string => newId !== undefined)
+    .map((dep: any) => {
+      if (typeof dep === 'string' || typeof dep === 'number') {
+        return taskIdMap.get(String(dep))
+      }
+      if (dep && typeof dep === 'object' && dep.taskId != null) {
+        const newTaskId = taskIdMap.get(String(dep.taskId))
+        if (!newTaskId) return undefined
+        return {
+          ...dep,
+          taskId: newTaskId,
+        }
+      }
+      return undefined
+    })
+    .filter((entry: any): entry is NonNullable<typeof entry> => entry !== undefined)
 
   return {
     ...attribute,

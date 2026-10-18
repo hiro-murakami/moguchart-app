@@ -1,4 +1,4 @@
-import type { ColorPalette, Label, Milestone, Project, User, ProjectGranularity } from '@functions/types/shared'
+import type { AutoScheduleMode, ColorPalette, Label, Milestone, Project, User, ProjectGranularity } from '@functions/types/shared'
 import { upsertUser, selectProjectUsers } from '@/modules/scripts'
 import { useUserStore } from '@/stores/useUserStore'
 import { DEFAULT_COLOR_PALETTES } from '@functions/types/shared'
@@ -44,6 +44,8 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
   const localDisableRowReorder = ref(false)
   const localDisableCrossRowMove = ref(false)
   const localEnableProgress = ref(true)
+  const localAutoSchedule = ref(false)
+  const localAutoScheduleMode = ref<AutoScheduleMode>('push-only')
   const DEFAULT_SUMMARY_TASK_COLOR = '#334155'
   const localSummaryTaskColor = ref<string>(DEFAULT_SUMMARY_TASK_COLOR)
 
@@ -145,6 +147,8 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
             localDisableRowReorder.value = !!props.project.attribute.disableRowReorder
             localDisableCrossRowMove.value = !!props.project.attribute.disableCrossRowMove
             localEnableProgress.value = props.project.attribute.enableProgress !== false
+            localAutoSchedule.value = !!props.project.attribute.autoSchedule
+            localAutoScheduleMode.value = props.project.attribute.autoScheduleMode || 'push-only'
             localSummaryTaskColor.value = props.project.attribute.summaryTaskColor || DEFAULT_SUMMARY_TASK_COLOR
             localClearProgress.value = true
 
@@ -196,6 +200,8 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
             localDisableRowReorder.value = !!props.project.attribute.disableRowReorder
             localDisableCrossRowMove.value = !!props.project.attribute.disableCrossRowMove
             localEnableProgress.value = props.project.attribute.enableProgress !== false
+            localAutoSchedule.value = !!props.project.attribute.autoSchedule
+            localAutoScheduleMode.value = props.project.attribute.autoScheduleMode || 'push-only'
             localSummaryTaskColor.value = props.project.attribute.summaryTaskColor || DEFAULT_SUMMARY_TASK_COLOR
           }
         } else {
@@ -218,6 +224,8 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
           localDisableRowReorder.value = false
           localDisableCrossRowMove.value = false
           localEnableProgress.value = true
+          localAutoSchedule.value = false
+          localAutoScheduleMode.value = 'push-only'
           localSummaryTaskColor.value = DEFAULT_SUMMARY_TASK_COLOR
         }
       }
@@ -253,6 +261,8 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
         localPublic.value !== false ||
         localDisableRowReorder.value !== false ||
         localDisableCrossRowMove.value !== false ||
+        localAutoSchedule.value !== false ||
+        localAutoScheduleMode.value !== 'push-only' ||
         localSummaryTaskColor.value !== DEFAULT_SUMMARY_TASK_COLOR ||
         localOwners.value.length > 0 ||
         localEditors.value.length > 0 ||
@@ -283,6 +293,8 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
       localDisableRowReorder.value !== !!props.project.attribute.disableRowReorder ||
       localDisableCrossRowMove.value !== !!props.project.attribute.disableCrossRowMove ||
       localEnableProgress.value !== (props.project.attribute.enableProgress !== false) ||
+      localAutoSchedule.value !== !!props.project.attribute.autoSchedule ||
+      localAutoScheduleMode.value !== (props.project.attribute.autoScheduleMode || 'push-only') ||
       localSummaryTaskColor.value !== (props.project.attribute.summaryTaskColor || DEFAULT_SUMMARY_TASK_COLOR) ||
       (localGranularity.value === 'hourly' || localGranularity.value === 'daily'
         ? localSnapDurationMinutes.value !==
@@ -333,6 +345,8 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
         disableRowReorder: localDisableRowReorder.value ? true : undefined,
         disableCrossRowMove: localDisableCrossRowMove.value ? true : undefined,
         enableProgress: localEnableProgress.value ? undefined : false,
+        autoSchedule: localAutoSchedule.value ? true : undefined,
+        autoScheduleMode: localAutoSchedule.value ? localAutoScheduleMode.value : undefined,
         summaryTaskColor: localSummaryTaskColor.value || undefined,
         // granularity は新規作成時のみ設定（編集時は既存値を保持）
         ...(!isEdit.value ? { granularity: localGranularity.value } : {}),
@@ -382,6 +396,8 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
     localDisableRowReorder,
     localDisableCrossRowMove,
     localEnableProgress,
+    localAutoSchedule,
+    localAutoScheduleMode,
     localSummaryTaskColor,
     authorityHistoryUsers,
     projectUsers,

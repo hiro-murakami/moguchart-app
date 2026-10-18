@@ -58,6 +58,8 @@ import type {
   GanttRow,
   GanttTask,
   TaskAttribute,
+  TaskDependency,
+  DependencyType,
   RowAttribute,
   MarkerAttribute,
   Project,
@@ -73,7 +75,7 @@ import * as holiday_jp from '@holiday-jp/holiday_jp'
 import * as moguchart from '@mogura/moguchart-core'
 import type { GanttChartInstance } from '@mogura/moguchart-vue'
 import type { ExcelExportColumn } from '@mogura/moguchart-plugin-excel'
-import { debounce } from 'lodash'
+import { debounce, isEqual } from 'lodash'
 import { storeToRefs } from 'pinia'
 import { computed, inject, nextTick, ref, watch, watchEffect, type Ref } from 'vue'
 
@@ -1343,6 +1345,9 @@ export const useGanttChartView = () => {
       },
       dependency: {
         showCriticalPath: showCriticalPath.value,
+        autoSchedule: !!currentProject.value?.attribute?.autoSchedule,
+        scheduleMode: currentProject.value?.attribute?.autoScheduleMode || 'push-only',
+        respectMovable: true,
       },
       minimap: {
         enabled: isMinimapReady.value && showMinimap.value,
@@ -1713,6 +1718,30 @@ export const useGanttChartView = () => {
   }
 
   /**
+   * 依存関係配列を正規化する（FS + lag=0 は文字列、SS/FF/SF または lag!=0 は TaskDependencyLink オブジェクト）
+   */
+  const normalizeTaskDependencies = (deps: unknown): TaskDependency[] => {
+    if (!Array.isArray(deps)) return []
+    return deps
+      .map((d): TaskDependency | null => {
+        if (typeof d === 'string' || typeof d === 'number') {
+          return String(d)
+        }
+        if (d && typeof d === 'object' && 'taskId' in d && (d as any).taskId != null) {
+          const taskId = String((d as any).taskId)
+          const type = (d as any).type as DependencyType | undefined
+          const lag =
+            typeof (d as any).lag === 'number' && !Number.isNaN((d as any).lag)
+              ? (d as any).lag
+              : 0
+          return moguchart.createDependencyEntry(taskId, type ?? 'FS', lag) as TaskDependency
+        }
+        return null
+      })
+      .filter((d): d is TaskDependency => d !== null)
+  }
+
+  /**
    * moguchart-core の GanttRow[] 差分から変更のあったタスクデータを抽出する
    */
   const extractTaskChanges = (beforeRows: moguchart.GanttRow[], afterRows: moguchart.GanttRow[]) => {
@@ -1763,10 +1792,9 @@ export const useGanttChartView = () => {
       const bProgress = bTask.progress ?? 0
       const aProgress = aTask.progress ?? 0
 
-      const bDeps = (((bTask as any).dependencies ?? (bTask as any).attribute?.dependencies ?? []) as (string | number)[]).map(String)
-      const aDeps = (((aTask as any).dependencies ?? (aTask as any).attribute?.dependencies ?? []) as (string | number)[]).map(String)
-      const depsChanged =
-        bDeps.length !== aDeps.length || !bDeps.every((d, i) => d === aDeps[i])
+      const bDeps = normalizeTaskDependencies((bTask as any).dependencies ?? (bTask as any).attribute?.dependencies)
+      const aDeps = normalizeTaskDependencies((aTask as any).dependencies ?? (aTask as any).attribute?.dependencies)
+      const depsChanged = !isEqual(bDeps, aDeps)
 
       const hasChange =
         bRowId !== aRowId ||
@@ -1785,12 +1813,12 @@ export const useGanttChartView = () => {
         const bAttr: TaskAttribute = {
           ...bRawAttr,
           ...(bTask.progress !== undefined ? { progress: bTask.progress } : {}),
-          dependencies: bDeps,
+          dependencies: bDeps.length > 0 ? bDeps : undefined,
         }
         const aAttr: TaskAttribute = {
           ...aRawAttr,
           ...(aTask.progress !== undefined ? { progress: aTask.progress } : {}),
-          dependencies: aDeps,
+          dependencies: aDeps.length > 0 ? aDeps : undefined,
         }
 
         beforeTasks.push({
@@ -1856,6 +1884,12 @@ export const useGanttChartView = () => {
     }
   }
 
+  /** 直近の cell-edit コマンドの前後全行データ（自動スケジューリングによる他行への波及を抽出するため保持） */
+  let lastCellEditCommandRows: {
+    before: moguchart.GanttRow[]
+    after: moguchart.GanttRow[]
+  } | null = null
+
   /**
    * moguchart-core からのコマンド発行イベントハンドラ
    */
@@ -1864,6 +1898,14 @@ export const useGanttChartView = () => {
     if (!detail?.command) return
 
     const cmd = detail.command
+    if (cmd.type === 'cell-edit' && cmd.before && cmd.after) {
+      lastCellEditCommandRows = {
+        before: cmd.before as moguchart.GanttRow[],
+        after: cmd.after as moguchart.GanttRow[],
+      }
+      return
+    }
+
     const supportedTypes: string[] = [
       'task-move',
       'task-resize',
@@ -1871,8 +1913,9 @@ export const useGanttChartView = () => {
       'dependency-create',
       'dependency-delete',
     ]
+    const isAutoScheduleCustom = cmd.type === 'custom' && cmd.description === '自動スケジューリング'
 
-    if (!supportedTypes.includes(cmd.type)) {
+    if (!supportedTypes.includes(cmd.type) && !isAutoScheduleCustom) {
       return
     }
 
@@ -1910,7 +1953,9 @@ export const useGanttChartView = () => {
     await maybeAutoSnapshot()
 
     let description = 'タスクの変更'
-    if (cmd.type === 'task-move') {
+    if (isAutoScheduleCustom) {
+      description = '自動スケジューリング'
+    } else if (cmd.type === 'task-move') {
       description = afterTasks.length > 1 ? `タスク一括移動 (${afterTasks.length}件)` : 'タスク移動'
     } else if (cmd.type === 'task-resize') {
       description = 'タスクリサイズ'
@@ -2556,13 +2601,68 @@ export const useGanttChartView = () => {
     targetTaskId: null as string | null,
   })
 
+  const isDependencyEditDialogVisible = ref(false)
+  const editingDependency = ref<{
+    sourceTaskId: string
+    targetTaskId: string
+    sourceTaskName: string
+    targetTaskName: string
+    type: DependencyType
+    lag: number
+  } | null>(null)
+
+  const openDependencyEditDialog = (sourceTaskId: string, targetTaskId: string) => {
+    if (!sourceTaskId || !targetTaskId || isReadOnly.value) return
+
+    const sourceRow = rows.value.find((r) => r.tasks.some((t) => String(t.id) === String(sourceTaskId)))
+    const sourceTask = sourceRow?.tasks.find((t) => String(t.id) === String(sourceTaskId))
+    const targetRow = rows.value.find((r) => r.tasks.some((t) => String(t.id) === String(targetTaskId)))
+    const targetTask = targetRow?.tasks.find((t) => String(t.id) === String(targetTaskId))
+    if (!sourceTask || !targetTask) return
+
+    const rawDeps =
+      targetTask.dependencies ??
+      ((targetTask as any).attribute as TaskAttribute | undefined)?.dependencies ??
+      []
+    const matchedDep = rawDeps.find(
+      (d) => moguchart.getDependencyTaskId(d as moguchart.GanttDependency) === String(sourceTaskId),
+    )
+    const normalized = matchedDep
+      ? moguchart.normalizeDependencyLink(matchedDep as moguchart.GanttDependency)
+      : { taskId: String(sourceTaskId), type: 'FS' as DependencyType, lag: 0 }
+
+    editingDependency.value = {
+      sourceTaskId: String(sourceTaskId),
+      targetTaskId: String(targetTaskId),
+      sourceTaskName: sourceTask.name || '',
+      targetTaskName: targetTask.name || '',
+      type: normalized.type as DependencyType,
+      lag: normalized.lag,
+    }
+    isDependencyEditDialogVisible.value = true
+  }
+
   const handleDependencyClick = (e: any) => {
     if (isReadOnly.value) return
     const detail = getDetail<moguchart.DependencyClickEventDetail>(e)
     const event = detail.event
-    // 右クリック時のみコンテキストメニューを表示（左クリック時はコアの選択/削除UIを使用）
-    if (event && event.button === 2) {
+    if (!event) return
+
+    // ダブルクリック時は接続線編集ダイアログを表示
+    if (event.type === 'dblclick' || (event.type === 'click' && event.detail >= 2 && event.button === 0)) {
       event.preventDefault()
+      dependencyContextMenu.value.visible = false
+      openDependencyEditDialog(detail.sourceTaskId, detail.targetTaskId)
+      return
+    }
+
+    // 右クリック（またはcontextmenuイベント）時のみコンテキストメニューを表示（左クリック時はコアの選択/削除UIを使用）
+    if (event.type === 'contextmenu' || event.button === 2) {
+      event.preventDefault()
+      chartContextMenu.value.visible = false
+      taskContextMenu.value.visible = false
+      contextMenu.value.visible = false
+      markerContextMenu.value.visible = false
       dependencyContextMenu.value = {
         visible: true,
         x: event.clientX,
@@ -2571,6 +2671,77 @@ export const useGanttChartView = () => {
         targetTaskId: detail.targetTaskId,
       }
     }
+  }
+
+  const handleEditDependencyFromContextMenu = async () => {
+    const { sourceTaskId, targetTaskId } = dependencyContextMenu.value
+    dependencyContextMenu.value.visible = false
+    if (!sourceTaskId || !targetTaskId || isReadOnly.value) return
+
+    await new Promise((resolve) => setTimeout(resolve, 150))
+    openDependencyEditDialog(sourceTaskId, targetTaskId)
+  }
+
+  const saveDependencyEdit = async (payload: { type: DependencyType; lag: number }) => {
+    const current = editingDependency.value
+    isDependencyEditDialogVisible.value = false
+    if (!current || isReadOnly.value) return
+
+    const { sourceTaskId, targetTaskId } = current
+    const newEntry = moguchart.createDependencyEntry(sourceTaskId, payload.type, payload.lag) as TaskDependency
+
+    let nextRows = rows.value.map((r) => {
+      if (!r.tasks.some((t) => String(t.id) === targetTaskId)) return r
+      return {
+        ...r,
+        tasks: r.tasks.map((t) => {
+          if (String(t.id) !== targetTaskId) return t
+          const attr = ((t as any).attribute as TaskAttribute | undefined) || {}
+          const rawDeps = t.dependencies ?? attr.dependencies ?? []
+          const nextDeps = rawDeps.map((d) =>
+            moguchart.getDependencyTaskId(d as moguchart.GanttDependency) === sourceTaskId
+              ? (newEntry as any)
+              : d,
+          )
+          return {
+            ...t,
+            dependencies: nextDeps,
+            attribute: {
+              ...attr,
+              dependencies: nextDeps as TaskDependency[],
+            },
+          }
+        }),
+      }
+    })
+
+    // 自動スケジューリングが有効な場合、先行タスクを起点に後続タスクを再計算
+    if (currentProject.value?.attribute?.autoSchedule) {
+      const scheduleResult = moguchart.propagateAutoSchedule(nextRows as any, [sourceTaskId], {
+        mode: currentProject.value?.attribute?.autoScheduleMode || 'push-only',
+        respectMovable: true,
+      })
+      if (scheduleResult.hasChanges) {
+        nextRows = scheduleResult.rows as any
+      }
+    }
+
+    const { beforeTasks, afterTasks, affectedRowIds } = extractTaskChanges(
+      rows.value as any,
+      nextRows as any,
+    )
+    if (afterTasks.length === 0) return
+
+    await maybeAutoSnapshot()
+    rows.value = nextRows
+    await syncTasksWithUndo('接続線の編集', beforeTasks, afterTasks, affectedRowIds)
+  }
+
+  const handleDeleteDependencyFromEditDialog = async () => {
+    const current = editingDependency.value
+    isDependencyEditDialogVisible.value = false
+    if (!current) return
+    await removeDependency(current.sourceTaskId, current.targetTaskId)
   }
 
   const removeDependency = async (sourceTaskId: string, targetTaskId: string) => {
@@ -3021,11 +3192,63 @@ export const useGanttChartView = () => {
   const saveTask = async (taskData: typeof editingTask.value) => {
     await maybeAutoSnapshot()
 
+    let resolvedStartStr = taskData.start
+    let resolvedEndStr = taskData.end
+
+    // 新規作成時に自動スケジューリングが有効かつ先行タスクが設定されている場合、初期日程を先行タスク制約に合わせる
+    if (
+      !taskData.id &&
+      currentProject.value?.attribute?.autoSchedule &&
+      taskData.dependencies &&
+      taskData.dependencies.length > 0 &&
+      !taskData.lock
+    ) {
+      const startMs = toLocalDate(resolvedStartStr).getTime()
+      const endMs = toLocalDate(resolvedEndStr).getTime()
+      const durationMs = Math.max(0, endMs - startMs)
+      if (!Number.isNaN(startMs) && !Number.isNaN(endMs)) {
+        const taskMap = new Map<string, { startMs: number; endMs: number }>()
+        for (const r of rows.value) {
+          for (const t of r.tasks) {
+            const s = t.start instanceof Date ? t.start.getTime() : new Date(t.start).getTime()
+            const e = t.end instanceof Date ? t.end.getTime() : new Date(t.end).getTime()
+            if (!Number.isNaN(s) && !Number.isNaN(e)) {
+              taskMap.set(String(t.id), { startMs: s, endMs: e })
+            }
+          }
+        }
+        let maxRequiredStartMs = -Infinity
+        for (const dep of taskData.dependencies) {
+          const link = moguchart.normalizeDependencyLink(dep as moguchart.GanttDependency)
+          const pred = taskMap.get(String(link.taskId))
+          if (!pred) continue
+          const reqMs = moguchart.computeRequiredStartMs(
+            pred.startMs,
+            pred.endMs,
+            durationMs,
+            link.type,
+            link.lag,
+          )
+          if (reqMs > maxRequiredStartMs) {
+            maxRequiredStartMs = reqMs
+          }
+        }
+        if (maxRequiredStartMs !== -Infinity) {
+          const mode = currentProject.value?.attribute?.autoScheduleMode || 'push-only'
+          const nextStartMs = mode === 'strict' ? maxRequiredStartMs : Math.max(startMs, maxRequiredStartMs)
+          if (nextStartMs !== startMs) {
+            resolvedStartStr = toDateTimeString(new Date(nextStartMs))
+            resolvedEndStr = toDateTimeString(new Date(nextStartMs + durationMs))
+          }
+        }
+      }
+    }
+
     // 新規作成の場合、アニメーション用の楽観的UI更新を行う
     if (!taskData.id) {
       const tempId = -Date.now()
-      const start = toLocalDate(taskData.start)
-      const end = toLocalDate(taskData.end)
+      const start = toLocalDate(resolvedStartStr)
+      const end = toLocalDate(resolvedEndStr)
 
       // スタイルの構築
       let style = 'box-shadow: var(--task-box-shadow, 0 2px 4px rgba(0, 0, 0, 0.3)); '
@@ -3066,8 +3289,8 @@ export const useGanttChartView = () => {
       id: Number(taskData.id),
       rowId: Number(taskData.rowId),
       name: taskData.name,
-      start: taskData.start,
-      end: taskData.end,
+      start: resolvedStartStr,
+      end: resolvedEndStr,
       attribute: {
         description: taskData.description || undefined,
         colorPalette: taskData.colorPalette,
@@ -3092,6 +3315,7 @@ export const useGanttChartView = () => {
     updateEditingTasks([])
 
     let affectedTaskId = String(taskData.id)
+    const affectedRowIdSet = new Set<number>([Number(taskData.rowId)])
     if (!taskData.id) {
       // 新規作成
       const result = await upsertGanttTasks([dataToSave])
@@ -3113,45 +3337,17 @@ export const useGanttChartView = () => {
       const taskIdStr = String(taskData.id)
       const beforeRow = rows.value.find((r) => r.tasks.some((t) => t.id === taskIdStr))
       const beforeTask = beforeRow?.tasks.find((t) => t.id === taskIdStr)
-      if (beforeTask && beforeRow) {
-        const beforeAttr = (beforeTask as any).attribute as TaskAttribute | undefined
-        const beforeData = {
-          id: Number(beforeTask.id),
-          rowId: Number(beforeRow.id),
-          name: beforeTask.name || '',
-          start: toDateTimeString(beforeTask.start),
-          end: toDateTimeString(beforeTask.end),
-          attribute: {
-            description: beforeAttr?.description || undefined,
-            colorPalette: beforeAttr?.colorPalette ? { ...beforeAttr.colorPalette } : undefined,
-            labels: beforeAttr?.labels ? [...beforeAttr.labels] : undefined,
-            lock: beforeAttr?.lock,
-            progress: beforeAttr?.progress,
-            assignees: beforeAttr?.assignees ? [...beforeAttr.assignees] : undefined,
-            dependencies: beforeAttr?.dependencies ? [...beforeAttr.dependencies] : undefined,
-            imageUrls: beforeAttr?.imageUrls ? [...beforeAttr.imageUrls] : undefined,
-          },
-        }
-        pushAction({
-          description: 'タスク編集',
-          undo: async () => {
-            await upsertGanttTasks([beforeData])
-            await loadData(projectId.value, { silent: true })
-          },
-          redo: async () => {
-            await upsertGanttTasks([dataToSave])
-            await loadData(projectId.value, { silent: true })
-          },
-        })
+      if (beforeRow) {
+        affectedRowIdSet.add(Number(beforeRow.id))
       }
 
-      // 楽観的UI更新：API完了前にローカルのrowsを即時反映
+      // 楽観的UI更新用の行配列を構築
       const updatedFormattedTask = formatGanttTask({
         ...dataToSave,
         commentCount: (beforeTask as any)?.commentCount ?? 0,
       })
       const targetRowIdStr = String(taskData.rowId)
-      rows.value = rows.value.map((r) => {
+      let nextRows = rows.value.map((r) => {
         const hasTask = r.tasks.some((t) => String(t.id) === taskIdStr)
         const isTargetRow = String(r.id) === targetRowIdStr
         if (hasTask && isTargetRow) {
@@ -3175,11 +3371,112 @@ export const useGanttChartView = () => {
         return r
       })
 
-      await upsertGanttTasks([dataToSave])
+      const beforeTasksToSave: GanttTask[] = []
+      const afterTasksToSave: GanttTask[] = [dataToSave]
+      const beforeAttr = (beforeTask as any)?.attribute as TaskAttribute | undefined
+
+      if (beforeTask && beforeRow) {
+        beforeTasksToSave.push({
+          id: Number(beforeTask.id),
+          rowId: Number(beforeRow.id),
+          name: beforeTask.name || '',
+          start: toDateTimeString(beforeTask.start),
+          end: toDateTimeString(beforeTask.end),
+          attribute: {
+            description: beforeAttr?.description || undefined,
+            colorPalette: beforeAttr?.colorPalette ? { ...beforeAttr.colorPalette } : undefined,
+            labels: beforeAttr?.labels ? [...beforeAttr.labels] : undefined,
+            lock: beforeAttr?.lock,
+            progress: beforeAttr?.progress,
+            assignees: beforeAttr?.assignees ? [...beforeAttr.assignees] : undefined,
+            dependencies: beforeAttr?.dependencies ? [...beforeAttr.dependencies] : undefined,
+            imageUrls: beforeAttr?.imageUrls ? [...beforeAttr.imageUrls] : undefined,
+          },
+        })
+      }
+
+      // プロジェクトの自動スケジューリングが有効な場合、先行タスク変更による自身の日程調整および後続タスクへのカスケード移動を計算
+      if (currentProject.value?.attribute?.autoSchedule) {
+        const mode = currentProject.value?.attribute?.autoScheduleMode || 'push-only'
+        let hasAnyCascade = false
+
+        // 先行タスク（dependencies）が追加・編集された場合、まず先行タスクを起点にこのタスク自身を調整
+        const nextDeps = dataToSave.attribute.dependencies ?? []
+        if (nextDeps.length > 0 && !isEqual(beforeAttr?.dependencies ?? [], nextDeps)) {
+          const predIds = nextDeps.map((d) =>
+            moguchart.getDependencyTaskId(d as moguchart.GanttDependency),
+          )
+          const predScheduleResult = moguchart.propagateAutoSchedule(nextRows as any, predIds, {
+            mode,
+            respectMovable: true,
+          })
+          if (predScheduleResult.hasChanges) {
+            nextRows = predScheduleResult.rows as any
+            hasAnyCascade = true
+            const movedSelf = nextRows
+              .flatMap((r) => r.tasks)
+              .find((t) => String(t.id) === taskIdStr)
+            if (movedSelf) {
+              dataToSave.start = toDateTimeString(movedSelf.start)
+              dataToSave.end = toDateTimeString(movedSelf.end)
+            }
+          }
+        }
+
+        const scheduleResult = moguchart.propagateAutoSchedule(nextRows as any, [taskIdStr], {
+          mode,
+          respectMovable: true,
+        })
+        if (scheduleResult.hasChanges) {
+          nextRows = scheduleResult.rows as any
+          hasAnyCascade = true
+        }
+
+        if (hasAnyCascade) {
+          const {
+            beforeTasks: cascadedBefore,
+            afterTasks: cascadedAfter,
+            affectedRowIds: cascadedRowIds,
+          } = extractTaskChanges(rows.value as any, nextRows as any)
+
+          for (const rowId of cascadedRowIds) {
+            affectedRowIdSet.add(rowId)
+          }
+          for (const bTask of cascadedBefore) {
+            if (String(bTask.id) !== taskIdStr) {
+              beforeTasksToSave.push(bTask)
+            }
+          }
+          for (const aTask of cascadedAfter) {
+            if (String(aTask.id) !== taskIdStr) {
+              afterTasksToSave.push(aTask)
+            }
+          }
+        }
+      }
+
+      if (beforeTasksToSave.length > 0) {
+        pushAction({
+          description: 'タスク編集',
+          undo: async () => {
+            await upsertGanttTasks(beforeTasksToSave)
+            await loadData(projectId.value, { silent: true })
+          },
+          redo: async () => {
+            await upsertGanttTasks(afterTasksToSave)
+            await loadData(projectId.value, { silent: true })
+          },
+        })
+      }
+
+      // 楽観的UI更新：API完了前にローカルのrowsを即時反映
+      rows.value = nextRows
+
+      await upsertGanttTasks(afterTasksToSave)
     }
     await loadData(projectId.value, { silent: true })
     publishEditEvent('task_upsert', {
-      rowIds: [Number(taskData.rowId)],
+      rowIds: Array.from(affectedRowIdSet),
       targetName: taskData.name,
       isNew: !taskData.id,
       taskId: affectedTaskId,
@@ -3461,6 +3758,9 @@ export const useGanttChartView = () => {
   }
 
   const handleCellEdit = async (e: any) => {
+    const commandRows = lastCellEditCommandRows
+    lastCellEditCommandRows = null
+
     const detail = getDetail<moguchart.CellEditEventDetail>(e)
     if (!detail) return
 
@@ -3481,9 +3781,12 @@ export const useGanttChartView = () => {
 
     if (!detail.previousRow || !detail.row) return
 
+    const beforeRowsForExtract = commandRows?.before ?? [detail.previousRow]
+    const afterRowsForExtract = commandRows?.after ?? (detail.rows ?? [detail.row])
+
     const { beforeTasks, afterTasks, affectedRowIds } = extractTaskChanges(
-      [detail.previousRow],
-      [detail.row],
+      beforeRowsForExtract,
+      afterRowsForExtract,
     )
     if (afterTasks.length === 0) return
 
@@ -5764,7 +6067,12 @@ export const useGanttChartView = () => {
     activeUsers,
     editLogs,
     dependencyContextMenu,
+    isDependencyEditDialogVisible,
+    editingDependency,
     handleDependencyClick,
+    handleEditDependencyFromContextMenu,
+    saveDependencyEdit,
+    handleDeleteDependencyFromEditDialog,
     handleDeleteDependencyFromContextMenu,
     isCommentDialogVisible,
     commentDialogTaskId,

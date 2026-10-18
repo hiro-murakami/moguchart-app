@@ -42,6 +42,8 @@ const {
   localDisableRowReorder,
   localDisableCrossRowMove,
   localEnableProgress,
+  localAutoSchedule,
+  localAutoScheduleMode,
   localSummaryTaskColor,
   authorityHistoryUsers,
   projectUsers,
@@ -55,6 +57,11 @@ const {
 const openSlideSchedule = () => {
   emit('open-slide-schedule')
 }
+
+const autoScheduleModeOptions = [
+  { title: '押し出しのみ（逆転時のみ後ろへ移動）', value: 'push-only' as const },
+  { title: '厳密追従（前後の移動に常に追従）', value: 'strict' as const },
+]
 
 const historyIntervalOptions = [
   { title: 'なし', value: 0 },
@@ -368,6 +375,32 @@ watch(
                           <HelpText text="ONにするとタスクを別の行へドラッグ移動できなくなります" />
                         </template>
                       </v-checkbox>
+                    </v-col>
+                    <v-col cols="12" class="mb-2">
+                      <v-checkbox v-model="localAutoSchedule" density="compact" hide-details>
+                        <template v-slot:label>
+                          <span class="mr-2">自動スケジューリングを行う</span>
+                          <HelpText
+                            text="ONにすると、接続線で結ばれた先行タスクの日時変更や接続線追加時に、後続タスクの日程を自動的に連動して移動します"
+                          />
+                        </template>
+                      </v-checkbox>
+                    </v-col>
+                    <v-col v-if="localAutoSchedule" cols="8" class="mb-3 pl-8">
+                      <v-select
+                        v-model="localAutoScheduleMode"
+                        :items="autoScheduleModeOptions"
+                        label="自動スケジューリングの連動モード"
+                        density="compact"
+                        variant="outlined"
+                        hide-details="auto"
+                      >
+                        <template v-slot:append>
+                          <HelpText
+                            text="「押し出しのみ」は先行タスクと日程が逆転する場合のみ後続タスクを後ろへ押し出します。「厳密追従」は先行タスクの移動に合わせて後続タスクを前倒しも含めて常に追従させます"
+                          />
+                        </template>
+                      </v-select>
                     </v-col>
                     <v-col cols="5" class="mb-2">
                       <div class="d-flex align-center">

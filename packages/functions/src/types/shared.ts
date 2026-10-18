@@ -220,6 +220,35 @@ export type Milestone = {
 /** プロジェクトの表示粒度 */
 export type ProjectGranularity = 'daily' | 'monthly' | 'hourly'
 
+/**
+ * 依存関係の種別
+ * - 'FS': Finish-to-Start（先行タスク終了後に後続タスク開始、デフォルト）
+ * - 'SS': Start-to-Start（先行タスク開始と同時に後続タスク開始）
+ * - 'FF': Finish-to-Finish（先行タスク終了と同時に後続タスク終了）
+ * - 'SF': Start-to-Finish（先行タスク開始後に後続タスク終了）
+ */
+export type DependencyType = 'FS' | 'SS' | 'FF' | 'SF'
+
+/** 拡張された依存関係リンク定義 */
+export type TaskDependencyLink = {
+  /** 先行タスク（依存元）のID */
+  taskId: string
+  /** 依存関係の種別 (デフォルト: 'FS') */
+  type?: DependencyType
+  /** ラグ（遅延）またはリード（前倒し）期間（分単位、デフォルト: 0） */
+  lag?: number
+}
+
+/** タスクの依存関係指定（タスクID文字列、または詳細オブジェクト） */
+export type TaskDependency = string | TaskDependencyLink
+
+/**
+ * 自動スケジューリングの制約モード
+ * - 'push-only': 依存制約に違反（逆転）する場合のみ後続タスクを後ろへ押し出す（デフォルト）
+ * - 'strict': 先行タスクの移動量・ラグに合わせて後続タスクを常に厳密に追従させる
+ */
+export type AutoScheduleMode = 'push-only' | 'strict'
+
 /** プロジェクトの追加属性 */
 export type ProjectAttribute = {
   /** プロジェクトの説明 */
@@ -268,6 +297,14 @@ export type ProjectAttribute = {
    * サマリータスク（自動集計バー）の既定色 (CSSカラー文字列、未指定時は #334155)
    */
   summaryTaskColor?: string
+  /**
+   * 自動スケジューリングを行うかどうか（trueの場合、先行タスクの変更時に後続タスクを自動連動）
+   */
+  autoSchedule?: boolean
+  /**
+   * 自動スケジューリングの制約モード（'push-only' | 'strict'、未指定時は 'push-only'）
+   */
+  autoScheduleMode?: AutoScheduleMode
 }
 
 /** マーカーの種類 */
@@ -331,8 +368,8 @@ export type TaskAttribute = {
   progress?: number
   /** 担当者のメールアドレス配列 */
   assignees?: string[]
-  /** 依存タスクのID配列 */
-  dependencies?: string[]
+  /** 依存タスクのIDまたは依存リンク定義の配列 */
+  dependencies?: TaskDependency[]
   /** タスクバーに表示する画像のURL配列 */
   imageUrls?: string[]
 }
@@ -364,8 +401,8 @@ export interface EditingTaskData {
   progress?: number
   /** 担当者のメールアドレス配列 */
   assignees?: string[]
-  /** 依存タスクのID配列 */
-  dependencies?: string[]
+  /** 依存タスクのIDまたは依存リンク定義の配列 */
+  dependencies?: TaskDependency[]
   /** タスクバーに表示する画像のURL配列 */
   imageUrls?: string[]
 }
@@ -374,6 +411,7 @@ export interface EditingTaskData {
 export interface SimpleRowData {
   id: string | number
   name: string
+  tasks?: { id: string | number; name?: string; type?: string }[]
 }
 
 /** プロジェクトのアクセス権限管理 */
