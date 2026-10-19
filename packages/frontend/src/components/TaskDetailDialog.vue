@@ -1,35 +1,17 @@
 <script setup lang="ts">
 import { useDiscardConfirm } from '@/composables/useConfirm'
-import {
-  DEPENDENCY_TYPE_OPTIONS,
-  granularityToInputType,
-  LAG_UNIT_OPTIONS,
-  lagValueAndUnitToMinutes,
-  minutesToLagValueAndUnit,
-  normalizeTaskDependency,
-  toTaskDependencyEntry,
-  type LagUnit,
-} from '@/modules/utils'
+import { granularityToInputType } from '@/modules/utils'
 import type {
   ColorPalette,
-  DependencyType,
   EditingTaskData,
   Label,
   ProjectGranularity,
   SimpleRowData,
-  TaskDependency,
   User,
 } from '@functions/types/shared'
 import dayjs from 'dayjs'
 import { cloneDeep, isEqual } from 'lodash'
 import { computed, ref, watch } from 'vue'
-
-interface EditableDependencyItem {
-  taskId: string
-  type: DependencyType
-  lagValue: number
-  lagUnit: LagUnit
-}
 
 const props = withDefaults(
   defineProps<{
@@ -50,106 +32,16 @@ const emit = defineEmits<{
   (e: 'save', task: EditingTaskData): void
 }>()
 
-const buildEditableDependencies = (deps?: TaskDependency[]): EditableDependencyItem[] => {
-  if (!deps || deps.length === 0) return []
-  return deps.map((dep) => {
-    const normalized = normalizeTaskDependency(dep)
-    const { value, unit } = minutesToLagValueAndUnit(normalized.lag, props.granularity)
-    return {
-      taskId: normalized.taskId,
-      type: normalized.type,
-      lagValue: value,
-      lagUnit: unit,
-    }
-  })
-}
-
 const localTask = ref<EditingTaskData>(cloneDeep(props.task))
-const localDependencies = ref<EditableDependencyItem[]>(buildEditableDependencies(props.task.dependencies))
 const { confirmAndClose } = useDiscardConfirm()
 
 watch(
   () => props.task,
   (newVal) => {
     localTask.value = cloneDeep(newVal)
-    localDependencies.value = buildEditableDependencies(newVal.dependencies)
   },
   { deep: true },
 )
-
-const syncDependenciesToLocalTask = () => {
-  const seen = new Set<string>()
-  const validEntries: TaskDependency[] = []
-  for (const item of localDependencies.value) {
-    if (!item.taskId || seen.has(item.taskId)) continue
-    seen.add(item.taskId)
-    validEntries.push(
-      toTaskDependencyEntry(
-        item.taskId,
-        item.type,
-        lagValueAndUnitToMinutes(item.lagValue, item.lagUnit),
-      ),
-    )
-  }
-  localTask.value.dependencies = validEntries.length > 0 ? validEntries : undefined
-}
-
-watch(
-  localDependencies,
-  () => {
-    syncDependenciesToLocalTask()
-  },
-  { deep: true },
-)
-
-// 先行タスク候補一覧（自分自身とサマリータスクを除外）
-const allTaskOptions = computed(() => {
-  const options: { value: string; title: string }[] = []
-  for (const row of props.rows) {
-    if (!row.tasks) continue
-    for (const t of row.tasks) {
-      const tId = String(t.id)
-      if (t.type === 'summary' || tId.endsWith('-summary')) continue
-      if (props.task.id && tId === String(props.task.id)) continue
-      const taskName = t.name || '（名称なし）'
-      options.push({
-        value: tId,
-        title: `${row.name} / ${taskName}`,
-      })
-    }
-  }
-  return options
-})
-
-const getTaskOptionsForIndex = (index: number) => {
-  const usedIds = new Set(
-    localDependencies.value
-      .map((item, i) => (i !== index ? item.taskId : ''))
-      .filter(Boolean),
-  )
-  return allTaskOptions.value.filter((opt) => !usedIds.has(opt.value))
-}
-
-const canAddDependency = computed(() => {
-  const usedIds = new Set(localDependencies.value.map((item) => item.taskId).filter(Boolean))
-  return allTaskOptions.value.some((opt) => !usedIds.has(opt.value))
-})
-
-const addDependencyRow = () => {
-  const usedIds = new Set(localDependencies.value.map((item) => item.taskId).filter(Boolean))
-  const firstAvailable = allTaskOptions.value.find((opt) => !usedIds.has(opt.value))
-  const defaultUnit: LagUnit = props.granularity === 'hourly' ? 'hours' : 'days'
-  localDependencies.value.push({
-    taskId: firstAvailable?.value || '',
-    type: 'FS',
-    lagValue: 0,
-    lagUnit: defaultUnit,
-  })
-}
-
-const removeDependencyRow = (index: number) => {
-  localDependencies.value.splice(index, 1)
-}
 
 const hasChanges = computed(() => {
   return !isEqual(props.task, localTask.value)
@@ -160,7 +52,6 @@ const closeDialog = () => emit('update:modelValue', false)
 const close = () => confirmAndClose(hasChanges, closeDialog)
 
 const save = () => {
-  syncDependenciesToLocalTask()
   emit('save', localTask.value)
 }
 
@@ -310,98 +201,6 @@ const inputType = computed(() => granularityToInputType(props.granularity))
           autocomplete="off"
         />
       </v-col>
-
-      <!-- 先行タスク（接続線）の設定 -->
-      <v-col cols="12" class="mb-3">
-        <div class="d-flex align-center justify-space-between mb-2">
-          <span class="text-caption font-weight-bold">先行タスク（接続線）</span>
-          <v-btn
-            size="small"
-            variant="tonal"
-            color="primary"
-            prepend-icon="mdi-plus"
-            :disabled="!canAddDependency"
-            @click="addDependencyRow"
-          >
-            先行タスクを追加
-          </v-btn>
-        </div>
-
-        <div
-          v-if="localDependencies.length === 0"
-          class="text-caption text-medium-emphasis py-1"
-        >
-          先行タスクは設定されていません
-        </div>
-
-        <v-row
-          v-for="(dep, index) in localDependencies"
-          :key="index"
-          density="compact"
-          align="center"
-          class="mb-2"
-        >
-          <v-col cols="12" sm="5">
-            <v-autocomplete
-              v-model="dep.taskId"
-              :items="getTaskOptionsForIndex(index)"
-              item-title="title"
-              item-value="value"
-              label="先行タスク"
-              density="compact"
-              variant="outlined"
-              hide-details
-              autocomplete="off"
-            />
-          </v-col>
-          <v-col cols="5" sm="3">
-            <v-select
-              v-model="dep.type"
-              :items="DEPENDENCY_TYPE_OPTIONS"
-              item-title="shortTitle"
-              item-value="value"
-              label="種別"
-              density="compact"
-              variant="outlined"
-              hide-details
-            />
-          </v-col>
-          <v-col cols="4" sm="2">
-            <v-number-input
-              v-model="dep.lagValue"
-              label="ラグ"
-              :step="1"
-              density="compact"
-              variant="outlined"
-              control-variant="stacked"
-              hide-details
-              autocomplete="off"
-            />
-          </v-col>
-          <v-col cols="2" sm="1">
-            <v-select
-              v-model="dep.lagUnit"
-              :items="LAG_UNIT_OPTIONS"
-              item-title="title"
-              item-value="value"
-              density="compact"
-              variant="outlined"
-              hide-details
-            />
-          </v-col>
-          <v-col cols="1" class="d-flex justify-center">
-            <v-btn
-              icon="mdi-close"
-              size="x-small"
-              variant="text"
-              color="error"
-              title="接続線を削除"
-              @click="removeDependencyRow(index)"
-            />
-          </v-col>
-        </v-row>
-      </v-col>
-
       <v-col cols="12">
         <v-switch
           v-model="isLocked"

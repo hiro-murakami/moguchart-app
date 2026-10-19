@@ -3395,44 +3395,15 @@ export const useGanttChartView = () => {
         })
       }
 
-      // プロジェクトの自動スケジューリングが有効な場合、先行タスク変更による自身の日程調整および後続タスクへのカスケード移動を計算
+      // プロジェクトの自動スケジューリングが有効な場合、後続タスクへのカスケード移動を計算
       if (currentProject.value?.attribute?.autoSchedule) {
         const mode = currentProject.value?.attribute?.autoScheduleMode || 'push-only'
-        let hasAnyCascade = false
-
-        // 先行タスク（dependencies）が追加・編集された場合、まず先行タスクを起点にこのタスク自身を調整
-        const nextDeps = dataToSave.attribute.dependencies ?? []
-        if (nextDeps.length > 0 && !isEqual(beforeAttr?.dependencies ?? [], nextDeps)) {
-          const predIds = nextDeps.map((d) =>
-            moguchart.getDependencyTaskId(d as moguchart.GanttDependency),
-          )
-          const predScheduleResult = moguchart.propagateAutoSchedule(nextRows as any, predIds, {
-            mode,
-            respectMovable: true,
-          })
-          if (predScheduleResult.hasChanges) {
-            nextRows = predScheduleResult.rows as any
-            hasAnyCascade = true
-            const movedSelf = nextRows
-              .flatMap((r) => r.tasks)
-              .find((t) => String(t.id) === taskIdStr)
-            if (movedSelf) {
-              dataToSave.start = toDateTimeString(movedSelf.start)
-              dataToSave.end = toDateTimeString(movedSelf.end)
-            }
-          }
-        }
-
         const scheduleResult = moguchart.propagateAutoSchedule(nextRows as any, [taskIdStr], {
           mode,
           respectMovable: true,
         })
         if (scheduleResult.hasChanges) {
           nextRows = scheduleResult.rows as any
-          hasAnyCascade = true
-        }
-
-        if (hasAnyCascade) {
           const {
             beforeTasks: cascadedBefore,
             afterTasks: cascadedAfter,
