@@ -346,7 +346,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
         disableCrossRowMove: localDisableCrossRowMove.value ? true : undefined,
         enableProgress: localEnableProgress.value ? undefined : false,
         autoSchedule: localAutoSchedule.value ? true : undefined,
-        autoScheduleMode: localAutoSchedule.value ? localAutoScheduleMode.value : undefined,
+        autoScheduleMode: localAutoScheduleMode.value !== 'push-only' ? localAutoScheduleMode.value : undefined,
         summaryTaskColor: localSummaryTaskColor.value || undefined,
         // granularity は新規作成時のみ設定（編集時は既存値を保持）
         ...(!isEdit.value ? { granularity: localGranularity.value } : {}),

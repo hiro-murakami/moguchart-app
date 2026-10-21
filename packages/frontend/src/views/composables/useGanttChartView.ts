@@ -4249,6 +4249,70 @@ export const useGanttChartView = () => {
     })
   })
 
+  /** コンテキストメニュー対象のタスク群に後続タスク（依存元として参照しているタスク）が存在するか */
+  const hasSuccessorsInContextMenu = computed(() => {
+    const menuTaskId = taskContextMenu.value.taskId
+    if (!menuTaskId) return false
+
+    const targetIds =
+      selectedTaskIds.value.includes(menuTaskId) && selectedTaskIds.value.length > 1
+        ? selectedTaskIds.value
+        : [menuTaskId]
+    const targetSet = new Set(targetIds.map(String))
+
+    return rows.value.some((r) =>
+      r.tasks.some((t) => {
+        if (t.type === 'summary' || isSummaryTaskId(t.id)) return false
+        const rawDeps = t.dependencies ?? ((t as any).attribute as TaskAttribute | undefined)?.dependencies ?? []
+        return rawDeps.some((dep) => {
+          const predId = String(moguchart.getDependencyTaskId(dep as moguchart.GanttDependency))
+          return predId !== String(t.id) && targetSet.has(predId)
+        })
+      }),
+    )
+  })
+
+  /** コンテキストメニューから指定タスク（または選択中の複数タスク）を起点に後続タスクをスケジューリング */
+  const handleAutoScheduleFromContextMenu = async () => {
+    const taskId = taskContextMenu.value.taskId
+    if (!taskId || isReadOnly.value) return
+
+    taskContextMenu.value.visible = false
+
+    const isMultiSelect = selectedTaskIds.value.includes(taskId) && selectedTaskIds.value.length > 1
+    const targetTaskIds = (isMultiSelect ? selectedTaskIds.value : [taskId]).map(String)
+
+    const mode = currentProject.value?.attribute?.autoScheduleMode || 'push-only'
+    const scheduleResult = moguchart.propagateAutoSchedule(rows.value as any, targetTaskIds, {
+      mode,
+      respectMovable: true,
+    })
+
+    if (!scheduleResult.hasChanges) {
+      snackbar({ message: '日程の調整が必要な後続タスクはありませんでした。', color: 'info' })
+      return
+    }
+
+    const { beforeTasks, afterTasks, affectedRowIds } = extractTaskChanges(
+      rows.value as any,
+      scheduleResult.rows as any,
+    )
+    if (afterTasks.length === 0) {
+      snackbar({ message: '日程の調整が必要な後続タスクはありませんでした。', color: 'info' })
+      return
+    }
+
+    // UIとスナックバーを即時反映し、バックエンド同期を非同期で実行
+    rows.value = scheduleResult.rows as any
+    snackbar({
+      message: `後続タスク（${afterTasks.length}件）をスケジューリングしました。`,
+      color: 'success',
+    })
+
+    await maybeAutoSnapshot()
+    await syncTasksWithUndo('後続タスクの自動スケジューリング', beforeTasks, afterTasks, affectedRowIds)
+  }
+
   const handleEditTaskFromContextMenu = async () => {
     const taskId = taskContextMenu.value.taskId
     if (!taskId) return
@@ -5989,6 +6053,7 @@ export const useGanttChartView = () => {
     contextMenu,
     taskContextMenu,
     hasLockedTaskInContextMenu,
+    hasSuccessorsInContextMenu,
     chartContextMenu,
     currentProject,
     showHiddenRows,
@@ -6097,6 +6162,7 @@ export const useGanttChartView = () => {
     resetScroll,
     handleTaskContextMenu,
     handleEditTaskFromContextMenu,
+    handleAutoScheduleFromContextMenu,
     handleDeleteTaskFromContextMenu,
     handleTaskDelete,
     handleTaskDragStart,

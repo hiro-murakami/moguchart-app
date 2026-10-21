@@ -29,6 +29,7 @@ const {
   contextMenu,
   taskContextMenu,
   hasLockedTaskInContextMenu,
+  hasSuccessorsInContextMenu,
   currentProject,
   showHiddenRows,
   showCurrentTimeLine,
@@ -117,6 +118,7 @@ const {
   handleSelectProject,
   handleTaskContextMenu,
   handleEditTaskFromContextMenu,
+  handleAutoScheduleFromContextMenu,
   handleDeleteTaskFromContextMenu,
   handleTaskDelete,
   handleBarSelectionChange,
@@ -664,9 +666,11 @@ const handleOpenSlideSchedule = async () => {
       :is-read-only="isReadOnly"
       :can-edit="isTaskContextMenuEditable"
       :disabled-delete="hasLockedTaskInContextMenu"
+      :has-successors="hasSuccessorsInContextMenu"
       @edit="handleEditTaskFromContextMenu"
       @comment="handleAddCommentFromContextMenu"
       @image="handleImageFromContextMenu"
+      @auto-schedule="handleAutoScheduleFromContextMenu"
       @copy="handleCopyTasksFromContextMenu"
       @delete="handleDeleteTaskFromContextMenu"
     />

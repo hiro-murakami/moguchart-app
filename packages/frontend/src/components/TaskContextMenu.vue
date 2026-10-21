@@ -10,6 +10,7 @@ const props = defineProps<{
   isReadOnly?: boolean
   canEdit?: boolean
   disabledDelete?: boolean
+  hasSuccessors?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -17,6 +18,7 @@ const emit = defineEmits<{
   (e: 'edit'): void
   (e: 'comment'): void
   (e: 'image'): void
+  (e: 'auto-schedule'): void
   (e: 'delete'): void
   (e: 'copy'): void
 }>()
@@ -42,6 +44,13 @@ const copyTitle = computed(() => {
   }
   return 'コピー'
 })
+
+const autoScheduleTitle = computed(() => {
+  if (props.taskId && props.selectedTaskIds?.includes(props.taskId) && (props.selectedTaskIds?.length || 0) > 1) {
+    return `選択した${props.selectedTaskIds!.length}個の後続タスクをスケジューリング`
+  }
+  return '後続タスクをスケジューリング'
+})
 </script>
 
 <template>
@@ -65,6 +74,13 @@ const copyTitle = computed(() => {
         />
         <v-list-item prepend-icon="mdi-comment-text-outline" title="コメント" @click="emit('comment')" />
         <v-list-item v-if="!isReadOnly" prepend-icon="mdi-image" title="画像" @click="emit('image')" />
+        <v-list-item
+          v-if="!isReadOnly"
+          prepend-icon="mdi-calendar-sync"
+          :title="autoScheduleTitle"
+          :disabled="!hasSuccessors"
+          @click="emit('auto-schedule')"
+        />
         <v-list-item prepend-icon="mdi-content-copy" @click="emit('copy')">
           <v-list-item-title>
             {{ copyTitle }}

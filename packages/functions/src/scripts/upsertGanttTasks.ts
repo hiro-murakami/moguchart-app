@@ -3,60 +3,92 @@ import type { UpsertGanttTasks, GanttTask, TaskAttribute } from '../types/shared
 import { checkProjectPermission, getCreateCommonColumns, getUpdateCommonColumns, prisma } from './common/commonFunctions'
 import { fromGanttTask, toGanttTask } from './common/converters'
 
-const syncTaskAssignees = async (
+const syncTasksAssigneesBatch = async (
   tx: Prisma.TransactionClient,
-  taskId: number,
-  assignees?: string[],
+  taskEntries: Array<{ taskId: number; assignees?: string[] }>,
 ) => {
-  // 既存の担当者レコードを削除して再投入
+  if (taskEntries.length === 0) return
+
+  const taskIds = taskEntries.map((e) => e.taskId)
   await tx.taskAssignee.deleteMany({
-    where: { taskId },
+    where: { taskId: { in: taskIds } },
   })
 
-  if (!assignees || !Array.isArray(assignees) || assignees.length === 0) {
-    return
+  // 全タスクの識別子を集約して1回のクエリでユーザー解決
+  const emails = new Set<string>()
+  const userIds = new Set<string>()
+  for (const entry of taskEntries) {
+    if (!entry.assignees || !Array.isArray(entry.assignees)) continue
+    for (const raw of entry.assignees) {
+      if (typeof raw !== 'string' || !raw.trim()) continue
+      const trimmed = raw.trim()
+      if (trimmed.includes('@')) {
+        emails.add(trimmed)
+      } else {
+        userIds.add(trimmed)
+      }
+    }
   }
 
-  const newAssignees: Array<{ userId: string | null; email: string | null }> = []
-  for (const identifier of assignees) {
-    if (typeof identifier !== 'string' || !identifier.trim()) continue
-    const trimmed = identifier.trim()
-    let userId: string | null = null
-    let email: string | null = null
+  const emailToId = new Map<string, string>()
+  const idToEmail = new Map<string, string>()
 
-    if (trimmed.includes('@')) {
-      email = trimmed
-      const user = await tx.user.findFirst({
-        where: { email: trimmed },
-        select: { id: true },
-      })
-      if (user) userId = user.id
-    } else {
-      userId = trimmed
-      const user = await tx.user.findUnique({
-        where: { id: trimmed },
-        select: { email: true },
-      })
-      if (user?.email) email = user.email
-    }
+  if (emails.size > 0 || userIds.size > 0) {
+    const orConditions: Prisma.UserWhereInput[] = []
+    if (emails.size > 0) orConditions.push({ email: { in: Array.from(emails) } })
+    if (userIds.size > 0) orConditions.push({ id: { in: Array.from(userIds) } })
 
-    const isDuplicate = newAssignees.some((existing) => {
-      if (userId && existing.userId && userId === existing.userId) return true
-      if (email && existing.email && email.toLowerCase() === existing.email.toLowerCase()) return true
-      return false
+    const matchedUsers = await tx.user.findMany({
+      where: { OR: orConditions },
+      select: { id: true, email: true },
     })
-    if (!isDuplicate) {
-      newAssignees.push({ userId, email })
+    for (const u of matchedUsers) {
+      if (u.email) {
+        emailToId.set(u.email.toLowerCase(), u.id)
+        idToEmail.set(u.id, u.email)
+      }
     }
   }
 
-  for (const a of newAssignees) {
-    await tx.taskAssignee.create({
-      data: {
-        taskId,
-        userId: a.userId,
-        email: a.email,
-      },
+  const rowsToCreate: Array<{ taskId: number; userId: string | null; email: string | null }> = []
+
+  for (const entry of taskEntries) {
+    if (!entry.assignees || !Array.isArray(entry.assignees) || entry.assignees.length === 0) continue
+
+    const taskAssignees: Array<{ userId: string | null; email: string | null }> = []
+    for (const raw of entry.assignees) {
+      if (typeof raw !== 'string' || !raw.trim()) continue
+      const trimmed = raw.trim()
+      let userId: string | null = null
+      let email: string | null = null
+
+      if (trimmed.includes('@')) {
+        email = trimmed
+        userId = emailToId.get(trimmed.toLowerCase()) ?? null
+      } else {
+        userId = trimmed
+        email = idToEmail.get(trimmed) ?? null
+      }
+
+      const isDuplicate = taskAssignees.some((existing) => {
+        if (userId && existing.userId && userId === existing.userId) return true
+        if (email && existing.email && email.toLowerCase() === existing.email.toLowerCase()) return true
+        return false
+      })
+      if (!isDuplicate) {
+        taskAssignees.push({ userId, email })
+        rowsToCreate.push({
+          taskId: entry.taskId,
+          userId,
+          email,
+        })
+      }
+    }
+  }
+
+  if (rowsToCreate.length > 0) {
+    await tx.taskAssignee.createMany({
+      data: rowsToCreate,
     })
   }
 }
@@ -81,8 +113,6 @@ const executeUpsert = async (tx: Prisma.TransactionClient, task: GanttTask, emai
       ...getCreateCommonColumns(email),
     },
   })
-
-  await syncTaskAssignees(tx, result.id, task.attribute?.assignees)
 
   return result.id
 }
@@ -164,20 +194,28 @@ const upsertGanttTasks: UpsertGanttTasks = async (tasks, email?: string) => {
       }
 
       return await prisma.$transaction(async (tx) => {
-        const results = []
+        const results: number[] = []
+        const assigneeEntries: Array<{ taskId: number; assignees?: string[] }> = []
         for (const task of sanitizedTasks) {
-          results.push(await executeUpsert(tx, task, email))
+          const upsertedId = await executeUpsert(tx, task, email)
+          results.push(upsertedId)
+          assigneeEntries.push({ taskId: upsertedId, assignees: task.attribute?.assignees })
         }
+        await syncTasksAssigneesBatch(tx, assigneeEntries)
         return results
       })
     }
   }
 
   return await prisma.$transaction(async (tx) => {
-    const results = []
+    const results: number[] = []
+    const assigneeEntries: Array<{ taskId: number; assignees?: string[] }> = []
     for (const task of tasks) {
-      results.push(await executeUpsert(tx, task, email))
+      const upsertedId = await executeUpsert(tx, task, email)
+      results.push(upsertedId)
+      assigneeEntries.push({ taskId: upsertedId, assignees: task.attribute?.assignees })
     }
+    await syncTasksAssigneesBatch(tx, assigneeEntries)
     return results
   })
 }
