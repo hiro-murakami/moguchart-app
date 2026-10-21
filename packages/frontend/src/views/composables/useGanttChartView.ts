@@ -1244,7 +1244,7 @@ export const useGanttChartView = () => {
             ...(id === 'name'
               ? {
                   renderCell: (_val: unknown, row: moguchart.GanttRow) =>
-                    rowHeaderContent(row, barHeight.value, true),
+                    rowHeaderContent(row, barHeight.value),
                 }
               : {}),
             ...(id === 'assignees'

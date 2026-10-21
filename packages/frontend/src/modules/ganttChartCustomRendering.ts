@@ -962,7 +962,7 @@ export const tooltip = (task: moguchart.GanttTask, isHourly?: boolean) => {
   return container
 }
 
-export const rowHeaderContent = (row: moguchart.GanttRow, barHeight: number = 38, isGridMode: boolean = false) => {
+export const rowHeaderContent = (row: moguchart.GanttRow, barHeight: number = 38) => {
   const rowWithAttr = row as any
   const description = rowWithAttr.attribute?.description as string | undefined
   const commentCount = rowWithAttr.commentCount as number | undefined
@@ -974,7 +974,7 @@ export const rowHeaderContent = (row: moguchart.GanttRow, barHeight: number = 38
   container.style.flexDirection = 'column'
   container.style.justifyContent = 'start'
   container.style.height = '100%'
-  container.style.padding = isGridMode ? '4px 2px' : '4px 8px'
+  container.style.padding = '4px 8px'
   container.style.overflow = 'hidden'
   container.style.width = '100%'
   container.style.boxSizing = 'border-box'
