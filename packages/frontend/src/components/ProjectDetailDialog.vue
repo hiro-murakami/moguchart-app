@@ -386,7 +386,7 @@ watch(
                         </template>
                       </v-checkbox>
                     </v-col>
-                    <v-col cols="8" class="mb-3 pl-8">
+                    <v-col v-if="localAutoSchedule" cols="8" class="mb-3 pl-8">
                       <v-select
                         v-model="localAutoScheduleMode"
                         :items="autoScheduleModeOptions"
@@ -394,7 +394,6 @@ watch(
                         density="compact"
                         variant="outlined"
                         hide-details="auto"
-                        :disabled="!localAutoSchedule"
                       >
                         <template v-slot:append>
                           <HelpText

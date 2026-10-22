@@ -2688,6 +2688,9 @@ export const useGanttChartView = () => {
     if (!current || isReadOnly.value) return
 
     const { sourceTaskId, targetTaskId } = current
+    const hasValueChanged = current.type !== payload.type || current.lag !== payload.lag
+    if (!hasValueChanged) return
+
     const newEntry = moguchart.createDependencyEntry(sourceTaskId, payload.type, payload.lag) as TaskDependency
 
     let nextRows = rows.value.map((r) => {
@@ -2715,10 +2718,16 @@ export const useGanttChartView = () => {
       }
     })
 
-    // 自動スケジューリングが有効な場合、先行タスクを起点に後続タスクを再計算
-    if (currentProject.value?.attribute?.autoSchedule) {
+    const shouldSchedule = await confirm({
+      title: '自動スケジューリングの確認',
+      message: '自動スケジューリングしますか？',
+      confirmText: 'はい',
+      cancelText: 'いいえ',
+    })
+
+    if (shouldSchedule) {
       const scheduleResult = moguchart.propagateAutoSchedule(nextRows as any, [sourceTaskId], {
-        mode: currentProject.value?.attribute?.autoScheduleMode || 'push-only',
+        mode: 'strict',
         respectMovable: true,
       })
       if (scheduleResult.hasChanges) {
@@ -2732,8 +2741,8 @@ export const useGanttChartView = () => {
     )
     if (afterTasks.length === 0) return
 
-    await maybeAutoSnapshot()
     rows.value = nextRows
+    await maybeAutoSnapshot()
     await syncTasksWithUndo('接続線の編集', beforeTasks, afterTasks, affectedRowIds)
   }
 
@@ -4282,9 +4291,8 @@ export const useGanttChartView = () => {
     const isMultiSelect = selectedTaskIds.value.includes(taskId) && selectedTaskIds.value.length > 1
     const targetTaskIds = (isMultiSelect ? selectedTaskIds.value : [taskId]).map(String)
 
-    const mode = currentProject.value?.attribute?.autoScheduleMode || 'push-only'
     const scheduleResult = moguchart.propagateAutoSchedule(rows.value as any, targetTaskIds, {
-      mode,
+      mode: 'strict',
       respectMovable: true,
     })
 
