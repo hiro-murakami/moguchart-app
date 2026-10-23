@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Moguchart REST API
-  version: 1.6.0
+  version: 1.7.0
   description: |
     Moguchartの外部アプリ向けREST API。
     ガントチャートプロジェクトの管理（プロジェクト・行・タスク・コメント・スナップショット）を提供します。
@@ -1701,6 +1701,29 @@ components:
         summaryTaskColor:
           type: string
           description: サマリータスク（自動集計バー）の既定色（CSSカラー文字列、未指定時は #334155）
+        autoSchedule:
+          type: boolean
+          description: 自動スケジューリングを行うかどうか（trueの場合、先行タスクの変更時に後続タスクの日程を自動連動）
+        autoScheduleMode:
+          type: string
+          enum: [push-only, strict]
+          description: 自動スケジューリングの制約モード（'push-only'：逆転時のみ押し出し、'strict'：常時厳密追従、未指定時は 'push-only'）
+
+    TaskDependencyLink:
+      type: object
+      required: [taskId]
+      description: 拡張された依存関係リンク定義
+      properties:
+        taskId:
+          type: string
+          description: 先行タスク（依存元）のID
+        type:
+          type: string
+          enum: [FS, SS, FF, SF]
+          description: 依存関係の種別（デフォルトは 'FS'）
+        lag:
+          type: integer
+          description: ラグ（遅延：正の値）またはリード（前倒し：負の値）期間（分単位、デフォルトは 0）
 
     TaskAttribute:
       type: object
@@ -1726,8 +1749,10 @@ components:
         dependencies:
           type: array
           items:
-            type: string
-          description: 依存タスクのID配列
+            oneOf:
+              - type: string
+              - $ref: '#/components/schemas/TaskDependencyLink'
+          description: 依存タスクのID文字列、または依存関係リンク定義（種別・ラグ付き）の配列
         assignees:
           type: array
           items:
