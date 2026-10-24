@@ -1708,6 +1708,10 @@ components:
           type: string
           enum: [push-only, strict]
           description: 自動スケジューリングの制約モード（'push-only'：逆転時のみ押し出し、'strict'：常時厳密追従、未指定時は 'push-only'）
+        autoScheduleCalendarMode:
+          type: string
+          enum: [calendar, weekends, weekends-holidays]
+          description: 自動スケジューリングの稼働日（休日除外）計算モード（'calendar'：カレンダー通り、'weekends'：土日を除外、'weekends-holidays'：土日・祝日を除外、未指定時は 'calendar'）
 
     TaskDependencyLink:
       type: object

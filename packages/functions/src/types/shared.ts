@@ -249,6 +249,14 @@ export type TaskDependency = string | TaskDependencyLink
  */
 export type AutoScheduleMode = 'push-only' | 'strict'
 
+/**
+ * 自動スケジューリングの稼働日（休日除外）計算モード
+ * - 'calendar': カレンダー通り（土日・祝日を含めて計算、デフォルト）
+ * - 'weekends': 営業日ベース（土日を非営業日として除外）
+ * - 'weekends-holidays': 営業日ベース（土日および祝日を非営業日として除外）
+ */
+export type AutoScheduleCalendarMode = 'calendar' | 'weekends' | 'weekends-holidays'
+
 /** プロジェクトの追加属性 */
 export type ProjectAttribute = {
   /** プロジェクトの説明 */
@@ -305,6 +313,10 @@ export type ProjectAttribute = {
    * 自動スケジューリングの制約モード（'push-only' | 'strict'、未指定時は 'push-only'）
    */
   autoScheduleMode?: AutoScheduleMode
+  /**
+   * 自動スケジューリングの稼働日（休日除外）計算モード（'calendar' | 'weekends' | 'weekends-holidays'、未指定時は 'calendar'）
+   */
+  autoScheduleCalendarMode?: AutoScheduleCalendarMode
 }
 
 /** マーカーの種類 */

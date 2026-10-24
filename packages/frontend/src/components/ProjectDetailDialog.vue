@@ -44,6 +44,7 @@ const {
   localEnableProgress,
   localAutoSchedule,
   localAutoScheduleMode,
+  localAutoScheduleCalendarMode,
   localSummaryTaskColor,
   authorityHistoryUsers,
   projectUsers,
@@ -61,6 +62,12 @@ const openSlideSchedule = () => {
 const autoScheduleModeOptions = [
   { title: '押し出しのみ（逆転時のみ後ろへ移動）', value: 'push-only' as const },
   { title: '厳密追従（前後の移動に常に追従）', value: 'strict' as const },
+]
+
+const autoScheduleCalendarModeOptions = [
+  { title: 'カレンダー通り（土日・祝日を含める）', value: 'calendar' as const },
+  { title: '営業日ベース（土日を除外）', value: 'weekends' as const },
+  { title: '営業日ベース（土日・祝日を除外）', value: 'weekends-holidays' as const },
 ]
 
 const historyIntervalOptions = [
@@ -386,7 +393,7 @@ watch(
                         </template>
                       </v-checkbox>
                     </v-col>
-                    <v-col v-if="localAutoSchedule" cols="8" class="mb-3 pl-8">
+                    <v-col cols="8" class="mb-3 pl-8">
                       <v-select
                         v-model="localAutoScheduleMode"
                         :items="autoScheduleModeOptions"
@@ -398,6 +405,22 @@ watch(
                         <template v-slot:append>
                           <HelpText
                             text="「押し出しのみ」は先行タスクと日程が逆転する場合のみ後続タスクを後ろへ押し出します。「厳密追従」は先行タスクの移動に合わせて後続タスクを前倒しも含めて常に追従させます"
+                          />
+                        </template>
+                      </v-select>
+                    </v-col>
+                    <v-col v-if="localGranularity !== 'monthly'" cols="8" class="mb-3 pl-8">
+                      <v-select
+                        v-model="localAutoScheduleCalendarMode"
+                        :items="autoScheduleCalendarModeOptions"
+                        label="スケジューリングの稼働日設定"
+                        density="compact"
+                        variant="outlined"
+                        hide-details="auto"
+                      >
+                        <template v-slot:append>
+                          <HelpText
+                            text="自動スケジューリングおよび手動の「後続タスクをスケジューリング」実行時に、非営業日（土日・祝日）をスキップして後続タスクの稼働日数およびラグを維持するかどうかを設定します"
                           />
                         </template>
                       </v-select>

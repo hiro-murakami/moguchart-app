@@ -1348,6 +1348,11 @@ export const useGanttChartView = () => {
         autoSchedule: !!currentProject.value?.attribute?.autoSchedule,
         scheduleMode: currentProject.value?.attribute?.autoScheduleMode || 'push-only',
         respectMovable: true,
+        calendarMode:
+          currentProject.value?.attribute?.granularity === 'monthly'
+            ? 'calendar'
+            : currentProject.value?.attribute?.autoScheduleCalendarMode || 'calendar',
+        isHoliday: holiday_jp.isHoliday,
       },
       minimap: {
         enabled: isMinimapReady.value && showMinimap.value,
@@ -2682,6 +2687,21 @@ export const useGanttChartView = () => {
     openDependencyEditDialog(sourceTaskId, targetTaskId)
   }
 
+  /** 現在のプロジェクト設定に応じた自動・手動スケジューリングオプションを取得する */
+  const getAutoScheduleOptions = (): moguchart.AutoScheduleOptions => {
+    const isMonthly = currentProject.value?.attribute?.granularity === 'monthly'
+    const mode = currentProject.value?.attribute?.autoScheduleMode || 'push-only'
+    const calendarMode = isMonthly
+      ? 'calendar'
+      : currentProject.value?.attribute?.autoScheduleCalendarMode || 'calendar'
+    return {
+      mode,
+      respectMovable: true,
+      calendarMode,
+      isHoliday: holiday_jp.isHoliday,
+    }
+  }
+
   const saveDependencyEdit = async (payload: { type: DependencyType; lag: number }) => {
     const current = editingDependency.value
     isDependencyEditDialogVisible.value = false
@@ -2726,10 +2746,11 @@ export const useGanttChartView = () => {
     })
 
     if (shouldSchedule) {
-      const scheduleResult = moguchart.propagateAutoSchedule(nextRows as any, [sourceTaskId], {
-        mode: 'strict',
-        respectMovable: true,
-      })
+      const scheduleResult = moguchart.propagateAutoSchedule(
+        nextRows as any,
+        [sourceTaskId],
+        getAutoScheduleOptions(),
+      )
       if (scheduleResult.hasChanges) {
         nextRows = scheduleResult.rows as any
       }
@@ -3406,11 +3427,11 @@ export const useGanttChartView = () => {
 
       // プロジェクトの自動スケジューリングが有効な場合、後続タスクへのカスケード移動を計算
       if (currentProject.value?.attribute?.autoSchedule) {
-        const mode = currentProject.value?.attribute?.autoScheduleMode || 'push-only'
-        const scheduleResult = moguchart.propagateAutoSchedule(nextRows as any, [taskIdStr], {
-          mode,
-          respectMovable: true,
-        })
+        const scheduleResult = moguchart.propagateAutoSchedule(
+          nextRows as any,
+          [taskIdStr],
+          getAutoScheduleOptions(),
+        )
         if (scheduleResult.hasChanges) {
           nextRows = scheduleResult.rows as any
           const {
@@ -4291,10 +4312,11 @@ export const useGanttChartView = () => {
     const isMultiSelect = selectedTaskIds.value.includes(taskId) && selectedTaskIds.value.length > 1
     const targetTaskIds = (isMultiSelect ? selectedTaskIds.value : [taskId]).map(String)
 
-    const scheduleResult = moguchart.propagateAutoSchedule(rows.value as any, targetTaskIds, {
-      mode: 'strict',
-      respectMovable: true,
-    })
+    const scheduleResult = moguchart.propagateAutoSchedule(
+      rows.value as any,
+      targetTaskIds,
+      getAutoScheduleOptions(),
+    )
 
     if (!scheduleResult.hasChanges) {
       snackbar({ message: '日程の調整が必要な後続タスクはありませんでした。', color: 'info' })
