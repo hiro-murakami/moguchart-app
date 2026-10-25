@@ -168,6 +168,8 @@ export type ProjectSettings = {
   gridEditable?: boolean
   /** マルチカラムグリッドで表示するカラムIDの配列 */
   gridColumns?: string[]
+  /** マルチカラムグリッドの「稼働日」カラム初期追加マイグレーション済みフラグ */
+  gridWorkingDaysInitialized?: boolean
   /** マルチカラムグリッドの各カラム幅 (columnId -> px) */
   gridColumnWidths?: Record<string, number>
   /** マルチカラムグリッド有効時の行ヘッダー全体幅 (px) */
