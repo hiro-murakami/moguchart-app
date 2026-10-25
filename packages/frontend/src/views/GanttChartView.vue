@@ -510,6 +510,12 @@ const handleOpenSlideSchedule = async () => {
           v-model:grid-editable="gridEditable"
           v-model:grid-columns="gridColumns"
           :enable-progress="currentProject?.attribute?.enableProgress !== false"
+          :enable-working-days="
+            currentProject?.attribute?.granularity !== 'monthly' &&
+            currentProject?.attribute?.granularity !== 'hourly' &&
+            (currentProject?.attribute?.autoScheduleCalendarMode === 'weekends' ||
+              currentProject?.attribute?.autoScheduleCalendarMode === 'weekends-holidays')
+          "
         />
       </div>
 

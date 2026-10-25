@@ -31,6 +31,7 @@ const props = defineProps<{
   gridEditable?: boolean
   gridColumns?: string[]
   enableProgress?: boolean
+  enableWorkingDays?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -56,7 +57,7 @@ const emit = defineEmits<{
   'update:gridColumns': [value: string[]]
 }>()
 
-const DEFAULT_GRID_COLUMNS = ['name', 'assignees', 'startDate', 'endDate', 'duration', 'progress']
+const DEFAULT_GRID_COLUMNS = ['name', 'assignees', 'startDate', 'endDate', 'duration', 'workingDays', 'progress']
 
 const selectableGridColumns = computed(() => {
   const g = props.granularity || 'daily'
@@ -69,6 +70,9 @@ const selectableGridColumns = computed(() => {
     { id: 'endDate', label: endLabel },
     { id: 'duration', label: '期間' },
   ]
+  if (props.enableWorkingDays) {
+    cols.push({ id: 'workingDays', label: '稼働日' })
+  }
   if (props.enableProgress !== false) {
     cols.push({ id: 'progress', label: '進捗' })
   }

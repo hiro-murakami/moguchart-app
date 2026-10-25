@@ -43,6 +43,7 @@ import { toDateString, toDateTimeString, toLocalDate, getContrastColor } from '@
 import {
   barContent,
   tooltip,
+  countWorkingDays,
   rowHeaderContent,
   rowHeaderTooltip,
   preloadCommentsCache,
@@ -207,7 +208,7 @@ export const useGanttChartView = () => {
   const baseBarHeight = ref(DEFAULT_BAR_HEIGHT)
 
   // マルチカラムグリッド設定
-  const DEFAULT_GRID_COLUMNS = ['name', 'assignees', 'startDate', 'endDate', 'duration', 'progress']
+  const DEFAULT_GRID_COLUMNS = ['name', 'assignees', 'startDate', 'endDate', 'duration', 'workingDays', 'progress']
   const gridEnabled = ref(false)
   const gridEditable = ref(true)
   const gridColumns = ref<string[]>([...DEFAULT_GRID_COLUMNS])
@@ -424,6 +425,7 @@ export const useGanttChartView = () => {
       gridEnabled?: boolean
       gridEditable?: boolean
       gridColumns?: string[]
+      gridWorkingDaysInitialized?: boolean
       gridColumnWidths?: Record<string, number>
     }) => {
       // 公開閲覧モードではユーザー設定を保存しない
@@ -506,6 +508,7 @@ export const useGanttChartView = () => {
       gridEnabled: enabled,
       gridEditable: editable,
       gridColumns: [...cols],
+      gridWorkingDaysInitialized: true,
     })
   })
 
@@ -655,6 +658,14 @@ export const useGanttChartView = () => {
           const cols = settings.gridColumns.includes('name')
             ? [...settings.gridColumns]
             : ['name', ...settings.gridColumns]
+          if (!settings.gridWorkingDaysInitialized && !cols.includes('workingDays')) {
+            const durationIdx = cols.indexOf('duration')
+            if (durationIdx !== -1) {
+              cols.splice(durationIdx + 1, 0, 'workingDays')
+            } else {
+              cols.push('workingDays')
+            }
+          }
           gridColumns.value = cols
         } else {
           gridColumns.value = [...DEFAULT_GRID_COLUMNS]
@@ -1185,6 +1196,12 @@ export const useGanttChartView = () => {
     // 1時間あたりのpx数をpxPerDayに換算（基準値）
     const pxPerDayFromHour = basePxPerHour.value * 24
 
+    const calendarMode: moguchart.AutoScheduleCalendarMode =
+      isMonthly || isHourly
+        ? 'calendar'
+        : currentProject.value?.attribute?.autoScheduleCalendarMode || 'calendar'
+    const isNonWorkingDay = moguchart.createNonWorkingDayChecker(calendarMode, holiday_jp.isHoliday)
+
     return {
       bar: {
         height: baseBarHeight.value,
@@ -1235,8 +1252,12 @@ export const useGanttChartView = () => {
         editable: !isReadOnly.value && gridEditable.value,
         editTrigger: 'dblclick',
         width: gridEnabled.value ? baseGridRowHeaderWidth.value : undefined,
-        columns: (['wbs', 'name', 'assignees', 'startDate', 'endDate', 'duration', 'progress'] as const)
-          .filter((id) => id !== 'progress' || currentProject.value?.attribute?.enableProgress !== false)
+        columns: (['wbs', 'name', 'assignees', 'startDate', 'endDate', 'duration', 'workingDays', 'progress'] as const)
+          .filter((id) => {
+            if (id === 'progress') return currentProject.value?.attribute?.enableProgress !== false
+            if (id === 'workingDays') return !!isNonWorkingDay
+            return true
+          })
           .map((id) => ({
             id,
             visible: id === 'name' ? true : gridColumns.value.includes(id),
@@ -1273,6 +1294,79 @@ export const useGanttChartView = () => {
                     return names.join(', ')
                   },
                   renderCell: (val: unknown) => renderAssigneesGridCell(String(val ?? '')),
+                }
+              : {}),
+            ...(id === 'workingDays'
+              ? {
+                  title: '稼働日',
+                  width: gridColumnWidths.value[id] ?? 80,
+                  minWidth: 50,
+                  align: 'right' as const,
+                  editor: 'number' as const,
+                  editorMin: 1,
+                  editorStep: 1,
+                  editable: (row: moguchart.GanttRow, tasks: moguchart.GanttTask[]) => {
+                    if (isReadOnly.value || !gridEditable.value || !isNonWorkingDay) return false
+                    if (row.isSummary || isParentRow(row.id) || (tasks ?? []).some((t) => t.type === 'summary')) {
+                      return false
+                    }
+                    const normalTasks = (tasks ?? []).filter((t) => t.type !== 'summary' && !(t as any).isSummary)
+                    if (normalTasks.length !== 1) return false
+                    const target = normalTasks[0]!
+                    if (target.resizable === false || target.movable === 'none') return false
+                    return true
+                  },
+                  valueGetter: (_row: moguchart.GanttRow, tasks: moguchart.GanttTask[]) => {
+                    if (!isNonWorkingDay) return null
+                    const summary = moguchart.calculateRowSummaryDates(tasks)
+                    if (!summary.start || !summary.end || summary.durationDays <= 0) return null
+                    return countWorkingDays(dayjs(summary.start), summary.durationDays, isNonWorkingDay)
+                  },
+                  valueSetter: (
+                    _row: moguchart.GanttRow,
+                    rawValue: unknown,
+                    tasks: moguchart.GanttTask[],
+                  ) => {
+                    if (!isNonWorkingDay) return false
+                    const normalTasks = (tasks ?? []).filter((t) => t.type !== 'summary' && !(t as any).isSummary)
+                    if (normalTasks.length !== 1) return false
+                    const target = normalTasks[0]!
+                    if (!target.start) return false
+
+                    const nextWorkingDays = Math.round(Number(rawValue))
+                    if (Number.isNaN(nextWorkingDays) || nextWorkingDays < 1) return false
+
+                    const currentSummary = moguchart.calculateRowSummaryDates(normalTasks)
+                    const currentWorkingDays =
+                      currentSummary.start && currentSummary.end && currentSummary.durationDays > 0
+                        ? countWorkingDays(dayjs(currentSummary.start), currentSummary.durationDays, isNonWorkingDay)
+                        : 0
+                    if (nextWorkingDays === currentWorkingDays) return false
+
+                    const baseDay = dayjs(target.start).startOf('day')
+                    let workingCount = 0
+                    let calendarDays = 0
+                    while (workingCount < nextWorkingDays && calendarDays < 10000) {
+                      const dayStartMs = baseDay.add(calendarDays, 'day').valueOf()
+                      if (!isNonWorkingDay(dayStartMs)) {
+                        workingCount++
+                      }
+                      calendarDays++
+                    }
+
+                    const s = target.start
+                    const e = target.end ?? s
+                    target.end = new Date(
+                      s.getFullYear(),
+                      s.getMonth(),
+                      s.getDate() + calendarDays,
+                      e.getHours(),
+                      e.getMinutes(),
+                      e.getSeconds(),
+                      e.getMilliseconds(),
+                    )
+                  },
+                  formatter: (val: unknown) => (typeof val === 'number' && val >= 0 ? `${val}日` : '-'),
                 }
               : {}),
           })),
@@ -1315,7 +1409,10 @@ export const useGanttChartView = () => {
             displayRows.value.flatMap((r) => r.tasks).find((t) => String(t.id) === String(task.id)) ??
             rows.value.flatMap((r) => r.tasks).find((t) => String(t.id) === String(task.id)) ??
             task
-          return tooltip(latestTask as moguchart.GanttTask, isHourly)
+          return tooltip(latestTask as moguchart.GanttTask, isHourly, {
+            calendarMode,
+            isHoliday: holiday_jp.isHoliday,
+          })
         },
         rowHeaderContent: (row: moguchart.GanttRow) => rowHeaderContent(row, barHeight.value),
         rowHeaderTooltip,

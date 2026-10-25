@@ -724,19 +724,44 @@ export const barContent = (task: moguchart.GanttTask) => {
   return container
 }
 
-export const tooltip = (task: moguchart.GanttTask, isHourly?: boolean) => {
+export interface TooltipOptions {
+  calendarMode?: moguchart.AutoScheduleCalendarMode
+  isHoliday?: (date: Date) => boolean
+}
+
+export const countWorkingDays = (
+  start: dayjs.Dayjs,
+  days: number,
+  isNonWorkingDay: (dayStartMs: number) => boolean,
+): number => {
+  let workingDays = 0
+  const baseDay = start.startOf('day')
+  const limit = Math.min(days, 10000)
+  for (let i = 0; i < limit; i++) {
+    const dayStartMs = baseDay.add(i, 'day').valueOf()
+    if (!isNonWorkingDay(dayStartMs)) {
+      workingDays++
+    }
+  }
+  return workingDays
+}
+
+export const tooltip = (task: moguchart.GanttTask, isHourly?: boolean, options?: TooltipOptions) => {
   const isSummary = task.type === 'summary'
   const taskWithAttr = task as any
   const labels = taskWithAttr.attribute?.labels as { name: string; color: string }[] | undefined
   const description = taskWithAttr.attribute?.description as string | undefined
   const progress = isSummary ? task.progress : (taskWithAttr.attribute?.progress as number | undefined)
+  const isNonWorkingDay = !isHourly
+    ? moguchart.createNonWorkingDayChecker(options?.calendarMode, options?.isHoliday)
+    : null
 
   const container = document.createElement('div')
   container.style.display = 'flex'
   container.style.flexDirection = 'column'
   container.style.gap = '4px'
   container.style.padding = '8px'
-  container.style.maxWidth = '300px'
+  container.style.maxWidth = '320px'
 
   // 日付
   const dateSpan = document.createElement('div')
@@ -758,7 +783,9 @@ export const tooltip = (task: moguchart.GanttTask, isHourly?: boolean) => {
     } else {
       days = Math.max(1, Math.round(end.diff(start, 'day', true)))
     }
-    dateSpan.textContent = `${start.format('YYYY/MM/DD')} - ${displayEnd.format('YYYY/MM/DD')} (${days}日)`
+    const workingDays = isNonWorkingDay ? countWorkingDays(start, days, isNonWorkingDay) : null
+    const daysText = workingDays !== null ? `${days}日 / 稼働${workingDays}日` : `${days}日`
+    dateSpan.textContent = `${start.format('YYYY/MM/DD')} - ${displayEnd.format('YYYY/MM/DD')} (${daysText})`
   }
   container.appendChild(dateSpan)
 
@@ -798,9 +825,11 @@ export const tooltip = (task: moguchart.GanttTask, isHourly?: boolean) => {
       statusColor = '#10b981'
     }
 
+    const bWorkingDays = isNonWorkingDay ? countWorkingDays(bStart, bDays, isNonWorkingDay) : null
+    const bDaysText = bWorkingDays !== null ? `${bDays}日 / 稼働${bWorkingDays}日` : `${bDays}日`
     const bDateText = isHourly
       ? `${bStart.format('MM/DD HH:mm')} - ${bEnd.format('MM/DD HH:mm')}`
-      : `${bStart.format('YYYY/MM/DD')} - ${bDisplayEnd.format('YYYY/MM/DD')} (${bDays}日)`
+      : `${bStart.format('YYYY/MM/DD')} - ${bDisplayEnd.format('YYYY/MM/DD')} (${bDaysText})`
 
     baselineDiv.innerHTML = `
       <span style="opacity: 0.85;">計画: ${bDateText}</span>
