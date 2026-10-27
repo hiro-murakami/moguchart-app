@@ -57,14 +57,15 @@ export function useUnassignedTaskSidebar(props: { isOpen: boolean }, emit: any) 
         }
       }
 
-      // Default duration to 1 day if not specified.
-      // Although the type says number, safety check.
-      const duration = template.duration || 1
+      const isMilestone = template.attribute?.type === 'milestone'
+      // Default duration to 1 day if not specified (0 for milestones).
+      const duration = isMilestone ? 0 : template.duration || 1
       const start = new Date()
       const end = new Date(start.getTime() + duration * 24 * 60 * 60 * 1000)
 
       return {
         id: `template-${index}`, // Temporary ID
+        type: isMilestone ? ('milestone' as const) : ('task' as const),
         name: template.name,
         start,
         end,

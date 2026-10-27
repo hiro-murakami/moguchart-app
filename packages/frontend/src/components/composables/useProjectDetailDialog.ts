@@ -47,6 +47,9 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
   const localAutoSchedule = ref(false)
   const localAutoScheduleMode = ref<AutoScheduleMode>('push-only')
   const localAutoScheduleCalendarMode = ref<AutoScheduleCalendarMode>('calendar')
+  const DEFAULT_NON_WORKING_DAYS = [0, 6]
+  const localNonWorkingDays = ref<number[]>([...DEFAULT_NON_WORKING_DAYS])
+  const localPreserveWorkingDaysOnDrag = ref(false)
   const DEFAULT_SUMMARY_TASK_COLOR = '#334155'
   const localSummaryTaskColor = ref<string>(DEFAULT_SUMMARY_TASK_COLOR)
 
@@ -151,6 +154,10 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
             localAutoSchedule.value = !!props.project.attribute.autoSchedule
             localAutoScheduleMode.value = props.project.attribute.autoScheduleMode || 'push-only'
             localAutoScheduleCalendarMode.value = props.project.attribute.autoScheduleCalendarMode || 'calendar'
+            localNonWorkingDays.value = Array.isArray(props.project.attribute.nonWorkingDays)
+              ? [...props.project.attribute.nonWorkingDays].sort((a, b) => a - b)
+              : [...DEFAULT_NON_WORKING_DAYS]
+            localPreserveWorkingDaysOnDrag.value = !!props.project.attribute.preserveWorkingDaysOnDrag
             localSummaryTaskColor.value = props.project.attribute.summaryTaskColor || DEFAULT_SUMMARY_TASK_COLOR
             localClearProgress.value = true
 
@@ -205,6 +212,10 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
             localAutoSchedule.value = !!props.project.attribute.autoSchedule
             localAutoScheduleMode.value = props.project.attribute.autoScheduleMode || 'push-only'
             localAutoScheduleCalendarMode.value = props.project.attribute.autoScheduleCalendarMode || 'calendar'
+            localNonWorkingDays.value = Array.isArray(props.project.attribute.nonWorkingDays)
+              ? [...props.project.attribute.nonWorkingDays].sort((a, b) => a - b)
+              : [...DEFAULT_NON_WORKING_DAYS]
+            localPreserveWorkingDaysOnDrag.value = !!props.project.attribute.preserveWorkingDaysOnDrag
             localSummaryTaskColor.value = props.project.attribute.summaryTaskColor || DEFAULT_SUMMARY_TASK_COLOR
           }
         } else {
@@ -230,6 +241,8 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
           localAutoSchedule.value = false
           localAutoScheduleMode.value = 'push-only'
           localAutoScheduleCalendarMode.value = 'calendar'
+          localNonWorkingDays.value = [...DEFAULT_NON_WORKING_DAYS]
+          localPreserveWorkingDaysOnDrag.value = false
           localSummaryTaskColor.value = DEFAULT_SUMMARY_TASK_COLOR
         }
       }
@@ -255,6 +268,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
   })
 
   const hasChanges = computed(() => {
+    const sortedLocalNonWorkingDays = [...localNonWorkingDays.value].sort((a, b) => a - b)
     if (!props.project) {
       // 新規追加モード: 何か入力されていれば変更とみなす
       return (
@@ -268,6 +282,8 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
         localAutoSchedule.value !== false ||
         localAutoScheduleMode.value !== 'push-only' ||
         localAutoScheduleCalendarMode.value !== 'calendar' ||
+        !isEqual(sortedLocalNonWorkingDays, DEFAULT_NON_WORKING_DAYS) ||
+        localPreserveWorkingDaysOnDrag.value !== false ||
         localSummaryTaskColor.value !== DEFAULT_SUMMARY_TASK_COLOR ||
         localOwners.value.length > 0 ||
         localEditors.value.length > 0 ||
@@ -281,6 +297,9 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
     const originalColorPalettes = props.project.attribute.colorPalettes || []
     const originalLabels = props.project.attribute.labels || []
     const originalMilestones = props.project.attribute.milestones || []
+    const originalNonWorkingDays = Array.isArray(props.project.attribute.nonWorkingDays)
+      ? [...props.project.attribute.nonWorkingDays].sort((a, b) => a - b)
+      : DEFAULT_NON_WORKING_DAYS
     return (
       localName.value !== props.project.name ||
       localDescription.value !== (props.project.attribute.description || '') ||
@@ -301,6 +320,8 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
       localAutoSchedule.value !== !!props.project.attribute.autoSchedule ||
       localAutoScheduleMode.value !== (props.project.attribute.autoScheduleMode || 'push-only') ||
       localAutoScheduleCalendarMode.value !== (props.project.attribute.autoScheduleCalendarMode || 'calendar') ||
+      !isEqual(sortedLocalNonWorkingDays, originalNonWorkingDays) ||
+      localPreserveWorkingDaysOnDrag.value !== !!props.project.attribute.preserveWorkingDaysOnDrag ||
       localSummaryTaskColor.value !== (props.project.attribute.summaryTaskColor || DEFAULT_SUMMARY_TASK_COLOR) ||
       (localGranularity.value === 'hourly' || localGranularity.value === 'daily'
         ? localSnapDurationMinutes.value !==
@@ -335,6 +356,8 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
           })()
         : localEnd.value
 
+    const sortedNonWorkingDays = [...localNonWorkingDays.value].sort((a, b) => a - b)
+
     const projectData: Partial<Project> = {
       name: localName.value,
       start: localStart.value,
@@ -355,6 +378,8 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
         autoScheduleMode: localAutoScheduleMode.value !== 'push-only' ? localAutoScheduleMode.value : undefined,
         autoScheduleCalendarMode:
           localAutoScheduleCalendarMode.value !== 'calendar' ? localAutoScheduleCalendarMode.value : undefined,
+        nonWorkingDays: !isEqual(sortedNonWorkingDays, DEFAULT_NON_WORKING_DAYS) ? sortedNonWorkingDays : undefined,
+        preserveWorkingDaysOnDrag: localPreserveWorkingDaysOnDrag.value ? true : undefined,
         summaryTaskColor: localSummaryTaskColor.value || undefined,
         // granularity は新規作成時のみ設定（編集時は既存値を保持）
         ...(!isEdit.value ? { granularity: localGranularity.value } : {}),
@@ -407,6 +432,8 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
     localAutoSchedule,
     localAutoScheduleMode,
     localAutoScheduleCalendarMode,
+    localNonWorkingDays,
+    localPreserveWorkingDaysOnDrag,
     localSummaryTaskColor,
     authorityHistoryUsers,
     projectUsers,

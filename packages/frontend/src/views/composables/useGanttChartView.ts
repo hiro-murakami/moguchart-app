@@ -1200,7 +1200,17 @@ export const useGanttChartView = () => {
       isMonthly || isHourly
         ? 'calendar'
         : currentProject.value?.attribute?.autoScheduleCalendarMode || 'calendar'
-    const isNonWorkingDay = moguchart.createNonWorkingDayChecker(calendarMode, holiday_jp.isHoliday)
+    const nonWorkingDays = currentProject.value?.attribute?.nonWorkingDays
+    const preserveWorkingDaysOnDrag =
+      !isMonthly &&
+      !isHourly &&
+      calendarMode !== 'calendar' &&
+      !!currentProject.value?.attribute?.preserveWorkingDaysOnDrag
+    const isNonWorkingDay = moguchart.createNonWorkingDayChecker(
+      calendarMode,
+      holiday_jp.isHoliday,
+      nonWorkingDays,
+    )
 
     return {
       bar: {
@@ -1238,7 +1248,14 @@ export const useGanttChartView = () => {
                 weekTextAlign: 'left' as const,
                 weekFormat: (_: number, startDate: Date) => startDate.getDate().toString(),
               }),
-        ...(isHourly ? {} : { isHoliday: holiday_jp.isHoliday }),
+        ...(isHourly
+          ? {}
+          : {
+              isHoliday: holiday_jp.isHoliday,
+              calendarMode,
+              nonWorkingDays,
+              preserveWorkingDaysOnDrag,
+            }),
         showCurrentTime: showCurrentTimeLine.value,
         currentTimeUpdateInterval: 1000 * 60,
         milestones: milestones.length > 0 ? milestones : undefined,
@@ -1298,75 +1315,7 @@ export const useGanttChartView = () => {
               : {}),
             ...(id === 'workingDays'
               ? {
-                  title: '稼働日',
                   width: gridColumnWidths.value[id] ?? 80,
-                  minWidth: 50,
-                  align: 'right' as const,
-                  editor: 'number' as const,
-                  editorMin: 1,
-                  editorStep: 1,
-                  editable: (row: moguchart.GanttRow, tasks: moguchart.GanttTask[]) => {
-                    if (isReadOnly.value || !gridEditable.value || !isNonWorkingDay) return false
-                    if (row.isSummary || isParentRow(row.id) || (tasks ?? []).some((t) => t.type === 'summary')) {
-                      return false
-                    }
-                    const normalTasks = (tasks ?? []).filter((t) => t.type !== 'summary' && !(t as any).isSummary)
-                    if (normalTasks.length !== 1) return false
-                    const target = normalTasks[0]!
-                    if (target.resizable === false || target.movable === 'none') return false
-                    return true
-                  },
-                  valueGetter: (_row: moguchart.GanttRow, tasks: moguchart.GanttTask[]) => {
-                    if (!isNonWorkingDay) return null
-                    const summary = moguchart.calculateRowSummaryDates(tasks)
-                    if (!summary.start || !summary.end || summary.durationDays <= 0) return null
-                    return countWorkingDays(dayjs(summary.start), summary.durationDays, isNonWorkingDay)
-                  },
-                  valueSetter: (
-                    _row: moguchart.GanttRow,
-                    rawValue: unknown,
-                    tasks: moguchart.GanttTask[],
-                  ) => {
-                    if (!isNonWorkingDay) return false
-                    const normalTasks = (tasks ?? []).filter((t) => t.type !== 'summary' && !(t as any).isSummary)
-                    if (normalTasks.length !== 1) return false
-                    const target = normalTasks[0]!
-                    if (!target.start) return false
-
-                    const nextWorkingDays = Math.round(Number(rawValue))
-                    if (Number.isNaN(nextWorkingDays) || nextWorkingDays < 1) return false
-
-                    const currentSummary = moguchart.calculateRowSummaryDates(normalTasks)
-                    const currentWorkingDays =
-                      currentSummary.start && currentSummary.end && currentSummary.durationDays > 0
-                        ? countWorkingDays(dayjs(currentSummary.start), currentSummary.durationDays, isNonWorkingDay)
-                        : 0
-                    if (nextWorkingDays === currentWorkingDays) return false
-
-                    const baseDay = dayjs(target.start).startOf('day')
-                    let workingCount = 0
-                    let calendarDays = 0
-                    while (workingCount < nextWorkingDays && calendarDays < 10000) {
-                      const dayStartMs = baseDay.add(calendarDays, 'day').valueOf()
-                      if (!isNonWorkingDay(dayStartMs)) {
-                        workingCount++
-                      }
-                      calendarDays++
-                    }
-
-                    const s = target.start
-                    const e = target.end ?? s
-                    target.end = new Date(
-                      s.getFullYear(),
-                      s.getMonth(),
-                      s.getDate() + calendarDays,
-                      e.getHours(),
-                      e.getMinutes(),
-                      e.getSeconds(),
-                      e.getMilliseconds(),
-                    )
-                  },
-                  formatter: (val: unknown) => (typeof val === 'number' && val >= 0 ? `${val}日` : '-'),
                 }
               : {}),
           })),
@@ -1412,6 +1361,7 @@ export const useGanttChartView = () => {
           return tooltip(latestTask as moguchart.GanttTask, isHourly, {
             calendarMode,
             isHoliday: holiday_jp.isHoliday,
+            nonWorkingDays,
           })
         },
         rowHeaderContent: (row: moguchart.GanttRow) => rowHeaderContent(row, barHeight.value),
@@ -1445,11 +1395,10 @@ export const useGanttChartView = () => {
         autoSchedule: !!currentProject.value?.attribute?.autoSchedule,
         scheduleMode: currentProject.value?.attribute?.autoScheduleMode || 'push-only',
         respectMovable: true,
-        calendarMode:
-          currentProject.value?.attribute?.granularity === 'monthly'
-            ? 'calendar'
-            : currentProject.value?.attribute?.autoScheduleCalendarMode || 'calendar',
+        calendarMode,
         isHoliday: holiday_jp.isHoliday,
+        nonWorkingDays,
+        preserveWorkingDaysOnDrag,
       },
       minimap: {
         enabled: isMinimapReady.value && showMinimap.value,
@@ -1911,15 +1860,19 @@ export const useGanttChartView = () => {
 
         const bRawAttr = ((bTask as any).attribute as TaskAttribute) || {}
         const aRawAttr = ((aTask as any).attribute as TaskAttribute) || {}
+        const bIsMilestone = bTask.type === 'milestone' || bRawAttr.type === 'milestone'
+        const aIsMilestone = aTask.type === 'milestone' || aRawAttr.type === 'milestone'
 
         const bAttr: TaskAttribute = {
           ...bRawAttr,
-          ...(bTask.progress !== undefined ? { progress: bTask.progress } : {}),
+          ...(bIsMilestone ? { type: 'milestone' as const } : {}),
+          ...(bTask.progress !== undefined && !bIsMilestone ? { progress: bTask.progress } : {}),
           dependencies: bDeps.length > 0 ? bDeps : undefined,
         }
         const aAttr: TaskAttribute = {
           ...aRawAttr,
-          ...(aTask.progress !== undefined ? { progress: aTask.progress } : {}),
+          ...(aIsMilestone ? { type: 'milestone' as const } : {}),
+          ...(aTask.progress !== undefined && !aIsMilestone ? { progress: aTask.progress } : {}),
           dependencies: aDeps.length > 0 ? aDeps : undefined,
         }
 
@@ -2083,6 +2036,7 @@ export const useGanttChartView = () => {
   // タスクの表示用フォーマット関数
   const formatGanttTask = (task: any) => {
     const attribute = task.attribute as TaskAttribute | undefined
+    const isMilestone = attribute?.type === 'milestone' || task.type === 'milestone'
     const colorPalette = attribute?.colorPalette
 
     let style: string | undefined = 'box-shadow: var(--task-box-shadow, 0 2px 4px rgba(0, 0, 0, 0.3)); '
@@ -2113,13 +2067,13 @@ export const useGanttChartView = () => {
       }
     }
 
-    // lock → moguchart の resizable / movable に変換
+    // lock / milestone → moguchart の resizable / movable に変換
     const isLocked = attribute?.lock === true
-    const resizable = isLocked ? false : undefined
+    const resizable = isLocked || isMilestone ? false : undefined
     const movable = isLocked ? ('none' as const) : undefined
 
     // 進捗編集可否:
-    // プロジェクトが進捗管理有効 かつ (編集権限あり または 担当者) かつ ロックされていない
+    // プロジェクトが進捗管理有効 かつ (編集権限あり または 担当者) かつ ロックされていない かつ マイルストーンでない
     const userId = userStore.currentUser?.id
     const userEmail = userStore.currentUser?.email
     const assignees = attribute?.assignees || []
@@ -2127,19 +2081,24 @@ export const useGanttChartView = () => {
     const canEditProgress =
       (!isReadOnly.value || isAssignee) &&
       !isLocked &&
+      !isMilestone &&
       currentProject.value?.attribute?.enableProgress !== false
+
+    const startDate = toLocalDate(task.start)
+    const endDate = isMilestone ? new Date(startDate.getTime()) : toLocalDate(task.end)
 
     return {
       ...task,
       id: task.id.toString(),
-      start: toLocalDate(task.start),
-      end: toLocalDate(task.end),
+      type: isMilestone ? ('milestone' as const) : undefined,
+      start: startDate,
+      end: endDate,
       style,
       labelStyle,
       pattern,
       resizable,
       movable,
-      progress: attribute?.progress,
+      progress: isMilestone ? undefined : attribute?.progress,
       progressResizable: canEditProgress,
       dependencies: attribute?.dependencies,
       html:
@@ -2162,6 +2121,7 @@ export const useGanttChartView = () => {
         tasks: r.tasks.map((t: any) => {
           const attribute = t.attribute as TaskAttribute | undefined
           const isLocked = attribute?.lock === true
+          const isMilestone = attribute?.type === 'milestone' || t.type === 'milestone'
           const userId = userStore.currentUser?.id
           const userEmail = userStore.currentUser?.email
           const assignees = attribute?.assignees || []
@@ -2169,6 +2129,7 @@ export const useGanttChartView = () => {
           const canEditProgress =
             (!isReadOnly.value || isAssignee) &&
             !isLocked &&
+            !isMilestone &&
             currentProject.value?.attribute?.enableProgress !== false
           return {
             ...t,
@@ -2796,6 +2757,7 @@ export const useGanttChartView = () => {
       respectMovable: true,
       calendarMode,
       isHoliday: holiday_jp.isHoliday,
+      nonWorkingDays: currentProject.value?.attribute?.nonWorkingDays,
     }
   }
 
@@ -2910,6 +2872,7 @@ export const useGanttChartView = () => {
 
   // --- ドラッグ＆ドロップ関連 ---
   const handleTaskDragStart = (e: DragEvent, task: moguchart.GanttTask) => {
+    const isMilestone = moguchart.isMilestoneTask(task) || (task as any).attribute?.type === 'milestone'
     if (e.dataTransfer) {
       e.dataTransfer.setData('application/json', JSON.stringify(task))
       e.dataTransfer.effectAllowed = 'copy'
@@ -2931,11 +2894,11 @@ export const useGanttChartView = () => {
         ${task.labelStyle || 'color: #ffffff'};
         font-weight: bold;
         box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        background-color: #3b82f6;
+        background-color: ${isMilestone ? '#8b5cf6' : '#3b82f6'};
         ${task.style || ''};
         ${moguchart.getPatternStyle(task.pattern)};
       `
-      dragImage.textContent = task.name || ''
+      dragImage.textContent = isMilestone ? `◆ ${task.name || ''}` : task.name || ''
       document.body.appendChild(dragImage)
 
       e.dataTransfer.setDragImage(dragImage, 0, 0)
@@ -2944,7 +2907,7 @@ export const useGanttChartView = () => {
     if (ganttChartRef.value) {
       ganttChartRef.value.externalDraggingTask = {
         ...task,
-        type: 'task',
+        type: isMilestone ? 'milestone' : 'task',
         attribute: (task as any).attribute,
       } as any
     }
@@ -2967,8 +2930,9 @@ export const useGanttChartView = () => {
     const { task, dropDate, targetRowId } = detail
 
     try {
+      const isMilestone = moguchart.isMilestoneTask(task) || (task as any).attribute?.type === 'milestone'
       const newStart = new Date(dropDate)
-      const duration = new Date(task.end).getTime() - new Date(task.start).getTime()
+      const duration = isMilestone ? 0 : new Date(task.end).getTime() - new Date(task.start).getTime()
       const newEnd = new Date(newStart.getTime() + duration)
 
       // 楽観的UI更新: アニメーション用の仮タスクを表示
@@ -2976,6 +2940,7 @@ export const useGanttChartView = () => {
       const optimisticTask = {
         ...task,
         id: tempId,
+        type: isMilestone ? ('milestone' as const) : undefined,
         rowId: Number(targetRowId),
         name: task.name || '',
         start: newStart,
@@ -3013,6 +2978,7 @@ export const useGanttChartView = () => {
         end: toDateTimeString(newEnd),
         attribute: {
           ...(taskAny.attribute || {}),
+          ...(isMilestone ? { type: 'milestone' as const } : {}),
           description: taskAny.attribute?.description || '',
           colorPalette,
         },
@@ -3250,18 +3216,20 @@ export const useGanttChartView = () => {
     if (row && task) {
       const taskWithAttr = task as unknown as { attribute?: TaskAttribute }
       const attr = taskWithAttr.attribute
+      const isMilestone = moguchart.isMilestoneTask(task as any) || attr?.type === 'milestone'
 
       editingTask.value = {
         id: task.id,
         rowId: row.id,
         name: task.name || '',
         start: toDateTimeString(task.start),
-        end: toDateTimeString(task.end),
+        end: isMilestone ? toDateTimeString(task.start) : toDateTimeString(task.end),
+        type: isMilestone ? 'milestone' : 'task',
         description: attr?.description || '',
         colorPalette: attr?.colorPalette ? { ...attr.colorPalette } : undefined,
         labels: attr?.labels ? [...attr.labels] : [],
         lock: attr?.lock,
-        progress: attr?.progress,
+        progress: isMilestone ? undefined : attr?.progress,
         assignees: attr?.assignees ? [...attr.assignees] : undefined,
         dependencies: attr?.dependencies ? [...attr.dependencies] : undefined,
         imageUrls: attr?.imageUrls ? [...attr.imageUrls] : undefined,
@@ -3305,9 +3273,11 @@ export const useGanttChartView = () => {
     const assignees = attr?.assignees || []
     const isAssignee = (!!userId && assignees.includes(userId)) || (!!userEmail && assignees.includes(userEmail))
 
-    // 閲覧権限モードの場合、自分が担当者 かつ プロジェクトで進捗管理が有効な場合に進捗率ダイアログを開く
+    const isMilestone = moguchart.isMilestoneTask(targetTask as any) || attr?.type === 'milestone'
+
+    // 閲覧権限モードの場合、自分が担当者 かつ プロジェクトで進捗管理が有効（かつマイルストーンでない）場合に進捗率ダイアログを開く
     if (isReadOnly.value) {
-      if (isAssignee && currentProject.value?.attribute?.enableProgress !== false) {
+      if (!isMilestone && isAssignee && currentProject.value?.attribute?.enableProgress !== false) {
         openProgressDialog(taskId)
       }
       return
@@ -3319,8 +3289,9 @@ export const useGanttChartView = () => {
   const saveTask = async (taskData: typeof editingTask.value) => {
     await maybeAutoSnapshot()
 
+    const isMilestone = taskData.type === 'milestone'
     let resolvedStartStr = taskData.start
-    let resolvedEndStr = taskData.end
+    let resolvedEndStr = isMilestone ? taskData.start : taskData.end
 
     // 新規作成時に自動スケジューリングが有効かつ先行タスクが設定されている場合、初期日程を先行タスク制約に合わせる
     if (
@@ -3332,7 +3303,7 @@ export const useGanttChartView = () => {
     ) {
       const startMs = toLocalDate(resolvedStartStr).getTime()
       const endMs = toLocalDate(resolvedEndStr).getTime()
-      const durationMs = Math.max(0, endMs - startMs)
+      const durationMs = isMilestone ? 0 : Math.max(0, endMs - startMs)
       if (!Number.isNaN(startMs) && !Number.isNaN(endMs)) {
         const taskMap = new Map<string, { startMs: number; endMs: number }>()
         for (const r of rows.value) {
@@ -3375,13 +3346,13 @@ export const useGanttChartView = () => {
     if (!taskData.id) {
       const tempId = -Date.now()
       const start = toLocalDate(resolvedStartStr)
-      const end = toLocalDate(resolvedEndStr)
+      const end = isMilestone ? new Date(start.getTime()) : toLocalDate(resolvedEndStr)
 
       // スタイルの構築
       let style = 'box-shadow: var(--task-box-shadow, 0 2px 4px rgba(0, 0, 0, 0.3)); '
       if (taskData.colorPalette?.backgroundColor) {
         style += `background-color: ${taskData.colorPalette.backgroundColor}; `
-      } else {
+      } else if (!isMilestone) {
         style += `background-color: ${DEFAULT_TASK_COLOR}; `
       }
 
@@ -3398,6 +3369,7 @@ export const useGanttChartView = () => {
 
       const optimisticTask = {
         id: tempId,
+        type: isMilestone ? ('milestone' as const) : undefined,
         name: taskData.name,
         start,
         end,
@@ -3419,11 +3391,12 @@ export const useGanttChartView = () => {
       start: resolvedStartStr,
       end: resolvedEndStr,
       attribute: {
+        type: isMilestone ? 'milestone' : undefined,
         description: taskData.description || undefined,
         colorPalette: taskData.colorPalette,
         labels: taskData.labels,
         lock: taskData.lock || undefined,
-        progress: taskData.progress != null ? taskData.progress : undefined,
+        progress: !isMilestone && taskData.progress != null ? taskData.progress : undefined,
         assignees: taskData.assignees && taskData.assignees.length > 0 ? taskData.assignees : undefined,
         dependencies: taskData.dependencies && taskData.dependencies.length > 0 ? taskData.dependencies : undefined,
         imageUrls: taskData.imageUrls && taskData.imageUrls.length > 0 ? taskData.imageUrls : undefined,
@@ -3510,6 +3483,7 @@ export const useGanttChartView = () => {
           start: toDateTimeString(beforeTask.start),
           end: toDateTimeString(beforeTask.end),
           attribute: {
+            type: beforeAttr?.type,
             description: beforeAttr?.description || undefined,
             colorPalette: beforeAttr?.colorPalette ? { ...beforeAttr.colorPalette } : undefined,
             labels: beforeAttr?.labels ? [...beforeAttr.labels] : undefined,
@@ -4329,8 +4303,13 @@ export const useGanttChartView = () => {
     const assignees = attr?.assignees || []
     const isAssignee = (!!userId && assignees.includes(userId)) || (!!userEmail && assignees.includes(userEmail))
 
-    // 閲覧権限モードの場合、自分が担当者 かつ プロジェクトで進捗管理が有効な場合のみコンテキストメニューを開く
-    if (isReadOnly.value && (!isAssignee || currentProject.value?.attribute?.enableProgress === false)) {
+    const isMilestone = moguchart.isMilestoneTask(targetTask as any) || attr?.type === 'milestone'
+
+    // 閲覧権限モードの場合、自分が担当者 かつ プロジェクトで進捗管理が有効（かつマイルストーンでない）場合のみコンテキストメニューを開く
+    if (
+      isReadOnly.value &&
+      (isMilestone || !isAssignee || currentProject.value?.attribute?.enableProgress === false)
+    ) {
       return
     }
 
@@ -4350,6 +4329,8 @@ export const useGanttChartView = () => {
     const row = rows.value.find((r) => r.tasks.some((t) => t.id === menuTaskId))
     const targetTask = row?.tasks.find((t) => t.id === menuTaskId)
     const attr = (targetTask as any)?.attribute as TaskAttribute | undefined
+    const isMilestone = moguchart.isMilestoneTask(targetTask as any) || attr?.type === 'milestone'
+    if (isMilestone) return false
     const userId = userStore.currentUser?.id
     const userEmail = userStore.currentUser?.email
     const assignees = attr?.assignees || []
@@ -5485,6 +5466,7 @@ export const useGanttChartView = () => {
   interface ClipboardTaskData {
     name: string
     durationDays: number
+    type?: 'task' | 'milestone'
     description?: string
     colorPalette?: ColorPalette
     labels?: Label[]
@@ -5507,11 +5489,15 @@ export const useGanttChartView = () => {
       if (task) {
         const startDate = task.start instanceof Date ? task.start : new Date(task.start)
         const endDate = task.end instanceof Date ? task.end : new Date(task.end)
-        const durationDays = Math.round((endDate.getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000))
         const attr = (task as any).attribute as TaskAttribute | undefined
+        const isMilestone = moguchart.isMilestoneTask(task as any) || attr?.type === 'milestone'
+        const durationDays = isMilestone
+          ? 0
+          : Math.round((endDate.getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000))
         clipboardData.push({
           name: task.name || '',
           durationDays,
+          type: isMilestone ? 'milestone' : undefined,
           description: attr?.description,
           colorPalette: attr?.colorPalette ? { ...attr.colorPalette } : undefined,
           labels: attr?.labels ? [...attr.labels] : undefined,
@@ -5554,8 +5540,11 @@ export const useGanttChartView = () => {
     await maybeAutoSnapshot()
 
     const upsertDataList = tasksData.map((t) => {
+      const isMilestone = t.type === 'milestone'
       const startDate = new Date(date)
-      const endDate = new Date(startDate.getTime() + t.durationDays * 24 * 60 * 60 * 1000)
+      const endDate = isMilestone
+        ? new Date(startDate.getTime())
+        : new Date(startDate.getTime() + t.durationDays * 24 * 60 * 60 * 1000)
       return {
         id: 0,
         rowId: Number(rowId),
@@ -5563,6 +5552,7 @@ export const useGanttChartView = () => {
         start: toDateTimeString(startDate),
         end: toDateTimeString(endDate),
         attribute: {
+          type: isMilestone ? ('milestone' as const) : undefined,
           description: t.description,
           colorPalette: t.colorPalette,
           labels: t.labels,
@@ -5674,6 +5664,7 @@ export const useGanttChartView = () => {
       id: '', // 新規作成
       rowId: rowId,
       name: '新規タスク',
+      type: 'task',
       start: isMonthly
         ? dayjs(date).startOf('month').format('YYYY-MM-DD')
         : isHourly
@@ -5684,6 +5675,32 @@ export const useGanttChartView = () => {
         : isHourly
           ? dayjs(date).add(2, 'hour').format('YYYY-MM-DD HH:00:00') // デフォルト2時間
           : toDateString(new Date(date.getTime() + 2 * 24 * 60 * 60 * 1000)), // デフォルト2日
+      description: '',
+      progress: undefined,
+      labels: [],
+    }
+    isDialogVisible.value = true
+  }
+
+  const handleCreateNewMilestone = async (date: Date, rowId: string) => {
+    chartContextMenu.value.visible = false
+    await new Promise((resolve) => setTimeout(resolve, 200))
+
+    const isMonthly = currentProject.value?.attribute?.granularity === 'monthly'
+    const isHourly = currentProject.value?.attribute?.granularity === 'hourly'
+    const dateStr = isMonthly
+      ? dayjs(date).startOf('month').format('YYYY-MM-DD')
+      : isHourly
+        ? dayjs(date).format('YYYY-MM-DD HH:00:00')
+        : toDateString(date)
+
+    editingTask.value = {
+      id: '', // 新規作成
+      rowId: rowId,
+      name: '新規マイルストーン',
+      type: 'milestone',
+      start: dateStr,
+      end: dateStr,
       description: '',
       progress: undefined,
       labels: [],
@@ -6300,6 +6317,7 @@ export const useGanttChartView = () => {
     handleDblClickTaskFromLog,
     handleChartContextMenu,
     handleCreateNewTask,
+    handleCreateNewMilestone,
     handleCreateNewMarker,
     handleMarkerDblClick,
     handleMarkerContextMenu,

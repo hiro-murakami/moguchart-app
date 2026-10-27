@@ -88,6 +88,7 @@ export const useExportData = () => {
 
       for (const task of validTasks) {
         const attribute = task.attribute as TaskAttribute | undefined
+        const isMilestone = task.type === 'milestone' || attribute?.type === 'milestone'
         const labels = attribute?.labels?.map((l: any) => l.name).join(', ') || ''
         const description = attribute?.description || task.description || ''
 
@@ -97,16 +98,20 @@ export const useExportData = () => {
           : typeof task.start === 'string'
             ? dayjs(task.start).format('YYYY-MM-DD')
             : ''
-        const endStr = task.end instanceof Date
-          ? dayjs(task.end).format('YYYY-MM-DD')
-          : typeof task.end === 'string'
+        const endStr = isMilestone
+          ? startStr
+          : task.end instanceof Date
             ? dayjs(task.end).format('YYYY-MM-DD')
-            : ''
+            : typeof task.end === 'string'
+              ? dayjs(task.end).format('YYYY-MM-DD')
+              : ''
 
-        // 日数を計算
-        const days = startStr && endStr
-          ? dayjs(endStr).diff(dayjs(startStr), 'day') + 1
-          : 0
+        // 日数を計算（マイルストーンは 0）
+        const days = isMilestone
+          ? 0
+          : startStr && endStr
+            ? dayjs(endStr).diff(dayjs(startStr), 'day') + 1
+            : 0
 
         exportRows.push({
           行名: rowName,

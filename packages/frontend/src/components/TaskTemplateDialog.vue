@@ -41,6 +41,24 @@ const save = () => {
 // v-modelバインディング用のcomputed properties
 // ネストされたオブジェクトへのアクセスを安全に行うため
 
+const isMilestone = computed(() => localTemplate.value.attribute?.type === 'milestone')
+
+const templateType = computed<'task' | 'milestone'>({
+  get: () => (isMilestone.value ? 'milestone' : 'task'),
+  set: (val: 'task' | 'milestone') => {
+    if (!localTemplate.value.attribute) localTemplate.value.attribute = {}
+    if (val === 'milestone') {
+      localTemplate.value.attribute.type = 'milestone'
+      localTemplate.value.duration = 0
+    } else {
+      localTemplate.value.attribute.type = undefined
+      if (!localTemplate.value.duration || localTemplate.value.duration < 1) {
+        localTemplate.value.duration = 1
+      }
+    }
+  },
+})
+
 const colorPalette = computed(() => localTemplate.value.attribute?.colorPalette)
 
 const templateLabels = computed(() => localTemplate.value.attribute?.labels || [])
@@ -75,12 +93,26 @@ const onUpdateDescription = (val: string) => {
     @update:labels="onUpdateLabels"
     :description="description"
     @update:description="onUpdateDescription"
-    :save-disabled="!localTemplate.duration || localTemplate.duration < 1"
+    :save-disabled="!isMilestone && (!localTemplate.duration || localTemplate.duration < 1)"
     @save="save"
     @close="close"
   >
     <template #extra-fields>
-      <v-col cols="3">
+      <v-col cols="12" class="mb-2 d-flex align-center">
+        <span class="text-caption text-medium-emphasis mr-3">種別</span>
+        <v-btn-toggle
+          v-model="templateType"
+          mandatory
+          density="compact"
+          color="primary"
+          variant="outlined"
+          divided
+        >
+          <v-btn value="task" size="small" prepend-icon="mdi-chart-timeline">通常タスク</v-btn>
+          <v-btn value="milestone" size="small" prepend-icon="mdi-rhombus">マイルストーン</v-btn>
+        </v-btn-toggle>
+      </v-col>
+      <v-col v-if="!isMilestone" cols="3">
         <v-number-input
           v-model="localTemplate.duration"
           label="期間（日）"

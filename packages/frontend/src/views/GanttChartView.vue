@@ -135,6 +135,7 @@ const {
   isTaskContextMenuEditable,
   handleChartContextMenu,
   handleCreateNewTask,
+  handleCreateNewMilestone,
   handleCreateNewMarker,
   handleMarkerDblClick,
   handleMarkerContextMenu,
@@ -738,6 +739,7 @@ const handleOpenSlideSchedule = async () => {
       :can-redo="canRedo"
       :has-clipboard="hasClipboardData"
       @new-task="handleCreateNewTask"
+      @new-milestone="handleCreateNewMilestone"
       @new-marker="handleCreateNewMarker"
       @paste="handlePasteTasksFromContextMenu"
       @undo="undo"

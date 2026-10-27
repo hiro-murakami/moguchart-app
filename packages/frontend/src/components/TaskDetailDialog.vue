@@ -81,6 +81,54 @@ const isLocked = computed({
 
 const isMonthly = computed(() => props.granularity === 'monthly')
 const isHourly = computed(() => props.granularity === 'hourly')
+const isMilestone = computed(() => localTask.value.type === 'milestone')
+
+const dialogTitle = computed(() => {
+  if (localTask.value.id) {
+    return isMilestone.value ? 'マイルストーン編集' : 'タスク編集'
+  }
+  return isMilestone.value ? '新規マイルストーン' : '新規タスク'
+})
+
+const taskType = computed<'task' | 'milestone'>({
+  get: () => (localTask.value.type === 'milestone' ? 'milestone' : 'task'),
+  set: (val: 'task' | 'milestone') => {
+    localTask.value.type = val
+    if (val === 'milestone') {
+      localTask.value.end = localTask.value.start
+      localTask.value.progress = undefined
+      if (!localTask.value.id && localTask.value.name === '新規タスク') {
+        localTask.value.name = '新規マイルストーン'
+      }
+    } else {
+      if (!localTask.value.id && localTask.value.name === '新規マイルストーン') {
+        localTask.value.name = '新規タスク'
+      }
+      if (localTask.value.start) {
+        const s = dayjs(localTask.value.start)
+        const e = localTask.value.end ? dayjs(localTask.value.end) : null
+        if (!e || !s.isBefore(e)) {
+          if (isMonthly.value) {
+            localTask.value.end = s.startOf('month').add(1, 'month').format('YYYY-MM-DD')
+          } else if (isHourly.value) {
+            localTask.value.end = s.add(2, 'hour').format('YYYY-MM-DD HH:mm:ss')
+          } else {
+            localTask.value.end = s.add(1, 'day').startOf('day').format('YYYY-MM-DDTHH:mm:ss')
+          }
+        }
+      }
+    }
+  },
+})
+
+watch(
+  () => localTask.value.start,
+  (newStart) => {
+    if (isMilestone.value && newStart) {
+      localTask.value.end = newStart
+    }
+  },
+)
 
 const displayEnd = computed({
   get: () => {
@@ -127,7 +175,7 @@ const inputType = computed(() => granularityToInputType(props.granularity))
   <TaskFormDialog
     :model-value="modelValue"
     @update:model-value="emit('update:modelValue', $event)"
-    title="タスク編集"
+    :title="dialogTitle"
     v-model:name="localTask.name"
     :color-palette="localTask.colorPalette"
     @update:color-palette="onUpdateColorPalette"
@@ -138,6 +186,20 @@ const inputType = computed(() => granularityToInputType(props.granularity))
     @close="close"
   >
     <template #extra-fields>
+      <v-col cols="12" class="mb-2 d-flex align-center">
+        <span class="text-caption text-medium-emphasis mr-3">種別</span>
+        <v-btn-toggle
+          v-model="taskType"
+          mandatory
+          density="compact"
+          color="primary"
+          variant="outlined"
+          divided
+        >
+          <v-btn value="task" size="small" prepend-icon="mdi-chart-timeline">通常タスク</v-btn>
+          <v-btn value="milestone" size="small" prepend-icon="mdi-rhombus">マイルストーン</v-btn>
+        </v-btn-toggle>
+      </v-col>
       <v-col cols="12">
         <v-select
           v-model="localTask.rowId"
@@ -155,23 +217,23 @@ const inputType = computed(() => granularityToInputType(props.granularity))
       <UsersInput
         v-model="localAssignees"
         label="担当者"
-        help-text="指定されたユーザーは、進捗率を変更できるようになります"
+        :help-text="isMilestone ? '担当者を指定できます' : '指定されたユーザーは、進捗率を変更できるようになります'"
         :users="props.users"
       />
-      <v-col :cols="props.enableProgress ? 4 : 6">
+      <v-col :cols="isMilestone ? 6 : props.enableProgress ? 4 : 6">
         <DateInput
           v-model="localTask.start"
           :type="inputType"
-          label-daily="開始日"
-          label-monthly="開始月"
-          label-datetime="開始日時"
-          :compare-target="displayEnd"
-          compare-rule="before"
+          :label-daily="isMilestone ? '日付' : '開始日'"
+          :label-monthly="isMilestone ? '月' : '開始月'"
+          :label-datetime="isMilestone ? '日時' : '開始日時'"
+          :compare-target="isMilestone ? undefined : displayEnd"
+          :compare-rule="isMilestone ? undefined : 'before'"
           hide-details="auto"
           class="mb-3"
         />
       </v-col>
-      <v-col :cols="props.enableProgress ? 4 : 6">
+      <v-col v-if="!isMilestone" :cols="props.enableProgress ? 4 : 6">
         <DateInput
           v-model="displayEnd"
           :type="inputType"
@@ -184,7 +246,7 @@ const inputType = computed(() => granularityToInputType(props.granularity))
           class="mb-3"
         />
       </v-col>
-      <v-col v-if="props.enableProgress" cols="4">
+      <v-col v-if="props.enableProgress && !isMilestone" cols="4">
         <v-number-input
           v-model="localTask.progress"
           label="進捗率"
@@ -204,7 +266,7 @@ const inputType = computed(() => granularityToInputType(props.granularity))
       <v-col cols="12">
         <v-switch
           v-model="isLocked"
-          label="ロック（移動・リサイズ・削除を禁止）"
+          :label="isMilestone ? 'ロック（移動・削除を禁止）' : 'ロック（移動・リサイズ・削除を禁止）'"
           density="compact"
           hide-details
           color="primary"

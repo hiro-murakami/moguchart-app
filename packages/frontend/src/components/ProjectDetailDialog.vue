@@ -45,6 +45,8 @@ const {
   localAutoSchedule,
   localAutoScheduleMode,
   localAutoScheduleCalendarMode,
+  localNonWorkingDays,
+  localPreserveWorkingDaysOnDrag,
   localSummaryTaskColor,
   authorityHistoryUsers,
   projectUsers,
@@ -65,9 +67,19 @@ const autoScheduleModeOptions = [
 ]
 
 const autoScheduleCalendarModeOptions = [
-  { title: 'カレンダー通り（土日・祝日を含める）', value: 'calendar' as const },
-  { title: '営業日ベース（土日を除外）', value: 'weekends' as const },
-  { title: '営業日ベース（土日・祝日を除外）', value: 'weekends-holidays' as const },
+  { title: 'カレンダー通り（定休日・祝日を含める）', value: 'calendar' as const },
+  { title: '営業日ベース（定休日を除外）', value: 'weekends' as const },
+  { title: '営業日ベース（定休日・祝日を除外）', value: 'weekends-holidays' as const },
+]
+
+const weekdayOptions = [
+  { label: '日', value: 0 },
+  { label: '月', value: 1 },
+  { label: '火', value: 2 },
+  { label: '水', value: 3 },
+  { label: '木', value: 4 },
+  { label: '金', value: 5 },
+  { label: '土', value: 6 },
 ]
 
 const historyIntervalOptions = [
@@ -409,7 +421,7 @@ watch(
                         </template>
                       </v-select>
                     </v-col>
-                    <v-col v-if="localGranularity !== 'monthly'" cols="8" class="mb-3 pl-8">
+                    <v-col v-if="localGranularity !== 'monthly'" cols="8" class="mb-2 pl-8">
                       <v-select
                         v-model="localAutoScheduleCalendarMode"
                         :items="autoScheduleCalendarModeOptions"
@@ -420,10 +432,46 @@ watch(
                       >
                         <template v-slot:append>
                           <HelpText
-                            text="自動スケジューリングおよび手動の「後続タスクをスケジューリング」実行時に、非営業日（土日・祝日）をスキップして後続タスクの稼働日数およびラグを維持するかどうかを設定します"
+                            text="自動スケジューリング、手動スケジューリング、および稼働日数の算出時に、非営業日（定休日・祝日）を除外するかどうかを設定します"
                           />
                         </template>
                       </v-select>
+                    </v-col>
+                    <v-col
+                      v-if="localGranularity !== 'monthly' && localAutoScheduleCalendarMode !== 'calendar'"
+                      cols="12"
+                      class="mb-2 pl-8"
+                    >
+                      <div class="d-flex align-center mb-1">
+                        <span class="text-caption text-medium-emphasis mr-2">非営業日（定休日）とする曜日</span>
+                        <HelpText text="稼働日計算やスケジューリング時に非営業日として除外する曜日を選択します" />
+                      </div>
+                      <v-chip-group v-model="localNonWorkingDays" multiple color="primary" column>
+                        <v-chip
+                          v-for="day in weekdayOptions"
+                          :key="day.value"
+                          :value="day.value"
+                          filter
+                          variant="outlined"
+                          size="small"
+                        >
+                          {{ day.label }}
+                        </v-chip>
+                      </v-chip-group>
+                    </v-col>
+                    <v-col
+                      v-if="localGranularity !== 'monthly' && localAutoScheduleCalendarMode !== 'calendar'"
+                      cols="12"
+                      class="mb-3 pl-8"
+                    >
+                      <v-checkbox v-model="localPreserveWorkingDaysOnDrag" density="compact" hide-details>
+                        <template v-slot:label>
+                          <span class="mr-2">ドラッグ移動時に稼働日数を維持する</span>
+                          <HelpText
+                            text="ONにすると、タスクをドラッグ移動して非営業日（定休日・祝日）を跨いだ際に、稼働日数が変わらないよう終了日を自動調整します"
+                          />
+                        </template>
+                      </v-checkbox>
                     </v-col>
                     <v-col cols="5" class="mb-2">
                       <div class="d-flex align-center">

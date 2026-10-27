@@ -204,7 +204,7 @@ export type UserAttribute = {
 export type NewTaskTemplate = {
   /** タスク名 */
   name: string
-  /** タスク期間（日数） */
+  /** タスク期間（日数。マイルストーンの場合は 0） */
   duration: number
   /** タスクの追加属性 */
   attribute: TaskAttribute
@@ -319,6 +319,14 @@ export type ProjectAttribute = {
    * 自動スケジューリングの稼働日（休日除外）計算モード（'calendar' | 'weekends' | 'weekends-holidays'、未指定時は 'calendar'）
    */
   autoScheduleCalendarMode?: AutoScheduleCalendarMode
+  /**
+   * 非営業日（定休日）とする曜日の配列（0=日曜, 1=月曜, ..., 6=土曜。未指定時は [0, 6]）
+   */
+  nonWorkingDays?: number[]
+  /**
+   * タスクのドラッグ移動時に稼働日数を維持するかどうか（trueの場合、休日を跨いでも稼働日数が変わらないよう終了日を自動調整）
+   */
+  preserveWorkingDaysOnDrag?: boolean
 }
 
 /** マーカーの種類 */
@@ -370,6 +378,8 @@ export type RowAttribute = {
 
 /** タスクの追加属性 */
 export type TaskAttribute = {
+  /** タスク種別（'task': 通常タスク, 'milestone': マイルストーン。未指定時は 'task'） */
+  type?: 'task' | 'milestone'
   /** タスクの説明 */
   description?: string
   /** タスクバーに適用するカラーパレット */
@@ -406,6 +416,8 @@ export interface EditingTaskData {
   name: string
   start: string
   end: string
+  /** タスク種別（'task': 通常タスク, 'milestone': マイルストーン。未指定時は 'task'） */
+  type?: 'task' | 'milestone'
   description?: string
   colorPalette?: ColorPalette
   labels?: Label[]

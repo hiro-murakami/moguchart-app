@@ -70,13 +70,30 @@ const {
       >
         <div class="task-header">
           <div
-            class="task-bar-preview"
-            :style="`${task.style || ''}; ${moguchart.getPatternStyle(task.pattern)}`"
-          ></div>
-          <div class="task-name">{{ task.name }}</div>
+            v-if="task.type === 'milestone' || task.attribute?.type === 'milestone'"
+            class="task-milestone-preview-row"
+          >
+            <div
+              class="task-milestone-diamond"
+              :style="`background-color: #8b5cf6; ${task.style || ''}; ${moguchart.getPatternStyle(task.pattern)}`"
+            ></div>
+            <div class="task-name mb-0">◆ {{ task.name }}</div>
+          </div>
+          <template v-else>
+            <div
+              class="task-bar-preview"
+              :style="`${task.style || ''}; ${moguchart.getPatternStyle(task.pattern)}`"
+            ></div>
+            <div class="task-name">{{ task.name }}</div>
+          </template>
         </div>
         <div class="task-meta">
-          <div class="task-duration">期間: {{ dayjs(task.end).diff(dayjs(task.start), 'day') }} 日</div>
+          <div class="task-duration">
+            <template v-if="task.type === 'milestone' || task.attribute?.type === 'milestone'">
+              マイルストーン (0日)
+            </template>
+            <template v-else> 期間: {{ dayjs(task.end).diff(dayjs(task.start), 'day') }} 日 </template>
+          </div>
           <div v-if="task.attribute?.labels?.length" class="task-labels">
             <span
               v-for="label in task.attribute.labels"
@@ -175,6 +192,22 @@ const {
   width: 100%;
   border-radius: 2px;
   margin-bottom: 8px;
+}
+
+.task-milestone-preview-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.task-milestone-diamond {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  transform: rotate(45deg);
+  flex-shrink: 0;
+  margin-left: 2px;
 }
 
 .task-name {

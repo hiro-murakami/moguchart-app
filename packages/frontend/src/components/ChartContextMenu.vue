@@ -15,6 +15,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
   (e: 'new-task', date: Date, rowId: string): void
+  (e: 'new-milestone', date: Date, rowId: string): void
   (e: 'new-marker', date: Date, rowId: string): void
   (e: 'undo'): void
   (e: 'redo'): void
@@ -34,6 +35,12 @@ const isOpen = computed({
 const handleNewTask = () => {
   if (props.date && props.rowId) {
     emit('new-task', props.date, props.rowId)
+  }
+}
+
+const handleNewMilestone = () => {
+  if (props.date && props.rowId) {
+    emit('new-milestone', props.date, props.rowId)
   }
 }
 
@@ -61,6 +68,9 @@ const handlePaste = () => {
     <v-list density="compact" class="py-0">
       <v-list-item @click="handleNewTask" prepend-icon="mdi-plus">
         <v-list-item-title>新規タスク</v-list-item-title>
+      </v-list-item>
+      <v-list-item @click="handleNewMilestone" prepend-icon="mdi-rhombus">
+        <v-list-item-title>新規マイルストーン</v-list-item-title>
       </v-list-item>
       <v-list-item @click="handleNewMarker" prepend-icon="mdi-map-marker-plus">
         <v-list-item-title>新規マーカー</v-list-item-title>

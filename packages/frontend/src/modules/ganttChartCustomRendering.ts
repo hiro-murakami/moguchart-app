@@ -366,10 +366,178 @@ export const barContent = (task: moguchart.GanttTask) => {
   }
 
   const taskWithAttr = task as any
+  const isMilestone = moguchart.isMilestoneTask(task) || taskWithAttr.attribute?.type === 'milestone'
   const labels = taskWithAttr.attribute?.labels as { name: string; color: string }[] | undefined
   const description = taskWithAttr.attribute?.description as string | undefined
   const commentCount = taskWithAttr.commentCount as number | undefined
   const isLocked = taskWithAttr.attribute?.lock === true
+
+  // マイルストーンの場合: ダイヤ（◆）の右外側にタスク名・ロック・ラベル・コメント・画像サムネイルを横並び表示
+  if (isMilestone) {
+    const isDark = !!document.querySelector('.v-theme--dark')
+    const anchor = document.createElement('div')
+    anchor.style.cssText =
+      'position: absolute; left: 50%; top: 50%; width: 0; height: 0; transform: scale(calc(1 / 0.76)) rotate(-45deg); transform-origin: 0 0; pointer-events: none; user-select: none; z-index: 2;'
+
+    const milestoneRow = document.createElement('div')
+    milestoneRow.style.cssText =
+      'position: absolute; left: 14px; top: 0; transform: translateY(-50%); display: flex; align-items: center; gap: 6px; white-space: nowrap; pointer-events: none;'
+
+    if (isLocked) {
+      const lockIcon = document.createElement('span')
+      lockIcon.style.fontSize = 'calc(11px * var(--moguchart-font-scale, 1))'
+      lockIcon.style.flexShrink = '0'
+      lockIcon.style.opacity = '0.85'
+      lockIcon.textContent = '🔒'
+      milestoneRow.appendChild(lockIcon)
+    }
+
+    const nameSpan = document.createElement('span')
+    const textColor = isDark ? '#f1f5f9' : '#1e293b'
+    const textShadow = isDark
+      ? '0 1px 2px rgba(0,0,0,0.85), 0 0 4px rgba(0,0,0,0.6)'
+      : '0 1px 2px rgba(255,255,255,0.95), 0 0 4px rgba(255,255,255,0.8)'
+    nameSpan.style.cssText = `font-weight: bold; font-size: calc(12px * var(--moguchart-font-scale, 1)); color: ${textColor}; text-shadow: ${textShadow}; white-space: nowrap;`
+
+    const searchKeywords = (task as any)._searchKeywords as string[] | undefined
+    if (searchKeywords && searchKeywords.length > 0) {
+      highlightText(task.name || '', searchKeywords, nameSpan)
+    } else {
+      nameSpan.textContent = task.name || ''
+    }
+    milestoneRow.appendChild(nameSpan)
+
+    if (labels && labels.length > 0) {
+      const labelsContainer = document.createElement('div')
+      labelsContainer.style.display = 'flex'
+      labelsContainer.style.gap = '4px'
+      labelsContainer.style.flexShrink = '0'
+
+      labels.forEach((l) => {
+        const labelSpan = document.createElement('span')
+        labelSpan.style.backgroundColor = l.color
+        labelSpan.style.color = getContrastColor(l.color)
+        labelSpan.style.padding = '0px 6px'
+        labelSpan.style.borderRadius = '3px'
+        labelSpan.style.fontSize = 'calc(10px * var(--moguchart-font-scale, 1))'
+        labelSpan.style.fontWeight = 'bold'
+        labelSpan.textContent = l.name
+        labelsContainer.appendChild(labelSpan)
+      })
+      milestoneRow.appendChild(labelsContainer)
+    }
+
+    if (commentCount && commentCount > 0) {
+      const taskId = Number(task.id)
+      const badge = document.createElement('span')
+      badge.style.display = 'inline-flex'
+      badge.style.alignItems = 'center'
+      badge.style.gap = '2px'
+      badge.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.16)' : 'rgba(15, 23, 42, 0.1)'
+      badge.style.color = textColor
+      badge.style.padding = '0px 5px'
+      badge.style.borderRadius = '8px'
+      badge.style.fontSize = 'calc(10px * var(--moguchart-font-scale, 1))'
+      badge.style.fontWeight = 'bold'
+      badge.style.flexShrink = '0'
+      badge.style.pointerEvents = 'auto'
+      badge.style.cursor = 'default'
+      badge.textContent = `💬 ${commentCount}`
+
+      let tooltipEl: HTMLElement | null = null
+      let hideTimeout: ReturnType<typeof setTimeout> | null = null
+
+      const showTooltip = () => {
+        if (hideTimeout) {
+          clearTimeout(hideTimeout)
+          hideTimeout = null
+        }
+        if (tooltipEl) return
+
+        const colors = getTooltipColors()
+        tooltipEl = document.createElement('div')
+        tooltipEl.style.position = 'fixed'
+        tooltipEl.style.zIndex = '9999'
+        tooltipEl.style.backgroundColor = colors.bg
+        tooltipEl.style.color = colors.text
+        tooltipEl.style.border = `1px solid ${colors.border}`
+        tooltipEl.style.borderRadius = '8px'
+        tooltipEl.style.padding = '8px 12px'
+        tooltipEl.style.maxWidth = '320px'
+        tooltipEl.style.fontSize = '12px'
+        tooltipEl.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)'
+        tooltipEl.style.pointerEvents = 'none'
+
+        const rect = badge.getBoundingClientRect()
+        tooltipEl.style.left = `${rect.left}px`
+        tooltipEl.style.top = `${rect.bottom + 4}px`
+
+        const cached = commentsCache.get(taskId)
+        if (cached && Date.now() - cached.fetchedAt < 60000) {
+          renderComments(tooltipEl, cached.data, commentCount)
+        } else {
+          tooltipEl.textContent = `コメント読み込み中... (${commentCount}件)`
+          selectTaskComments(taskId)
+            .then((comments) => {
+              commentsCache.set(taskId, { data: comments, fetchedAt: Date.now() })
+              if (tooltipEl) {
+                renderComments(tooltipEl, comments, commentCount)
+                adjustTooltipPosition(tooltipEl, rect)
+              }
+            })
+            .catch(() => {
+              if (tooltipEl) tooltipEl.textContent = 'コメントの読み込みに失敗しました'
+            })
+        }
+        document.body.appendChild(tooltipEl)
+        adjustTooltipPosition(tooltipEl, rect)
+      }
+
+      const removeTooltip = () => {
+        if (hideTimeout) {
+          clearTimeout(hideTimeout)
+          hideTimeout = null
+        }
+        if (tooltipEl) {
+          tooltipEl.remove()
+          tooltipEl = null
+        }
+      }
+
+      const hideTooltip = () => {
+        hideTimeout = setTimeout(removeTooltip, 100)
+      }
+
+      badge.addEventListener('mouseenter', showTooltip)
+      badge.addEventListener('mouseleave', hideTooltip)
+      badge.addEventListener('mousedown', removeTooltip)
+      document.addEventListener('mousedown', (e) => {
+        if (tooltipEl && e.target !== badge) removeTooltip()
+      })
+
+      milestoneRow.appendChild(badge)
+    }
+
+    const milestoneImageUrls = (taskWithAttr.attribute?.imageUrls as string[] | undefined)?.filter(Boolean)
+    if (milestoneImageUrls && milestoneImageUrls.length > 0) {
+      const thumbWrapper = document.createElement('span')
+      thumbWrapper.style.cssText =
+        'position: relative; width: 20px; height: 20px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 3px; overflow: hidden; background-color: rgba(128,128,128,0.2); pointer-events: auto; cursor: zoom-in; border: 1px solid rgba(128,128,128,0.35);'
+      const thumbImg = document.createElement('img')
+      setImageSrc(thumbImg, milestoneImageUrls[0]!)
+      thumbImg.style.cssText = 'width: 100%; height: 100%; object-fit: cover; display: block;'
+      thumbImg.draggable = false
+      thumbWrapper.appendChild(thumbImg)
+      thumbWrapper.addEventListener('click', (e) => {
+        e.stopPropagation()
+        openImageLightbox(milestoneImageUrls, 0)
+      })
+      milestoneRow.appendChild(thumbWrapper)
+    }
+
+    anchor.appendChild(milestoneRow)
+    return anchor
+  }
 
   const container = document.createElement('div')
   container.style.display = 'flex'
@@ -727,6 +895,8 @@ export const barContent = (task: moguchart.GanttTask) => {
 export interface TooltipOptions {
   calendarMode?: moguchart.AutoScheduleCalendarMode
   isHoliday?: (date: Date) => boolean
+  nonWorkingDays?: number[]
+  nonWorkingDates?: string[]
 }
 
 export const countWorkingDays = (
@@ -749,11 +919,17 @@ export const countWorkingDays = (
 export const tooltip = (task: moguchart.GanttTask, isHourly?: boolean, options?: TooltipOptions) => {
   const isSummary = task.type === 'summary'
   const taskWithAttr = task as any
+  const isMilestone = moguchart.isMilestoneTask(task) || taskWithAttr.attribute?.type === 'milestone'
   const labels = taskWithAttr.attribute?.labels as { name: string; color: string }[] | undefined
   const description = taskWithAttr.attribute?.description as string | undefined
   const progress = isSummary ? task.progress : (taskWithAttr.attribute?.progress as number | undefined)
   const isNonWorkingDay = !isHourly
-    ? moguchart.createNonWorkingDayChecker(options?.calendarMode, options?.isHoliday)
+    ? moguchart.createNonWorkingDayChecker(
+        options?.calendarMode,
+        options?.isHoliday,
+        options?.nonWorkingDays,
+        options?.nonWorkingDates,
+      )
     : null
 
   const container = document.createElement('div')
@@ -770,7 +946,9 @@ export const tooltip = (task: moguchart.GanttTask, isHourly?: boolean, options?:
   const start = dayjs(task.start)
   const end = dayjs(task.end)
 
-  if (isHourly) {
+  if (isMilestone) {
+    dateSpan.textContent = isHourly ? start.format('YYYY/MM/DD HH:mm') : start.format('YYYY/MM/DD')
+  } else if (isHourly) {
     const diffMinutes = end.diff(start, 'minute')
     const diffHours = diffMinutes / 60
     const hoursStr = Number.isInteger(diffHours) ? diffHours.toString() : diffHours.toFixed(1)
@@ -827,9 +1005,13 @@ export const tooltip = (task: moguchart.GanttTask, isHourly?: boolean, options?:
 
     const bWorkingDays = isNonWorkingDay ? countWorkingDays(bStart, bDays, isNonWorkingDay) : null
     const bDaysText = bWorkingDays !== null ? `${bDays}日 / 稼働${bWorkingDays}日` : `${bDays}日`
-    const bDateText = isHourly
-      ? `${bStart.format('MM/DD HH:mm')} - ${bEnd.format('MM/DD HH:mm')}`
-      : `${bStart.format('YYYY/MM/DD')} - ${bDisplayEnd.format('YYYY/MM/DD')} (${bDaysText})`
+    const bDateText = isMilestone
+      ? isHourly
+        ? bStart.format('MM/DD HH:mm')
+        : bStart.format('YYYY/MM/DD')
+      : isHourly
+        ? `${bStart.format('MM/DD HH:mm')} - ${bEnd.format('MM/DD HH:mm')}`
+        : `${bStart.format('YYYY/MM/DD')} - ${bDisplayEnd.format('YYYY/MM/DD')} (${bDaysText})`
 
     baselineDiv.innerHTML = `
       <span style="opacity: 0.85;">計画: ${bDateText}</span>
@@ -845,6 +1027,11 @@ export const tooltip = (task: moguchart.GanttTask, isHourly?: boolean, options?:
   nameSpan.style.marginBottom = '4px'
   if (isSummary) {
     nameSpan.innerHTML = `<span style="opacity: 0.85; font-size: 11px; display: flex; align-items: center; gap: 4px; margin-bottom: 2px;">📁 <span>サマリータスク（配下集計）</span></span>${task.name || ''}`
+  } else if (isMilestone) {
+    nameSpan.innerHTML = `<span style="opacity: 0.85; font-size: 11px; display: flex; align-items: center; gap: 4px; margin-bottom: 2px;"><span style="color: #a78bfa;">◆</span> <span>マイルストーン</span></span>`
+    const titleText = document.createElement('span')
+    titleText.textContent = task.name || ''
+    nameSpan.appendChild(titleText)
   } else {
     nameSpan.textContent = task.name || ''
   }
@@ -917,8 +1104,8 @@ export const tooltip = (task: moguchart.GanttTask, isHourly?: boolean, options?:
     container.appendChild(assigneesDiv)
   }
 
-  // 進捗率
-  if (progress != null && progress >= 0) {
+  // 進捗率（マイルストーン以外）
+  if (!isMilestone && progress != null && progress >= 0) {
     const clampedProgress = Math.min(100, Math.max(0, progress))
     const progressDiv = document.createElement('div')
     progressDiv.style.fontSize = '12px'
