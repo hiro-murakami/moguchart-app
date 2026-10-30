@@ -37,6 +37,7 @@ declare module 'vue' {
     MarkerContextMenu: typeof import('./src/components/MarkerContextMenu.vue')['default']
     MarkerFormDialog: typeof import('./src/components/MarkerFormDialog.vue')['default']
     MilestoneInput: typeof import('./src/components/common/MilestoneInput.vue')['default']
+    NonWorkingDateInput: typeof import('./src/components/common/NonWorkingDateInput.vue')['default']
     OperationManualDrawer: typeof import('./src/components/OperationManualDrawer.vue')['default']
     ProjectCommentButton: typeof import('./src/components/ProjectCommentButton.vue')['default']
     ProjectCommentPanel: typeof import('./src/components/ProjectCommentPanel.vue')['default']

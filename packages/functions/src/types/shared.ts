@@ -219,6 +219,18 @@ export type Milestone = {
   color: string
 }
 
+/** カスタム定休日・休日定義 */
+export type CustomNonWorkingDate = {
+  /** 開始日 ('YYYY-MM-DD') */
+  start: string
+  /** 終了日（包含、'YYYY-MM-DD'。単一日指定の場合は start と同日または省略可） */
+  end?: string
+  /** 休日の名称（任意） */
+  name?: string
+  /** カレンダー・行背景のカスタム背景色（CSSカラー文字列・任意。未指定時は標準の休日色） */
+  color?: string
+}
+
 /** プロジェクトの表示粒度 */
 export type ProjectGranularity = 'daily' | 'monthly' | 'hourly'
 
@@ -323,6 +335,10 @@ export type ProjectAttribute = {
    * 非営業日（定休日）とする曜日の配列（0=日曜, 1=月曜, ..., 6=土曜。未指定時は [0, 6]）
    */
   nonWorkingDays?: number[]
+  /**
+   * カスタム定休日・休日（特定日・期間）の配列
+   */
+  nonWorkingDates?: CustomNonWorkingDate[]
   /**
    * タスクのドラッグ移動時に稼働日数を維持するかどうか（trueの場合、休日を跨いでも稼働日数が変わらないよう終了日を自動調整）
    */

@@ -896,7 +896,7 @@ export interface TooltipOptions {
   calendarMode?: moguchart.AutoScheduleCalendarMode
   isHoliday?: (date: Date) => boolean
   nonWorkingDays?: number[]
-  nonWorkingDates?: string[]
+  nonWorkingDates?: moguchart.GanttNonWorkingDateInput[]
 }
 
 export const countWorkingDays = (

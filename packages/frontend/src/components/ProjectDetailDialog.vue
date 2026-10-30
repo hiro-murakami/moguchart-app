@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { ref, watch, computed, nextTick } from 'vue'
-import type { Project, ColorPalette, Label, Milestone, ProjectGranularity } from '@functions/types/shared'
+import type { Project, ColorPalette, CustomNonWorkingDate, Label, Milestone, ProjectGranularity } from '@functions/types/shared'
 import inputRules from '@/modules/inputRules'
 import { granularityToInputType } from '@/modules/utils'
 import { useProjectDetailDialog } from './composables/useProjectDetailDialog'
 import ProjectMembersTable from './ProjectMembersTable.vue'
+import NonWorkingDateInput from './common/NonWorkingDateInput.vue'
 import dayjs from 'dayjs'
 
 const props = defineProps<{
@@ -46,6 +47,7 @@ const {
   localAutoScheduleMode,
   localAutoScheduleCalendarMode,
   localNonWorkingDays,
+  localNonWorkingDates,
   localPreserveWorkingDaysOnDrag,
   localSummaryTaskColor,
   authorityHistoryUsers,
@@ -103,13 +105,15 @@ const historyRetentionOptions = [
   { title: '90日', value: 90 },
 ]
 
-const tab = ref<'general' | 'permissions' | 'editOptions' | 'colorPalettes' | 'labels' | 'milestones'>('general')
+const tab = ref<'general' | 'permissions' | 'editOptions' | 'scheduling' | 'colorPalettes' | 'labels' | 'milestones'>('general')
 const expandedPaletteIndex = ref<number | null>(null)
 const expandedLabelIndex = ref<number | null>(null)
 const expandedMilestoneIndex = ref<number | null>(null)
+const expandedNonWorkingDateIndex = ref<number | null>(null)
 const palettesContainer = ref<HTMLElement | null>(null)
 const labelsContainer = ref<HTMLElement | null>(null)
 const milestonesContainer = ref<HTMLElement | null>(null)
+const nonWorkingDatesContainer = ref<HTMLElement | null>(null)
 
 const scrollToBottom = async (container: HTMLElement | null) => {
   await nextTick()
@@ -136,6 +140,12 @@ const addMilestone = () => {
   localMilestones.value.push({ name: '', datetime: '', color: '#FF0000' })
   expandedMilestoneIndex.value = localMilestones.value.length - 1
   scrollToBottom(milestonesContainer.value)
+}
+
+const addNonWorkingDate = () => {
+  localNonWorkingDates.value.push({ start: '', end: '' })
+  expandedNonWorkingDateIndex.value = localNonWorkingDates.value.length - 1
+  scrollToBottom(nonWorkingDatesContainer.value)
 }
 
 const dateInputType = computed(() => granularityToInputType(localGranularity.value))
@@ -173,6 +183,7 @@ watch(
       expandedPaletteIndex.value = null
       expandedLabelIndex.value = null
       expandedMilestoneIndex.value = null
+      expandedNonWorkingDateIndex.value = null
     }
   },
 )
@@ -194,6 +205,10 @@ watch(
                 <v-tab value="editOptions">
                   <v-icon start> mdi-cog </v-icon>
                   編集オプション
+                </v-tab>
+                <v-tab value="scheduling">
+                  <v-icon start> mdi-calendar-clock </v-icon>
+                  スケジューリング
                 </v-tab>
                 <v-tab value="permissions">
                   <v-icon start> mdi-lock </v-icon>
@@ -395,6 +410,30 @@ watch(
                         </template>
                       </v-checkbox>
                     </v-col>
+                    <v-col cols="5" class="mb-2">
+                      <div class="d-flex align-center">
+                        <v-color-input
+                          class="mr-2"
+                          v-model="localSummaryTaskColor"
+                          color-pip
+                          label="サマリータスクの既定色"
+                          variant="outlined"
+                          pip-variant="flat"
+                          density="compact"
+                          hide-details="auto"
+                          pip-location="prepend-inner"
+                          show-swatches
+                          clearable
+                        />
+                        <HelpText
+                          text="WBS親行に自動計算されるサマリータスク（集計バー）の既定色を設定します。行ごとに個別色を設定することも可能です"
+                        />
+                      </div>
+                    </v-col>
+                  </v-row>
+                </v-window-item>
+                <v-window-item value="scheduling">
+                  <v-row density="compact" class="pt-2">
                     <v-col cols="12" class="mb-2">
                       <v-checkbox v-model="localAutoSchedule" density="compact" hide-details>
                         <template v-slot:label>
@@ -405,7 +444,7 @@ watch(
                         </template>
                       </v-checkbox>
                     </v-col>
-                    <v-col cols="8" class="mb-3 pl-8">
+                    <v-col cols="8" class="mb-4 pl-8">
                       <v-select
                         v-model="localAutoScheduleMode"
                         :items="autoScheduleModeOptions"
@@ -421,7 +460,7 @@ watch(
                         </template>
                       </v-select>
                     </v-col>
-                    <v-col v-if="localGranularity !== 'monthly'" cols="8" class="mb-2 pl-8">
+                    <v-col v-if="localGranularity !== 'monthly'" cols="8" class="mb-2">
                       <v-select
                         v-model="localAutoScheduleCalendarMode"
                         :items="autoScheduleCalendarModeOptions"
@@ -440,7 +479,21 @@ watch(
                     <v-col
                       v-if="localGranularity !== 'monthly' && localAutoScheduleCalendarMode !== 'calendar'"
                       cols="12"
-                      class="mb-2 pl-8"
+                      class="mb-2 pl-4"
+                    >
+                      <v-checkbox v-model="localPreserveWorkingDaysOnDrag" density="compact" hide-details>
+                        <template v-slot:label>
+                          <span class="mr-2">ドラッグ移動時に稼働日数を維持する</span>
+                          <HelpText
+                            text="ONにすると、タスクをドラッグ移動して非営業日（定休日・祝日）を跨いだ際に、稼働日数が変わらないよう終了日を自動調整します"
+                          />
+                        </template>
+                      </v-checkbox>
+                    </v-col>
+                    <v-col
+                      v-if="localGranularity !== 'monthly' && localAutoScheduleCalendarMode !== 'calendar'"
+                      cols="12"
+                      class="mb-2 pl-4"
                     >
                       <div class="d-flex align-center mb-1">
                         <span class="text-caption text-medium-emphasis mr-2">非営業日（定休日）とする曜日</span>
@@ -462,35 +515,46 @@ watch(
                     <v-col
                       v-if="localGranularity !== 'monthly' && localAutoScheduleCalendarMode !== 'calendar'"
                       cols="12"
-                      class="mb-3 pl-8"
+                      class="mb-2 pl-4"
                     >
-                      <v-checkbox v-model="localPreserveWorkingDaysOnDrag" density="compact" hide-details>
-                        <template v-slot:label>
-                          <span class="mr-2">ドラッグ移動時に稼働日数を維持する</span>
-                          <HelpText
-                            text="ONにすると、タスクをドラッグ移動して非営業日（定休日・祝日）を跨いだ際に、稼働日数が変わらないよう終了日を自動調整します"
-                          />
-                        </template>
-                      </v-checkbox>
-                    </v-col>
-                    <v-col cols="5" class="mb-2">
-                      <div class="d-flex align-center">
-                        <v-color-input
-                          class="mr-2"
-                          v-model="localSummaryTaskColor"
-                          color-pip
-                          label="サマリータスクの既定色"
-                          variant="outlined"
-                          pip-variant="flat"
-                          density="compact"
-                          hide-details="auto"
-                          pip-location="prepend-inner"
-                          show-swatches
-                          clearable
-                        />
+                      <div class="d-flex align-center mb-1">
+                        <span class="text-caption text-medium-emphasis mr-2">カスタム定休日（特定日・期間）</span>
                         <HelpText
-                          text="WBS親行に自動計算されるサマリータスク（集計バー）の既定色を設定します。行ごとに個別色を設定することも可能です"
+                          text="夏季休暇・年末年始・計画メンテナンス日など、特定の日付や期間を非営業日として登録します。カレンダー上の背景色にも反映されます"
                         />
+                        <v-btn
+                          variant="text"
+                          prepend-icon="mdi-plus"
+                          color="primary"
+                          size="small"
+                          class="ml-2"
+                          @click="addNonWorkingDate"
+                        >
+                          カスタム定休日追加
+                        </v-btn>
+                      </div>
+                      <div
+                        v-if="localNonWorkingDates.length > 0"
+                        ref="nonWorkingDatesContainer"
+                        style="max-height: 280px; overflow-y: auto; overflow-x: hidden"
+                        class="pr-2"
+                      >
+                        <v-row density="compact">
+                          <v-col v-for="(item, i) in localNonWorkingDates" :key="i" cols="12">
+                            <NonWorkingDateInput
+                              :model-value="item"
+                              :expanded="expandedNonWorkingDateIndex === i"
+                              @update:expanded="(val: boolean) => (expandedNonWorkingDateIndex = val ? i : null)"
+                              @update:model-value="(val: CustomNonWorkingDate) => (localNonWorkingDates[i] = val)"
+                              @delete="
+                                () => {
+                                  localNonWorkingDates.splice(i, 1)
+                                  if (expandedNonWorkingDateIndex === i) expandedNonWorkingDateIndex = null
+                                }
+                              "
+                            />
+                          </v-col>
+                        </v-row>
                       </div>
                     </v-col>
                   </v-row>

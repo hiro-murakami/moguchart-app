@@ -1200,7 +1200,10 @@ export const useGanttChartView = () => {
       isMonthly || isHourly
         ? 'calendar'
         : currentProject.value?.attribute?.autoScheduleCalendarMode || 'calendar'
-    const nonWorkingDays = currentProject.value?.attribute?.nonWorkingDays
+    const nonWorkingDays =
+      calendarMode !== 'calendar' ? currentProject.value?.attribute?.nonWorkingDays : undefined
+    const nonWorkingDates =
+      calendarMode !== 'calendar' ? currentProject.value?.attribute?.nonWorkingDates : undefined
     const preserveWorkingDaysOnDrag =
       !isMonthly &&
       !isHourly &&
@@ -1210,6 +1213,7 @@ export const useGanttChartView = () => {
       calendarMode,
       holiday_jp.isHoliday,
       nonWorkingDays,
+      nonWorkingDates,
     )
 
     return {
@@ -1254,6 +1258,7 @@ export const useGanttChartView = () => {
               isHoliday: holiday_jp.isHoliday,
               calendarMode,
               nonWorkingDays,
+              nonWorkingDates,
               preserveWorkingDaysOnDrag,
             }),
         showCurrentTime: showCurrentTimeLine.value,
@@ -1362,6 +1367,7 @@ export const useGanttChartView = () => {
             calendarMode,
             isHoliday: holiday_jp.isHoliday,
             nonWorkingDays,
+            nonWorkingDates,
           })
         },
         rowHeaderContent: (row: moguchart.GanttRow) => rowHeaderContent(row, barHeight.value),
@@ -1398,6 +1404,7 @@ export const useGanttChartView = () => {
         calendarMode,
         isHoliday: holiday_jp.isHoliday,
         nonWorkingDays,
+        nonWorkingDates,
         preserveWorkingDaysOnDrag,
       },
       minimap: {
@@ -2757,7 +2764,8 @@ export const useGanttChartView = () => {
       respectMovable: true,
       calendarMode,
       isHoliday: holiday_jp.isHoliday,
-      nonWorkingDays: currentProject.value?.attribute?.nonWorkingDays,
+      nonWorkingDays: calendarMode !== 'calendar' ? currentProject.value?.attribute?.nonWorkingDays : undefined,
+      nonWorkingDates: calendarMode !== 'calendar' ? currentProject.value?.attribute?.nonWorkingDates : undefined,
     }
   }
 
