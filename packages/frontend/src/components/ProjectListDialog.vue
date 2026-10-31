@@ -23,7 +23,10 @@ const {
   downloading,
   restoring,
   archiving,
+  activeTab,
   showArchived,
+  isStarred,
+  toggleStar,
   searchQuery,
   highlightText,
   isProjectDetailDialogVisible,
@@ -82,14 +85,15 @@ const handleFileChange = (e: Event) => {
         <div class="d-flex">
           <!-- 縦タブ -->
           <v-tabs
-            v-model="showArchived"
+            v-model="activeTab"
             direction="vertical"
             density="compact"
             color="primary"
             class="project-tabs flex-shrink-0 mr-4"
           >
-            <v-tab :value="false" class="text-body-2" prepend-icon="mdi-folder-open"> メイン </v-tab>
-            <v-tab :value="true" class="text-body-2" prepend-icon="mdi-archive"> アーカイブ済 </v-tab>
+            <v-tab value="main" class="text-body-2" prepend-icon="mdi-folder-open"> メイン </v-tab>
+            <v-tab value="starred" class="text-body-2" prepend-icon="mdi-star"> スター付き </v-tab>
+            <v-tab value="archived" class="text-body-2" prepend-icon="mdi-archive"> アーカイブ済 </v-tab>
           </v-tabs>
 
           <!-- テーブル -->
@@ -154,20 +158,33 @@ const handleFileChange = (e: Event) => {
               @click:row="(_: unknown, { item }: { item: Project }) => selectProject(item)"
             >
               <template #item.project="{ item }">
-                <div class="py-2">
-                  <div class="font-weight-bold">
-                    <span v-html="highlightText(item.name)"></span>
-                    <v-icon
-                      v-if="item.attribute?.archived"
-                      icon="mdi-archive"
-                      size="small"
-                      color="warning"
-                      class="ml-1"
-                    />
-                  </div>
-                  <div class="d-flex flex-wrap align-center mt-1">
-                    <RoleChip :role="item.role" class="mr-1" />
-                    <v-chip v-if="item.public" color="secondary" size="small"> 一般公開 </v-chip>
+                <div class="d-flex align-center py-2">
+                  <TooltipBtn
+                    :tooltip="isStarred(item.id) ? 'スターを外す' : 'スターを付ける'"
+                    location="top"
+                    :icon="isStarred(item.id) ? 'mdi-star' : 'mdi-star-outline'"
+                    :color="isStarred(item.id) ? 'amber-darken-1' : 'grey'"
+                    variant="text"
+                    size="small"
+                    density="comfortable"
+                    class="mr-2 flex-shrink-0"
+                    @click.stop="toggleStar(item)"
+                  />
+                  <div>
+                    <div class="font-weight-bold">
+                      <span v-html="highlightText(item.name)"></span>
+                      <v-icon
+                        v-if="item.attribute?.archived"
+                        icon="mdi-archive"
+                        size="small"
+                        color="warning"
+                        class="ml-1"
+                      />
+                    </div>
+                    <div class="d-flex flex-wrap align-center mt-1">
+                      <RoleChip :role="item.role" class="mr-1" />
+                      <v-chip v-if="item.public" color="secondary" size="small"> 一般公開 </v-chip>
+                    </div>
                   </div>
                 </div>
               </template>

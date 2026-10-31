@@ -176,6 +176,8 @@ export type ProjectSettings = {
   gridRowHeaderWidth?: number
   /** マルチカラムグリッド有効時の基準行ヘッダー全体幅 (px)（倍率100%基準） */
   baseGridRowHeaderWidth?: number
+  /** スター付きフラグ */
+  starred?: boolean
   /** @deprecated barShadowLevel に移行済み。後方互換のため残存 */
   showBarShadow?: boolean
 }

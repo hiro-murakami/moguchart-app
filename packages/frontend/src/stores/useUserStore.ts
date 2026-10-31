@@ -52,6 +52,32 @@ export const useUserStore = defineStore('user', {
       this.user = user
     },
 
+    isProjectStarred(projectId: string): boolean {
+      return !!this.user?.attribute?.projectSettings?.[projectId]?.starred
+    },
+
+    async toggleProjectStar(projectId: string): Promise<boolean> {
+      if (!this.user || !projectId) return false
+      const currentSettings = this.user.attribute?.projectSettings?.[projectId] || {}
+      const nextStarred = !currentSettings.starred
+      const projectSettings = {
+        ...this.user.attribute?.projectSettings,
+        [projectId]: {
+          ...currentSettings,
+          starred: nextStarred,
+        },
+      }
+      this.user = {
+        ...this.user,
+        attribute: {
+          ...this.user.attribute,
+          projectSettings,
+        },
+      }
+      await this.saveUser(this.user)
+      return nextStarred
+    },
+
     async completeTutorial(key: TutorialKey) {
       if (!this.user) return
 

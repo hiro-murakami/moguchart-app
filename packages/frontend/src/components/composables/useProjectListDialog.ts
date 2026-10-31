@@ -16,7 +16,10 @@ import dayjs from 'dayjs'
 import { toDateTimeString } from '@/modules/utils'
 
 import { useProjectStore } from '@/stores/useProjectStore'
+import { useUserStore } from '@/stores/useUserStore'
 import { storeToRefs } from 'pinia'
+
+export type ProjectListTab = 'main' | 'starred' | 'archived'
 
 export const useProjectListDialog = (
   props: { modelValue: boolean },
@@ -27,6 +30,7 @@ export const useProjectListDialog = (
   },
 ) => {
   const projectStore = useProjectStore()
+  const userStore = useUserStore()
   const { projects } = storeToRefs(projectStore)
   const loading = ref(false)
   const saving = ref(false)
@@ -35,7 +39,8 @@ export const useProjectListDialog = (
   const downloading = ref(false)
   const restoring = ref(false)
   const archiving = ref(false)
-  const showArchived = ref(false)
+  const activeTab = ref<ProjectListTab>('main')
+  const showArchived = computed(() => activeTab.value === 'archived')
   const searchQuery = ref('')
   const isProjectDetailDialogVisible = ref(false)
   const projectToEdit = ref<Project | null>(null)
@@ -46,11 +51,33 @@ export const useProjectListDialog = (
   const confirm = useConfirm()
   const snackbar = useSnackbar()
 
-  /** アーカイブ状態 + フリーワードでフィルタリングされたプロジェクト一覧 */
+  const isStarred = (projectId: string): boolean => {
+    return userStore.isProjectStarred(projectId)
+  }
+
+  const toggleStar = async (project: Project) => {
+    if (!project?.id) return
+    try {
+      await userStore.toggleProjectStar(project.id)
+    } catch (e) {
+      console.error(e)
+      snackbar({
+        message: 'スターの更新に失敗しました。',
+        color: 'error',
+      })
+    }
+  }
+
+  /** タブ状態（メイン / スター付き / アーカイブ済） + フリーワードでフィルタリングされたプロジェクト一覧 */
   const filteredProjects = computed(() => {
-    let list = showArchived.value
-      ? projects.value.filter((p) => p.attribute?.archived)
-      : projects.value.filter((p) => !p.attribute?.archived)
+    let list: Project[]
+    if (activeTab.value === 'archived') {
+      list = projects.value.filter((p) => p.attribute?.archived)
+    } else if (activeTab.value === 'starred') {
+      list = projects.value.filter((p) => !p.attribute?.archived && isStarred(p.id))
+    } else {
+      list = projects.value.filter((p) => !p.attribute?.archived)
+    }
 
     const q = (searchQuery.value ?? '').trim().toLowerCase()
     if (q) {
@@ -96,6 +123,7 @@ export const useProjectListDialog = (
     () => props.modelValue,
     (val) => {
       if (val) {
+        activeTab.value = 'main'
         fetchProjects(true)
       }
     },
@@ -520,7 +548,10 @@ export const useProjectListDialog = (
     downloading,
     restoring,
     archiving,
+    activeTab,
     showArchived,
+    isStarred,
+    toggleStar,
     searchQuery,
     highlightText,
     isProjectDetailDialogVisible,
