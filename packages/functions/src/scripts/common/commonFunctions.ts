@@ -71,7 +71,7 @@ export const setupFirebaseFunction = (targetFunctions: FirebaseFunction): Functi
       ],
     },
     async (data) => {
-      functions.logger.log('request:', data)
+      functions.logger.log('request: ' + JSON.stringify(data.data))
 
       // 認証チェック
       // Authorizationヘッダがない、または不正な値が設定されていた場合はエラーとする
