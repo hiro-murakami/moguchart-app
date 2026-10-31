@@ -49,6 +49,7 @@ import {
   preloadCommentsCache,
   preloadRowCommentsCache,
   createCornerContent,
+  createCalendarDayContent,
   setUserDisplayNameResolver,
   renderAssigneesGridCell,
 } from '@/modules/ganttChartCustomRendering'
@@ -82,11 +83,23 @@ import { storeToRefs } from 'pinia'
 import { computed, inject, nextTick, ref, watch, watchEffect, type Ref } from 'vue'
 
 /**
+ * 日本の祝日判定および祝日名を含むメタ情報を返す GanttHolidayChecker
+ */
+const japaneseHolidayChecker: moguchart.GanttHolidayChecker = (date: Date): moguchart.GanttHolidayResult => {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  const key = `${y}-${m}-${d}`
+  const holiday = (holiday_jp.holidays as Record<string, { name: string } | undefined>)[key]
+  return holiday ? { name: holiday.name } : false
+}
+
+/**
  * プロジェクトのカスタム定休日と祝日判定関数を合成した GanttHolidayChecker を生成する
  */
 const createProjectHolidayChecker = (
   customDates?: CustomNonWorkingDate[],
-  baseIsHoliday?: (date: Date) => boolean,
+  baseIsHoliday?: moguchart.GanttHolidayChecker,
 ): moguchart.GanttHolidayChecker => {
   if (!customDates || customDates.length === 0) {
     return baseIsHoliday ?? (() => false)
@@ -119,15 +132,39 @@ const createProjectHolidayChecker = (
 
   return (date: Date): moguchart.GanttHolidayResult => {
     const dayStartMs = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime()
-    for (const range of parsedRanges) {
-      if (dayStartMs >= range.startMs && dayStartMs <= range.endMs) {
-        return {
-          name: range.name,
-          color: range.color,
-        }
+    const matchedRanges = parsedRanges.filter((r) => dayStartMs >= r.startMs && dayStartMs <= r.endMs)
+    if (matchedRanges.length === 0) {
+      return baseIsHoliday ? baseIsHoliday(date) : false
+    }
+
+    let color: string | undefined
+    const names: string[] = []
+    const seenNames = new Set<string>()
+
+    for (const range of matchedRanges) {
+      if (!color && range.color) {
+        color = range.color
+      }
+      const trimmed = range.name?.trim()
+      if (trimmed && !seenNames.has(trimmed)) {
+        seenNames.add(trimmed)
+        names.push(trimmed)
       }
     }
-    return baseIsHoliday ? baseIsHoliday(date) : false
+
+    if (baseIsHoliday) {
+      const baseMeta = moguchart.resolveHolidayMeta(baseIsHoliday(date))
+      const baseName = baseMeta?.name?.trim()
+      if (baseName && !seenNames.has(baseName)) {
+        seenNames.add(baseName)
+        names.push(baseName)
+      }
+    }
+
+    return {
+      name: names.length > 0 ? names.join('\n') : undefined,
+      color,
+    }
   }
 }
 
@@ -1255,7 +1292,7 @@ export const useGanttChartView = () => {
       calendarMode !== 'calendar' ? currentProject.value?.attribute?.nonWorkingDays : undefined
     const nonWorkingDates =
       calendarMode !== 'calendar' ? currentProject.value?.attribute?.nonWorkingDates : undefined
-    const isHoliday = createProjectHolidayChecker(nonWorkingDates, holiday_jp.isHoliday)
+    const isHoliday = createProjectHolidayChecker(nonWorkingDates, japaneseHolidayChecker)
     const preserveWorkingDaysOnDrag =
       !isMonthly &&
       !isHourly &&
@@ -1421,6 +1458,7 @@ export const useGanttChartView = () => {
         },
         rowHeaderContent: (row: moguchart.GanttRow) => rowHeaderContent(row, barHeight.value),
         rowHeaderTooltip,
+        ...(!isMonthly && !isHourly ? { calendarDayContent: createCalendarDayContent(isHoliday) } : {}),
         cornerContent: createCornerContent(() => ({
           availableLabels: availableRowLabels.value,
           selectedLabels: selectedRowFilterLabelNames.value,
@@ -2809,7 +2847,7 @@ export const useGanttChartView = () => {
       mode,
       respectMovable: true,
       calendarMode,
-      isHoliday: createProjectHolidayChecker(nonWorkingDates, holiday_jp.isHoliday),
+      isHoliday: createProjectHolidayChecker(nonWorkingDates, japaneseHolidayChecker),
       nonWorkingDays: calendarMode !== 'calendar' ? currentProject.value?.attribute?.nonWorkingDays : undefined,
     }
   }

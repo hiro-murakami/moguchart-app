@@ -2132,6 +2132,156 @@ export const createCornerContent = (getOptions: () => CornerContentOptions) => {
   }
 }
 
+/** ツールチップの表示位置をアンカーの中央下（画面内に収まるよう調整）に配置する */
+const adjustCenteredTooltipPosition = (tooltipEl: HTMLElement, anchorRect: DOMRect) => {
+  const margin = 6
+  const elRect = tooltipEl.getBoundingClientRect()
+
+  let left = anchorRect.left + anchorRect.width / 2 - elRect.width / 2
+  let top = anchorRect.bottom + 4
+
+  // 右端はみ出し
+  if (left + elRect.width > window.innerWidth - margin) {
+    left = window.innerWidth - elRect.width - margin
+  }
+  // 左端はみ出し
+  if (left < margin) {
+    left = margin
+  }
+  // 下端はみ出し: アンカーの上側に表示
+  if (top + elRect.height > window.innerHeight - margin) {
+    top = anchorRect.top - elRect.height - 4
+  }
+  // 上端はみ出し
+  if (top < margin) {
+    top = margin
+  }
+
+  tooltipEl.style.left = `${left}px`
+  tooltipEl.style.top = `${top}px`
+}
+
+let activeHolidayTooltipEl: HTMLElement | null = null
+let activeHolidayShowTimer: ReturnType<typeof setTimeout> | null = null
+let activeHolidayCleanupListeners: (() => void) | null = null
+
+const removeHolidayTooltip = () => {
+  if (activeHolidayShowTimer) {
+    clearTimeout(activeHolidayShowTimer)
+    activeHolidayShowTimer = null
+  }
+  if (activeHolidayCleanupListeners) {
+    activeHolidayCleanupListeners()
+    activeHolidayCleanupListeners = null
+  }
+  if (activeHolidayTooltipEl) {
+    activeHolidayTooltipEl.remove()
+    activeHolidayTooltipEl = null
+  }
+  document.querySelectorAll('[data-moguchart-holiday-tooltip]').forEach((el) => el.remove())
+}
+
+/**
+ * カレンダーの日付セルを描画し、休日名（祝日名・カスタム定休日名）がある場合は
+ * マウスオーバーで休日名をポップアップ表示する。
+ */
+export const createCalendarDayContent = (isHoliday?: moguchart.GanttHolidayChecker) => {
+  return (ctx: moguchart.CalendarDayCellContext): string | HTMLElement => {
+    if (!ctx.isHoliday || !isHoliday) {
+      return ctx.defaultLabel
+    }
+
+    const holidayMeta = moguchart.resolveHolidayMeta(isHoliday(ctx.date))
+    const rawName = holidayMeta?.name?.trim()
+    if (!rawName) {
+      return ctx.defaultLabel
+    }
+
+    const names = rawName
+      .split('\n')
+      .map((s) => s.trim())
+      .filter(Boolean)
+    if (names.length === 0) {
+      return ctx.defaultLabel
+    }
+
+    const cellEl = document.createElement('div')
+    cellEl.style.cssText =
+      'width: 100%; margin: -6px 0; padding: 6px 0; display: flex; align-items: center; justify-content: center; box-sizing: border-box;'
+    cellEl.textContent = ctx.defaultLabel
+
+    cellEl.addEventListener('mouseenter', () => {
+      removeHolidayTooltip()
+      activeHolidayShowTimer = setTimeout(() => {
+        activeHolidayShowTimer = null
+        if (!cellEl.isConnected) return
+
+        const colors = getTooltipColors()
+        const tooltipEl = document.createElement('div')
+        tooltipEl.setAttribute('data-moguchart-holiday-tooltip', 'true')
+        tooltipEl.style.position = 'fixed'
+        tooltipEl.style.zIndex = '9999'
+        tooltipEl.style.backgroundColor = colors.bg
+        tooltipEl.style.color = colors.textStrong
+        tooltipEl.style.border = `1px solid ${colors.border}`
+        tooltipEl.style.borderRadius = '6px'
+        tooltipEl.style.padding = '4px 10px'
+        tooltipEl.style.maxWidth = '280px'
+        tooltipEl.style.fontSize = '12px'
+        tooltipEl.style.fontWeight = '500'
+        tooltipEl.style.lineHeight = '1.4'
+        tooltipEl.style.wordBreak = 'break-word'
+        tooltipEl.style.whiteSpace = 'normal'
+        tooltipEl.style.boxShadow = '0 4px 12px rgba(0,0,0,0.18)'
+        tooltipEl.style.pointerEvents = 'none'
+        tooltipEl.style.display = 'flex'
+        tooltipEl.style.flexDirection = 'column'
+        tooltipEl.style.gap = '2px'
+
+        names.forEach((n) => {
+          const itemDiv = document.createElement('div')
+          itemDiv.textContent = n
+          tooltipEl.appendChild(itemDiv)
+        })
+
+        document.body.appendChild(tooltipEl)
+        activeHolidayTooltipEl = tooltipEl
+
+        const rect = cellEl.getBoundingClientRect()
+        adjustCenteredTooltipPosition(tooltipEl, rect)
+
+        const onDismiss = () => removeHolidayTooltip()
+        const onMouseMove = (ev: MouseEvent) => {
+          if (!cellEl.isConnected) {
+            removeHolidayTooltip()
+            return
+          }
+          const r = cellEl.getBoundingClientRect()
+          if (ev.clientX < r.left || ev.clientX > r.right || ev.clientY < r.top || ev.clientY > r.bottom) {
+            removeHolidayTooltip()
+          }
+        }
+        window.addEventListener('scroll', onDismiss, true)
+        window.addEventListener('wheel', onDismiss, { passive: true })
+        document.addEventListener('mousedown', onDismiss, true)
+        document.addEventListener('mousemove', onMouseMove, { passive: true })
+
+        activeHolidayCleanupListeners = () => {
+          window.removeEventListener('scroll', onDismiss, true)
+          window.removeEventListener('wheel', onDismiss)
+          document.removeEventListener('mousedown', onDismiss, true)
+          document.removeEventListener('mousemove', onMouseMove)
+        }
+      }, 150)
+    })
+
+    cellEl.addEventListener('mouseleave', removeHolidayTooltip)
+    cellEl.addEventListener('mousedown', removeHolidayTooltip)
+
+    return cellEl
+  }
+}
+
 /**
  * マルチカラムグリッドの担当者セルを描画し、テキストがセル幅を超えて省略表示されている場合のみ
  * マウスオーバーで全文ツールチップを表示する。
