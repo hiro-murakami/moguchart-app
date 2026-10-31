@@ -894,9 +894,8 @@ export const barContent = (task: moguchart.GanttTask) => {
 
 export interface TooltipOptions {
   calendarMode?: moguchart.AutoScheduleCalendarMode
-  isHoliday?: (date: Date) => boolean
+  isHoliday?: moguchart.GanttHolidayChecker
   nonWorkingDays?: number[]
-  nonWorkingDates?: moguchart.GanttNonWorkingDateInput[]
 }
 
 export const countWorkingDays = (
@@ -928,7 +927,6 @@ export const tooltip = (task: moguchart.GanttTask, isHourly?: boolean, options?:
         options?.calendarMode,
         options?.isHoliday,
         options?.nonWorkingDays,
-        options?.nonWorkingDates,
       )
     : null
 

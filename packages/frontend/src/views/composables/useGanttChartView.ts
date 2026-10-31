@@ -56,6 +56,7 @@ import { useProjectStore } from '@/stores/useProjectStore'
 import { useUserStore } from '@/stores/useUserStore'
 import type {
   ColorPalette,
+  CustomNonWorkingDate,
   GanttRow,
   GanttTask,
   TaskAttribute,
@@ -79,6 +80,56 @@ import type { ExcelExportColumn } from '@mogura/moguchart-plugin-excel'
 import { debounce, isEqual } from 'lodash'
 import { storeToRefs } from 'pinia'
 import { computed, inject, nextTick, ref, watch, watchEffect, type Ref } from 'vue'
+
+/**
+ * プロジェクトのカスタム定休日と祝日判定関数を合成した GanttHolidayChecker を生成する
+ */
+const createProjectHolidayChecker = (
+  customDates?: CustomNonWorkingDate[],
+  baseIsHoliday?: (date: Date) => boolean,
+): moguchart.GanttHolidayChecker => {
+  if (!customDates || customDates.length === 0) {
+    return baseIsHoliday ?? (() => false)
+  }
+
+  const parsedRanges: Array<{
+    startMs: number
+    endMs: number
+    name?: string
+    color?: string
+  }> = []
+
+  for (const item of customDates) {
+    if (!item || !item.start) continue
+    const sMs = moguchart.parseLocalDateToStartOfDayMs(item.start)
+    const eMs = moguchart.parseLocalDateToStartOfDayMs(item.end || item.start)
+    if (sMs !== null && eMs !== null) {
+      parsedRanges.push({
+        startMs: Math.min(sMs, eMs),
+        endMs: Math.max(sMs, eMs),
+        name: item.name,
+        color: item.color,
+      })
+    }
+  }
+
+  if (parsedRanges.length === 0) {
+    return baseIsHoliday ?? (() => false)
+  }
+
+  return (date: Date): moguchart.GanttHolidayResult => {
+    const dayStartMs = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime()
+    for (const range of parsedRanges) {
+      if (dayStartMs >= range.startMs && dayStartMs <= range.endMs) {
+        return {
+          name: range.name,
+          color: range.color,
+        }
+      }
+    }
+    return baseIsHoliday ? baseIsHoliday(date) : false
+  }
+}
 
 const getDetail = <T>(e: T | { detail: T }): T => {
   return e && typeof e === 'object' && 'detail' in e ? (e as any).detail : e
@@ -1204,6 +1255,7 @@ export const useGanttChartView = () => {
       calendarMode !== 'calendar' ? currentProject.value?.attribute?.nonWorkingDays : undefined
     const nonWorkingDates =
       calendarMode !== 'calendar' ? currentProject.value?.attribute?.nonWorkingDates : undefined
+    const isHoliday = createProjectHolidayChecker(nonWorkingDates, holiday_jp.isHoliday)
     const preserveWorkingDaysOnDrag =
       !isMonthly &&
       !isHourly &&
@@ -1211,9 +1263,8 @@ export const useGanttChartView = () => {
       !!currentProject.value?.attribute?.preserveWorkingDaysOnDrag
     const isNonWorkingDay = moguchart.createNonWorkingDayChecker(
       calendarMode,
-      holiday_jp.isHoliday,
+      isHoliday,
       nonWorkingDays,
-      nonWorkingDates,
     )
 
     return {
@@ -1255,10 +1306,9 @@ export const useGanttChartView = () => {
         ...(isHourly
           ? {}
           : {
-              isHoliday: holiday_jp.isHoliday,
+              isHoliday,
               calendarMode,
               nonWorkingDays,
-              nonWorkingDates,
               preserveWorkingDaysOnDrag,
             }),
         showCurrentTime: showCurrentTimeLine.value,
@@ -1365,9 +1415,8 @@ export const useGanttChartView = () => {
             task
           return tooltip(latestTask as moguchart.GanttTask, isHourly, {
             calendarMode,
-            isHoliday: holiday_jp.isHoliday,
+            isHoliday,
             nonWorkingDays,
-            nonWorkingDates,
           })
         },
         rowHeaderContent: (row: moguchart.GanttRow) => rowHeaderContent(row, barHeight.value),
@@ -1401,11 +1450,6 @@ export const useGanttChartView = () => {
         autoSchedule: !!currentProject.value?.attribute?.autoSchedule,
         scheduleMode: currentProject.value?.attribute?.autoScheduleMode || 'push-only',
         respectMovable: true,
-        calendarMode,
-        isHoliday: holiday_jp.isHoliday,
-        nonWorkingDays,
-        nonWorkingDates,
-        preserveWorkingDaysOnDrag,
       },
       minimap: {
         enabled: isMinimapReady.value && showMinimap.value,
@@ -2759,13 +2803,14 @@ export const useGanttChartView = () => {
     const calendarMode = isMonthly
       ? 'calendar'
       : currentProject.value?.attribute?.autoScheduleCalendarMode || 'calendar'
+    const nonWorkingDates =
+      calendarMode !== 'calendar' ? currentProject.value?.attribute?.nonWorkingDates : undefined
     return {
       mode,
       respectMovable: true,
       calendarMode,
-      isHoliday: holiday_jp.isHoliday,
+      isHoliday: createProjectHolidayChecker(nonWorkingDates, holiday_jp.isHoliday),
       nonWorkingDays: calendarMode !== 'calendar' ? currentProject.value?.attribute?.nonWorkingDays : undefined,
-      nonWorkingDates: calendarMode !== 'calendar' ? currentProject.value?.attribute?.nonWorkingDates : undefined,
     }
   }
 
