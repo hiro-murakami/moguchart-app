@@ -1,7 +1,7 @@
 import dayjs from 'dayjs'
 import { getContrastColor, toDateString } from '@/modules/utils'
 import * as moguchart from '@mogura/moguchart-core'
-import { selectTaskComments, selectComments } from '@/modules/scripts'
+import { selectComments } from '@/modules/scripts'
 import type { Comment } from '@functions/types/shared'
 import { UNLABELED_VALUE } from '@/modules/constants'
 import { getCachedImageUrl, setImageSrc } from '@/modules/imageCache'
@@ -778,7 +778,7 @@ export const barContent = (task: moguchart.GanttTask) => {
       badge.style.cursor = 'default'
       badge.textContent = `💬 ${commentCount}`
 
-      bindCommentBadgeInteractions(badge, commentsCache, taskId, commentCount, () => selectTaskComments(taskId))
+      bindCommentBadgeInteractions(badge, commentsCache, taskId, commentCount, () => selectComments({ taskId }))
 
       milestoneRow.appendChild(badge)
     }
@@ -896,7 +896,7 @@ export const barContent = (task: moguchart.GanttTask) => {
     badge.style.cursor = 'default'
     badge.textContent = `💬 ${commentCount}`
 
-    bindCommentBadgeInteractions(badge, commentsCache, taskId, commentCount, () => selectTaskComments(taskId))
+    bindCommentBadgeInteractions(badge, commentsCache, taskId, commentCount, () => selectComments({ taskId }))
 
     headerContainer.appendChild(badge)
   }
