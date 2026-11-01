@@ -32,6 +32,7 @@ const props = defineProps<{
   gridColumns?: string[]
   enableProgress?: boolean
   enableWorkingDays?: boolean
+  buttonClass?: string
 }>()
 
 const emit = defineEmits<{
@@ -270,11 +271,18 @@ const currentTheme = computed({
         placement="bottom"
       >
         <template #activator="{ props: overlayProps }">
-          <TooltipBtn v-bind="{ ...menuProps, ...overlayProps }" icon="mdi-cog" variant="text" tooltip="表示設定" />
+          <TooltipBtn
+            v-bind="{ ...menuProps, ...overlayProps }"
+            icon="mdi-cog"
+            variant="text"
+            density="comfortable"
+            :class="buttonClass"
+            tooltip="表示設定"
+          />
         </template>
       </TutorialOverlay>
     </template>
-    <v-card min-width="380" max-width="420" class="pa-4 display-settings-card">
+    <v-card class="pa-4 display-settings-card">
       <div class="text-subtitle-1 font-weight-bold mb-3 d-flex align-center">
         <v-icon size="22" class="mr-2" color="primary">mdi-tune-variant</v-icon>
         表示設定
@@ -637,6 +645,19 @@ const currentTheme = computed({
 <style scoped>
 .display-settings-card {
   user-select: none;
+  min-width: min(380px, calc(100vw - 32px));
+  max-width: min(420px, calc(100vw - 32px));
+  max-height: calc(100dvh - 72px);
+  overflow-y: auto;
+}
+
+@media (max-height: 800px) {
+  .display-settings-card {
+    padding: 12px !important;
+  }
+  .setting-row {
+    min-height: 34px;
+  }
 }
 
 .section-label {

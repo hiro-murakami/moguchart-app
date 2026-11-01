@@ -1,4 +1,8 @@
 <script setup lang="ts">
+defineProps<{
+  buttonClass?: string
+}>()
+
 defineEmits<{
   exportCsv: []
   exportExcel: []
@@ -15,6 +19,8 @@ defineEmits<{
         v-bind="exportMenuProps"
         icon="mdi-file-export-outline"
         variant="text"
+        density="comfortable"
+        :class="buttonClass"
         tooltip="エクスポート"
       />
     </template>

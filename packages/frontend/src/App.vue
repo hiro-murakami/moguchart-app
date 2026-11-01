@@ -37,6 +37,10 @@ provide('publicThemeOverride', publicThemeOverride)
 
 const systemTheme = ref<'light' | 'dark'>(window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
 
+const compactHeaderQuery = '(max-height: 820px), (max-width: 1280px)'
+const isCompactHeader = ref(window.matchMedia(compactHeaderQuery).matches)
+const appBarHeight = computed(() => (isCompactHeader.value ? 46 : 54))
+
 const resolveTheme = (theme: 'light' | 'dark' | 'system' | null | undefined): 'light' | 'dark' => {
   if (!theme || theme === 'system') return systemTheme.value
   return theme
@@ -54,13 +58,19 @@ const updateSystemTheme = (e: MediaQueryListEvent) => {
   systemTheme.value = e.matches ? 'dark' : 'light'
 }
 
+const updateCompactHeader = (e: MediaQueryListEvent) => {
+  isCompactHeader.value = e.matches
+}
+
 onMounted(() => {
   userStore.initializeAuthListener()
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateSystemTheme)
+  window.matchMedia(compactHeaderQuery).addEventListener('change', updateCompactHeader)
 })
 
 onUnmounted(() => {
   window.matchMedia('(prefers-color-scheme: dark)').removeEventListener('change', updateSystemTheme)
+  window.matchMedia(compactHeaderQuery).removeEventListener('change', updateCompactHeader)
 })
 
 // バージョンアップ時にリリースノートを自動表示
@@ -128,18 +138,20 @@ const shouldShowLoginPrompt = computed(() => {
 
 <template>
   <DialogProvider>
-    <v-app :theme="effectiveTheme">
-      <v-app-bar color="moguChartColor" height="54">
-        <img :src="headerImage" height="32" class="header-image ml-4" @click="returnToSplash" />
-        <span class="ml-2 text-label-large" style="opacity: 0.7">v{{ VERSION }}</span>
+    <v-app :theme="effectiveTheme" :style="{ '--app-bar-height': `${appBarHeight}px` }">
+      <v-app-bar color="moguChartColor" :height="appBarHeight">
+        <img :src="headerImage" :height="isCompactHeader ? 28 : 32" class="header-image ml-3" @click="returnToSplash" />
+        <span class="ml-2 text-label-large version-badge">v{{ VERSION }}</span>
         <v-spacer />
         <TooltipBtn
           icon="mdi-book-open-variant"
           variant="text"
+          density="comfortable"
+          class="mr-1"
           tooltip="操作マニュアル"
           @click="showManual = !showManual"
         />
-        <v-btn v-if="!firebaseUser" @click="userStore.signIn"> Login </v-btn>
+        <v-btn v-if="!firebaseUser" size="small" class="mr-2" @click="userStore.signIn"> Login </v-btn>
         <AppUserMenu
           v-else
           v-model:show-user-detail="showUserDetail"
@@ -167,5 +179,12 @@ const shouldShowLoginPrompt = computed(() => {
 .header-image {
   border-radius: 6px;
   cursor: pointer;
+  flex-shrink: 0;
+}
+
+.version-badge {
+  opacity: 0.7;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 </style>

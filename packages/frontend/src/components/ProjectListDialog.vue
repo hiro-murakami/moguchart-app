@@ -74,12 +74,13 @@ const handleFileChange = (e: Event) => {
     :model-value="modelValue"
     @update:model-value="emit('update:modelValue', $event)"
     max-width="1400px"
-    min-height="700px"
+    min-height="min(700px, calc(100dvh - 48px))"
+    scrollable
   >
     <v-card v-draggable-dialog>
-      <v-card-title class="d-flex justify-space-between align-center pt-6 px-6 pb-4">
+      <v-card-title class="d-flex justify-space-between align-center pt-5 px-6 pb-3">
         <span>プロジェクト一覧</span>
-        <v-btn icon="mdi-close" variant="text" @click="close"></v-btn>
+        <v-btn icon="mdi-close" variant="text" density="comfortable" @click="close"></v-btn>
       </v-card-title>
       <v-card-text class="px-6 pb-6 pt-0">
         <div class="d-flex">
@@ -98,7 +99,7 @@ const handleFileChange = (e: Event) => {
 
           <!-- テーブル -->
           <div class="flex-grow-1 overflow-hidden">
-            <div class="d-flex align-center my-2" style="gap: 16px">
+            <div class="d-flex align-center flex-wrap my-2" style="gap: 12px">
               <v-text-field
                 v-model="searchQuery"
                 prepend-inner-icon="mdi-magnify"
@@ -108,6 +109,7 @@ const handleFileChange = (e: Event) => {
                 hide-details
                 clearable
                 class="flex-grow-1"
+                style="min-width: 200px"
                 autocomplete="off"
               />
               <input ref="fileInput" type="file" accept=".json,.zip" style="display: none" @change="handleFileChange" />

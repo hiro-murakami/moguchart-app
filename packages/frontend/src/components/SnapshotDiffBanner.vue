@@ -58,19 +58,19 @@ const getPositionLabel = (pos: 'bottom' | 'top' | 'overlay') => {
 </script>
 
 <template>
-  <div v-if="diffSummary" class="snapshot-diff-banner rounded-lg px-3 py-2 mb-3">
-    <div class="d-flex align-center justify-space-between flex-wrap gap-2">
+  <div v-if="diffSummary" class="snapshot-diff-banner rounded-lg px-3 py-1.5 mb-2">
+    <div class="d-flex align-center justify-space-between flex-wrap banner-row">
       <!-- 左側: タイトルとサマリーチップ -->
-      <div class="d-flex align-center flex-wrap gap-2">
+      <div class="d-flex align-center flex-wrap banner-summary">
         <div class="d-flex align-center font-weight-medium">
           <v-icon icon="mdi-compare" color="info" size="small" class="mr-1" />
-          <span class="text-caption font-weight-bold text-medium-emphasis mr-1">差分比較中:</span>
+          <span class="text-caption font-weight-bold text-medium-emphasis mr-1 text-no-wrap">差分比較中:</span>
           <span class="text-body-2 font-weight-bold text-truncate" style="max-width: 220px">
             {{ diffSummary.snapshotDisplayName }}
           </span>
         </div>
 
-        <div class="d-flex align-center gap-1 ml-1">
+        <div class="d-flex align-center flex-wrap banner-chips ml-1">
           <v-chip
             v-if="diffSummary.delayedCount > 0"
             size="x-small"
@@ -125,7 +125,7 @@ const getPositionLabel = (pos: 'bottom' | 'top' | 'overlay') => {
       </div>
 
       <!-- 右側: コントロールボタン -->
-      <div class="d-flex align-center gap-1">
+      <div class="d-flex align-center flex-wrap banner-controls">
         <!-- 差分のみ強調トグルボタン -->
         <v-tooltip location="bottom" text="差分のないタスクを半透明化して差分タスクを目立たせます">
           <template #activator="{ props: tipProps }">
@@ -220,6 +220,21 @@ const getPositionLabel = (pos: 'bottom' | 'top' | 'overlay') => {
   background-color: rgba(var(--v-theme-info), 0.1);
   border: 1px solid rgba(var(--v-theme-info), 0.3);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+
+.banner-row {
+  gap: 6px 12px;
+}
+
+.banner-summary {
+  gap: 4px 8px;
+}
+
+.banner-chips,
+.banner-controls {
+  gap: 4px;
 }
 
 .cursor-pointer {

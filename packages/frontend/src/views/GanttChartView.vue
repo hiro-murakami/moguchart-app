@@ -356,168 +356,221 @@ const handleOpenSlideSchedule = async () => {
     }"
   >
     <template v-if="currentProject">
-      <div class="mb-4 d-flex align-center" style="gap: 1rem">
-        <TooltipBtn
-          v-if="!isSnapshotMode"
-          icon="mdi-format-list-bulleted"
-          variant="text"
-          @click="isProjectListDialogVisible = true"
-          tooltip="プロジェクト一覧"
-        />
-        <div>
-          <div class="d-flex align-center">
-            <span class="text-h6">{{ currentProject.name }}</span>
-            <RoleChip :role="isSnapshotMode ? 'snapshot' : currentProject.role" class="mr-2" />
-            <TooltipBtn
-              v-if="isOwner"
-              icon="mdi-pencil"
-              variant="text"
-              class="ml-2"
-              @click="isProjectDetailDialogVisible = true"
-              tooltip="プロジェクト詳細"
-            />
-            <TooltipBtn v-if="!isSnapshotMode" icon="mdi-refresh" variant="text" @click="refresh" tooltip="最新化" />
-            <TooltipBtn
-              v-if="!isSnapshotMode && !isReadOnly"
-              icon="mdi-camera"
-              variant="text"
-              @click="handleCreateSnapshot"
-              tooltip="スナップショット作成"
-            />
+      <div class="project-header-wrapper">
+        <div class="project-header">
+          <div class="project-header__main">
             <TooltipBtn
               v-if="!isSnapshotMode"
-              icon="mdi-image-multiple"
-              :color="isDiffActive ? 'info' : undefined"
+              icon="mdi-format-list-bulleted"
               variant="text"
-              @click="isSnapshotListDialogVisible = true"
-              :tooltip="isDiffActive ? 'スナップショット一覧（差分比較中）' : 'スナップショット一覧'"
+              density="comfortable"
+              class="header-icon-btn flex-shrink-0"
+              @click="isProjectListDialogVisible = true"
+              tooltip="プロジェクト一覧"
             />
-            <TooltipBtn
-              v-if="!isSnapshotMode && isDiffActive"
-              icon="mdi-file-document-outline"
-              color="info"
-              variant="text"
-              @click="isDiffSummaryDialogVisible = true"
-              tooltip="差分詳細サマリー"
-            />
-            <ExportMenu
-              @export-csv="handleExportCsv"
-              @export-excel="handleExportExcel"
-              @export-zip="handleExportZip"
-              @export-png="handleExportPng"
-              @export-pdf="handleExportPdf"
-            />
-            <template v-if="!isSnapshotMode">
-              <v-divider vertical class="mx-1 my-2" />
-              <TooltipBtn
-                v-if="!isReadOnly"
-                icon="mdi-format-indent-increase"
-                variant="text"
-                :disabled="!canIndent"
-                @click="handleIndentRows"
-                tooltip="インデント（子行にする） [Tab]"
-              />
-              <TooltipBtn
-                v-if="!isReadOnly"
-                icon="mdi-format-indent-decrease"
-                variant="text"
-                :disabled="!canOutdent"
-                @click="handleOutdentRows"
-                tooltip="インデント解除 [Shift+Tab]"
-              />
-              <TooltipBtn
-                icon="mdi-folder"
-                variant="text"
-                @click="handleCollapseAll"
-                tooltip="すべての親行を折りたたみ"
-              />
-              <TooltipBtn
-                icon="mdi-folder-open"
-                variant="text"
-                @click="handleExpandAll"
-                tooltip="すべての行を展開"
-              />
-            </template>
+            <div class="project-header__info">
+              <div class="project-header__title-bar">
+                <div class="project-header__title-group">
+                  <v-tooltip :text="currentProject.name" location="bottom" :open-delay="400">
+                    <template #activator="{ props: titleTipProps }">
+                      <span v-bind="titleTipProps" class="project-title text-truncate">
+                        {{ currentProject.name }}
+                      </span>
+                    </template>
+                  </v-tooltip>
+                  <RoleChip :role="isSnapshotMode ? 'snapshot' : currentProject.role" />
+                </div>
+
+                <div class="project-header__actions">
+                  <TooltipBtn
+                    v-if="isOwner"
+                    icon="mdi-pencil"
+                    variant="text"
+                    density="comfortable"
+                    class="header-icon-btn"
+                    @click="isProjectDetailDialogVisible = true"
+                    tooltip="プロジェクト詳細"
+                  />
+                  <TooltipBtn
+                    v-if="!isSnapshotMode"
+                    icon="mdi-refresh"
+                    variant="text"
+                    density="comfortable"
+                    class="header-icon-btn"
+                    @click="refresh"
+                    tooltip="最新化"
+                  />
+                  <TooltipBtn
+                    v-if="!isSnapshotMode && !isReadOnly"
+                    icon="mdi-camera"
+                    variant="text"
+                    density="comfortable"
+                    class="header-icon-btn"
+                    @click="handleCreateSnapshot"
+                    tooltip="スナップショット作成"
+                  />
+                  <TooltipBtn
+                    v-if="!isSnapshotMode"
+                    icon="mdi-image-multiple"
+                    :color="isDiffActive ? 'info' : undefined"
+                    variant="text"
+                    density="comfortable"
+                    class="header-icon-btn"
+                    @click="isSnapshotListDialogVisible = true"
+                    :tooltip="isDiffActive ? 'スナップショット一覧（差分比較中）' : 'スナップショット一覧'"
+                  />
+                  <TooltipBtn
+                    v-if="!isSnapshotMode && isDiffActive"
+                    icon="mdi-file-document-outline"
+                    color="info"
+                    variant="text"
+                    density="comfortable"
+                    class="header-icon-btn"
+                    @click="isDiffSummaryDialogVisible = true"
+                    tooltip="差分詳細サマリー"
+                  />
+                  <ExportMenu
+                    button-class="header-icon-btn"
+                    @export-csv="handleExportCsv"
+                    @export-excel="handleExportExcel"
+                    @export-zip="handleExportZip"
+                    @export-png="handleExportPng"
+                    @export-pdf="handleExportPdf"
+                  />
+                  <template v-if="!isSnapshotMode">
+                    <v-divider vertical class="mx-1 header-divider" />
+                    <TooltipBtn
+                      v-if="!isReadOnly"
+                      icon="mdi-format-indent-increase"
+                      variant="text"
+                      density="comfortable"
+                      class="header-icon-btn"
+                      :disabled="!canIndent"
+                      @click="handleIndentRows"
+                      tooltip="インデント（子行にする） [Tab]"
+                    />
+                    <TooltipBtn
+                      v-if="!isReadOnly"
+                      icon="mdi-format-indent-decrease"
+                      variant="text"
+                      density="comfortable"
+                      class="header-icon-btn"
+                      :disabled="!canOutdent"
+                      @click="handleOutdentRows"
+                      tooltip="インデント解除 [Shift+Tab]"
+                    />
+                    <TooltipBtn
+                      icon="mdi-folder"
+                      variant="text"
+                      density="comfortable"
+                      class="header-icon-btn"
+                      @click="handleCollapseAll"
+                      tooltip="すべての親行を折りたたみ"
+                    />
+                    <TooltipBtn
+                      icon="mdi-folder-open"
+                      variant="text"
+                      density="comfortable"
+                      class="header-icon-btn"
+                      @click="handleExpandAll"
+                      tooltip="すべての行を展開"
+                    />
+                  </template>
+                </div>
+              </div>
+              <v-tooltip
+                v-if="currentProject.attribute.description"
+                :text="currentProject.attribute.description"
+                location="bottom"
+                :open-delay="500"
+              >
+                <template #activator="{ props: descTipProps }">
+                  <div v-bind="descTipProps" class="project-description text-caption text-medium-emphasis text-truncate">
+                    {{ currentProject.attribute.description }}
+                  </div>
+                </template>
+              </v-tooltip>
+            </div>
           </div>
-          <div v-if="currentProject.attribute.description" class="text-caption text-medium-emphasis">
-            {{ currentProject.attribute.description }}
+
+          <div class="project-header__controls">
+            <div v-if="activeUsers.length > 0" class="d-flex align-center flex-shrink-0 mr-1">
+              <v-tooltip v-for="user in activeUsers" :key="user.email" :text="user.displayName" location="bottom">
+                <template v-slot:activator="{ props }">
+                  <UserAvatar
+                    v-bind="props"
+                    :color="user.color"
+                    size="30"
+                    class="presence-avatar"
+                    :url="user.avatarUrl"
+                    :name="user.displayName"
+                    :is-anonymous="!user.avatarUrl"
+                  />
+                </template>
+              </v-tooltip>
+            </div>
+            <v-text-field
+              v-model="searchText"
+              prepend-inner-icon="mdi-magnify"
+              label="フリーワード検索"
+              density="compact"
+              hide-details
+              variant="outlined"
+              clearable
+              class="search-text-field header-compact-field"
+              autocomplete="off"
+            />
+            <v-checkbox
+              v-if="searchText"
+              v-model="searchIncludeRows"
+              label="行も検索"
+              density="compact"
+              hide-details
+              class="search-include-rows"
+            />
+
+            <LabelFilter
+              class="label-filter-field header-compact-field"
+              v-model="selectedFilterLabelNames"
+              :available-labels="availableLabels"
+              @select-all="selectAllLabels"
+              @clear-all="clearAllLabels"
+            />
+
+            <DisplaySettingsMenu
+              button-class="header-icon-btn flex-shrink-0"
+              v-model:show-hidden-rows="showHiddenRows"
+              v-model:show-current-time-line="showCurrentTimeLine"
+              v-model:show-critical-path="showCriticalPath"
+              v-model:show-summary-tasks="showSummaryTasks"
+              v-model:show-minimap="showMinimap"
+              v-model:minimap-opacity="minimapOpacity"
+              v-model:bar-shadow-level="barShadowLevel"
+              v-model:zoom-percent="zoomPercent"
+              v-model:base-px-per-day="basePxPerDay"
+              v-model:base-px-per-month="basePxPerMonth"
+              v-model:base-px-per-hour="basePxPerHour"
+              :px-per-day="pxPerDay"
+              :px-per-month="pxPerMonth"
+              :px-per-hour="pxPerHour"
+              v-model:base-bar-height="baseBarHeight"
+              :bar-height="barHeight"
+              v-model:readonly-mode="readonlyMode"
+              :can-edit="currentRole !== 'viewer'"
+              :granularity="currentProject?.attribute?.granularity"
+              v-model:grid-enabled="gridEnabled"
+              v-model:grid-editable="gridEditable"
+              v-model:grid-columns="gridColumns"
+              :enable-progress="currentProject?.attribute?.enableProgress !== false"
+              :enable-working-days="
+                currentProject?.attribute?.granularity !== 'monthly' &&
+                currentProject?.attribute?.granularity !== 'hourly' &&
+                (currentProject?.attribute?.autoScheduleCalendarMode === 'weekends' ||
+                  currentProject?.attribute?.autoScheduleCalendarMode === 'weekends-holidays')
+              "
+            />
           </div>
         </div>
-        <v-spacer />
-        <div v-if="activeUsers.length > 0" class="d-flex align-center mr-4" style="gap: -4px">
-          <v-tooltip v-for="user in activeUsers" :key="user.email" :text="user.displayName" location="bottom">
-            <template v-slot:activator="{ props }">
-              <UserAvatar
-                v-bind="props"
-                :color="user.color"
-                size="32"
-                class="presence-avatar"
-                :url="user.avatarUrl"
-                :name="user.displayName"
-                :is-anonymous="!user.avatarUrl"
-              />
-            </template>
-          </v-tooltip>
-        </div>
-        <v-text-field
-          v-model="searchText"
-          prepend-inner-icon="mdi-magnify"
-          label="フリーワード検索"
-          density="compact"
-          hide-details
-          variant="outlined"
-          clearable
-          class="search-text-field"
-          autocomplete="off"
-        />
-        <v-checkbox
-          v-if="searchText"
-          v-model="searchIncludeRows"
-          label="行も検索"
-          density="compact"
-          hide-details
-          class="search-include-rows"
-        />
-
-        <LabelFilter
-          class="mr-n2"
-          v-model="selectedFilterLabelNames"
-          :available-labels="availableLabels"
-          @select-all="selectAllLabels"
-          @clear-all="clearAllLabels"
-        />
-
-        <DisplaySettingsMenu
-          v-model:show-hidden-rows="showHiddenRows"
-          v-model:show-current-time-line="showCurrentTimeLine"
-          v-model:show-critical-path="showCriticalPath"
-          v-model:show-summary-tasks="showSummaryTasks"
-          v-model:show-minimap="showMinimap"
-          v-model:minimap-opacity="minimapOpacity"
-          v-model:bar-shadow-level="barShadowLevel"
-          v-model:zoom-percent="zoomPercent"
-          v-model:base-px-per-day="basePxPerDay"
-          v-model:base-px-per-month="basePxPerMonth"
-          v-model:base-px-per-hour="basePxPerHour"
-          :px-per-day="pxPerDay"
-          :px-per-month="pxPerMonth"
-          :px-per-hour="pxPerHour"
-          v-model:base-bar-height="baseBarHeight"
-          :bar-height="barHeight"
-          v-model:readonly-mode="readonlyMode"
-          :can-edit="currentRole !== 'viewer'"
-          :granularity="currentProject?.attribute?.granularity"
-          v-model:grid-enabled="gridEnabled"
-          v-model:grid-editable="gridEditable"
-          v-model:grid-columns="gridColumns"
-          :enable-progress="currentProject?.attribute?.enableProgress !== false"
-          :enable-working-days="
-            currentProject?.attribute?.granularity !== 'monthly' &&
-            currentProject?.attribute?.granularity !== 'hourly' &&
-            (currentProject?.attribute?.autoScheduleCalendarMode === 'weekends' ||
-              currentProject?.attribute?.autoScheduleCalendarMode === 'weekends-holidays')
-          "
-        />
       </div>
 
       <SnapshotDiffBanner
@@ -620,15 +673,16 @@ const handleOpenSlideSchedule = async () => {
       </div>
     </template>
 
-    <div v-else class="d-flex flex-column align-center justify-center flex-grow-1">
-      <img :src="splashImage" height="500" class="splash-image mb-6" alt="MoguChart" />
-      <p v-if="!isSnapshotMode" class="text-subtitle-1 text-medium-emphasis mb-8">
+    <div v-else class="splash-container d-flex flex-column align-center justify-center flex-grow-1">
+      <img :src="splashImage" class="splash-image" alt="MoguChart" />
+      <p v-if="!isSnapshotMode" class="splash-subtitle text-subtitle-1 text-medium-emphasis">
         プロジェクトを選択してガントチャートを表示します
       </p>
       <v-btn
         v-if="!isSnapshotMode"
         color="primary"
         size="large"
+        class="splash-action-btn flex-shrink-0"
         prepend-icon="mdi-format-list-bulleted"
         @click="isProjectListDialogVisible = true"
       >
@@ -884,16 +938,242 @@ const handleOpenSlideSchedule = async () => {
   padding: 8px;
   font-family: sans-serif;
   box-sizing: border-box;
-  height: calc(100vh - 54px);
-  height: calc(100dvh - 54px);
+  height: calc(100vh - var(--app-bar-height, 54px));
+  height: calc(100dvh - var(--app-bar-height, 54px));
   display: flex;
   flex-direction: column;
   transition: padding-right 0.3s ease;
 }
 
+@media (max-height: 820px) {
+  .gantt-app {
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
+}
+
 :global(.v-theme--dark) .gantt-app {
   /* ダークモード: 白系グローと黒影の組み合わせで視認性を確保 */
   --task-box-shadow: 0 2px 10px rgba(255, 255, 255, 0.4), 0 2px 5px rgba(0, 0, 0, 0.6);
+}
+
+/* --- プロジェクトヘッダ（レスポンシブ・コンテナクエリ対応） --- */
+.project-header-wrapper {
+  container-type: inline-size;
+  container-name: project-header;
+  margin-bottom: 8px;
+  flex-shrink: 0;
+}
+
+@media (max-height: 820px) {
+  .project-header-wrapper {
+    margin-bottom: 6px;
+  }
+}
+
+.project-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 10px;
+  row-gap: 6px;
+}
+
+.project-header__main {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 999 1 530px;
+  min-width: min(100%, 530px);
+}
+
+.project-header__info {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.project-header__title-bar {
+  display: flex;
+  align-items: center;
+  column-gap: 6px;
+  row-gap: 2px;
+  min-width: 0;
+}
+
+.project-header__title-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 1 auto;
+  min-width: min(100%, 100px);
+  max-width: 100%;
+}
+
+.project-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: 0.01em;
+}
+
+.project-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.header-divider {
+  height: 20px;
+  align-self: center;
+}
+
+:deep(.header-icon-btn) {
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+}
+
+.project-description {
+  max-width: 100%;
+  line-height: 1.3;
+  margin-top: 1px;
+}
+
+.project-header__controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex: 1 0 auto;
+  margin-left: auto;
+  max-width: 100%;
+}
+
+.search-text-field {
+  flex: 0 1 230px;
+  width: 230px;
+  max-width: 300px;
+  min-width: 195px;
+}
+
+.label-filter-field {
+  flex: 0 1 200px;
+  width: 200px;
+  max-width: 250px;
+  min-width: 175px;
+}
+
+.search-include-rows {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.search-include-rows :deep(.v-label) {
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.search-include-rows :deep(.v-selection-control) {
+  min-height: 32px;
+}
+
+/* 大画面では検索欄・ラベル欄をゆったり表示 */
+@container project-header (min-width: 1280px) {
+  .search-text-field {
+    flex-basis: 260px;
+    width: 260px;
+    min-width: 230px;
+    max-width: 340px;
+  }
+  .label-filter-field {
+    flex-basis: 220px;
+    width: 220px;
+    min-width: 195px;
+    max-width: 270px;
+  }
+}
+
+/* iPad横画面・中解像度以下ではボタンと入力欄を引き締める */
+@container project-header (max-width: 1180px) {
+  .project-title {
+    font-size: 1.05rem;
+  }
+  .project-header__actions {
+    gap: 0;
+  }
+  :deep(.header-icon-btn) {
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+  }
+  .header-compact-field :deep(.v-field) {
+    font-size: 13px;
+  }
+  .header-compact-field :deep(.v-field-label:not(.v-field-label--floating)) {
+    font-size: 13px;
+  }
+  .search-text-field {
+    flex-basis: 185px;
+    width: 185px;
+    min-width: 172px;
+  }
+  .label-filter-field {
+    flex-basis: 168px;
+    width: 168px;
+    min-width: 158px;
+  }
+}
+
+@media (max-height: 820px) {
+  .project-title {
+    font-size: 1.05rem;
+  }
+  .header-compact-field :deep(.v-field) {
+    --v-input-control-height: 36px;
+    --v-input-padding-top: 4px;
+    font-size: 13px;
+  }
+  .header-compact-field :deep(.v-field__input) {
+    min-height: 36px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    align-items: center;
+  }
+  .header-compact-field :deep(.v-field-label:not(.v-field-label--floating)) {
+    font-size: 13px;
+  }
+}
+
+/* 2段折り返し発生する中狭幅以下では検索欄・ラベル欄を適度に伸縮可能にする */
+@container project-header (max-width: 940px) {
+  .project-header__controls {
+    flex: 1 1 100%;
+  }
+  .search-text-field {
+    flex: 1 1 180px;
+    max-width: 280px;
+    min-width: 140px;
+  }
+  .label-filter-field {
+    flex: 1 1 160px;
+    max-width: 240px;
+    min-width: 135px;
+  }
+}
+
+/* 極狭幅（タブレット縦＋サイドバー展開時など）ではタイトル行とアクション群、コントロール群も折り返し可能にする */
+@container project-header (max-width: 640px) {
+  .project-header__title-bar {
+    flex-wrap: wrap;
+  }
+  .project-header__actions {
+    flex-wrap: wrap;
+  }
+  .project-header__controls {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
 }
 
 .row-edit-input {
@@ -908,13 +1188,39 @@ const handleOpenSlideSchedule = async () => {
   outline: none;
   box-sizing: border-box;
 }
+
+.splash-container {
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px;
+}
+
 .splash-image {
+  height: min(500px, calc(100dvh - 240px));
+  min-height: 160px;
+  max-width: min(90vw, 100%);
+  width: auto;
+  object-fit: contain;
   border-radius: 24px;
+  margin-bottom: 24px;
 }
-.search-text-field {
-  max-width: 500px;
-  min-width: 250px;
+
+.splash-subtitle {
+  margin-bottom: 32px;
+  text-align: center;
 }
+
+@media (max-height: 800px) {
+  .splash-image {
+    height: min(380px, calc(100dvh - 200px));
+    margin-bottom: 16px;
+    border-radius: 18px;
+  }
+  .splash-subtitle {
+    margin-bottom: 16px;
+  }
+}
+
 .presence-avatar {
   border: 2px solid rgb(var(--v-theme-surface));
   margin-left: -6px;

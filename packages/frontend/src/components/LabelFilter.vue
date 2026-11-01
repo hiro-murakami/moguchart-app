@@ -17,6 +17,13 @@ const selectedLabels = defineModel<string[]>({ default: () => [] })
 
 const items = computed(() => [{ name: 'ラベルなし', color: '#9e9e9e', isUnlabeled: true }, ...props.availableLabels])
 
+const getRawLabel = (item: any): Label => item?.raw ?? item
+
+const removeLabel = (label: Label) => {
+  const targetVal = label.isUnlabeled ? UNLABELED_VALUE : label.name
+  selectedLabels.value = selectedLabels.value.filter((v) => v !== targetVal)
+}
+
 const emit = defineEmits<{
   selectAll: []
   clearAll: []
@@ -31,8 +38,6 @@ const emit = defineEmits<{
     :item-value="(item: any) => (item.isUnlabeled ? UNLABELED_VALUE : item.name)"
     label="ラベル絞り込み"
     multiple
-    chips
-    closable-chips
     density="compact"
     hide-details
     variant="outlined"
@@ -53,35 +58,41 @@ const emit = defineEmits<{
       <v-divider class="mt-2" />
     </template>
 
-    <template #chip="{ props, item }">
+    <template #selection="{ item, index }">
       <v-chip
-        v-bind="props"
+        v-if="index === 0"
         :style="{
-          backgroundColor: item.color,
-          color: getContrastColor(item.color),
+          backgroundColor: getRawLabel(item).color,
+          color: getContrastColor(getRawLabel(item).color),
           borderColor: 'rgba(0,0,0,0.1)',
         }"
         variant="flat"
-        size="small"
+        size="x-small"
         label
-        :class="{ 'font-weight-bold': item.isUnlabeled }"
+        closable
+        class="selected-label-chip"
+        :class="{ 'font-weight-bold': getRawLabel(item).isUnlabeled }"
+        @click:close.stop="removeLabel(getRawLabel(item))"
       >
-        {{ item.name }}
+        <span class="text-truncate">{{ getRawLabel(item).name }}</span>
       </v-chip>
+      <span v-else-if="index === 1" class="text-caption text-medium-emphasis ml-1 flex-shrink-0 font-weight-medium">
+        +{{ selectedLabels.length - 1 }}
+      </span>
     </template>
 
     <template #item="{ props, item }">
       <v-list-item v-bind="props" title="">
         <template #prepend>
           <v-chip
-            :style="{ color: getContrastColor(item.color) }"
-            :color="item.color"
+            :style="{ color: getContrastColor(getRawLabel(item).color) }"
+            :color="getRawLabel(item).color"
             variant="flat"
             size="small"
             label
             class="mr-2 font-weight-bold"
           >
-            {{ item.name }}
+            {{ getRawLabel(item).name }}
           </v-chip>
         </template>
       </v-list-item>
@@ -91,7 +102,16 @@ const emit = defineEmits<{
 
 <style scoped>
 .filter-labels-select {
-  max-width: 300px;
-  min-width: 200px;
+  max-width: 280px;
+  min-width: 155px;
+}
+
+.filter-labels-select :deep(.v-field__input) {
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+
+.selected-label-chip {
+  max-width: 120px;
 }
 </style>

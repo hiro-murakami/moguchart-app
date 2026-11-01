@@ -61,7 +61,7 @@ watch(
 </script>
 
 <template>
-  <v-dialog :model-value="modelValue" @update:model-value="handleBeforeClose" max-width="760px">
+  <v-dialog :model-value="modelValue" @update:model-value="handleBeforeClose" max-width="760px" scrollable>
     <v-card v-draggable-dialog>
       <v-card-title class="pa-8 pb-0">{{ title }}</v-card-title>
       <v-card-text class="pa-8">

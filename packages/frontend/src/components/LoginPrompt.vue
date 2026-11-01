@@ -18,7 +18,7 @@ const handleSignInAnonymously = async () => {
 
 <template>
   <v-container class="fill-height">
-    <v-row align="center" justify="center" style="height: 100vh">
+    <v-row align="center" justify="center" style="min-height: calc(100dvh - var(--app-bar-height, 54px) - 32px)">
       <v-col cols="12" sm="8" md="4">
         <v-card class="elevation-12">
           <v-toolbar color="primary" dark>

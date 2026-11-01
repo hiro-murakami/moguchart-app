@@ -40,7 +40,14 @@ const getRoleLabel = (role: string) => {
 </script>
 
 <template>
-  <v-chip :color="getRoleColor(role)" size="small">
+  <v-chip :color="getRoleColor(role)" size="small" class="role-chip">
     {{ getRoleLabel(role) }}
   </v-chip>
 </template>
+
+<style scoped>
+.role-chip {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+</style>

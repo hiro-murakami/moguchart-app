@@ -17,11 +17,11 @@ const showApiKeyManage = defineModel<boolean>('showApiKeyManage', { required: tr
   <template v-if="userStore.isAnonymous">
     <v-menu location="bottom end">
       <template v-slot:activator="{ props }">
-        <div class="d-flex align-center cursor-pointer mr-4" v-bind="props">
-          <v-avatar color="grey-darken-1" class="mr-2">
-            <v-icon icon="mdi-account" color="white" />
+        <div class="d-flex align-center cursor-pointer user-menu-trigger mr-3" v-bind="props">
+          <v-avatar color="grey-darken-1" size="32" class="flex-shrink-0">
+            <v-icon icon="mdi-account" size="20" color="white" />
           </v-avatar>
-          <span class="text-label-large">ゲストユーザー</span>
+          <span class="text-label-large user-display-name ml-2">ゲストユーザー</span>
         </div>
       </template>
       <v-list>
@@ -44,21 +44,32 @@ const showApiKeyManage = defineModel<boolean>('showApiKeyManage', { required: tr
   <template v-else>
     <v-menu location="bottom end">
       <template v-slot:activator="{ props }">
-        <TutorialOverlay
-          :condition="!!projectStore.currentProjectId"
-          tutorial-key="userSetting"
-          message="[ユーザー設定]で表示名を変更できます"
-          placement="bottom"
-        >
-          <template #activator="{ props: overlayProps }">
-            <UserAvatar
-              class="mr-4 cursor-pointer"
-              v-bind="{ ...props, ...overlayProps }"
-              :url="firebaseUser?.photoURL"
-              :name="appUser?.displayName || firebaseUser?.displayName"
-            />
-          </template>
-        </TutorialOverlay>
+        <div class="d-flex align-center cursor-pointer user-menu-trigger mr-3" v-bind="props">
+          <TutorialOverlay
+            :condition="!!projectStore.currentProjectId"
+            tutorial-key="userSetting"
+            message="[ユーザー設定]で表示名を変更できます"
+            placement="bottom"
+          >
+            <template #activator="{ props: overlayProps }">
+              <UserAvatar
+                class="flex-shrink-0"
+                size="32"
+                v-bind="overlayProps"
+                :url="firebaseUser?.photoURL"
+                :name="appUser?.displayName || firebaseUser?.displayName"
+              />
+            </template>
+          </TutorialOverlay>
+          <div class="user-info-text ml-2">
+            <span class="text-label-large text-truncate user-display-name">
+              {{ appUser?.displayName || firebaseUser?.displayName }}
+            </span>
+            <span class="text-label-medium text-truncate user-email">
+              {{ appUser?.email || firebaseUser?.email }}
+            </span>
+          </div>
+        </div>
       </template>
       <v-list>
         <v-list-item prepend-icon="mdi-account-cog" @click="showUserDetail = true">
@@ -76,15 +87,48 @@ const showApiKeyManage = defineModel<boolean>('showApiKeyManage', { required: tr
         </v-list-item>
       </v-list>
     </v-menu>
-    <div class="d-flex flex-column mr-4">
-      <span class="text-label-large">{{ appUser?.displayName || firebaseUser?.displayName }}</span>
-      <span class="text-label-medium">{{ appUser?.email || firebaseUser?.email }}</span>
-    </div>
   </template>
 </template>
 
 <style scoped>
 .cursor-pointer {
   cursor: pointer;
+}
+
+.user-menu-trigger {
+  min-width: 0;
+}
+
+.user-info-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  max-width: 190px;
+  line-height: 1.2;
+}
+
+.user-display-name {
+  line-height: 1.25;
+}
+
+.user-email {
+  opacity: 0.85;
+  line-height: 1.2;
+}
+
+@media (max-height: 820px), (max-width: 1100px) {
+  .user-email {
+    display: none;
+  }
+  .user-info-text {
+    max-width: 140px;
+  }
+}
+
+@media (max-width: 640px) {
+  .user-info-text,
+  .user-display-name {
+    display: none;
+  }
 }
 </style>
