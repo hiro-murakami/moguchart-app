@@ -2,7 +2,7 @@
 import splashImage from '@/assets/splash2.png'
 import { GanttChart } from '@mogura/moguchart-vue'
 import { useGanttChartView } from './composables/useGanttChartView'
-import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useTheme } from 'vuetify'
 import ProjectCommentPanel from '@/components/ProjectCommentPanel.vue'
 import SlideScheduleDialog from '@/components/SlideScheduleDialog.vue'
@@ -244,6 +244,16 @@ const canComment = computed(() => {
     return (!!userId && list.includes(userId)) || (!!email && list.includes(email))
   }
   return matches(auth.owners) || matches(auth.editors) || matches(auth.viewers)
+})
+
+const showTaskTemplatesSidebar = computed(
+  () => !isReadOnly.value && !!currentProject.value?.attribute?.showTaskTemplates,
+)
+
+watch(showTaskTemplatesSidebar, (visible) => {
+  if (!visible) {
+    isUnassignedTasksOpen.value = false
+  }
 })
 
 
@@ -591,7 +601,7 @@ const handleOpenSlideSchedule = async () => {
           flex: 1,
           display: 'flex',
           flexDirection: 'column',
-          paddingRight: isReadOnly ? undefined : isUnassignedTasksOpen ? '248px' : '58px',
+          paddingRight: !showTaskTemplatesSidebar ? undefined : isUnassignedTasksOpen ? '248px' : '58px',
           transition: 'padding-right 0.3s ease',
         }"
       >
@@ -631,7 +641,7 @@ const handleOpenSlideSchedule = async () => {
         </div>
 
         <UnassignedTaskSidebar
-          v-if="!isReadOnly"
+          v-if="showTaskTemplatesSidebar"
           v-model:is-open="isUnassignedTasksOpen"
           @drag-start="handleTaskDragStart"
           @drag-end="handleTaskDragEnd"

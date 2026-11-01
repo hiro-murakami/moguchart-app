@@ -44,6 +44,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
   const localDisableRowReorder = ref(false)
   const localDisableCrossRowMove = ref(false)
   const localEnableProgress = ref(true)
+  const localShowTaskTemplates = ref(false)
   const localAutoSchedule = ref(false)
   const localAutoScheduleMode = ref<AutoScheduleMode>('push-only')
   const localAutoScheduleCalendarMode = ref<AutoScheduleCalendarMode>('calendar')
@@ -152,6 +153,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
             localDisableRowReorder.value = !!props.project.attribute.disableRowReorder
             localDisableCrossRowMove.value = !!props.project.attribute.disableCrossRowMove
             localEnableProgress.value = props.project.attribute.enableProgress !== false
+            localShowTaskTemplates.value = !!props.project.attribute.showTaskTemplates
             localAutoSchedule.value = !!props.project.attribute.autoSchedule
             localAutoScheduleMode.value = props.project.attribute.autoScheduleMode || 'push-only'
             localAutoScheduleCalendarMode.value = props.project.attribute.autoScheduleCalendarMode || 'calendar'
@@ -213,6 +215,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
             localDisableRowReorder.value = !!props.project.attribute.disableRowReorder
             localDisableCrossRowMove.value = !!props.project.attribute.disableCrossRowMove
             localEnableProgress.value = props.project.attribute.enableProgress !== false
+            localShowTaskTemplates.value = !!props.project.attribute.showTaskTemplates
             localAutoSchedule.value = !!props.project.attribute.autoSchedule
             localAutoScheduleMode.value = props.project.attribute.autoScheduleMode || 'push-only'
             localAutoScheduleCalendarMode.value = props.project.attribute.autoScheduleCalendarMode || 'calendar'
@@ -245,6 +248,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
           localDisableRowReorder.value = false
           localDisableCrossRowMove.value = false
           localEnableProgress.value = true
+          localShowTaskTemplates.value = false
           localAutoSchedule.value = false
           localAutoScheduleMode.value = 'push-only'
           localAutoScheduleCalendarMode.value = 'calendar'
@@ -287,6 +291,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
         localPublic.value !== false ||
         localDisableRowReorder.value !== false ||
         localDisableCrossRowMove.value !== false ||
+        localShowTaskTemplates.value !== false ||
         localAutoSchedule.value !== false ||
         localAutoScheduleMode.value !== 'push-only' ||
         localAutoScheduleCalendarMode.value !== 'calendar' ||
@@ -327,6 +332,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
       localDisableRowReorder.value !== !!props.project.attribute.disableRowReorder ||
       localDisableCrossRowMove.value !== !!props.project.attribute.disableCrossRowMove ||
       localEnableProgress.value !== (props.project.attribute.enableProgress !== false) ||
+      localShowTaskTemplates.value !== !!props.project.attribute.showTaskTemplates ||
       localAutoSchedule.value !== !!props.project.attribute.autoSchedule ||
       localAutoScheduleMode.value !== (props.project.attribute.autoScheduleMode || 'push-only') ||
       localAutoScheduleCalendarMode.value !== (props.project.attribute.autoScheduleCalendarMode || 'calendar') ||
@@ -393,6 +399,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
         disableRowReorder: localDisableRowReorder.value ? true : undefined,
         disableCrossRowMove: localDisableCrossRowMove.value ? true : undefined,
         enableProgress: localEnableProgress.value ? undefined : false,
+        showTaskTemplates: localShowTaskTemplates.value ? true : undefined,
         autoSchedule: localAutoSchedule.value ? true : undefined,
         autoScheduleMode: localAutoScheduleMode.value !== 'push-only' ? localAutoScheduleMode.value : undefined,
         autoScheduleCalendarMode:
@@ -449,6 +456,7 @@ export function useProjectDetailDialog(props: ProjectDetailDialogProps, emit: Pr
     localDisableRowReorder,
     localDisableCrossRowMove,
     localEnableProgress,
+    localShowTaskTemplates,
     localAutoSchedule,
     localAutoScheduleMode,
     localAutoScheduleCalendarMode,

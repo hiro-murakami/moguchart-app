@@ -1699,6 +1699,9 @@ components:
         enableProgress:
           type: boolean
           description: 進捗率管理を行うかどうか（trueの場合、進捗バー・ラベル・ハンドル等の進捗管理機能を有効化）
+        showTaskTemplates:
+          type: boolean
+          description: タスクテンプレートを表示するかどうか（trueの場合、画面右側にタスクテンプレートサイドバーを表示）
         summaryTaskColor:
           type: string
           description: サマリータスク（自動集計バー）の既定色（CSSカラー文字列、未指定時は #334155）

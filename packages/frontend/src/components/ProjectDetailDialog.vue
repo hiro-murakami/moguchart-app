@@ -43,6 +43,7 @@ const {
   localDisableRowReorder,
   localDisableCrossRowMove,
   localEnableProgress,
+  localShowTaskTemplates,
   localAutoSchedule,
   localAutoScheduleMode,
   localAutoScheduleCalendarMode,
@@ -390,6 +391,16 @@ watch(
                           <span class="mr-2">進捗率管理を行う</span>
                           <HelpText
                             text="ONにするとタスクバーに進捗バーや進捗ラベルが表示され、進捗率のドラッグ編集が可能になります"
+                          />
+                        </template>
+                      </v-checkbox>
+                    </v-col>
+                    <v-col cols="12" class="mb-2">
+                      <v-checkbox v-model="localShowTaskTemplates" density="compact" hide-details>
+                        <template v-slot:label>
+                          <span class="mr-2">タスクテンプレートを表示する</span>
+                          <HelpText
+                            text="ONにすると画面右側にタスクテンプレートサイドバーが表示され、テンプレートからドラッグ＆ドロップでタスクを配置できます"
                           />
                         </template>
                       </v-checkbox>

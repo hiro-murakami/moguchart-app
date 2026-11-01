@@ -70,6 +70,7 @@ const projects = [
     authority: { owners: ['h.murakami@esm.co.jp'] },
     attribute: {
       granularity: 'daily',
+      showTaskTemplates: true,
       description: 'カラーパレット・ラベル・タスクテンプレートの各パターンを網羅したデモプロジェクトです。',
       colorPalettes: Object.values(colorPalettes),
       labels: Object.values(labels),
@@ -146,6 +147,7 @@ const hourlyProject = {
   authority: { owners: ['h.murakami@esm.co.jp'] },
   attribute: {
     granularity: 'hourly',
+    showTaskTemplates: true,
     description: '本番障害インシデント対応の1日タイムライン。時間単位ガントチャートのサンプルです。',
     snapDurationMinutes: 15,
     colorPalettes: Object.values(colorPalettes),

@@ -318,6 +318,10 @@ export type ProjectAttribute = {
    */
   enableProgress?: boolean
   /**
+   * タスクテンプレートを表示するかどうか（trueの場合、画面右側にタスクテンプレートサイドバーを表示）
+   */
+  showTaskTemplates?: boolean
+  /**
    * サマリータスク（自動集計バー）の既定色 (CSSカラー文字列、未指定時は #334155)
    */
   summaryTaskColor?: string
