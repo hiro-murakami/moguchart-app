@@ -283,6 +283,13 @@ export const useGanttChartView = () => {
   const chartEndStr = ref('2026-03-31')
   // --- 表示倍率（ズーム倍率）と連動値 ---
   const zoomPercent = ref<number>(ZOOM_PERCENT.default)
+  /**
+   * GanttChart の option.zoom.initialPercent に渡す初期倍率。
+   * ピンチズームやホイールズーム中に毎フレーム chartOption が再生成されるのを防ぐため、
+   * チャート側からの zoom-change 同期では更新せず、設定復元時や未マウント時の外部変更でのみ更新する。
+   */
+  const initialZoomPercent = ref<number>(ZOOM_PERCENT.default)
+  let lastChartReportedZoomPercent: number | null = null
   const zoomScale = computed(() => zoomPercent.value / 100)
   const fontScale = computed(() => zoomScale.value)
   const isExporting = ref(false)
@@ -304,6 +311,8 @@ export const useGanttChartView = () => {
 
   // 実効値（ズーム連動）
   const pxPerDay = computed(() => Math.max(8, Math.round(basePxPerDay.value * zoomScale.value)))
+  /** 日単位モードで縮小時に週表示へ切り替える閾値判定（boolean化により閾値跨ぎ時のみ chartOption を更新） */
+  const isCompactDailyCalendar = computed(() => pxPerDay.value < 20)
   const pxPerMonth = computed(() => Math.max(10, Math.round(basePxPerMonth.value * zoomScale.value)))
   const pxPerHour = computed(() => Math.max(30, Math.round(basePxPerHour.value * zoomScale.value)))
   const effectiveRowHeaderWidth = computed(() =>
@@ -538,18 +547,37 @@ export const useGanttChartView = () => {
   // zoomPercent変更時に保存 & coreチャートに反映
   watch(zoomPercent, (newValue) => {
     if (isExporting.value) return
-    const chart = ganttChartRef.value
-    if (chart && typeof chart.getZoomPercent === 'function') {
-      if (chart.getZoomPercent() !== newValue) {
-        chart.zoomToPercent(newValue)
+    const isFromChart = lastChartReportedZoomPercent === newValue
+    lastChartReportedZoomPercent = null
+
+    if (!isFromChart) {
+      const chart = ganttChartRef.value
+      if (chart && typeof chart.getZoomPercent === 'function') {
+        if (chart.getZoomPercent() !== newValue) {
+          chart.zoomToPercent(newValue)
+        }
+      } else {
+        initialZoomPercent.value = newValue
       }
     }
+
     saveProjectSettings({
       zoomPercent: newValue,
       pxPerDay: pxPerDay.value,
       pxPerMonth: pxPerMonth.value,
       pxPerHour: pxPerHour.value,
     })
+  })
+
+  // チャートインスタンスの再マウント時に現在の zoomPercent と initialZoomPercent を同期
+  watch(ganttChartRef, (chart) => {
+    if (!chart) {
+      initialZoomPercent.value = zoomPercent.value
+      return
+    }
+    if (typeof chart.getZoomPercent === 'function' && chart.getZoomPercent() !== zoomPercent.value) {
+      chart.zoomToPercent(zoomPercent.value)
+    }
   })
 
   // カレンダー基準幅変更時に保存
@@ -715,11 +743,9 @@ export const useGanttChartView = () => {
         }
 
         // zoomPercentの復元
-        if (settings?.zoomPercent) {
-          zoomPercent.value = settings.zoomPercent
-        } else {
-          zoomPercent.value = ZOOM_PERCENT.default
-        }
+        const restoredZoomPercent = settings?.zoomPercent || ZOOM_PERCENT.default
+        initialZoomPercent.value = restoredZoomPercent
+        zoomPercent.value = restoredZoomPercent
 
         // baseRowHeaderWidthの復元
         if (settings?.baseRowHeaderWidth) {
@@ -1048,11 +1074,8 @@ export const useGanttChartView = () => {
       // スクロール実行
       if (typeof chartEl.scrollToTask === 'function') {
         chartEl.scrollToTask(targetTaskId)
-      } else {
-        const barEl = chartEl.shadowRoot?.querySelector(`gantt-bar[task-id="${targetTaskId}"]`) as HTMLElement | null
-        if (barEl) {
-          barEl.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' })
-        }
+      } else if (typeof (chartInstance as any)?.scrollToTask === 'function') {
+        ;(chartInstance as any).scrollToTask(targetTaskId)
       }
     }, 120)
   }
@@ -1336,7 +1359,9 @@ export const useGanttChartView = () => {
               }
             : {
                 // 日単位表示: pxPerDay が 20 未満の場合は週番号表示に切り替え
-                ...(pxPerDay.value < 20 ? { showWeeks: true, showDays: false, weekStartDay: 1 as const } : {}),
+                ...(isCompactDailyCalendar.value
+                  ? { showWeeks: true, showDays: false, weekStartDay: 1 as const }
+                  : {}),
                 weekTextAlign: 'left' as const,
                 weekFormat: (_: number, startDate: Date) => startDate.getDate().toString(),
               }),
@@ -1478,7 +1503,7 @@ export const useGanttChartView = () => {
       },
       zoom: {
         enabled: true,
-        initialPercent: zoomPercent.value,
+        initialPercent: initialZoomPercent.value,
         minPercent: ZOOM_PERCENT.min,
         maxPercent: ZOOM_PERCENT.max,
         levels: moguchart.CHROME_ZOOM_LEVELS,
@@ -1522,32 +1547,35 @@ export const useGanttChartView = () => {
 
   /**
    * zoom-change イベントハンドラ
-   * core側でホイールズームやAPIにより変更された値を zoomPercent に反映する。
+   * core側でホイールズーム・ピンチズーム・APIにより変更された値を zoomPercent に反映する。
    */
   const handleZoomChange = (e: any) => {
     const detail = getDetail(e) as { pxPerDay: number; pxPerMonth?: number; zoomPercent?: number }
+    let nextPercent: number
     if (typeof detail?.zoomPercent === 'number') {
-      zoomPercent.value = detail.zoomPercent
-      return
-    }
-
-    // フォールバック（万が一 zoomPercent がない場合）
-    const granularity = currentProject.value?.attribute?.granularity
-    let newScale = 1.0
-
-    if (granularity === 'monthly' && detail.pxPerMonth !== undefined) {
-      newScale = detail.pxPerMonth / basePxPerMonth.value
-    } else if (granularity === 'hourly') {
-      newScale = detail.pxPerDay / 24 / basePxPerHour.value
+      nextPercent = detail.zoomPercent
     } else {
-      newScale = detail.pxPerDay / basePxPerDay.value
+      // フォールバック（万が一 zoomPercent がない場合）
+      const granularity = currentProject.value?.attribute?.granularity
+      let newScale = 1.0
+
+      if (granularity === 'monthly' && detail.pxPerMonth !== undefined) {
+        newScale = detail.pxPerMonth / basePxPerMonth.value
+      } else if (granularity === 'hourly') {
+        newScale = detail.pxPerDay / 24 / basePxPerHour.value
+      } else {
+        newScale = detail.pxPerDay / basePxPerDay.value
+      }
+
+      nextPercent = Math.max(
+        ZOOM_PERCENT.min,
+        Math.min(ZOOM_PERCENT.max, Math.round(newScale * 100)),
+      )
     }
 
-    const clampedPercent = Math.max(
-      ZOOM_PERCENT.min,
-      Math.min(ZOOM_PERCENT.max, Math.round(newScale * 100)),
-    )
-    zoomPercent.value = clampedPercent
+    if (zoomPercent.value === nextPercent) return
+    lastChartReportedZoomPercent = nextPercent
+    zoomPercent.value = nextPercent
   }
 
   /**

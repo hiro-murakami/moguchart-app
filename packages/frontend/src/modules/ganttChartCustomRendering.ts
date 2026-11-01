@@ -312,6 +312,340 @@ const openImageLightbox = (srcs: string[], initialIndex = 0) => {
   })
 }
 
+/**
+ * コメントバッジにマウスホバーおよびタッチタップでのツールチップ表示イベントを登録する。
+ * バー・行ヘッダーのドラッグやクリック選択への伝播を防ぎつつ、表示中のみグローバルリスナーを管理する。
+ */
+const bindCommentBadgeInteractions = (
+  badge: HTMLElement,
+  cache: Map<number, { data: Comment[]; fetchedAt: number }>,
+  cacheKey: number,
+  commentCount: number,
+  fetchComments: () => Promise<Comment[]>,
+) => {
+  let tooltipEl: HTMLElement | null = null
+  let hideTimeout: ReturnType<typeof setTimeout> | null = null
+  let cleanupGlobalListeners: (() => void) | null = null
+  let lastPointerType = 'mouse'
+
+  const removeTooltip = () => {
+    if (hideTimeout) {
+      clearTimeout(hideTimeout)
+      hideTimeout = null
+    }
+    if (cleanupGlobalListeners) {
+      cleanupGlobalListeners()
+      cleanupGlobalListeners = null
+    }
+    if (tooltipEl) {
+      tooltipEl.remove()
+      tooltipEl = null
+    }
+  }
+
+  const showTooltip = () => {
+    if (hideTimeout) {
+      clearTimeout(hideTimeout)
+      hideTimeout = null
+    }
+    if (tooltipEl) return
+
+    document.querySelectorAll('[data-moguchart-comment-tooltip]').forEach((el) => el.remove())
+
+    const colors = getTooltipColors()
+    const el = document.createElement('div')
+    el.setAttribute('data-moguchart-comment-tooltip', 'true')
+    el.style.position = 'fixed'
+    el.style.zIndex = '9999'
+    el.style.backgroundColor = colors.bg
+    el.style.color = colors.text
+    el.style.border = `1px solid ${colors.border}`
+    el.style.borderRadius = '8px'
+    el.style.padding = '8px 12px'
+    el.style.maxWidth = '320px'
+    el.style.fontSize = '12px'
+    el.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)'
+    el.style.pointerEvents = 'none'
+
+    const rect = badge.getBoundingClientRect()
+    el.style.left = `${rect.left}px`
+    el.style.top = `${rect.bottom + 4}px`
+    tooltipEl = el
+
+    const cached = cache.get(cacheKey)
+    if (cached && Date.now() - cached.fetchedAt < 60000) {
+      renderComments(el, cached.data, commentCount)
+    } else {
+      el.textContent = `コメント読み込み中... (${commentCount}件)`
+      fetchComments()
+        .then((comments) => {
+          cache.set(cacheKey, { data: comments, fetchedAt: Date.now() })
+          if (tooltipEl === el) {
+            renderComments(el, comments, commentCount)
+            adjustTooltipPosition(el, badge.getBoundingClientRect())
+          }
+        })
+        .catch(() => {
+          if (tooltipEl === el) el.textContent = 'コメントの読み込みに失敗しました'
+        })
+    }
+
+    document.body.appendChild(el)
+    adjustTooltipPosition(el, rect)
+
+    const onOutsidePointerDown = (ev: PointerEvent) => {
+      const path = typeof ev.composedPath === 'function' ? ev.composedPath() : []
+      if (ev.target === badge || badge.contains(ev.target as Node) || path.includes(badge)) return
+      removeTooltip()
+    }
+    const onScrollOrWheel = () => removeTooltip()
+    document.addEventListener('pointerdown', onOutsidePointerDown, true)
+    window.addEventListener('scroll', onScrollOrWheel, true)
+    window.addEventListener('wheel', onScrollOrWheel, { passive: true })
+    cleanupGlobalListeners = () => {
+      document.removeEventListener('pointerdown', onOutsidePointerDown, true)
+      window.removeEventListener('scroll', onScrollOrWheel, true)
+      window.removeEventListener('wheel', onScrollOrWheel)
+    }
+  }
+
+  const hideTooltip = () => {
+    hideTimeout = setTimeout(removeTooltip, 100)
+  }
+
+  badge.addEventListener('pointerdown', (e) => {
+    lastPointerType = e.pointerType || 'mouse'
+    e.stopPropagation()
+    if (lastPointerType !== 'touch') {
+      removeTooltip()
+    }
+  })
+  badge.addEventListener('mousedown', (e) => {
+    e.stopPropagation()
+  })
+  badge.addEventListener('dblclick', (e) => {
+    e.stopPropagation()
+  })
+  badge.addEventListener('mouseenter', () => {
+    if (lastPointerType === 'touch') return
+    showTooltip()
+  })
+  badge.addEventListener('mouseleave', () => {
+    if (lastPointerType === 'touch') return
+    hideTooltip()
+  })
+  badge.addEventListener('click', (e) => {
+    e.stopPropagation()
+    if (lastPointerType === 'touch') {
+      if (tooltipEl) {
+        removeTooltip()
+      } else {
+        showTooltip()
+      }
+    }
+  })
+}
+
+interface ImageThumbnailInteractionOptions {
+  popupAttr: string
+  anchorAttr: string
+  anchorId: string
+  onBeforeSchedule?: () => void
+  onCleanup?: () => void
+  preventNativeDrag?: boolean
+}
+
+/**
+ * 画像サムネイルにマウスホバー時のプレビューポップアップおよびクリック・タッチ時のライトボックス表示を登録する。
+ */
+const bindImageThumbnailInteractions = (
+  thumbWrapper: HTMLElement,
+  imageUrls: string[],
+  options: ImageThumbnailInteractionOptions,
+) => {
+  thumbWrapper.style.cursor = 'zoom-in'
+  thumbWrapper.setAttribute(options.anchorAttr, options.anchorId)
+
+  let popupEl: HTMLElement | null = null
+  let popupShowTimeout: ReturnType<typeof setTimeout> | null = null
+  let popupHideTimeout: ReturnType<typeof setTimeout> | null = null
+  let cleanupGlobalListeners: (() => void) | null = null
+  let lastPointerType = 'mouse'
+
+  const clearShowTimeout = () => {
+    if (popupShowTimeout) {
+      clearTimeout(popupShowTimeout)
+      popupShowTimeout = null
+    }
+  }
+
+  const clearHideTimeout = () => {
+    if (popupHideTimeout) {
+      clearTimeout(popupHideTimeout)
+      popupHideTimeout = null
+    }
+  }
+
+  const removeImagePopup = () => {
+    clearShowTimeout()
+    clearHideTimeout()
+    if (cleanupGlobalListeners) {
+      cleanupGlobalListeners()
+      cleanupGlobalListeners = null
+    }
+    options.onCleanup?.()
+    if (popupEl) {
+      popupEl.remove()
+      popupEl = null
+    }
+  }
+
+  const ensureGlobalListeners = () => {
+    if (cleanupGlobalListeners) return
+    const onOutsidePointerDown = (ev: PointerEvent) => {
+      const path = typeof ev.composedPath === 'function' ? ev.composedPath() : []
+      const isInsideThumb =
+        ev.target === thumbWrapper || thumbWrapper.contains(ev.target as Node) || path.includes(thumbWrapper)
+      const isInsidePopup =
+        !!popupEl && (ev.target === popupEl || popupEl.contains(ev.target as Node) || path.includes(popupEl))
+      if (!isInsideThumb && !isInsidePopup) {
+        removeImagePopup()
+      }
+    }
+    const onScroll = (ev: Event) => {
+      if (popupEl && (ev.target === popupEl || popupEl.contains(ev.target as Node))) return
+      removeImagePopup()
+    }
+    document.addEventListener('pointerdown', onOutsidePointerDown, true)
+    window.addEventListener('scroll', onScroll, true)
+    cleanupGlobalListeners = () => {
+      document.removeEventListener('pointerdown', onOutsidePointerDown, true)
+      window.removeEventListener('scroll', onScroll, true)
+    }
+  }
+
+  const showImagePopup = () => {
+    clearHideTimeout()
+    clearShowTimeout()
+    if (popupEl) return
+
+    let anchorEl: HTMLElement = thumbWrapper
+    if (!anchorEl.isConnected) {
+      const latest = document.querySelector(`[${options.anchorAttr}="${options.anchorId}"]`) as HTMLElement | null
+      if (latest && latest.isConnected) {
+        anchorEl = latest
+      } else {
+        removeImagePopup()
+        return
+      }
+    }
+
+    document.querySelectorAll(`[${options.popupAttr}]`).forEach((el) => el.remove())
+    options.onBeforeSchedule?.()
+
+    const colors = getTooltipColors()
+    const el = document.createElement('div')
+    el.setAttribute(options.popupAttr, 'true')
+    el.style.position = 'fixed'
+    el.style.zIndex = '9999'
+    el.style.backgroundColor = colors.bg
+    el.style.border = `1px solid ${colors.border}`
+    el.style.borderRadius = '8px'
+    el.style.padding = '6px'
+    el.style.boxShadow = '0 8px 24px rgba(0,0,0,0.25)'
+    el.style.pointerEvents = 'auto'
+    el.style.cursor = 'zoom-in'
+    el.style.maxWidth = '400px'
+    el.style.maxHeight = '320px'
+    el.style.overflowY = imageUrls.length > 1 ? 'auto' : 'hidden'
+    el.style.display = 'flex'
+    el.style.flexDirection = 'column'
+    el.style.gap = '4px'
+
+    imageUrls.forEach((url, idx) => {
+      const popupImg = document.createElement('img')
+      setImageSrc(popupImg, url)
+      popupImg.style.maxWidth = '388px'
+      popupImg.style.maxHeight = imageUrls.length === 1 ? '296px' : '200px'
+      popupImg.style.objectFit = 'contain'
+      popupImg.style.display = 'block'
+      popupImg.style.borderRadius = '4px'
+      popupImg.style.cursor = 'zoom-in'
+      popupImg.draggable = false
+
+      popupImg.addEventListener('click', (e) => {
+        e.stopPropagation()
+        removeImagePopup()
+        openImageLightbox(imageUrls, idx)
+      })
+      el.appendChild(popupImg)
+    })
+
+    el.addEventListener('mouseenter', () => {
+      clearHideTimeout()
+    })
+    el.addEventListener('mouseleave', () => {
+      popupHideTimeout = setTimeout(removeImagePopup, 100)
+    })
+
+    popupEl = el
+    document.body.appendChild(el)
+    ensureGlobalListeners()
+
+    const rect = anchorEl.getBoundingClientRect()
+    adjustTooltipPosition(el, rect)
+  }
+
+  const scheduleImagePopup = () => {
+    clearHideTimeout()
+    options.onBeforeSchedule?.()
+    if (popupEl || popupShowTimeout) return
+    ensureGlobalListeners()
+    popupShowTimeout = setTimeout(showImagePopup, IMAGE_POPUP_DELAY)
+  }
+
+  const hideImagePopup = () => {
+    clearShowTimeout()
+    options.onCleanup?.()
+    if (popupEl) {
+      popupHideTimeout = setTimeout(removeImagePopup, 100)
+    } else if (cleanupGlobalListeners) {
+      cleanupGlobalListeners()
+      cleanupGlobalListeners = null
+    }
+  }
+
+  thumbWrapper.addEventListener('pointerdown', (e) => {
+    lastPointerType = e.pointerType || 'mouse'
+    e.stopPropagation()
+  })
+  thumbWrapper.addEventListener('mousedown', (e) => {
+    e.stopPropagation()
+  })
+  thumbWrapper.addEventListener('dblclick', (e) => {
+    e.stopPropagation()
+  })
+  if (options.preventNativeDrag) {
+    thumbWrapper.addEventListener('dragstart', (e) => {
+      e.preventDefault()
+      e.stopPropagation()
+    })
+  }
+  thumbWrapper.addEventListener('mouseenter', () => {
+    if (lastPointerType === 'touch') return
+    scheduleImagePopup()
+  })
+  thumbWrapper.addEventListener('mouseleave', () => {
+    if (lastPointerType === 'touch') return
+    hideImagePopup()
+  })
+  thumbWrapper.addEventListener('click', (e) => {
+    e.stopPropagation()
+    removeImagePopup()
+    openImageLightbox(imageUrls, 0)
+  })
+}
+
 export const barContent = (task: moguchart.GanttTask) => {
   // サマリータスクの場合（ブラケット形状に最適化した専用レイアウト）
   if (task.type === 'summary') {
@@ -444,76 +778,7 @@ export const barContent = (task: moguchart.GanttTask) => {
       badge.style.cursor = 'default'
       badge.textContent = `💬 ${commentCount}`
 
-      let tooltipEl: HTMLElement | null = null
-      let hideTimeout: ReturnType<typeof setTimeout> | null = null
-
-      const showTooltip = () => {
-        if (hideTimeout) {
-          clearTimeout(hideTimeout)
-          hideTimeout = null
-        }
-        if (tooltipEl) return
-
-        const colors = getTooltipColors()
-        tooltipEl = document.createElement('div')
-        tooltipEl.style.position = 'fixed'
-        tooltipEl.style.zIndex = '9999'
-        tooltipEl.style.backgroundColor = colors.bg
-        tooltipEl.style.color = colors.text
-        tooltipEl.style.border = `1px solid ${colors.border}`
-        tooltipEl.style.borderRadius = '8px'
-        tooltipEl.style.padding = '8px 12px'
-        tooltipEl.style.maxWidth = '320px'
-        tooltipEl.style.fontSize = '12px'
-        tooltipEl.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)'
-        tooltipEl.style.pointerEvents = 'none'
-
-        const rect = badge.getBoundingClientRect()
-        tooltipEl.style.left = `${rect.left}px`
-        tooltipEl.style.top = `${rect.bottom + 4}px`
-
-        const cached = commentsCache.get(taskId)
-        if (cached && Date.now() - cached.fetchedAt < 60000) {
-          renderComments(tooltipEl, cached.data, commentCount)
-        } else {
-          tooltipEl.textContent = `コメント読み込み中... (${commentCount}件)`
-          selectTaskComments(taskId)
-            .then((comments) => {
-              commentsCache.set(taskId, { data: comments, fetchedAt: Date.now() })
-              if (tooltipEl) {
-                renderComments(tooltipEl, comments, commentCount)
-                adjustTooltipPosition(tooltipEl, rect)
-              }
-            })
-            .catch(() => {
-              if (tooltipEl) tooltipEl.textContent = 'コメントの読み込みに失敗しました'
-            })
-        }
-        document.body.appendChild(tooltipEl)
-        adjustTooltipPosition(tooltipEl, rect)
-      }
-
-      const removeTooltip = () => {
-        if (hideTimeout) {
-          clearTimeout(hideTimeout)
-          hideTimeout = null
-        }
-        if (tooltipEl) {
-          tooltipEl.remove()
-          tooltipEl = null
-        }
-      }
-
-      const hideTooltip = () => {
-        hideTimeout = setTimeout(removeTooltip, 100)
-      }
-
-      badge.addEventListener('mouseenter', showTooltip)
-      badge.addEventListener('mouseleave', hideTooltip)
-      badge.addEventListener('mousedown', removeTooltip)
-      document.addEventListener('mousedown', (e) => {
-        if (tooltipEl && e.target !== badge) removeTooltip()
-      })
+      bindCommentBadgeInteractions(badge, commentsCache, taskId, commentCount, () => selectTaskComments(taskId))
 
       milestoneRow.appendChild(badge)
     }
@@ -528,6 +793,15 @@ export const barContent = (task: moguchart.GanttTask) => {
       thumbImg.style.cssText = 'width: 100%; height: 100%; object-fit: cover; display: block;'
       thumbImg.draggable = false
       thumbWrapper.appendChild(thumbImg)
+      thumbWrapper.addEventListener('pointerdown', (e) => {
+        e.stopPropagation()
+      })
+      thumbWrapper.addEventListener('mousedown', (e) => {
+        e.stopPropagation()
+      })
+      thumbWrapper.addEventListener('dblclick', (e) => {
+        e.stopPropagation()
+      })
       thumbWrapper.addEventListener('click', (e) => {
         e.stopPropagation()
         openImageLightbox(milestoneImageUrls, 0)
@@ -622,76 +896,7 @@ export const barContent = (task: moguchart.GanttTask) => {
     badge.style.cursor = 'default'
     badge.textContent = `💬 ${commentCount}`
 
-    let tooltipEl: HTMLElement | null = null
-    let hideTimeout: ReturnType<typeof setTimeout> | null = null
-
-    const showTooltip = () => {
-      if (hideTimeout) {
-        clearTimeout(hideTimeout)
-        hideTimeout = null
-      }
-      if (tooltipEl) return
-
-      const colors = getTooltipColors()
-      tooltipEl = document.createElement('div')
-      tooltipEl.style.position = 'fixed'
-      tooltipEl.style.zIndex = '9999'
-      tooltipEl.style.backgroundColor = colors.bg
-      tooltipEl.style.color = colors.text
-      tooltipEl.style.border = `1px solid ${colors.border}`
-      tooltipEl.style.borderRadius = '8px'
-      tooltipEl.style.padding = '8px 12px'
-      tooltipEl.style.maxWidth = '320px'
-      tooltipEl.style.fontSize = '12px'
-      tooltipEl.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)'
-      tooltipEl.style.pointerEvents = 'none'
-
-      const rect = badge.getBoundingClientRect()
-      tooltipEl.style.left = `${rect.left}px`
-      tooltipEl.style.top = `${rect.bottom + 4}px`
-
-      const cached = commentsCache.get(taskId)
-      if (cached && Date.now() - cached.fetchedAt < 60000) {
-        renderComments(tooltipEl, cached.data, commentCount)
-      } else {
-        tooltipEl.textContent = `コメント読み込み中... (${commentCount}件)`
-        selectTaskComments(taskId)
-          .then((comments) => {
-            commentsCache.set(taskId, { data: comments, fetchedAt: Date.now() })
-            if (tooltipEl) {
-              renderComments(tooltipEl, comments, commentCount)
-              adjustTooltipPosition(tooltipEl, rect)
-            }
-          })
-          .catch(() => {
-            if (tooltipEl) tooltipEl.textContent = 'コメントの読み込みに失敗しました'
-          })
-      }
-      document.body.appendChild(tooltipEl)
-      adjustTooltipPosition(tooltipEl, rect)
-    }
-
-    const removeTooltip = () => {
-      if (hideTimeout) {
-        clearTimeout(hideTimeout)
-        hideTimeout = null
-      }
-      if (tooltipEl) {
-        tooltipEl.remove()
-        tooltipEl = null
-      }
-    }
-
-    const hideTooltip = () => {
-      hideTimeout = setTimeout(removeTooltip, 100)
-    }
-
-    badge.addEventListener('mouseenter', showTooltip)
-    badge.addEventListener('mouseleave', hideTooltip)
-    badge.addEventListener('mousedown', removeTooltip)
-    document.addEventListener('mousedown', (e) => {
-      if (tooltipEl && e.target !== badge) removeTooltip()
-    })
+    bindCommentBadgeInteractions(badge, commentsCache, taskId, commentCount, () => selectTaskComments(taskId))
 
     headerContainer.appendChild(badge)
   }
@@ -713,7 +918,7 @@ export const barContent = (task: moguchart.GanttTask) => {
     thumbWrapper.style.overflow = 'hidden'
     thumbWrapper.style.backgroundColor = 'rgba(255, 255, 255, 0.2)'
     thumbWrapper.style.pointerEvents = 'auto'
-    thumbWrapper.style.cursor = 'default'
+    thumbWrapper.style.cursor = 'zoom-in'
     thumbWrapper.style.border = '1px solid rgba(255, 255, 255, 0.3)'
 
     const thumbImg = document.createElement('img')
@@ -734,143 +939,17 @@ export const barContent = (task: moguchart.GanttTask) => {
       thumbWrapper.appendChild(countBadge)
     }
 
-    thumbWrapper.setAttribute('data-task-thumb', String(task.id))
-
-    let popupEl: HTMLElement | null = null
-    let popupShowTimeout: ReturnType<typeof setTimeout> | null = null
-    let popupHideTimeout: ReturnType<typeof setTimeout> | null = null
-
-    const clearShowTimeout = () => {
-      if (popupShowTimeout) {
-        clearTimeout(popupShowTimeout)
-        popupShowTimeout = null
-      }
-    }
-
-    const clearHideTimeout = () => {
-      if (popupHideTimeout) {
-        clearTimeout(popupHideTimeout)
-        popupHideTimeout = null
-      }
-    }
-
-    const showImagePopup = () => {
-      clearHideTimeout()
-      clearShowTimeout()
-      if (popupEl) return
-
-      let anchorEl: HTMLElement = thumbWrapper
-      if (!anchorEl.isConnected) {
-        const latest = document.querySelector(`[data-task-thumb="${task.id}"]`) as HTMLElement | null
-        if (latest && latest.isConnected) {
-          anchorEl = latest
-        } else {
-          return
-        }
-      }
-
-      // 再レンダリングで孤立した既存ポップアップを削除
-      document.querySelectorAll('[data-moguchart-image-popup]').forEach((el) => el.remove())
-
-      // ガントバーのツールチップを非表示にする
-      hideGanttChartTooltips()
-
-      const colors = getTooltipColors()
-      popupEl = document.createElement('div')
-      popupEl.setAttribute('data-moguchart-image-popup', 'true')
-      popupEl.style.position = 'fixed'
-      popupEl.style.zIndex = '9999'
-      popupEl.style.backgroundColor = colors.bg
-      popupEl.style.border = `1px solid ${colors.border}`
-      popupEl.style.borderRadius = '8px'
-      popupEl.style.padding = '6px'
-      popupEl.style.boxShadow = '0 8px 24px rgba(0,0,0,0.25)'
-      popupEl.style.pointerEvents = 'auto'
-      popupEl.style.cursor = 'zoom-in'
-      popupEl.style.maxWidth = '400px'
-      popupEl.style.maxHeight = '320px'
-      popupEl.style.overflowY = imageUrls.length > 1 ? 'auto' : 'hidden'
-      popupEl.style.display = 'flex'
-      popupEl.style.flexDirection = 'column'
-      popupEl.style.gap = '4px'
-
-      imageUrls.forEach((url, idx) => {
-        const popupImg = document.createElement('img')
-        setImageSrc(popupImg, url)
-        popupImg.style.maxWidth = '388px'
-        popupImg.style.maxHeight = imageUrls.length === 1 ? '296px' : '200px'
-        popupImg.style.objectFit = 'contain'
-        popupImg.style.display = 'block'
-        popupImg.style.borderRadius = '4px'
-        popupImg.style.cursor = 'zoom-in'
-        popupImg.draggable = false
-
-        popupImg.addEventListener('click', (e) => {
-          e.stopPropagation()
-          removeImagePopup()
-          openImageLightbox(imageUrls, idx)
-        })
-        popupEl!.appendChild(popupImg)
-      })
-
-      popupEl.addEventListener('mouseenter', () => {
-        clearHideTimeout()
-      })
-      popupEl.addEventListener('mouseleave', () => {
-        popupHideTimeout = setTimeout(removeImagePopup, 100)
-      })
-
-      document.body.appendChild(popupEl)
-
-      const rect = anchorEl.getBoundingClientRect()
-      adjustTooltipPosition(popupEl, rect)
-    }
-
-    const scheduleImagePopup = () => {
-      clearHideTimeout()
-
-      // ガントバーのツールチップを非表示にする（タイマーもキャンセル）
-      hideGanttChartTooltips()
-      thumbWrapper.dispatchEvent(new CustomEvent('bar-mouseleave', { bubbles: true, composed: true }))
-
-      if (popupEl) return
-      if (popupShowTimeout) return
-
-      popupShowTimeout = setTimeout(showImagePopup, IMAGE_POPUP_DELAY)
-    }
-
-    const removeImagePopup = () => {
-      clearShowTimeout()
-      clearHideTimeout()
-      restoreGanttChartTooltips()
-      if (popupEl) {
-        popupEl.remove()
-        popupEl = null
-      }
-    }
-
-    const hideImagePopup = () => {
-      clearShowTimeout()
-      restoreGanttChartTooltips()
-      if (popupEl) {
-        popupHideTimeout = setTimeout(removeImagePopup, 100)
-      }
-    }
-
-    thumbWrapper.addEventListener('mouseenter', scheduleImagePopup)
-    thumbWrapper.addEventListener('mouseleave', hideImagePopup)
-    thumbWrapper.addEventListener('mousedown', (e) => {
-      // ライトボックスが開くときの mousedown ではポップアップを消さない
-      e.stopPropagation()
-    })
-    document.addEventListener('mousedown', (e) => {
-      if (
-        (popupEl || popupShowTimeout) &&
-        e.target !== thumbWrapper &&
-        !thumbWrapper.contains(e.target as Node) &&
-        (!popupEl || (e.target !== popupEl && !popupEl.contains(e.target as Node)))
-      )
-        removeImagePopup()
+    bindImageThumbnailInteractions(thumbWrapper, imageUrls, {
+      popupAttr: 'data-moguchart-image-popup',
+      anchorAttr: 'data-task-thumb',
+      anchorId: String(task.id),
+      onBeforeSchedule: () => {
+        hideGanttChartTooltips()
+        thumbWrapper.dispatchEvent(new CustomEvent('bar-mouseleave', { bubbles: true, composed: true }))
+      },
+      onCleanup: () => {
+        restoreGanttChartTooltips()
+      },
     })
 
     container.appendChild(thumbWrapper)
@@ -1259,77 +1338,7 @@ export const rowHeaderContent = (row: moguchart.GanttRow, barHeight: number = 38
     badge.style.cursor = 'default'
     badge.textContent = `💬 ${commentCount}`
 
-    let tooltipEl: HTMLElement | null = null
-    let hideTimeout: ReturnType<typeof setTimeout> | null = null
-
-    const showTooltip = (e: MouseEvent) => {
-      if (hideTimeout) {
-        clearTimeout(hideTimeout)
-        hideTimeout = null
-      }
-      if (tooltipEl) return
-
-      const colors = getTooltipColors()
-      tooltipEl = document.createElement('div')
-      tooltipEl.style.position = 'fixed'
-      tooltipEl.style.zIndex = '9999'
-      tooltipEl.style.backgroundColor = colors.bg
-      tooltipEl.style.color = colors.text
-      tooltipEl.style.border = `1px solid ${colors.border}`
-      tooltipEl.style.borderRadius = '8px'
-      tooltipEl.style.padding = '8px 12px'
-      tooltipEl.style.maxWidth = '320px'
-      tooltipEl.style.fontSize = '12px'
-      tooltipEl.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)'
-      tooltipEl.style.pointerEvents = 'none'
-
-      const rect = badge.getBoundingClientRect()
-      tooltipEl.style.left = `${rect.left}px`
-      tooltipEl.style.top = `${rect.bottom + 4}px`
-
-      // キャッシュ or APIから取得
-      const cached = rowCommentsCache.get(rowId)
-      if (cached && Date.now() - cached.fetchedAt < 60000) {
-        renderComments(tooltipEl, cached.data, commentCount)
-      } else {
-        tooltipEl.textContent = `コメント読み込み中... (${commentCount}件)`
-        selectComments({ rowId })
-          .then((comments) => {
-            rowCommentsCache.set(rowId, { data: comments, fetchedAt: Date.now() })
-            if (tooltipEl) {
-              renderComments(tooltipEl, comments, commentCount)
-              adjustTooltipPosition(tooltipEl, rect)
-            }
-          })
-          .catch(() => {
-            if (tooltipEl) tooltipEl.textContent = 'コメントの読み込みに失敗しました'
-          })
-      }
-      document.body.appendChild(tooltipEl)
-      adjustTooltipPosition(tooltipEl, rect)
-    }
-
-    const removeTooltip = () => {
-      if (hideTimeout) {
-        clearTimeout(hideTimeout)
-        hideTimeout = null
-      }
-      if (tooltipEl) {
-        tooltipEl.remove()
-        tooltipEl = null
-      }
-    }
-
-    const hideTooltip = () => {
-      hideTimeout = setTimeout(removeTooltip, 100)
-    }
-
-    badge.addEventListener('mouseenter', showTooltip)
-    badge.addEventListener('mouseleave', hideTooltip)
-    badge.addEventListener('mousedown', removeTooltip)
-    document.addEventListener('mousedown', (e) => {
-      if (tooltipEl && e.target !== badge) removeTooltip()
-    })
+    bindCommentBadgeInteractions(badge, rowCommentsCache, rowId, commentCount, () => selectComments({ rowId }))
 
     nameRow.appendChild(badge)
   }
@@ -1353,7 +1362,7 @@ export const rowHeaderContent = (row: moguchart.GanttRow, barHeight: number = 38
     thumbWrapper.style.overflow = 'hidden'
     thumbWrapper.style.backgroundColor = 'rgba(var(--v-theme-on-surface), 0.08)'
     thumbWrapper.style.pointerEvents = 'auto'
-    thumbWrapper.style.cursor = 'default'
+    thumbWrapper.style.cursor = 'zoom-in'
     thumbWrapper.style.border = '1px solid rgba(var(--v-theme-on-surface), 0.15)'
 
     const thumbImg = document.createElement('img')
@@ -1374,136 +1383,14 @@ export const rowHeaderContent = (row: moguchart.GanttRow, barHeight: number = 38
       thumbWrapper.appendChild(countBadge)
     }
 
-    thumbWrapper.setAttribute('data-row-thumb', String(row.id))
-
-    let popupEl: HTMLElement | null = null
-    let popupShowTimeout: ReturnType<typeof setTimeout> | null = null
-    let popupHideTimeout: ReturnType<typeof setTimeout> | null = null
-
-    const clearShowTimeout = () => {
-      if (popupShowTimeout) {
-        clearTimeout(popupShowTimeout)
-        popupShowTimeout = null
-      }
-    }
-
-    const clearHideTimeout = () => {
-      if (popupHideTimeout) {
-        clearTimeout(popupHideTimeout)
-        popupHideTimeout = null
-      }
-    }
-
-    const showImagePopup = () => {
-      clearHideTimeout()
-      clearShowTimeout()
-      if (popupEl) return
-
-      let anchorEl: HTMLElement = thumbWrapper
-      if (!anchorEl.isConnected) {
-        const latest = document.querySelector(`[data-row-thumb="${row.id}"]`) as HTMLElement | null
-        if (latest && latest.isConnected) {
-          anchorEl = latest
-        } else {
-          return
-        }
-      }
-
-      // 既存のポップアップを削除
-      document.querySelectorAll('[data-moguchart-row-image-popup]').forEach((el) => el.remove())
-
-      const colors = getTooltipColors()
-      popupEl = document.createElement('div')
-      popupEl.setAttribute('data-moguchart-row-image-popup', 'true')
-      popupEl.style.position = 'fixed'
-      popupEl.style.zIndex = '9999'
-      popupEl.style.backgroundColor = colors.bg
-      popupEl.style.border = `1px solid ${colors.border}`
-      popupEl.style.borderRadius = '8px'
-      popupEl.style.padding = '6px'
-      popupEl.style.boxShadow = '0 8px 24px rgba(0,0,0,0.25)'
-      popupEl.style.pointerEvents = 'auto'
-      popupEl.style.cursor = 'zoom-in'
-      popupEl.style.maxWidth = '400px'
-      popupEl.style.maxHeight = '320px'
-      popupEl.style.overflowY = rowImageUrls.length > 1 ? 'auto' : 'hidden'
-      popupEl.style.display = 'flex'
-      popupEl.style.flexDirection = 'column'
-      popupEl.style.gap = '4px'
-
-      rowImageUrls.forEach((url, idx) => {
-        const popupImg = document.createElement('img')
-        setImageSrc(popupImg, url)
-        popupImg.style.maxWidth = '388px'
-        popupImg.style.maxHeight = rowImageUrls.length === 1 ? '296px' : '200px'
-        popupImg.style.objectFit = 'contain'
-        popupImg.style.display = 'block'
-        popupImg.style.borderRadius = '4px'
-        popupImg.style.cursor = 'zoom-in'
-        popupImg.draggable = false
-
-        popupImg.addEventListener('click', (e) => {
-          e.stopPropagation()
-          removeImagePopup()
-          openImageLightbox(rowImageUrls, idx)
-        })
-        popupEl!.appendChild(popupImg)
-      })
-
-      popupEl.addEventListener('mouseenter', () => {
-        clearHideTimeout()
-      })
-      popupEl.addEventListener('mouseleave', () => {
-        popupHideTimeout = setTimeout(removeImagePopup, 100)
-      })
-
-      document.body.appendChild(popupEl)
-
-      const rect = anchorEl.getBoundingClientRect()
-      adjustTooltipPosition(popupEl, rect)
-    }
-
-    const scheduleImagePopup = () => {
-      clearHideTimeout()
-
-      // 行ヘッダーのツールチップを非表示にする（タイマーもキャンセル）
-      thumbWrapper.dispatchEvent(new CustomEvent('row-header-mouseleave', { bubbles: true, composed: true }))
-
-      if (popupEl) return
-      if (popupShowTimeout) return
-
-      popupShowTimeout = setTimeout(showImagePopup, IMAGE_POPUP_DELAY)
-    }
-
-    const removeImagePopup = () => {
-      clearShowTimeout()
-      clearHideTimeout()
-      if (popupEl) {
-        popupEl.remove()
-        popupEl = null
-      }
-    }
-
-    const hideImagePopup = () => {
-      clearShowTimeout()
-      if (popupEl) {
-        popupHideTimeout = setTimeout(removeImagePopup, 100)
-      }
-    }
-
-    thumbWrapper.addEventListener('mouseenter', scheduleImagePopup)
-    thumbWrapper.addEventListener('mouseleave', hideImagePopup)
-    thumbWrapper.addEventListener('mousedown', (e) => {
-      e.stopPropagation()
-    })
-    document.addEventListener('mousedown', (e) => {
-      if (
-        (popupEl || popupShowTimeout) &&
-        e.target !== thumbWrapper &&
-        !thumbWrapper.contains(e.target as Node) &&
-        (!popupEl || (e.target !== popupEl && !popupEl.contains(e.target as Node)))
-      )
-        removeImagePopup()
+    bindImageThumbnailInteractions(thumbWrapper, rowImageUrls, {
+      popupAttr: 'data-moguchart-row-image-popup',
+      anchorAttr: 'data-row-thumb',
+      anchorId: String(row.id),
+      onBeforeSchedule: () => {
+        thumbWrapper.dispatchEvent(new CustomEvent('row-header-mouseleave', { bubbles: true, composed: true }))
+      },
+      preventNativeDrag: true,
     })
 
     container.appendChild(thumbWrapper)
@@ -1871,8 +1758,13 @@ export const createCornerContent = (getOptions: () => CornerContentOptions) => {
 
     // --- ポップアップパネル ---
     let panel: HTMLElement | null = null
+    let cleanupOutsideListener: (() => void) | null = null
 
     const removePanel = () => {
+      if (cleanupOutsideListener) {
+        cleanupOutsideListener()
+        cleanupOutsideListener = null
+      }
       if (panel) {
         panel.remove()
         panel = null
@@ -2110,16 +2002,21 @@ export const createCornerContent = (getOptions: () => CornerContentOptions) => {
       panel = createPanel()
       document.body.appendChild(panel)
 
-      // 外クリックで閉じる
-      const onOutside = (ev: MouseEvent) => {
+      // 外クリック・外タップで閉じる
+      const onOutside = (ev: PointerEvent) => {
         const path = typeof ev.composedPath === 'function' ? ev.composedPath() : []
         if (panel && !panel.contains(ev.target as Node) && ev.target !== btn && !path.includes(btn)) {
           removePanel()
-          document.removeEventListener('mousedown', onOutside)
         }
       }
       // 次のイベントループで登録（今回のクリックに反応しないよう）
-      setTimeout(() => document.addEventListener('mousedown', onOutside), 0)
+      const timerId = setTimeout(() => {
+        document.addEventListener('pointerdown', onOutside, true)
+      }, 0)
+      cleanupOutsideListener = () => {
+        clearTimeout(timerId)
+        document.removeEventListener('pointerdown', onOutside, true)
+      }
     })
 
     if (editSwitchBtn) {
@@ -2210,9 +2107,11 @@ export const createCalendarDayContent = (isHoliday?: moguchart.GanttHolidayCheck
       'width: 100%; margin: -6px 0; padding: 6px 0; display: flex; align-items: center; justify-content: center; box-sizing: border-box;'
     cellEl.textContent = ctx.defaultLabel
 
-    cellEl.addEventListener('mouseenter', () => {
+    let lastPointerType = 'mouse'
+
+    const openHolidayTooltipNow = (delayMs: number) => {
       removeHolidayTooltip()
-      activeHolidayShowTimer = setTimeout(() => {
+      const show = () => {
         activeHolidayShowTimer = null
         if (!cellEl.isConnected) return
 
@@ -2250,8 +2149,14 @@ export const createCalendarDayContent = (isHoliday?: moguchart.GanttHolidayCheck
         const rect = cellEl.getBoundingClientRect()
         adjustCenteredTooltipPosition(tooltipEl, rect)
 
+        const onOutsidePointerDown = (ev: PointerEvent) => {
+          const path = typeof ev.composedPath === 'function' ? ev.composedPath() : []
+          if (ev.target === cellEl || cellEl.contains(ev.target as Node) || path.includes(cellEl)) return
+          removeHolidayTooltip()
+        }
         const onDismiss = () => removeHolidayTooltip()
         const onMouseMove = (ev: MouseEvent) => {
+          if (lastPointerType === 'touch') return
           if (!cellEl.isConnected) {
             removeHolidayTooltip()
             return
@@ -2263,20 +2168,47 @@ export const createCalendarDayContent = (isHoliday?: moguchart.GanttHolidayCheck
         }
         window.addEventListener('scroll', onDismiss, true)
         window.addEventListener('wheel', onDismiss, { passive: true })
-        document.addEventListener('mousedown', onDismiss, true)
+        document.addEventListener('pointerdown', onOutsidePointerDown, true)
         document.addEventListener('mousemove', onMouseMove, { passive: true })
 
         activeHolidayCleanupListeners = () => {
           window.removeEventListener('scroll', onDismiss, true)
           window.removeEventListener('wheel', onDismiss)
-          document.removeEventListener('mousedown', onDismiss, true)
+          document.removeEventListener('pointerdown', onOutsidePointerDown, true)
           document.removeEventListener('mousemove', onMouseMove)
         }
-      }, 150)
-    })
+      }
 
-    cellEl.addEventListener('mouseleave', removeHolidayTooltip)
-    cellEl.addEventListener('mousedown', removeHolidayTooltip)
+      if (delayMs <= 0) {
+        show()
+      } else {
+        activeHolidayShowTimer = setTimeout(show, delayMs)
+      }
+    }
+
+    cellEl.addEventListener('pointerdown', (e) => {
+      lastPointerType = e.pointerType || 'mouse'
+      if (lastPointerType !== 'touch') {
+        removeHolidayTooltip()
+      }
+    })
+    cellEl.addEventListener('mouseenter', () => {
+      if (lastPointerType === 'touch') return
+      openHolidayTooltipNow(150)
+    })
+    cellEl.addEventListener('mouseleave', () => {
+      if (lastPointerType === 'touch') return
+      removeHolidayTooltip()
+    })
+    cellEl.addEventListener('click', () => {
+      if (lastPointerType === 'touch') {
+        if (activeHolidayTooltipEl) {
+          removeHolidayTooltip()
+        } else {
+          openHolidayTooltipNow(0)
+        }
+      }
+    })
 
     return cellEl
   }
@@ -2284,7 +2216,7 @@ export const createCalendarDayContent = (isHoliday?: moguchart.GanttHolidayCheck
 
 /**
  * マルチカラムグリッドの担当者セルを描画し、テキストがセル幅を超えて省略表示されている場合のみ
- * マウスオーバーで全文ツールチップを表示する。
+ * マウスオーバーまたはタッチタップで全文ツールチップを表示する。
  */
 export const renderAssigneesGridCell = (text: string): HTMLElement => {
   const cellEl = document.createElement('div')
@@ -2306,11 +2238,17 @@ export const renderAssigneesGridCell = (text: string): HTMLElement => {
 
   let tooltipEl: HTMLElement | null = null
   let showTimer: ReturnType<typeof setTimeout> | null = null
+  let cleanupGlobalListeners: (() => void) | null = null
+  let lastPointerType = 'mouse'
 
   const removeTooltip = () => {
     if (showTimer) {
       clearTimeout(showTimer)
       showTimer = null
+    }
+    if (cleanupGlobalListeners) {
+      cleanupGlobalListeners()
+      cleanupGlobalListeners = null
     }
     if (tooltipEl) {
       tooltipEl.remove()
@@ -2318,43 +2256,86 @@ export const renderAssigneesGridCell = (text: string): HTMLElement => {
     }
   }
 
-  cellEl.addEventListener('mouseenter', () => {
-    // 表示しきれている場合はツールチップを表示しない
+  const showAssigneesTooltip = (delayMs: number) => {
     if (textSpan.scrollWidth <= textSpan.clientWidth) return
-
     removeTooltip()
-    showTimer = setTimeout(() => {
+
+    const renderNow = () => {
+      showTimer = null
       if (!cellEl.isConnected || textSpan.scrollWidth <= textSpan.clientWidth) return
 
       document.querySelectorAll('[data-moguchart-assignees-tooltip]').forEach((el) => el.remove())
 
       const colors = getTooltipColors()
-      tooltipEl = document.createElement('div')
-      tooltipEl.setAttribute('data-moguchart-assignees-tooltip', 'true')
-      tooltipEl.style.position = 'fixed'
-      tooltipEl.style.zIndex = '9999'
-      tooltipEl.style.backgroundColor = colors.bg
-      tooltipEl.style.color = colors.text
-      tooltipEl.style.border = `1px solid ${colors.border}`
-      tooltipEl.style.borderRadius = '8px'
-      tooltipEl.style.padding = '6px 10px'
-      tooltipEl.style.maxWidth = '320px'
-      tooltipEl.style.fontSize = '12px'
-      tooltipEl.style.lineHeight = '1.5'
-      tooltipEl.style.wordBreak = 'break-word'
-      tooltipEl.style.whiteSpace = 'normal'
-      tooltipEl.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)'
-      tooltipEl.style.pointerEvents = 'none'
-      tooltipEl.textContent = text
+      const el = document.createElement('div')
+      el.setAttribute('data-moguchart-assignees-tooltip', 'true')
+      el.style.position = 'fixed'
+      el.style.zIndex = '9999'
+      el.style.backgroundColor = colors.bg
+      el.style.color = colors.text
+      el.style.border = `1px solid ${colors.border}`
+      el.style.borderRadius = '8px'
+      el.style.padding = '6px 10px'
+      el.style.maxWidth = '320px'
+      el.style.fontSize = '12px'
+      el.style.lineHeight = '1.5'
+      el.style.wordBreak = 'break-word'
+      el.style.whiteSpace = 'normal'
+      el.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)'
+      el.style.pointerEvents = 'none'
+      el.textContent = text
 
-      document.body.appendChild(tooltipEl)
+      tooltipEl = el
+      document.body.appendChild(el)
       const rect = cellEl.getBoundingClientRect()
-      adjustTooltipPosition(tooltipEl, rect)
-    }, 200)
-  })
+      adjustTooltipPosition(el, rect)
 
-  cellEl.addEventListener('mouseleave', removeTooltip)
-  cellEl.addEventListener('mousedown', removeTooltip)
+      const onOutsidePointerDown = (ev: PointerEvent) => {
+        const path = typeof ev.composedPath === 'function' ? ev.composedPath() : []
+        if (ev.target === cellEl || cellEl.contains(ev.target as Node) || path.includes(cellEl)) return
+        removeTooltip()
+      }
+      const onScrollOrWheel = () => removeTooltip()
+      document.addEventListener('pointerdown', onOutsidePointerDown, true)
+      window.addEventListener('scroll', onScrollOrWheel, true)
+      window.addEventListener('wheel', onScrollOrWheel, { passive: true })
+      cleanupGlobalListeners = () => {
+        document.removeEventListener('pointerdown', onOutsidePointerDown, true)
+        window.removeEventListener('scroll', onScrollOrWheel, true)
+        window.removeEventListener('wheel', onScrollOrWheel)
+      }
+    }
+
+    if (delayMs <= 0) {
+      renderNow()
+    } else {
+      showTimer = setTimeout(renderNow, delayMs)
+    }
+  }
+
+  cellEl.addEventListener('pointerdown', (e) => {
+    lastPointerType = e.pointerType || 'mouse'
+    if (lastPointerType !== 'touch') {
+      removeTooltip()
+    }
+  })
+  cellEl.addEventListener('mouseenter', () => {
+    if (lastPointerType === 'touch') return
+    showAssigneesTooltip(200)
+  })
+  cellEl.addEventListener('mouseleave', () => {
+    if (lastPointerType === 'touch') return
+    removeTooltip()
+  })
+  cellEl.addEventListener('click', () => {
+    if (lastPointerType === 'touch') {
+      if (tooltipEl) {
+        removeTooltip()
+      } else {
+        showAssigneesTooltip(0)
+      }
+    }
+  })
 
   return cellEl
 }
