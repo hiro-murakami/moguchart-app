@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Moguchart REST API
-  version: 1.7.0
+  version: 1.8.0
   description: |
     Moguchartの外部アプリ向けREST API。
     ガントチャートプロジェクトの管理（プロジェクト・行・タスク・コメント・スナップショット）を提供します。
@@ -1692,6 +1692,7 @@ components:
                 type: string
               duration:
                 type: number
+                description: タスク期間（日数。マイルストーンの場合は 0）
               attribute:
                 $ref: '#/components/schemas/TaskAttribute'
           description: 新規タスクテンプレート一覧
@@ -1711,7 +1712,42 @@ components:
         autoScheduleCalendarMode:
           type: string
           enum: [calendar, weekends, weekends-holidays]
-          description: 自動スケジューリングの稼働日（休日除外）計算モード（'calendar'：カレンダー通り、'weekends'：土日を除外、'weekends-holidays'：土日・祝日を除外、未指定時は 'calendar'）
+          description: スケジューリングおよび稼働日算出の休日除外モード（'calendar'：カレンダー通り、'weekends'：定休日を除外、'weekends-holidays'：定休日・祝日を除外、未指定時は 'calendar'）
+        nonWorkingDays:
+          type: array
+          items:
+            type: integer
+            minimum: 0
+            maximum: 6
+          description: 非営業日（定休日）とする曜日の配列（0=日曜, 1=月曜, ..., 6=土曜。未指定時は [0, 6]）
+        nonWorkingDates:
+          type: array
+          items:
+            $ref: '#/components/schemas/CustomNonWorkingDate'
+          description: カスタム定休日・休日（特定日・期間）の配列
+        preserveWorkingDaysOnDrag:
+          type: boolean
+          description: タスクのドラッグ移動時に稼働日数を維持するかどうか（trueの場合、非営業日を跨いでも稼働日数が変わらないよう終了日を自動調整）
+
+    CustomNonWorkingDate:
+      type: object
+      required: [start]
+      description: カスタム定休日・休日定義
+      properties:
+        start:
+          type: string
+          format: date
+          description: 開始日（YYYY-MM-DD）
+        end:
+          type: string
+          format: date
+          description: 終了日（包含、YYYY-MM-DD。単一日指定の場合は start と同日または省略可）
+        name:
+          type: string
+          description: 休日の名称（任意）
+        color:
+          type: string
+          description: カレンダー・行背景のカスタム背景色（CSSカラー文字列・任意。未指定時は標準の休日色）
 
     TaskDependencyLink:
       type: object
@@ -1733,6 +1769,10 @@ components:
       type: object
       description: タスクの追加属性
       properties:
+        type:
+          type: string
+          enum: [task, milestone]
+          description: タスク種別（'task'：通常タスク、'milestone'：マイルストーン。未指定時は 'task'）
         description:
           type: string
           description: タスクの説明
@@ -2209,6 +2249,20 @@ components:
         minimapCollapsed:
           type: boolean
           description: ミニマップが最小化（折りたたみ）されているかどうか
+        gridEnabled:
+          type: boolean
+          description: マルチカラムグリッドを表示するかどうか
+        gridEditable:
+          type: boolean
+          description: マルチカラムグリッドのインライン編集を有効にするかどうか
+        gridColumns:
+          type: array
+          items:
+            type: string
+          description: マルチカラムグリッドで表示するカラムIDの配列
+        starred:
+          type: boolean
+          description: スター付きフラグ
 
     ApiKeyMasked:
       type: object
