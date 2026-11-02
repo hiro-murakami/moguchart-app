@@ -495,7 +495,7 @@ const handleOpenSlideSchedule = async () => {
                 :open-delay="500"
               >
                 <template #activator="{ props: descTipProps }">
-                  <div v-bind="descTipProps" class="project-description text-caption text-medium-emphasis text-truncate">
+                  <div v-bind="descTipProps" class="project-description text-medium-emphasis text-truncate">
                     {{ currentProject.attribute.description }}
                   </div>
                 </template>
@@ -1046,7 +1046,9 @@ const handleOpenSlideSchedule = async () => {
 
 .project-description {
   max-width: 100%;
+  font-size: 0.75rem;
   line-height: 1.3;
+  letter-spacing: 0.02em;
   margin-top: 1px;
 }
 
@@ -1089,7 +1091,7 @@ const handleOpenSlideSchedule = async () => {
 }
 
 /* 大画面では検索欄・ラベル欄をゆったり表示 */
-@container project-header (min-width: 1280px) {
+@container project-header (min-width: 1400px) {
   .search-text-field {
     flex-basis: 260px;
     width: 260px;
@@ -1104,10 +1106,33 @@ const handleOpenSlideSchedule = async () => {
   }
 }
 
-/* iPad横画面・中解像度以下ではボタンと入力欄を引き締める */
-@container project-header (max-width: 1180px) {
+@media (max-height: 820px) {
   .project-title {
     font-size: 1.05rem;
+  }
+  .header-compact-field :deep(.v-field) {
+    --v-input-control-height: 36px;
+    --v-input-padding-top: 4px;
+    font-size: 13px;
+  }
+  .header-compact-field :deep(.v-field__input) {
+    min-height: 36px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    align-items: center;
+  }
+  .header-compact-field :deep(.v-field-label:not(.v-field-label--floating)) {
+    font-size: 13px;
+  }
+}
+
+/* iPad Pro 13横画面を含む中解像度以下ではタイトル・説明・ボタン・入力欄を引き締める */
+@container project-header (max-width: 1380px) {
+  .project-title {
+    font-size: 0.95rem;
+  }
+  .project-description {
+    font-size: 0.7rem;
   }
   .project-header__actions {
     gap: 0;
@@ -1135,28 +1160,14 @@ const handleOpenSlideSchedule = async () => {
   }
 }
 
-@media (max-height: 820px) {
-  .project-title {
-    font-size: 1.05rem;
-  }
-  .header-compact-field :deep(.v-field) {
-    --v-input-control-height: 36px;
-    --v-input-padding-top: 4px;
-    font-size: 13px;
-  }
-  .header-compact-field :deep(.v-field__input) {
-    min-height: 36px;
-    padding-top: 4px;
-    padding-bottom: 4px;
-    align-items: center;
-  }
-  .header-compact-field :deep(.v-field-label:not(.v-field-label--floating)) {
-    font-size: 13px;
-  }
-}
-
-/* 2段折り返し発生する中狭幅以下では検索欄・ラベル欄を適度に伸縮可能にする */
+/* 2段折り返し発生する中狭幅以下ではタイトル・説明をさらに縮小し、検索欄・ラベル欄を伸縮可能にする */
 @container project-header (max-width: 940px) {
+  .project-title {
+    font-size: 0.875rem;
+  }
+  .project-description {
+    font-size: 0.675rem;
+  }
   .project-header__controls {
     flex: 1 1 100%;
   }
@@ -1172,8 +1183,14 @@ const handleOpenSlideSchedule = async () => {
   }
 }
 
-/* 極狭幅（タブレット縦＋サイドバー展開時など）ではタイトル行とアクション群、コントロール群も折り返し可能にする */
+/* 極狭幅（タブレット縦＋サイドバー展開時・スマホなど）ではタイトル行とアクション群、コントロール群も折り返し可能にする */
 @container project-header (max-width: 640px) {
+  .project-title {
+    font-size: 0.8125rem;
+  }
+  .project-description {
+    font-size: 0.65rem;
+  }
   .project-header__title-bar {
     flex-wrap: wrap;
   }
