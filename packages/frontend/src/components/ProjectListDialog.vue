@@ -77,13 +77,13 @@ const handleFileChange = (e: Event) => {
     min-height="min(700px, calc(100dvh - 48px))"
     scrollable
   >
-    <v-card v-draggable-dialog>
-      <v-card-title class="d-flex justify-space-between align-center pt-5 px-6 pb-3">
+    <v-card v-draggable-dialog class="project-list-card">
+      <v-card-title class="d-flex justify-space-between align-center pt-5 px-6 pb-3 flex-shrink-0">
         <span>プロジェクト一覧</span>
         <v-btn icon="mdi-close" variant="text" density="comfortable" @click="close"></v-btn>
       </v-card-title>
-      <v-card-text class="px-6 pb-6 pt-0">
-        <div class="d-flex">
+      <v-card-text class="px-6 pb-6 pt-0 project-list-card-text">
+        <div class="project-list-body">
           <!-- 縦タブ -->
           <v-tabs
             v-model="activeTab"
@@ -98,8 +98,8 @@ const handleFileChange = (e: Event) => {
           </v-tabs>
 
           <!-- テーブル -->
-          <div class="flex-grow-1 overflow-hidden">
-            <div class="d-flex align-center flex-wrap my-2" style="gap: 12px">
+          <div class="project-table-area">
+            <div class="d-flex align-center flex-wrap my-2 flex-shrink-0" style="gap: 12px">
               <v-text-field
                 v-model="searchQuery"
                 prepend-inner-icon="mdi-magnify"
@@ -155,8 +155,9 @@ const handleFileChange = (e: Event) => {
               :items="filteredProjects"
               :loading="loading || deleting || downloading || restoring || archiving"
               hover
+              fixed-header
               density="compact"
-              class="row-pointer"
+              class="row-pointer project-data-table"
               @click:row="(_: unknown, { item }: { item: Project }) => selectProject(item)"
             >
               <template #item.project="{ item }">
@@ -363,6 +364,56 @@ const handleFileChange = (e: Event) => {
 </template>
 
 <style scoped>
+.project-list-card {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 48px);
+  overflow: hidden !important;
+}
+
+.project-list-card-text {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden !important;
+}
+
+.project-list-body {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.project-table-area {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+.project-data-table {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.project-data-table :deep(.v-table__wrapper) {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.project-data-table :deep(thead th) {
+  white-space: nowrap;
+}
+
 .row-pointer :deep(tbody tr) {
   cursor: pointer;
 }
