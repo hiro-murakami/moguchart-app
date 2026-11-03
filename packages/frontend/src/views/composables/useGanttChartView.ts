@@ -299,7 +299,6 @@ export const useGanttChartView = () => {
   const basePxPerMonth = ref(DEFAULT_PX_PER_MONTH)
   const basePxPerHour = ref(DEFAULT_PX_PER_HOUR)
   const baseRowHeaderWidth = ref(DEFAULT_ROW_HEADER_WIDTH)
-  const baseGridRowHeaderWidth = ref(600)
   const baseBarHeight = ref(DEFAULT_BAR_HEIGHT)
 
   // マルチカラムグリッド設定
@@ -317,9 +316,6 @@ export const useGanttChartView = () => {
   const pxPerHour = computed(() => Math.max(30, Math.round(basePxPerHour.value * zoomScale.value)))
   const effectiveRowHeaderWidth = computed(() =>
     Math.max(60, Math.min(600, Math.round(baseRowHeaderWidth.value * zoomScale.value))),
-  )
-  const effectiveGridRowHeaderWidth = computed(() =>
-    Math.max(120, Math.min(1600, Math.round(baseGridRowHeaderWidth.value * zoomScale.value))),
   )
   const effectiveBarHeight = computed(() =>
     Math.max(16, Math.round(baseBarHeight.value * Math.max(0.7, Math.min(1.5, 1 + (zoomScale.value - 1) * 0.7)))),
@@ -424,6 +420,43 @@ export const useGanttChartView = () => {
   )
   const currentProject = computed(() => (isSnapshotMode.value ? snapshotProject.value : storeProject.value))
   const currentRole = computed(() => (isSnapshotMode.value ? 'viewer' : storeRole.value))
+
+  /**
+   * マルチカラムグリッド表示時の列ヘッダ表示幅（表示対象カラムの合計幅）
+   */
+  const baseGridRowHeaderWidth = computed(() => {
+    const granularity = currentProject.value?.attribute?.granularity
+    const isMonthly = granularity === 'monthly'
+    const isHourly = granularity === 'hourly'
+    const calendarMode: moguchart.AutoScheduleCalendarMode =
+      isMonthly || isHourly
+        ? 'calendar'
+        : currentProject.value?.attribute?.autoScheduleCalendarMode || 'calendar'
+    const hasWorkingDays = !isMonthly && !isHourly && calendarMode !== 'calendar'
+    const enableProgress = currentProject.value?.attribute?.enableProgress !== false
+
+    const rawColumns: moguchart.GanttColumn[] = (
+      ['wbs', 'name', 'assignees', 'startDate', 'endDate', 'duration', 'workingDays', 'progress'] as const
+    )
+      .filter((id) => {
+        if (id === 'progress') return enableProgress
+        if (id === 'workingDays') return hasWorkingDays
+        return true
+      })
+      .map((id) => ({
+        id,
+        visible: id === 'name' ? true : gridColumns.value.includes(id),
+        ...(gridColumnWidths.value[id] ? { width: gridColumnWidths.value[id] } : {}),
+        ...(id === 'assignees' ? { width: gridColumnWidths.value[id] ?? 100 } : {}),
+        ...(id === 'workingDays' ? { width: gridColumnWidths.value[id] ?? 80 } : {}),
+      }))
+
+    const normalized = moguchart.normalizeGridColumns(rawColumns, undefined, isMonthly, isHourly)
+    return normalized
+      .filter((col) => col.visible !== false)
+      .reduce((sum, col) => sum + (col.width ?? 100), 0)
+  })
+  const effectiveGridRowHeaderWidth = baseGridRowHeaderWidth
 
   const ganttChartRef = ref<GanttChartInstance | null>(null)
 
@@ -610,12 +643,21 @@ export const useGanttChartView = () => {
     })
   })
 
-  // グリッド行ヘッダー基準幅変更時に保存
-  watch(baseGridRowHeaderWidth, (newValue) => {
-    saveProjectSettings({
-      baseGridRowHeaderWidth: newValue,
-      gridRowHeaderWidth: effectiveGridRowHeaderWidth.value,
-    })
+  // マルチカラムグリッドの表示切替やカラム幅変更時にチャートの行ヘッダー幅を同期
+  watch([gridEnabled, baseGridRowHeaderWidth, baseRowHeaderWidth], ([enabled, gridWidth, rowWidth]) => {
+    const el = ganttChartRef.value?.element
+    if (!el) return
+    if (enabled) {
+      el.baseRowHeaderWidth = gridWidth
+      el.currentRowHeaderWidth = gridWidth
+      ;(el as any)._userResizedHeaderWidth = gridWidth
+      ;(el as any).currentGridScrollLeft = 0
+    } else {
+      el.baseRowHeaderWidth = rowWidth
+      el.currentRowHeaderWidth = el.effectiveRowHeaderWidth
+      ;(el as any)._userResizedHeaderWidth = el.currentRowHeaderWidth
+      ;(el as any).currentGridScrollLeft = 0
+    }
   })
 
   // マルチカラムグリッド設定変更時に保存
@@ -754,15 +796,6 @@ export const useGanttChartView = () => {
           baseRowHeaderWidth.value = settings.rowHeaderWidth
         } else {
           baseRowHeaderWidth.value = DEFAULT_ROW_HEADER_WIDTH
-        }
-
-        // baseGridRowHeaderWidthの復元
-        if (settings?.baseGridRowHeaderWidth) {
-          baseGridRowHeaderWidth.value = settings.baseGridRowHeaderWidth
-        } else if (settings?.gridRowHeaderWidth) {
-          baseGridRowHeaderWidth.value = settings.gridRowHeaderWidth
-        } else {
-          baseGridRowHeaderWidth.value = 600
         }
 
         // マルチカラムグリッド設定の復元
@@ -1378,8 +1411,9 @@ export const useGanttChartView = () => {
         milestones: milestones.length > 0 ? milestones : undefined,
       },
       rowHeader: {
-        maxWidth: gridEnabled.value ? 1600 : 400,
+        maxWidth: gridEnabled.value ? Math.max(1600, baseGridRowHeaderWidth.value) : 400,
         width: gridEnabled.value ? baseGridRowHeaderWidth.value : baseRowHeaderWidth.value,
+        resizable: !gridEnabled.value,
       },
       grid: {
         enabled: gridEnabled.value,
@@ -1507,6 +1541,9 @@ export const useGanttChartView = () => {
         minPercent: ZOOM_PERCENT.min,
         maxPercent: ZOOM_PERCENT.max,
         levels: moguchart.CHROME_ZOOM_LEVELS,
+        scaleElements: {
+          rowHeader: !gridEnabled.value,
+        },
       },
       dependency: {
         showCriticalPath: showCriticalPath.value,
@@ -3924,12 +3961,9 @@ export const useGanttChartView = () => {
   }
 
   const handleRowHeaderResize = (e: any) => {
+    if (gridEnabled.value) return
     const detail = getDetail<moguchart.RowHeaderResizeEventDetail>(e)
-    if (gridEnabled.value) {
-      baseGridRowHeaderWidth.value = Math.max(120, Math.round(detail.width / zoomScale.value))
-    } else {
-      baseRowHeaderWidth.value = Math.max(60, Math.round(detail.width / zoomScale.value))
-    }
+    baseRowHeaderWidth.value = Math.max(60, Math.round(detail.width / zoomScale.value))
   }
 
   const handleColumnResize = (e: any) => {
