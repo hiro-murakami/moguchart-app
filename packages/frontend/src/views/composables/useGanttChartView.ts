@@ -302,10 +302,38 @@ export const useGanttChartView = () => {
   const baseBarHeight = ref(DEFAULT_BAR_HEIGHT)
 
   // マルチカラムグリッド設定
+  const ALL_GRID_COLUMN_IDS = [
+    'wbs',
+    'name',
+    'assignees',
+    'startDate',
+    'endDate',
+    'duration',
+    'workingDays',
+    'progress',
+  ] as const
   const DEFAULT_GRID_COLUMNS = ['name', 'assignees', 'startDate', 'endDate', 'duration', 'workingDays', 'progress']
+  const normalizeGridColumnOrder = (order?: string[]): string[] => {
+    const validSet = new Set<string>(ALL_GRID_COLUMN_IDS)
+    const result: string[] = []
+    if (Array.isArray(order)) {
+      for (const id of order) {
+        if (validSet.has(id) && !result.includes(id)) {
+          result.push(id)
+        }
+      }
+    }
+    for (const id of ALL_GRID_COLUMN_IDS) {
+      if (!result.includes(id)) {
+        result.push(id)
+      }
+    }
+    return result
+  }
   const gridEnabled = ref(false)
   const gridEditable = ref(true)
   const gridColumns = ref<string[]>([...DEFAULT_GRID_COLUMNS])
+  const gridColumnOrder = ref<string[]>([...ALL_GRID_COLUMN_IDS])
   const gridColumnWidths = ref<Record<string, number>>({})
 
   // 実効値（ズーム連動）
@@ -435,9 +463,8 @@ export const useGanttChartView = () => {
     const hasWorkingDays = !isMonthly && !isHourly && calendarMode !== 'calendar'
     const enableProgress = currentProject.value?.attribute?.enableProgress !== false
 
-    const rawColumns: moguchart.GanttColumn[] = (
-      ['wbs', 'name', 'assignees', 'startDate', 'endDate', 'duration', 'workingDays', 'progress'] as const
-    )
+    const orderedColumnIds = normalizeGridColumnOrder(gridColumnOrder.value)
+    const rawColumns: moguchart.GanttColumn[] = orderedColumnIds
       .filter((id) => {
         if (id === 'progress') return enableProgress
         if (id === 'workingDays') return hasWorkingDays
@@ -555,6 +582,7 @@ export const useGanttChartView = () => {
       gridEnabled?: boolean
       gridEditable?: boolean
       gridColumns?: string[]
+      gridColumnOrder?: string[]
       gridWorkingDaysInitialized?: boolean
       gridColumnWidths?: Record<string, number>
     }) => {
@@ -669,6 +697,14 @@ export const useGanttChartView = () => {
       gridWorkingDaysInitialized: true,
     })
   })
+
+  watch(
+    gridColumnOrder,
+    (newOrder) => {
+      saveProjectSettings({ gridColumnOrder: [...newOrder] })
+    },
+    { deep: true },
+  )
 
   watch(
     gridColumnWidths,
@@ -817,6 +853,7 @@ export const useGanttChartView = () => {
         } else {
           gridColumns.value = [...DEFAULT_GRID_COLUMNS]
         }
+        gridColumnOrder.value = normalizeGridColumnOrder(settings?.gridColumnOrder)
         gridColumnWidths.value = settings?.gridColumnWidths ? { ...settings.gridColumnWidths } : {}
 
         // selectedFilterLabelNamesの復元
@@ -1420,7 +1457,7 @@ export const useGanttChartView = () => {
         editable: !isReadOnly.value && gridEditable.value,
         editTrigger: 'dblclick',
         width: gridEnabled.value ? baseGridRowHeaderWidth.value : undefined,
-        columns: (['wbs', 'name', 'assignees', 'startDate', 'endDate', 'duration', 'workingDays', 'progress'] as const)
+        columns: normalizeGridColumnOrder(gridColumnOrder.value)
           .filter((id) => {
             if (id === 'progress') return currentProject.value?.attribute?.enableProgress !== false
             if (id === 'workingDays') return !!isNonWorkingDay
@@ -3982,6 +4019,29 @@ export const useGanttChartView = () => {
     }
   }
 
+  const handleColumnReorder = (e: any) => {
+    const detail = getDetail<moguchart.ColumnReorderEventDetail>(e)
+    if (!detail?.columnId || !detail?.targetColumnId) return
+    const toCanonical = (id: string) =>
+      id === 'startMonth' || id === 'startDateTime'
+        ? 'startDate'
+        : id === 'endMonth' || id === 'endDateTime'
+          ? 'endDate'
+          : id
+    const sourceId = toCanonical(detail.columnId)
+    const targetId = toCanonical(detail.targetColumnId)
+    if (sourceId === targetId) return
+
+    const currentOrder = normalizeGridColumnOrder(gridColumnOrder.value)
+    const filtered = currentOrder.filter((id) => id !== sourceId)
+    const targetIdx = filtered.indexOf(targetId)
+    if (targetIdx === -1) return
+
+    const insertIdx = detail.position === 'left' ? targetIdx : targetIdx + 1
+    filtered.splice(insertIdx, 0, sourceId)
+    gridColumnOrder.value = filtered
+  }
+
   const handleCellEdit = async (e: any) => {
     const commandRows = lastCellEditCommandRows
     lastCellEditCommandRows = null
@@ -6380,6 +6440,7 @@ export const useGanttChartView = () => {
     gridEnabled,
     gridEditable,
     gridColumns,
+    gridColumnOrder,
     gridColumnWidths,
     addRowCount,
     manualAddRowCount,
@@ -6487,6 +6548,7 @@ export const useGanttChartView = () => {
     updateProject,
     handleRowHeaderResize,
     handleColumnResize,
+    handleColumnReorder,
     handleCellEdit,
     undo,
     redo,

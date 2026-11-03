@@ -151,6 +151,7 @@ const {
   updateProject,
   handleRowHeaderResize,
   handleColumnResize,
+  handleColumnReorder,
   handleCellEdit,
   undo,
   redo,
@@ -623,6 +624,7 @@ const handleOpenSlideSchedule = async () => {
             @chart-contextmenu="handleChartContextMenu"
             @row-header-resize="handleRowHeaderResize"
             @column-resize="handleColumnResize"
+            @column-reorder="handleColumnReorder"
             @cell-edit="handleCellEdit"
             @task-delete="handleTaskDelete"
             @dependency-create="handleDependencyCreate"
