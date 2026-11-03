@@ -52,6 +52,7 @@ import {
   createCalendarDayContent,
   setUserDisplayNameResolver,
   renderAssigneesGridCell,
+  createAssigneesCellEditor,
 } from '@/modules/ganttChartCustomRendering'
 import { useProjectStore } from '@/stores/useProjectStore'
 import { useUserStore } from '@/stores/useUserStore'
@@ -1479,7 +1480,27 @@ export const useGanttChartView = () => {
                   width: gridColumnWidths.value[id] ?? 100,
                   minWidth: 60,
                   align: 'left' as const,
-                  editable: false,
+                  editable: (row: moguchart.GanttRow, tasks: moguchart.GanttTask[]) => {
+                    if (isReadOnly.value || !gridEditable.value) return false
+                    const hasChildren = rows.value.some((r) => String(r.parentId) === String(row.id))
+                    if ((row as any).isSummary || hasChildren || (tasks ?? []).some((t) => t.type === 'summary')) {
+                      return false
+                    }
+                    const normalTasks = (tasks ?? []).filter(
+                      (t) => t.type !== 'summary' && !(t as any).isSummary,
+                    )
+                    if (normalTasks.length !== 1) return false
+                    const singleTask = normalTasks[0]!
+                    if (singleTask.movable === 'none' || (singleTask as any).attribute?.lock === true) {
+                      return false
+                    }
+                    return true
+                  },
+                  editor: createAssigneesCellEditor(() => ({
+                    getUsers: () => taskUsers.value,
+                    getCurrentUser: () => userStore.currentUser,
+                    resolveDisplayName: resolveUserDisplayName,
+                  })),
                   valueGetter: (_row: moguchart.GanttRow, tasks: moguchart.GanttTask[]) => {
                     const names: string[] = []
                     const seen = new Set<string>()
@@ -1488,15 +1509,56 @@ export const useGanttChartView = () => {
                       const raw = (t as any).attribute?.assignees
                       const list = Array.isArray(raw) ? raw : typeof raw === 'string' && raw ? [raw] : []
                       for (const identifier of list) {
-                        if (!identifier) continue
+                        if (!identifier || seen.has(identifier)) continue
+                        seen.add(identifier)
                         const displayName = resolveUserDisplayName(identifier)
-                        if (displayName && !seen.has(displayName)) {
-                          seen.add(displayName)
+                        if (displayName) {
                           names.push(displayName)
                         }
                       }
                     }
                     return names.join(', ')
+                  },
+                  valueSetter: (_row: moguchart.GanttRow, newValue: unknown, tasks: moguchart.GanttTask[]) => {
+                    const normalTasks = (tasks ?? []).filter(
+                      (t) => t.type !== 'summary' && !(t as any).isSummary,
+                    )
+                    if (normalTasks.length !== 1) return false
+                    const targetTask = normalTasks[0] as any
+                    const prevAttr = (targetTask.attribute as TaskAttribute | undefined) ?? {}
+                    const prevAssignees = Array.isArray(prevAttr.assignees)
+                      ? prevAttr.assignees.filter(Boolean)
+                      : typeof prevAttr.assignees === 'string' && prevAttr.assignees
+                        ? [prevAttr.assignees]
+                        : []
+                    const nextAssignees = Array.isArray(newValue)
+                      ? newValue.map((v) => String(v ?? '').trim()).filter(Boolean)
+                      : typeof newValue === 'string' && newValue.trim()
+                        ? [newValue.trim()]
+                        : []
+
+                    if (isEqual(prevAssignees, nextAssignees)) {
+                      return false
+                    }
+
+                    const isLocked = prevAttr.lock === true
+                    const isMilestone = prevAttr.type === 'milestone' || targetTask.type === 'milestone'
+                    const userId = userStore.currentUser?.id
+                    const userEmail = userStore.currentUser?.email
+                    const isAssignee =
+                      (!!userId && nextAssignees.includes(userId)) ||
+                      (!!userEmail && nextAssignees.includes(userEmail))
+                    const canEditProgress =
+                      (!isReadOnly.value || isAssignee) &&
+                      !isLocked &&
+                      !isMilestone &&
+                      currentProject.value?.attribute?.enableProgress !== false
+
+                    targetTask.attribute = {
+                      ...prevAttr,
+                      assignees: nextAssignees.length > 0 ? nextAssignees : undefined,
+                    }
+                    targetTask.progressResizable = canEditProgress
                   },
                   renderCell: (val: unknown) => renderAssigneesGridCell(String(val ?? '')),
                 }
@@ -2038,12 +2100,19 @@ export const useGanttChartView = () => {
       const aDeps = normalizeTaskDependencies((aTask as any).dependencies ?? (aTask as any).attribute?.dependencies)
       const depsChanged = !isEqual(bDeps, aDeps)
 
+      const bAssigneesRaw = (bTask as any).attribute?.assignees
+      const aAssigneesRaw = (aTask as any).attribute?.assignees
+      const bAssignees = Array.isArray(bAssigneesRaw) ? bAssigneesRaw.filter(Boolean) : []
+      const aAssignees = Array.isArray(aAssigneesRaw) ? aAssigneesRaw.filter(Boolean) : []
+      const assigneesChanged = !isEqual(bAssignees, aAssignees)
+
       const hasChange =
         bRowId !== aRowId ||
         bStart !== aStart ||
         bEnd !== aEnd ||
         bProgress !== aProgress ||
-        depsChanged
+        depsChanged ||
+        assigneesChanged
 
       if (hasChange) {
         affectedRowIdSet.add(bRowId)
@@ -2058,12 +2127,14 @@ export const useGanttChartView = () => {
           ...bRawAttr,
           ...(bIsMilestone ? { type: 'milestone' as const } : {}),
           ...(bTask.progress !== undefined && !bIsMilestone ? { progress: bTask.progress } : {}),
+          assignees: bAssignees.length > 0 ? bAssignees : undefined,
           dependencies: bDeps.length > 0 ? bDeps : undefined,
         }
         const aAttr: TaskAttribute = {
           ...aRawAttr,
           ...(aIsMilestone ? { type: 'milestone' as const } : {}),
           ...(aTask.progress !== undefined && !aIsMilestone ? { progress: aTask.progress } : {}),
+          assignees: aAssignees.length > 0 ? aAssignees : undefined,
           dependencies: aDeps.length > 0 ? aDeps : undefined,
         }
 
@@ -4092,9 +4163,17 @@ export const useGanttChartView = () => {
       return
     }
 
+    if (detail.columnId === 'assignees') {
+      userStore.fetchCollaborators().catch(() => {})
+    }
+
     await maybeAutoSnapshot()
     const colTitle = detail.column?.title ?? detail.columnId
     await syncTasksWithUndo(`${colTitle} の編集`, beforeTasks, afterTasks, affectedRowIds)
+
+    if (detail.columnId === 'assignees' && projectId.value) {
+      loadProjectUsers(projectId.value).catch(() => {})
+    }
   }
 
   // --- 行追加関連 ---

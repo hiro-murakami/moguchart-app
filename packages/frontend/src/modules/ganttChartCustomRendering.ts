@@ -1,8 +1,8 @@
 import dayjs from 'dayjs'
-import { getContrastColor, toDateString } from '@/modules/utils'
+import { getContrastColor, isEmailFormat, toDateString } from '@/modules/utils'
 import * as moguchart from '@mogura/moguchart-core'
 import { selectComments } from '@/modules/scripts'
-import type { Comment } from '@functions/types/shared'
+import type { Comment, User } from '@functions/types/shared'
 import { UNLABELED_VALUE } from '@/modules/constants'
 import { getCachedImageUrl, setImageSrc } from '@/modules/imageCache'
 
@@ -2319,6 +2319,9 @@ export const renderAssigneesGridCell = (text: string): HTMLElement => {
       removeTooltip()
     }
   })
+  cellEl.addEventListener('dblclick', () => {
+    removeTooltip()
+  })
   cellEl.addEventListener('mouseenter', () => {
     if (lastPointerType === 'touch') return
     showAssigneesTooltip(200)
@@ -2339,4 +2342,777 @@ export const renderAssigneesGridCell = (text: string): HTMLElement => {
 
   return cellEl
 }
+
+export interface AssigneesCellEditorOptions {
+  getUsers: () => User[]
+  getCurrentUser: () => User | null | undefined
+  resolveDisplayName: (identifier: string) => string
+}
+
+/**
+ * マルチカラムグリッドの「担当者」セル用インラインカスタムエディタを生成する。
+ * セル直下にフローティング・マルチセレクトポップオーバーを表示し、
+ * 候補ユーザーの複数選択およびメールアドレスの直接追加を行えるようにする。
+ */
+export const createAssigneesCellEditor = (getOptions: () => AssigneesCellEditorOptions) => {
+  return (context: moguchart.GanttCellEditorContext): HTMLElement => {
+    document.querySelectorAll('[data-moguchart-assignees-tooltip]').forEach((el) => el.remove())
+    document.querySelectorAll('[data-moguchart-assignees-editor-popover]').forEach((el) => el.remove())
+    hideGanttChartTooltips()
+
+    const { getUsers, getCurrentUser, resolveDisplayName } = getOptions()
+    const users = getUsers() ?? []
+    const currentUser = getCurrentUser()
+
+    /** 識別子（UIDまたはメール）から同一ユーザー判定用のキー配列を返す */
+    const getUserKeys = (rawVal: string): string[] => {
+      const val = rawVal.trim().toLowerCase()
+      if (!val) return []
+      const keys = new Set<string>([val])
+      if (
+        currentUser &&
+        ((currentUser.id && currentUser.id.toLowerCase() === val) ||
+          (currentUser.email && currentUser.email.toLowerCase() === val))
+      ) {
+        if (currentUser.id) keys.add(currentUser.id.toLowerCase())
+        if (currentUser.email) keys.add(currentUser.email.toLowerCase())
+      }
+      const matched = users.find(
+        (u) => (u.id && u.id.toLowerCase() === val) || (u.email && u.email.toLowerCase() === val),
+      )
+      if (matched) {
+        if (matched.id) keys.add(matched.id.toLowerCase())
+        if (matched.email) keys.add(matched.email.toLowerCase())
+      }
+      return Array.from(keys)
+    }
+
+    /** 同一ユーザー（UIDとメールアドレスの混在）を重複排除する */
+    const deduplicateIdentifiers = (values: string[]): string[] => {
+      const result: string[] = []
+      const seenKeys = new Set<string>()
+      for (const raw of values) {
+        const trimmed = raw.trim()
+        if (!trimmed) continue
+        const keys = getUserKeys(trimmed)
+        if (keys.some((k) => seenKeys.has(k))) continue
+        for (const k of keys) seenKeys.add(k)
+        result.push(trimmed)
+      }
+      return result
+    }
+
+    const normalTasks = (context.tasks ?? []).filter(
+      (t) => t.type !== 'summary' && !(t as any).isSummary,
+    )
+    const singleTask = normalTasks.length === 1 ? normalTasks[0] : undefined
+    const rawAssignees = (singleTask as any)?.attribute?.assignees
+    const initialList: string[] = Array.isArray(rawAssignees)
+      ? rawAssignees.filter((v): v is string => typeof v === 'string' && v.trim() !== '')
+      : typeof rawAssignees === 'string' && rawAssignees.trim() !== ''
+        ? [rawAssignees.trim()]
+        : []
+
+    let selectedAssignees = deduplicateIdentifiers(initialList)
+    let searchQuery = ''
+    let errorMessage = ''
+    let isFinished = false
+
+    const isSelectedUser = (identifier: string, altIdentifier?: string): boolean => {
+      const targetKeys = new Set<string>([
+        ...getUserKeys(identifier),
+        ...(altIdentifier ? getUserKeys(altIdentifier) : []),
+      ])
+      return selectedAssignees.some((sel) => getUserKeys(sel).some((k) => targetKeys.has(k)))
+    }
+
+    const toggleUserSelection = (preferredValue: string, altIdentifier?: string) => {
+      const targetKeys = new Set<string>([
+        ...getUserKeys(preferredValue),
+        ...(altIdentifier ? getUserKeys(altIdentifier) : []),
+      ])
+      const exists = selectedAssignees.some((sel) => getUserKeys(sel).some((k) => targetKeys.has(k)))
+      if (exists) {
+        selectedAssignees = selectedAssignees.filter(
+          (sel) => !getUserKeys(sel).some((k) => targetKeys.has(k)),
+        )
+      } else {
+        selectedAssignees = deduplicateIdentifiers([...selectedAssignees, preferredValue])
+      }
+    }
+
+    // --- セル内プレースホルダ要素 ---
+    const isDark = !!document.querySelector('.v-theme--dark')
+    const hostEl = document.createElement('div')
+    hostEl.tabIndex = 0
+    hostEl.style.cssText = `
+      width: 100%;
+      height: calc(100% - 4px);
+      max-height: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 4px;
+      padding: 0 6px;
+      box-sizing: border-box;
+      border-radius: 4px;
+      border: 1.5px solid ${isDark ? '#60a5fa' : '#3b82f6'};
+      background: ${isDark ? '#1e293b' : '#ffffff'};
+      color: ${isDark ? '#f8fafc' : '#0f172a'};
+      font-size: calc(12px * var(--moguchart-font-scale, 1));
+      overflow: hidden;
+      cursor: pointer;
+      outline: none;
+    `
+
+    const hostTextSpan = document.createElement('span')
+    hostTextSpan.style.cssText = `
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+      min-width: 0;
+    `
+    const hostChevron = document.createElement('span')
+    hostChevron.textContent = '▾'
+    hostChevron.style.cssText = `
+      font-size: 10px;
+      opacity: 0.65;
+      flex-shrink: 0;
+    `
+    hostEl.appendChild(hostTextSpan)
+    hostEl.appendChild(hostChevron)
+
+    const updateHostPreview = () => {
+      if (selectedAssignees.length === 0) {
+        hostTextSpan.textContent = '未割当'
+        hostTextSpan.style.opacity = '0.45'
+      } else {
+        const names = selectedAssignees.map((id) => resolveDisplayName(id)).filter(Boolean)
+        hostTextSpan.textContent = names.join(', ')
+        hostTextSpan.style.opacity = '1'
+      }
+    }
+    updateHostPreview()
+
+    // --- フローティングポップオーバー ---
+    const bg = isDark ? '#1e1e2e' : '#ffffff'
+    const text = isDark ? 'rgba(255,255,255,0.87)' : 'rgba(0,0,0,0.87)'
+    const subText = isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.55)'
+    const border = isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.12)'
+    const hoverBg = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'
+    const inputBg = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.03)'
+    const accent = isDark ? '#818cf8' : '#4f46e5'
+
+    const panel = document.createElement('div')
+    panel.setAttribute('data-moguchart-assignees-editor-popover', 'true')
+    panel.style.cssText = `
+      position: fixed;
+      z-index: 10000;
+      background: ${bg};
+      color: ${text};
+      border: 1px solid ${border};
+      border-radius: 10px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.22);
+      width: 280px;
+      max-width: calc(100vw - 16px);
+      overflow: hidden;
+      font-size: 13px;
+      user-select: none;
+      display: flex;
+      flex-direction: column;
+    `
+
+    // イベントがガントチャート本体に伝播して誤動作しないようガード
+    for (const evtName of ['mousedown', 'pointerdown', 'click', 'dblclick', 'wheel'] as const) {
+      panel.addEventListener(evtName, (e) => e.stopPropagation())
+    }
+
+    // ヘッダー
+    const header = document.createElement('div')
+    header.style.cssText = `
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px 6px;
+      font-weight: bold;
+      font-size: 12px;
+      color: ${subText};
+    `
+    const headerTitle = document.createElement('span')
+    headerTitle.textContent = '担当者を選択'
+    header.appendChild(headerTitle)
+
+    const clearBtn = document.createElement('button')
+    clearBtn.type = 'button'
+    clearBtn.textContent = 'クリア'
+    clearBtn.style.cssText = `
+      border: none;
+      background: none;
+      cursor: pointer;
+      color: ${accent};
+      font-size: 11px;
+      font-weight: bold;
+      padding: 2px 6px;
+      border-radius: 4px;
+    `
+    clearBtn.addEventListener('click', (e) => {
+      e.stopPropagation()
+      selectedAssignees = []
+      errorMessage = ''
+      updateHostPreview()
+      renderItems()
+      searchInput.focus()
+    })
+    header.appendChild(clearBtn)
+    panel.appendChild(header)
+
+    // 検索・メール追加入力欄
+    const searchWrap = document.createElement('div')
+    searchWrap.style.cssText = `padding: 0 10px 6px; display: flex; flex-direction: column; gap: 4px;`
+
+    const searchInput = document.createElement('input')
+    searchInput.type = 'text'
+    searchInput.placeholder = '名前で検索 / メールを入力してEnter...'
+    searchInput.autocomplete = 'off'
+    searchInput.style.cssText = `
+      width: 100%;
+      box-sizing: border-box;
+      padding: 6px 8px;
+      border-radius: 6px;
+      border: 1px solid ${border};
+      background: ${inputBg};
+      color: ${text};
+      font-size: 12px;
+      outline: none;
+    `
+    searchInput.addEventListener('focus', () => {
+      searchInput.style.borderColor = accent
+    })
+    searchInput.addEventListener('blur', () => {
+      searchInput.style.borderColor = border
+    })
+
+    const errorEl = document.createElement('div')
+    errorEl.style.cssText = `
+      color: #ef4444;
+      font-size: 11px;
+      padding: 0 2px;
+      display: none;
+    `
+
+    searchWrap.appendChild(searchInput)
+    searchWrap.appendChild(errorEl)
+    panel.appendChild(searchWrap)
+
+    const dividerTop = document.createElement('div')
+    dividerTop.style.cssText = `height: 1px; background: ${border};`
+    panel.appendChild(dividerTop)
+
+    // 候補リストコンテナ
+    const itemsContainer = document.createElement('div')
+    itemsContainer.style.cssText = `
+      max-height: 220px;
+      overflow-y: auto;
+      padding: 4px 0;
+    `
+    panel.appendChild(itemsContainer)
+
+    interface CandidateItem {
+      value: string
+      altId?: string
+      displayName: string
+      email?: string
+      photoURL?: string | null
+      isSelf?: boolean
+    }
+
+    const buildCandidates = (): CandidateItem[] => {
+      const list: CandidateItem[] = []
+      const seenKeys = new Set<string>()
+
+      const addCandidate = (item: CandidateItem) => {
+        const keys = [
+          ...getUserKeys(item.value),
+          ...(item.altId ? getUserKeys(item.altId) : []),
+        ]
+        if (keys.some((k) => seenKeys.has(k))) return
+        for (const k of keys) seenKeys.add(k)
+        list.push(item)
+      }
+
+      // 1. 自分自身
+      if (currentUser && (currentUser.email || currentUser.id)) {
+        const selfEmail = currentUser.email || (currentUser.id?.includes('@') ? currentUser.id : undefined)
+        const existingVal = selectedAssignees.find((sel) =>
+          getUserKeys(sel).some((k) =>
+            getUserKeys(selfEmail || currentUser.id).includes(k),
+          ),
+        )
+        addCandidate({
+          value: existingVal || selfEmail || currentUser.id,
+          altId: currentUser.id,
+          displayName: currentUser.displayName || selfEmail || currentUser.id,
+          email: selfEmail,
+          photoURL: currentUser.attribute?.photoURL,
+          isSelf: true,
+        })
+      }
+
+      // 2. プロジェクトメンバー・コラボレーター・履歴
+      for (const u of users) {
+        if (!u.email && !u.displayName) continue
+        const email = u.email || (u.id?.includes('@') ? u.id : undefined)
+        const primary = email || u.id
+        if (!primary) continue
+        const existingVal = selectedAssignees.find((sel) =>
+          getUserKeys(sel).some((k) => getUserKeys(primary).includes(k) || (u.id ? getUserKeys(u.id).includes(k) : false)),
+        )
+        const isSelf =
+          !!currentUser &&
+          ((!!currentUser.id && u.id === currentUser.id) ||
+            (!!currentUser.email && email === currentUser.email))
+        addCandidate({
+          value: existingVal || primary,
+          altId: u.id,
+          displayName: u.displayName || email || primary,
+          email,
+          photoURL: u.attribute?.photoURL,
+          isSelf,
+        })
+      }
+
+      // 3. 既に選択されているが候補リストに未含有の識別子
+      for (const sel of selectedAssignees) {
+        const resolved = resolveDisplayName(sel)
+        addCandidate({
+          value: sel,
+          displayName: resolved || sel,
+          email: sel.includes('@') ? sel : undefined,
+        })
+      }
+
+      return list
+    }
+
+    const renderItems = () => {
+      if (errorMessage) {
+        errorEl.textContent = errorMessage
+        errorEl.style.display = 'block'
+      } else {
+        errorEl.style.display = 'none'
+      }
+
+      itemsContainer.innerHTML = ''
+      const allCandidates = buildCandidates()
+      const q = searchQuery.trim().toLowerCase()
+
+      const filtered = q
+        ? allCandidates.filter(
+            (c) =>
+              c.displayName.toLowerCase().includes(q) ||
+              (c.email && c.email.toLowerCase().includes(q)) ||
+              c.value.toLowerCase().includes(q),
+          )
+        : allCandidates
+
+      // 検索文字列が有効なメールアドレス形式で、まだ選択されていない場合は直接追加ボタンを表示
+      const trimmedRaw = searchQuery.trim()
+      const canAddDirectEmail =
+        trimmedRaw !== '' &&
+        isEmailFormat(trimmedRaw) &&
+        !allCandidates.some(
+          (c) =>
+            c.value.toLowerCase() === trimmedRaw.toLowerCase() ||
+            (c.email && c.email.toLowerCase() === trimmedRaw.toLowerCase()),
+        )
+
+      if (canAddDirectEmail) {
+        const addRow = document.createElement('div')
+        addRow.style.cssText = `
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 7px 12px;
+          margin: 0 4px 2px;
+          border-radius: 6px;
+          cursor: pointer;
+          color: ${accent};
+          font-weight: 600;
+          font-size: 12px;
+        `
+        addRow.textContent = `＋ メールアドレスを追加: ${trimmedRaw}`
+        addRow.addEventListener('mouseenter', () => {
+          addRow.style.background = hoverBg
+        })
+        addRow.addEventListener('mouseleave', () => {
+          addRow.style.background = 'transparent'
+        })
+        addRow.addEventListener('click', (e) => {
+          e.stopPropagation()
+          selectedAssignees = deduplicateIdentifiers([...selectedAssignees, trimmedRaw])
+          searchQuery = ''
+          searchInput.value = ''
+          errorMessage = ''
+          updateHostPreview()
+          renderItems()
+          searchInput.focus()
+        })
+        itemsContainer.appendChild(addRow)
+      }
+
+      if (filtered.length === 0 && !canAddDirectEmail) {
+        const emptyDiv = document.createElement('div')
+        emptyDiv.style.cssText = `
+          padding: 14px 12px;
+          text-align: center;
+          color: ${subText};
+          font-size: 12px;
+        `
+        emptyDiv.textContent = q
+          ? '一致するユーザーがいません（メールアドレス入力でEnter追加可）'
+          : '候補ユーザーがいません'
+        itemsContainer.appendChild(emptyDiv)
+        return
+      }
+
+      for (const item of filtered) {
+        const checked = isSelectedUser(item.value, item.altId)
+        const row = document.createElement('div')
+        row.style.cssText = `
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 6px 12px;
+          margin: 0 4px;
+          border-radius: 6px;
+          cursor: pointer;
+          transition: background 0.12s;
+        `
+        row.addEventListener('mouseenter', () => {
+          row.style.background = hoverBg
+        })
+        row.addEventListener('mouseleave', () => {
+          row.style.background = 'transparent'
+        })
+
+        // チェックボックス
+        const check = document.createElement('div')
+        check.style.cssText = `
+          width: 16px;
+          height: 16px;
+          border-radius: 4px;
+          border: 2px solid ${checked ? accent : isDark ? 'rgba(255,255,255,0.28)' : 'rgba(0,0,0,0.22)'};
+          background: ${checked ? accent : 'transparent'};
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          transition: all 0.12s;
+        `
+        if (checked) {
+          const checkSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+          checkSvg.setAttribute('width', '10')
+          checkSvg.setAttribute('height', '10')
+          checkSvg.setAttribute('viewBox', '0 0 24 24')
+          checkSvg.setAttribute('fill', '#ffffff')
+          const checkPath = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+          checkPath.setAttribute('d', 'M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z')
+          checkSvg.appendChild(checkPath)
+          check.appendChild(checkSvg)
+        }
+
+        // アバターアイコン（画像またはイニシャル）
+        const avatar = document.createElement('div')
+        avatar.style.cssText = `
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          background: ${isDark ? 'rgba(99,102,241,0.3)' : 'rgba(99,102,241,0.15)'};
+          color: ${accent};
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 11px;
+          font-weight: bold;
+          flex-shrink: 0;
+          overflow: hidden;
+        `
+        if (item.photoURL) {
+          const img = document.createElement('img')
+          img.style.cssText = 'width: 100%; height: 100%; object-fit: cover;'
+          setImageSrc(img, item.photoURL)
+          avatar.appendChild(img)
+        } else {
+          avatar.textContent = (item.displayName || item.email || '?').charAt(0).toUpperCase()
+        }
+
+        // テキスト情報
+        const infoCol = document.createElement('div')
+        infoCol.style.cssText = `
+          display: flex;
+          flex-direction: column;
+          min-width: 0;
+          flex: 1;
+        `
+        const nameRow = document.createElement('div')
+        nameRow.style.cssText = `
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          min-width: 0;
+        `
+        const nameSpan = document.createElement('span')
+        nameSpan.textContent = item.displayName
+        nameSpan.style.cssText = `
+          font-size: 12px;
+          font-weight: 500;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        `
+        nameRow.appendChild(nameSpan)
+
+        if (item.isSelf) {
+          const selfBadge = document.createElement('span')
+          selfBadge.textContent = 'あなた'
+          selfBadge.style.cssText = `
+            font-size: 10px;
+            padding: 1px 5px;
+            border-radius: 4px;
+            background: ${isDark ? 'rgba(99,102,241,0.25)' : 'rgba(99,102,241,0.12)'};
+            color: ${accent};
+            font-weight: 600;
+            flex-shrink: 0;
+          `
+          nameRow.appendChild(selfBadge)
+        }
+        infoCol.appendChild(nameRow)
+
+        if (item.email && item.email !== item.displayName) {
+          const emailSpan = document.createElement('span')
+          emailSpan.textContent = item.email
+          emailSpan.style.cssText = `
+            font-size: 11px;
+            color: ${subText};
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          `
+          infoCol.appendChild(emailSpan)
+        }
+
+        row.appendChild(check)
+        row.appendChild(avatar)
+        row.appendChild(infoCol)
+
+        row.addEventListener('click', (e) => {
+          e.stopPropagation()
+          toggleUserSelection(item.value, item.altId)
+          errorMessage = ''
+          updateHostPreview()
+          renderItems()
+        })
+
+        itemsContainer.appendChild(row)
+      }
+    }
+
+    // フッター（キャンセル・確定）
+    const footer = document.createElement('div')
+    footer.style.cssText = `
+      padding: 6px 10px 8px;
+      border-top: 1px solid ${border};
+      display: flex;
+      justify-content: flex-end;
+      gap: 6px;
+    `
+    const cancelBtn = document.createElement('button')
+    cancelBtn.type = 'button'
+    cancelBtn.textContent = 'キャンセル'
+    cancelBtn.style.cssText = `
+      border: 1px solid ${border};
+      background: transparent;
+      color: ${text};
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 12px;
+      cursor: pointer;
+    `
+    const applyBtn = document.createElement('button')
+    applyBtn.type = 'button'
+    applyBtn.textContent = '確定'
+    applyBtn.style.cssText = `
+      border: none;
+      background: ${accent};
+      color: #ffffff;
+      border-radius: 6px;
+      padding: 4px 12px;
+      font-size: 12px;
+      font-weight: bold;
+      cursor: pointer;
+    `
+    footer.appendChild(cancelBtn)
+    footer.appendChild(applyBtn)
+    panel.appendChild(footer)
+
+    // --- クリーンアップ・確定・キャンセル制御 ---
+    let cleanupListeners: (() => void) | null = null
+
+    const cleanup = () => {
+      if (cleanupListeners) {
+        cleanupListeners()
+        cleanupListeners = null
+      }
+      if (panel.isConnected) {
+        panel.remove()
+      }
+      restoreGanttChartTooltips()
+    }
+
+    const finishCommit = () => {
+      if (isFinished) return
+      isFinished = true
+      // もし検索欄に有効なメールアドレスが入力されたまま確定された場合は自動追加する
+      const pending = searchQuery.trim()
+      if (pending && isEmailFormat(pending)) {
+        selectedAssignees = deduplicateIdentifiers([...selectedAssignees, pending])
+      }
+      cleanup()
+      context.commit([...selectedAssignees])
+    }
+
+    const finishCancel = () => {
+      if (isFinished) return
+      isFinished = true
+      cleanup()
+      context.cancel()
+    }
+
+    cancelBtn.addEventListener('click', (e) => {
+      e.stopPropagation()
+      finishCancel()
+    })
+
+    applyBtn.addEventListener('click', (e) => {
+      e.stopPropagation()
+      finishCommit()
+    })
+
+    searchInput.addEventListener('input', () => {
+      searchQuery = searchInput.value
+      errorMessage = ''
+      renderItems()
+    })
+
+    searchInput.addEventListener('keydown', (e: KeyboardEvent) => {
+      e.stopPropagation()
+      if (e.isComposing || e.keyCode === 229) return
+
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        finishCancel()
+        return
+      }
+
+      if (e.key === 'Enter') {
+        e.preventDefault()
+        const raw = searchInput.value.trim()
+        if (!raw) {
+          finishCommit()
+          return
+        }
+        if (isEmailFormat(raw)) {
+          selectedAssignees = deduplicateIdentifiers([...selectedAssignees, raw])
+          searchQuery = ''
+          searchInput.value = ''
+          errorMessage = ''
+          updateHostPreview()
+          renderItems()
+          return
+        }
+        // 絞り込み結果が1件のみの場合はそれをトグル選択する
+        const q = raw.toLowerCase()
+        const matches = buildCandidates().filter(
+          (c) =>
+            c.displayName.toLowerCase().includes(q) ||
+            (c.email && c.email.toLowerCase().includes(q)) ||
+            c.value.toLowerCase().includes(q),
+        )
+        if (matches.length === 1) {
+          toggleUserSelection(matches[0]!.value, matches[0]!.altId)
+          searchQuery = ''
+          searchInput.value = ''
+          errorMessage = ''
+          updateHostPreview()
+          renderItems()
+          return
+        }
+        errorMessage = '有効なメールアドレスを入力してください'
+        renderItems()
+      }
+    })
+
+    hostEl.addEventListener('keydown', (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        e.stopPropagation()
+        finishCancel()
+      } else if (e.key === 'Enter') {
+        e.preventDefault()
+        e.stopPropagation()
+        finishCommit()
+      }
+    })
+
+    renderItems()
+    document.body.appendChild(panel)
+
+    // DOM配置後に位置計算・フォーカス・外部クリック監視を開始
+    const initTimer = setTimeout(() => {
+      if (isFinished || !hostEl.isConnected) {
+        cleanup()
+        return
+      }
+      const rect = hostEl.getBoundingClientRect()
+      adjustTooltipPosition(panel, rect)
+      searchInput.focus()
+
+      const onOutsidePointerDown = (ev: PointerEvent) => {
+        const path = typeof ev.composedPath === 'function' ? ev.composedPath() : []
+        if (
+          panel.contains(ev.target as Node) ||
+          path.includes(panel) ||
+          ev.target === hostEl ||
+          hostEl.contains(ev.target as Node) ||
+          path.includes(hostEl)
+        ) {
+          return
+        }
+        finishCommit()
+      }
+
+      // セル要素が外部要因（スクロールや行再描画）でDOMから切り離された場合にパネルを閉じる
+      const disconnectCheckInterval = setInterval(() => {
+        if (!hostEl.isConnected) {
+          cleanup()
+        }
+      }, 150)
+
+      document.addEventListener('pointerdown', onOutsidePointerDown, true)
+      cleanupListeners = () => {
+        clearTimeout(initTimer)
+        clearInterval(disconnectCheckInterval)
+        document.removeEventListener('pointerdown', onOutsidePointerDown, true)
+      }
+    }, 0)
+
+    cleanupListeners = () => {
+      clearTimeout(initTimer)
+    }
+
+    return hostEl
+  }
+}
+
 
