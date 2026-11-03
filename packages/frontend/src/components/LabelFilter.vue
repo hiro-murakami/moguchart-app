@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { getContrastColor } from '@/modules/utils'
 import { UNLABELED_VALUE } from '@/modules/constants'
 
@@ -28,10 +28,73 @@ const emit = defineEmits<{
   selectAll: []
   clearAll: []
 }>()
+
+const selectRef = ref<{ $el?: HTMLElement } | null>(null)
+const containerWidth = ref(200)
+let resizeObserver: ResizeObserver | null = null
+
+onMounted(() => {
+  const el = selectRef.value?.$el
+  if (el && typeof ResizeObserver !== 'undefined') {
+    containerWidth.value = el.clientWidth || 200
+    resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.contentRect.width > 0) {
+          containerWidth.value = entry.contentRect.width
+        }
+      }
+    })
+    resizeObserver.observe(el)
+  }
+})
+
+onBeforeUnmount(() => {
+  resizeObserver?.disconnect()
+  resizeObserver = null
+})
+
+const estimateChipWidth = (text: string): number => {
+  let w = 0
+  for (const ch of text) {
+    w += ch.charCodeAt(0) > 0x7f ? 11.5 : 7
+  }
+  return Math.min(180, Math.ceil(w + 38))
+}
+
+const maxVisibleChips = computed(() => {
+  const total = selectedLabels.value.length
+  if (total <= 1) return 1
+
+  const usableWidth = Math.max(80, containerWidth.value - 48)
+  const chipWidths = selectedLabels.value.map((val) => {
+    const name = val === UNLABELED_VALUE ? 'ラベルなし' : val
+    return estimateChipWidth(name)
+  })
+
+  const sumAll = chipWidths.reduce((a, b) => a + b, 0)
+  if (sumAll <= usableWidth) {
+    return total
+  }
+
+  const badgeReserve = 28
+  let accumulated = chipWidths[0] ?? 0
+  let count = 1
+  for (let i = 1; i < total; i++) {
+    const nextWidth = chipWidths[i] ?? 0
+    if (accumulated + nextWidth <= usableWidth - badgeReserve) {
+      accumulated += nextWidth
+      count++
+    } else {
+      break
+    }
+  }
+  return count
+})
 </script>
 
 <template>
   <v-select
+    ref="selectRef"
     v-model="selectedLabels"
     :items="items"
     item-title="name"
@@ -60,7 +123,7 @@ const emit = defineEmits<{
 
     <template #selection="{ item, index }">
       <v-chip
-        v-if="index === 0"
+        v-if="index < maxVisibleChips"
         :style="{
           backgroundColor: getRawLabel(item).color,
           color: getContrastColor(getRawLabel(item).color),
@@ -70,14 +133,17 @@ const emit = defineEmits<{
         size="x-small"
         label
         closable
-        class="selected-label-chip"
+        class="selected-label-chip mr-1"
         :class="{ 'font-weight-bold': getRawLabel(item).isUnlabeled }"
         @click:close.stop="removeLabel(getRawLabel(item))"
       >
         <span class="text-truncate">{{ getRawLabel(item).name }}</span>
       </v-chip>
-      <span v-else-if="index === 1" class="text-caption text-medium-emphasis ml-1 flex-shrink-0 font-weight-medium">
-        +{{ selectedLabels.length - 1 }}
+      <span
+        v-else-if="index === maxVisibleChips"
+        class="text-caption text-medium-emphasis ml-1 flex-shrink-0 font-weight-medium"
+      >
+        +{{ selectedLabels.length - maxVisibleChips }}
       </span>
     </template>
 
@@ -102,8 +168,7 @@ const emit = defineEmits<{
 
 <style scoped>
 .filter-labels-select {
-  max-width: 280px;
-  min-width: 155px;
+  min-width: 135px;
 }
 
 .filter-labels-select :deep(.v-field__input) {
@@ -112,6 +177,13 @@ const emit = defineEmits<{
 }
 
 .selected-label-chip {
-  max-width: 120px;
+  max-width: 180px;
+  min-width: 48px;
+  flex: 0 1 auto;
+}
+
+.selected-label-chip :deep(.v-chip__content) {
+  min-width: 0;
+  overflow: hidden;
 }
 </style>

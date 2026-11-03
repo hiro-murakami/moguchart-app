@@ -993,7 +993,7 @@ const handleOpenSlideSchedule = async () => {
   display: flex;
   align-items: center;
   gap: 6px;
-  flex: 999 1 530px;
+  flex: 1 1 530px;
   min-width: min(100%, 530px);
 }
 
@@ -1057,23 +1057,22 @@ const handleOpenSlideSchedule = async () => {
   align-items: center;
   justify-content: flex-end;
   gap: 8px;
-  flex: 1 0 auto;
+  flex: 1.5 1 460px;
+  min-width: min(100%, 400px);
   margin-left: auto;
   max-width: 100%;
 }
 
 .search-text-field {
-  flex: 0 1 230px;
-  width: 230px;
-  max-width: 300px;
-  min-width: 195px;
+  flex: 1.2 1 230px;
+  max-width: 500px;
+  min-width: 170px;
 }
 
 .label-filter-field {
-  flex: 0 1 200px;
-  width: 200px;
-  max-width: 250px;
-  min-width: 175px;
+  flex: 1 1 200px;
+  max-width: 420px;
+  min-width: 155px;
 }
 
 .search-include-rows {
@@ -1088,22 +1087,6 @@ const handleOpenSlideSchedule = async () => {
 
 .search-include-rows :deep(.v-selection-control) {
   min-height: 32px;
-}
-
-/* 大画面では検索欄・ラベル欄をゆったり表示 */
-@container project-header (min-width: 1400px) {
-  .search-text-field {
-    flex-basis: 260px;
-    width: 260px;
-    min-width: 230px;
-    max-width: 340px;
-  }
-  .label-filter-field {
-    flex-basis: 220px;
-    width: 220px;
-    min-width: 195px;
-    max-width: 270px;
-  }
 }
 
 @media (max-height: 820px) {
@@ -1148,15 +1131,23 @@ const handleOpenSlideSchedule = async () => {
   .header-compact-field :deep(.v-field-label:not(.v-field-label--floating)) {
     font-size: 13px;
   }
+  .project-header__main {
+    flex-basis: 510px;
+    min-width: min(100%, 510px);
+  }
+  .project-header__controls {
+    flex-basis: 395px;
+    min-width: min(100%, 380px);
+  }
   .search-text-field {
     flex-basis: 185px;
-    width: 185px;
-    min-width: 172px;
+    max-width: 360px;
+    min-width: 145px;
   }
   .label-filter-field {
     flex-basis: 168px;
-    width: 168px;
-    min-width: 158px;
+    max-width: 300px;
+    min-width: 135px;
   }
 }
 
@@ -1172,13 +1163,13 @@ const handleOpenSlideSchedule = async () => {
     flex: 1 1 100%;
   }
   .search-text-field {
-    flex: 1 1 180px;
-    max-width: 280px;
+    flex: 1.2 1 180px;
+    max-width: 420px;
     min-width: 140px;
   }
   .label-filter-field {
     flex: 1 1 160px;
-    max-width: 240px;
+    max-width: 360px;
     min-width: 135px;
   }
 }
