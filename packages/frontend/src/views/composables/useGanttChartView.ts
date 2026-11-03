@@ -2173,6 +2173,7 @@ export const useGanttChartView = () => {
     beforeTasks: any[],
     afterTasks: any[],
     affectedRowIds: number[],
+    options?: { skipReload?: boolean },
   ) => {
     pushAction({
       description,
@@ -2188,7 +2189,9 @@ export const useGanttChartView = () => {
 
     try {
       await upsertGanttTasks(afterTasks)
-      await loadData(projectId.value, { silent: true })
+      if (!options?.skipReload) {
+        await loadData(projectId.value, { silent: true })
+      }
       publishEditEvent('task_upsert', {
         rowIds: affectedRowIds,
         targetName: afterTasks.length === 1 ? afterTasks[0]!.name : `${afterTasks.length}件のタスク`,
@@ -4113,6 +4116,9 @@ export const useGanttChartView = () => {
     gridColumnOrder.value = filtered
   }
 
+  let cellEditSaveQueue: Promise<void> = Promise.resolve()
+  let pendingCellEditSaves = 0
+
   const handleCellEdit = async (e: any) => {
     const commandRows = lastCellEditCommandRows
     lastCellEditCommandRows = null
@@ -4120,60 +4126,87 @@ export const useGanttChartView = () => {
     const detail = getDetail<moguchart.CellEditEventDetail>(e)
     if (!detail) return
 
-    if (detail.columnId === 'name') {
-      if (isReadOnly.value) {
-        await loadData(projectId.value, { silent: true })
-        return
+    // Tab / Enter で連続してセルを移動・編集した際に非同期の loadData が後続の編集結果を上書きしないよう直列化し、
+    // ローカルの rows.value も即時更新しておく
+    if (detail.rows && Array.isArray(detail.rows)) {
+      rows.value = detail.rows as any
+    }
+
+    pendingCellEditSaves += 1
+    const runSave = async () => {
+      try {
+        if (detail.columnId === 'name') {
+          if (isReadOnly.value) {
+            await loadData(projectId.value, { silent: true })
+            return
+          }
+          const nextName = String(detail.newValue ?? '').trim()
+          if (!nextName) {
+            await loadData(projectId.value, { silent: true })
+            return
+          }
+          await maybeAutoSnapshot()
+          await updateRowName(Number(detail.rowId), nextName, { skipReload: true })
+          if (pendingCellEditSaves === 1 && projectId.value) {
+            await loadData(projectId.value, { silent: true })
+          }
+          return
+        }
+
+        if (!detail.previousRow || !detail.row) return
+
+        const beforeRowsForExtract = commandRows?.before ?? [detail.previousRow]
+        const afterRowsForExtract = commandRows?.after ?? (detail.rows ?? [detail.row])
+
+        const { beforeTasks, afterTasks, affectedRowIds } = extractTaskChanges(
+          beforeRowsForExtract,
+          afterRowsForExtract,
+        )
+        if (afterTasks.length === 0) return
+
+        if (detail.columnId === 'progress') {
+          const userId = userStore.currentUser?.id
+          const userEmail = userStore.currentUser?.email
+          const canEdit = afterTasks.every((t) => {
+            const assignees = t.attribute?.assignees || []
+            const isAssignee =
+              (!!userId && assignees.includes(userId)) ||
+              (!!userEmail && assignees.includes(userEmail))
+            return !isReadOnly.value || isAssignee
+          })
+          if (!canEdit) {
+            await loadData(projectId.value, { silent: true })
+            return
+          }
+        } else if (isReadOnly.value) {
+          await loadData(projectId.value, { silent: true })
+          return
+        }
+
+        if (detail.columnId === 'assignees') {
+          userStore.fetchCollaborators().catch(() => {})
+        }
+
+        await maybeAutoSnapshot()
+        const colTitle = detail.column?.title ?? detail.columnId
+        await syncTasksWithUndo(`${colTitle} の編集`, beforeTasks, afterTasks, affectedRowIds, {
+          skipReload: true,
+        })
+
+        if (pendingCellEditSaves === 1 && projectId.value) {
+          await loadData(projectId.value, { silent: true })
+        }
+
+        if (detail.columnId === 'assignees' && projectId.value) {
+          loadProjectUsers(projectId.value).catch(() => {})
+        }
+      } finally {
+        pendingCellEditSaves = Math.max(0, pendingCellEditSaves - 1)
       }
-      const nextName = String(detail.newValue ?? '').trim()
-      if (!nextName) {
-        await loadData(projectId.value, { silent: true })
-        return
-      }
-      await maybeAutoSnapshot()
-      await updateRowName(Number(detail.rowId), nextName)
-      return
     }
 
-    if (!detail.previousRow || !detail.row) return
-
-    const beforeRowsForExtract = commandRows?.before ?? [detail.previousRow]
-    const afterRowsForExtract = commandRows?.after ?? (detail.rows ?? [detail.row])
-
-    const { beforeTasks, afterTasks, affectedRowIds } = extractTaskChanges(
-      beforeRowsForExtract,
-      afterRowsForExtract,
-    )
-    if (afterTasks.length === 0) return
-
-    if (detail.columnId === 'progress') {
-      const userId = userStore.currentUser?.id
-      const userEmail = userStore.currentUser?.email
-      const canEdit = afterTasks.every((t) => {
-        const assignees = t.attribute?.assignees || []
-        const isAssignee = (!!userId && assignees.includes(userId)) || (!!userEmail && assignees.includes(userEmail))
-        return !isReadOnly.value || isAssignee
-      })
-      if (!canEdit) {
-        await loadData(projectId.value, { silent: true })
-        return
-      }
-    } else if (isReadOnly.value) {
-      await loadData(projectId.value, { silent: true })
-      return
-    }
-
-    if (detail.columnId === 'assignees') {
-      userStore.fetchCollaborators().catch(() => {})
-    }
-
-    await maybeAutoSnapshot()
-    const colTitle = detail.column?.title ?? detail.columnId
-    await syncTasksWithUndo(`${colTitle} の編集`, beforeTasks, afterTasks, affectedRowIds)
-
-    if (detail.columnId === 'assignees' && projectId.value) {
-      loadProjectUsers(projectId.value).catch(() => {})
-    }
+    cellEditSaveQueue = cellEditSaveQueue.then(runSave, runSave)
+    await cellEditSaveQueue
   }
 
   // --- 行追加関連 ---
@@ -4300,7 +4333,11 @@ export const useGanttChartView = () => {
     }, 100)
   }
 
-  const updateRowName = async (rowId: number, name: string) => {
+  const updateRowName = async (
+    rowId: number,
+    name: string,
+    options?: { skipReload?: boolean },
+  ) => {
     const row = rows.value.find((r) => Number(r.id) === rowId)
     if (!row) return
 
@@ -4347,7 +4384,9 @@ export const useGanttChartView = () => {
       })
     }
 
-    await loadData(projectId.value, { silent: true })
+    if (!options?.skipReload) {
+      await loadData(projectId.value, { silent: true })
+    }
     publishEditEvent('row_upsert', { targetName: name })
   }
 

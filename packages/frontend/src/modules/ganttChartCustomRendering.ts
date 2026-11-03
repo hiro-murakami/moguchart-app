@@ -2912,6 +2912,7 @@ export const createAssigneesCellEditor = (getOptions: () => AssigneesCellEditorO
           errorMessage = ''
           updateHostPreview()
           renderItems()
+          searchInput.focus()
         })
 
         itemsContainer.appendChild(row)
@@ -2970,7 +2971,7 @@ export const createAssigneesCellEditor = (getOptions: () => AssigneesCellEditorO
       restoreGanttChartTooltips()
     }
 
-    const finishCommit = () => {
+    const finishCommit = (navigationDirection?: moguchart.GridCellNavigationDirection) => {
       if (isFinished) return
       isFinished = true
       // もし検索欄に有効なメールアドレスが入力されたまま確定された場合は自動追加する
@@ -2979,7 +2980,7 @@ export const createAssigneesCellEditor = (getOptions: () => AssigneesCellEditorO
         selectedAssignees = deduplicateIdentifiers([...selectedAssignees, pending])
       }
       cleanup()
-      context.commit([...selectedAssignees])
+      context.commit([...selectedAssignees], navigationDirection)
     }
 
     const finishCancel = () => {
@@ -3015,11 +3016,17 @@ export const createAssigneesCellEditor = (getOptions: () => AssigneesCellEditorO
         return
       }
 
+      if (e.key === 'Tab') {
+        e.preventDefault()
+        finishCommit(e.shiftKey ? 'prev' : 'next')
+        return
+      }
+
       if (e.key === 'Enter') {
         e.preventDefault()
         const raw = searchInput.value.trim()
         if (!raw) {
-          finishCommit()
+          finishCommit(e.shiftKey ? 'up' : 'down')
           return
         }
         if (isEmailFormat(raw)) {
@@ -3053,17 +3060,25 @@ export const createAssigneesCellEditor = (getOptions: () => AssigneesCellEditorO
       }
     })
 
-    hostEl.addEventListener('keydown', (e: KeyboardEvent) => {
+    const handleFallbackKeydown = (e: KeyboardEvent) => {
+      if (e.isComposing || e.keyCode === 229) return
       if (e.key === 'Escape') {
         e.preventDefault()
         e.stopPropagation()
         finishCancel()
+      } else if (e.key === 'Tab') {
+        e.preventDefault()
+        e.stopPropagation()
+        finishCommit(e.shiftKey ? 'prev' : 'next')
       } else if (e.key === 'Enter') {
         e.preventDefault()
         e.stopPropagation()
-        finishCommit()
+        finishCommit(e.shiftKey ? 'up' : 'down')
       }
-    })
+    }
+
+    hostEl.addEventListener('keydown', handleFallbackKeydown)
+    panel.addEventListener('keydown', handleFallbackKeydown)
 
     renderItems()
     document.body.appendChild(panel)
