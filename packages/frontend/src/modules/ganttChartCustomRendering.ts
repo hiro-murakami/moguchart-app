@@ -3130,4 +3130,111 @@ export const createAssigneesCellEditor = (getOptions: () => AssigneesCellEditorO
   }
 }
 
+/**
+ * マルチカラムグリッドの「タスク名（行名）」セル用インラインカスタムエディタを生成する。
+ * rowHeaderContent のタスク名表示位置（上寄せ・左パディング・フォントサイズ）に合わせてテキストボックスを配置する。
+ */
+export const createNameCellEditor = () => {
+  return (context: moguchart.GanttCellEditorContext): HTMLElement => {
+    hideGanttChartTooltips()
+
+    let isFinished = false
+    const isDark = !!document.querySelector('.v-theme--dark')
+
+    const wrapper = document.createElement('div')
+    wrapper.style.cssText = `
+      width: 100%;
+      height: 100%;
+      min-width: 0;
+      display: flex;
+      align-items: flex-start;
+      padding: 2px 2px 0 0;
+      box-sizing: border-box;
+    `
+
+    const input = document.createElement('input')
+    input.type = 'text'
+    input.className = 'grid-cell-editor grid-cell-input'
+    input.value = String(context.value ?? context.row.name ?? '')
+    input.autocomplete = 'off'
+    input.style.cssText = `
+      width: 100%;
+      min-width: 0;
+      height: calc(24px * var(--moguchart-font-scale, 1));
+      max-height: calc(100% - 4px);
+      box-sizing: border-box;
+      font-family: inherit;
+      font-size: calc(14px * var(--moguchart-font-scale, 1));
+      font-weight: bold;
+      padding: 0 4.5px;
+      border-radius: 4px;
+      border: 1.5px solid var(--moguchart-editor-border, ${isDark ? '#60a5fa' : '#3b82f6'});
+      background-color: var(--moguchart-editor-bg, ${isDark ? '#1e293b' : '#ffffff'});
+      color: var(--moguchart-editor-text, ${isDark ? '#f8fafc' : '#0f172a'});
+      outline: none;
+      margin: 0;
+    `
+
+    const syncHostEditingValue = (val: string) => {
+      const rootNode = wrapper.getRootNode() as ShadowRoot | null
+      const rowHost = rootNode?.host as any
+      if (rowHost && '_editingValue' in rowHost) {
+        rowHost._editingValue = val
+      }
+    }
+
+    const finishCommit = (navigationDirection?: moguchart.GridCellNavigationDirection) => {
+      if (isFinished) return
+      isFinished = true
+      restoreGanttChartTooltips()
+      context.commit(input.value, navigationDirection)
+    }
+
+    const finishCancel = () => {
+      if (isFinished) return
+      isFinished = true
+      restoreGanttChartTooltips()
+      context.cancel()
+    }
+
+    input.addEventListener('input', () => {
+      syncHostEditingValue(input.value)
+    })
+
+    input.addEventListener('keydown', (e: KeyboardEvent) => {
+      e.stopPropagation()
+      if (e.isComposing || e.keyCode === 229) return
+      if (e.key === 'Tab') {
+        e.preventDefault()
+        finishCommit(e.shiftKey ? 'prev' : 'next')
+      } else if (e.key === 'Enter') {
+        e.preventDefault()
+        finishCommit(e.shiftKey ? 'up' : 'down')
+      } else if (e.key === 'Escape') {
+        e.preventDefault()
+        finishCancel()
+      }
+    })
+
+    input.addEventListener('blur', () => {
+      finishCommit()
+    })
+
+    for (const evtName of ['click', 'dblclick', 'mousedown', 'pointerdown'] as const) {
+      input.addEventListener(evtName, (e) => e.stopPropagation())
+    }
+
+    wrapper.appendChild(input)
+    wrapper.focus = () => {
+      input.focus()
+      try {
+        input.select()
+      } catch {}
+    }
+
+    return wrapper
+  }
+}
+
+
 

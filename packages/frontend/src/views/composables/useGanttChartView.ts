@@ -53,6 +53,7 @@ import {
   setUserDisplayNameResolver,
   renderAssigneesGridCell,
   createAssigneesCellEditor,
+  createNameCellEditor,
 } from '@/modules/ganttChartCustomRendering'
 import { useProjectStore } from '@/stores/useProjectStore'
 import { useUserStore } from '@/stores/useUserStore'
@@ -1472,6 +1473,7 @@ export const useGanttChartView = () => {
               ? {
                   renderCell: (_val: unknown, row: moguchart.GanttRow) =>
                     rowHeaderContent(row, barHeight.value),
+                  editor: createNameCellEditor(),
                 }
               : {}),
             ...(id === 'assignees'
