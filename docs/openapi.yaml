@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Moguchart REST API
-  version: 1.8.0
+  version: 1.9.0
   description: |
     Moguchartの外部アプリ向けREST API。
     ガントチャートプロジェクトの管理（プロジェクト・行・タスク・コメント・スナップショット）を提供します。
@@ -2263,6 +2263,16 @@ components:
           items:
             type: string
           description: マルチカラムグリッドで表示するカラムIDの配列
+        gridColumnOrder:
+          type: array
+          items:
+            type: string
+          description: マルチカラムグリッドのカラム表示順序（カラムID配列）
+        gridColumnWidths:
+          type: object
+          additionalProperties:
+            type: number
+          description: マルチカラムグリッドの各カラム幅 (columnId -> px)
         starred:
           type: boolean
           description: スター付きフラグ
