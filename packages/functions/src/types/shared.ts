@@ -174,6 +174,8 @@ export type ProjectSettings = {
   gridWorkingDaysInitialized?: boolean
   /** マルチカラムグリッドの各カラム幅 (columnId -> px) */
   gridColumnWidths?: Record<string, number>
+  /** マルチカラムグリッドの集計フッター行を表示するかどうか */
+  gridShowFooter?: boolean
   /** マルチカラムグリッド有効時の行ヘッダー全体幅 (px) */
   gridRowHeaderWidth?: number
   /** マルチカラムグリッド有効時の基準行ヘッダー全体幅 (px)（倍率100%基準） */

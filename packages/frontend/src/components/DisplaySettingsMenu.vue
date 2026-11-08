@@ -31,6 +31,7 @@ const props = defineProps<{
   granularity?: 'daily' | 'monthly' | 'hourly'
   gridEnabled?: boolean
   gridEditable?: boolean
+  gridShowFooter?: boolean
   gridColumns?: string[]
   enableProgress?: boolean
   enableWorkingDays?: boolean
@@ -59,6 +60,7 @@ const emit = defineEmits<{
   'update:baseBarHeight': [value: number]
   'update:gridEnabled': [value: boolean]
   'update:gridEditable': [value: boolean]
+  'update:gridShowFooter': [value: boolean]
   'update:gridColumns': [value: string[]]
 }>()
 
@@ -491,6 +493,20 @@ const currentTheme = computed({
                 density="compact"
                 class="setting-switch"
                 @update:model-value="emit('update:gridEditable', $event as boolean)"
+              />
+            </div>
+            <div class="setting-row sub-row">
+              <div class="setting-label-group">
+                <v-icon size="18" color="medium-emphasis" class="setting-icon">mdi-sigma</v-icon>
+                <span class="setting-title sub-title text-medium-emphasis">集計フッター行を表示</span>
+              </div>
+              <v-switch
+                :model-value="gridShowFooter ?? false"
+                color="primary"
+                hide-details
+                density="compact"
+                class="setting-switch"
+                @update:model-value="emit('update:gridShowFooter', Boolean($event))"
               />
             </div>
             <div class="setting-row sub-row flex-column align-start py-2" style="gap: 6px">

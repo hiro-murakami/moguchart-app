@@ -335,6 +335,7 @@ export const useGanttChartView = () => {
   }
   const gridEnabled = ref(false)
   const gridEditable = ref(true)
+  const gridShowFooter = ref(false)
   const gridColumns = ref<string[]>([...DEFAULT_GRID_COLUMNS])
   const gridColumnOrder = ref<string[]>([...ALL_GRID_COLUMN_IDS])
   const gridColumnWidths = ref<Record<string, number>>({})
@@ -588,6 +589,7 @@ export const useGanttChartView = () => {
       minimapCollapsed?: boolean
       gridEnabled?: boolean
       gridEditable?: boolean
+      gridShowFooter?: boolean
       gridColumns?: string[]
       gridColumnOrder?: string[]
       gridWorkingDaysInitialized?: boolean
@@ -696,10 +698,11 @@ export const useGanttChartView = () => {
   })
 
   // マルチカラムグリッド設定変更時に保存
-  watch([gridEnabled, gridEditable, gridColumns], ([enabled, editable, cols]) => {
+  watch([gridEnabled, gridEditable, gridShowFooter, gridColumns], ([enabled, editable, showFooter, cols]) => {
     saveProjectSettings({
       gridEnabled: enabled,
       gridEditable: editable,
+      gridShowFooter: showFooter,
       gridColumns: [...cols],
       gridWorkingDaysInitialized: true,
     })
@@ -854,6 +857,7 @@ export const useGanttChartView = () => {
         // マルチカラムグリッド設定の復元
         gridEnabled.value = settings?.gridEnabled ?? false
         gridEditable.value = settings?.gridEditable ?? true
+        gridShowFooter.value = settings?.gridShowFooter ?? false
         if (Array.isArray(settings?.gridColumns) && settings.gridColumns.length > 0) {
           const cols = settings.gridColumns.includes('name')
             ? [...settings.gridColumns]
@@ -1502,6 +1506,9 @@ export const useGanttChartView = () => {
         enabled: gridEnabled.value,
         editable: !isReadOnly.value && gridEditable.value,
         editTrigger: 'dblclick',
+        sortable: true,
+        showFooter: gridShowFooter.value,
+        cellSelection: true,
         width: gridEnabled.value ? baseGridRowHeaderWidth.value : undefined,
         columns: normalizeGridColumnOrder(gridColumnOrder.value)
           .filter((id) => {
@@ -1577,10 +1584,43 @@ export const useGanttChartView = () => {
                       : typeof prevAttr.assignees === 'string' && prevAttr.assignees
                         ? [prevAttr.assignees]
                         : []
+
+                    const resolveAssigneeToken = (token: string): string => {
+                      const trimmed = token.trim()
+                      if (!trimmed) return ''
+                      const lower = trimmed.toLowerCase()
+                      const current = userStore.currentUser
+                      if (
+                        current &&
+                        (current.displayName?.toLowerCase() === lower ||
+                          current.email?.toLowerCase() === lower ||
+                          current.id.toLowerCase() === lower)
+                      ) {
+                        return current.email || current.id
+                      }
+                      const matched = taskUsers.value.find(
+                        (u) =>
+                          u.displayName?.toLowerCase() === lower ||
+                          u.email?.toLowerCase() === lower ||
+                          u.id.toLowerCase() === lower,
+                      )
+                      if (matched) {
+                        return matched.email || matched.id
+                      }
+                      return trimmed
+                    }
+
                     const nextAssignees = Array.isArray(newValue)
                       ? newValue.map((v) => String(v ?? '').trim()).filter(Boolean)
                       : typeof newValue === 'string' && newValue.trim()
-                        ? [newValue.trim()]
+                        ? Array.from(
+                            new Set(
+                              newValue
+                                .split(/[,、]+/)
+                                .map(resolveAssigneeToken)
+                                .filter(Boolean),
+                            ),
+                          )
                         : []
 
                     if (isEqual(prevAssignees, nextAssignees)) {
@@ -1605,6 +1645,20 @@ export const useGanttChartView = () => {
                       assignees: nextAssignees.length > 0 ? nextAssignees : undefined,
                     }
                     targetTask.progressResizable = canEditProgress
+                  },
+                  footerValueGetter: (allRows: moguchart.GanttRow[]) => {
+                    const seen = new Set<string>()
+                    for (const r of allRows) {
+                      for (const t of r.tasks ?? []) {
+                        if (t.type === 'summary' || (t as any).isSummary) continue
+                        const raw = (t as any).attribute?.assignees
+                        const list = Array.isArray(raw) ? raw : typeof raw === 'string' && raw ? [raw] : []
+                        for (const id of list) {
+                          if (id) seen.add(resolveUserDisplayName(id) || id)
+                        }
+                      }
+                    }
+                    return seen.size > 0 ? `${seen.size}名` : ''
                   },
                   renderCell: (val: unknown) => renderAssigneesGridCell(String(val ?? '')),
                 }
@@ -4376,6 +4430,144 @@ export const useGanttChartView = () => {
     await cellEditSaveQueue
   }
 
+  const handleCellPaste = async (e: any) => {
+    const commandRows = lastCellEditCommandRows
+    lastCellEditCommandRows = null
+
+    const detail = getDetail<moguchart.CellPasteEventDetail>(e)
+    if (!detail || !Array.isArray(detail.changes) || detail.changes.length === 0) return
+
+    const beforeRows = commandRows?.before ?? (rows.value as any as moguchart.GanttRow[])
+    const afterRows = commandRows?.after ?? detail.rows
+
+    if (detail.rows && Array.isArray(detail.rows)) {
+      rows.value = detail.rows as any
+    }
+
+    pendingCellEditSaves += 1
+    const runSave = async () => {
+      try {
+        if (isReadOnly.value) {
+          await loadData(projectId.value, { silent: true })
+          return
+        }
+
+        const beforeRowMap = new Map<string, moguchart.GanttRow>()
+        for (const r of beforeRows) {
+          beforeRowMap.set(String(r.id), r)
+        }
+
+        const beforeRowUpdates: GanttRow[] = []
+        const afterRowUpdates: GanttRow[] = []
+
+        for (const aRow of afterRows) {
+          const bRow = beforeRowMap.get(String(aRow.id))
+          if (!bRow) continue
+          const nextName = String(aRow.name ?? '').trim()
+          const prevName = String(bRow.name ?? '').trim()
+          if (nextName && nextName !== prevName) {
+            const attr = ((aRow as any).attribute as RowAttribute | undefined) ?? {}
+            beforeRowUpdates.push({
+              id: Number(aRow.id),
+              name: prevName,
+              order: getRowOrder(bRow),
+              projectId: projectId.value,
+              visible: bRow.visible ?? true,
+              attribute: attr,
+              tasks: [],
+            })
+            afterRowUpdates.push({
+              id: Number(aRow.id),
+              name: nextName,
+              order: getRowOrder(aRow),
+              projectId: projectId.value,
+              visible: aRow.visible ?? true,
+              attribute: attr,
+              tasks: [],
+            })
+          }
+        }
+
+        const { beforeTasks, afterTasks, affectedRowIds } = extractTaskChanges(beforeRows, afterRows)
+        if (afterRowUpdates.length === 0 && afterTasks.length === 0) return
+
+        const hasAssigneeChange = detail.changes.some((c) => c.columnId === 'assignees')
+        if (hasAssigneeChange) {
+          userStore.fetchCollaborators().catch(() => {})
+        }
+
+        await maybeAutoSnapshot()
+
+        const description = `セルの一括貼り付け (${detail.changes.length}件)`
+        pushAction({
+          description,
+          undo: async () => {
+            if (beforeRowUpdates.length > 0) {
+              await upsertGanttRow(beforeRowUpdates)
+            }
+            if (beforeTasks.length > 0) {
+              await upsertGanttTasks(beforeTasks)
+            }
+            await loadData(projectId.value, { silent: true })
+          },
+          redo: async () => {
+            if (afterRowUpdates.length > 0) {
+              await upsertGanttRow(afterRowUpdates)
+            }
+            if (afterTasks.length > 0) {
+              await upsertGanttTasks(afterTasks)
+            }
+            await loadData(projectId.value, { silent: true })
+          },
+        })
+
+        if (afterRowUpdates.length > 0) {
+          await upsertGanttRow(afterRowUpdates)
+        }
+        if (afterTasks.length > 0) {
+          await upsertGanttTasks(afterTasks)
+        }
+
+        if (pendingCellEditSaves === 1 && projectId.value) {
+          await loadData(projectId.value, { silent: true })
+        }
+
+        if (afterTasks.length > 0) {
+          publishEditEvent('task_upsert', {
+            rowIds: affectedRowIds,
+            targetName: `${afterTasks.length}件のタスク`,
+            isNew: false,
+            taskId: String(afterTasks[0]!.id),
+          })
+        } else if (afterRowUpdates.length > 0) {
+          publishEditEvent('row_upsert', {
+            targetName:
+              afterRowUpdates.length === 1
+                ? afterRowUpdates[0]!.name
+                : `${afterRowUpdates.length}件の行`,
+          })
+        }
+
+        if (hasAssigneeChange && projectId.value) {
+          loadProjectUsers(projectId.value).catch(() => {})
+        }
+
+        snackbar({
+          message: `${detail.changes.length}件のセルを貼り付けました`,
+          color: 'success',
+        })
+      } catch (err) {
+        console.error('[GanttChart] Failed to save pasted cells:', err)
+        await loadData(projectId.value, { silent: true })
+      } finally {
+        pendingCellEditSaves = Math.max(0, pendingCellEditSaves - 1)
+      }
+    }
+
+    cellEditSaveQueue = cellEditSaveQueue.then(runSave, runSave)
+    await cellEditSaveQueue
+  }
+
   // --- 行追加関連 ---
   const handleAddRow = async (index?: number, count: number = 1) => {
     await maybeAutoSnapshot()
@@ -6109,6 +6301,14 @@ export const useGanttChartView = () => {
 
   // キーボードショートカット: コピー
   const handleCopyTasksShortcut = async () => {
+    if (
+      selectedTaskIds.value.length === 0 &&
+      gridEnabled.value &&
+      ganttChartRef.value?.getSelectedGridCells?.()
+    ) {
+      ganttChartRef.value.copySelectedCellsToTsv?.()
+      return
+    }
     await copySelectedTasks()
   }
 
@@ -6124,7 +6324,12 @@ export const useGanttChartView = () => {
       return
     }
 
-    if (!text.startsWith(CLIPBOARD_PREFIX)) return
+    if (!text.startsWith(CLIPBOARD_PREFIX)) {
+      if (gridEnabled.value && ganttChartRef.value?.getSelectedGridCells?.() && text) {
+        ganttChartRef.value.pasteTsvToCells?.(text)
+      }
+      return
+    }
 
     // ganttChartRef が存在し hitTest が使える場合、最後のマウス位置で判定
     const chart = ganttChartRef.value
@@ -6726,6 +6931,7 @@ export const useGanttChartView = () => {
     baseGridRowHeaderWidth,
     gridEnabled,
     gridEditable,
+    gridShowFooter,
     gridColumns,
     gridColumnOrder,
     gridColumnWidths,
@@ -6837,6 +7043,7 @@ export const useGanttChartView = () => {
     handleColumnResize,
     handleColumnReorder,
     handleCellEdit,
+    handleCellPaste,
     undo,
     redo,
     refresh,

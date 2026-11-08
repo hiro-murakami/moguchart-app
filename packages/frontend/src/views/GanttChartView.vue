@@ -44,6 +44,7 @@ const {
   readonlyMode,
   gridEnabled,
   gridEditable,
+  gridShowFooter,
   gridColumns,
   currentRole,
   pxPerDay,
@@ -155,6 +156,7 @@ const {
   handleColumnResize,
   handleColumnReorder,
   handleCellEdit,
+  handleCellPaste,
   undo,
   redo,
   handleCommand,
@@ -264,11 +266,21 @@ watch(showTaskTemplatesSidebar, (visible) => {
 
 // キーボードショートカット
 const handleKeyDown = (e: KeyboardEvent) => {
+  if (e.defaultPrevented) return
   // テキスト入力系の要素にフォーカスがある場合はブラウザ標準の動作を優先する
-  const target = e.target as HTMLElement | null
-  if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+  const composedTarget = (typeof e.composedPath === 'function' ? e.composedPath()[0] : e.target) as HTMLElement | null
+  const target = composedTarget || (e.target as HTMLElement | null)
+  if (
+    target &&
+    (target.tagName === 'INPUT' ||
+      target.tagName === 'TEXTAREA' ||
+      target.tagName === 'SELECT' ||
+      target.isContentEditable)
+  ) {
     return
   }
+
+  const hasSelectedGridCells = Boolean(ganttChartRef.value?.getSelectedGridCells?.())
 
   if (e.metaKey || e.ctrlKey) {
     const key = e.key.toLowerCase()
@@ -298,8 +310,14 @@ const handleKeyDown = (e: KeyboardEvent) => {
     }
   }
 
-  // 行選択時のインデント / アウトデント
+  // 行選択時のインデント / アウトデント（グリッドのセル選択中はセル移動を優先）
   if (e.key === 'Tab') {
+    if (hasSelectedGridCells) {
+      if (ganttChartRef.value?.moveGridCellSelection?.(0, e.shiftKey ? -1 : 1, false, true)) {
+        e.preventDefault()
+      }
+      return
+    }
     if (selectedRowIds.value.length > 0) {
       e.preventDefault()
       if (e.shiftKey) {
@@ -576,6 +594,7 @@ const handleOpenSlideSchedule = async () => {
               :granularity="currentProject?.attribute?.granularity"
               v-model:grid-enabled="gridEnabled"
               v-model:grid-editable="gridEditable"
+              v-model:grid-show-footer="gridShowFooter"
               v-model:grid-columns="gridColumns"
               :enable-progress="currentProject?.attribute?.enableProgress !== false"
               :enable-working-days="
@@ -631,6 +650,7 @@ const handleOpenSlideSchedule = async () => {
             @column-resize="handleColumnResize"
             @column-reorder="handleColumnReorder"
             @cell-edit="handleCellEdit"
+            @cell-paste="handleCellPaste"
             @task-delete="handleTaskDelete"
             @dependency-create="handleDependencyCreate"
             @dependency-click="handleDependencyClick"
