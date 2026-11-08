@@ -646,7 +646,24 @@ const bindImageThumbnailInteractions = (
   })
 }
 
-export const barContent = (task: moguchart.GanttTask) => {
+export interface BarContentOptions {
+  labelPosition?: 'inside' | 'auto' | 'right'
+  barWidthPx?: number
+  fontScale?: number
+  barHeightPx?: number
+  isDark?: boolean
+}
+
+const resolveIsDarkTheme = (explicitIsDark?: boolean): boolean => {
+  if (typeof explicitIsDark === 'boolean') return explicitIsDark
+  const chartEl = document.querySelector('gantt-chart')
+  const chartTheme = chartEl?.getAttribute('theme')
+  if (chartTheme === 'dark') return true
+  if (chartTheme === 'light') return false
+  return !!document.querySelector('.v-theme--dark')
+}
+
+export const barContent = (task: moguchart.GanttTask, options?: BarContentOptions) => {
   // サマリータスクの場合（ブラケット形状に最適化した専用レイアウト）
   if (task.type === 'summary') {
     const summaryContainer = document.createElement('div')
@@ -708,7 +725,7 @@ export const barContent = (task: moguchart.GanttTask) => {
 
   // マイルストーンの場合: ダイヤ（◆）の右外側にタスク名・ロック・ラベル・コメント・画像サムネイルを横並び表示
   if (isMilestone) {
-    const isDark = !!document.querySelector('.v-theme--dark')
+    const isDark = resolveIsDarkTheme(options?.isDark)
     const anchor = document.createElement('div')
     anchor.style.cssText =
       'position: absolute; left: 50%; top: 50%; width: 0; height: 0; transform: scale(calc(1 / 0.76)) rotate(-45deg); transform-origin: 0 0; pointer-events: none; user-select: none; z-index: 2;'
@@ -727,10 +744,10 @@ export const barContent = (task: moguchart.GanttTask) => {
     }
 
     const nameSpan = document.createElement('span')
-    const textColor = isDark ? '#f1f5f9' : '#1e293b'
+    const textColor = isDark ? '#f8fafc' : '#0f172a'
     const textShadow = isDark
-      ? '0 1px 2px rgba(0,0,0,0.85), 0 0 4px rgba(0,0,0,0.6)'
-      : '0 1px 2px rgba(255,255,255,0.95), 0 0 4px rgba(255,255,255,0.8)'
+      ? '0 1px 2px rgba(0,0,0,0.9), 0 0 4px rgba(0,0,0,0.75)'
+      : '0 1px 2px rgba(255,255,255,0.95), 0 0 4px rgba(255,255,255,0.85)'
     nameSpan.style.cssText = `font-weight: bold; font-size: calc(12px * var(--moguchart-font-scale, 1)); color: ${textColor}; text-shadow: ${textShadow}; white-space: nowrap;`
 
     const searchKeywords = (task as any)._searchKeywords as string[] | undefined
@@ -811,6 +828,173 @@ export const barContent = (task: moguchart.GanttTask) => {
 
     anchor.appendChild(milestoneRow)
     return anchor
+  }
+
+  const imageUrls = (taskWithAttr.attribute?.imageUrls as string[] | undefined)?.filter(Boolean)
+  const hasImages = !!(imageUrls && imageUrls.length > 0)
+  const scale = options?.fontScale ?? 1
+  const barHeightPx = options?.barHeightPx ?? 32
+  const barWidthPx = options?.barWidthPx
+  const labelPosMode = options?.labelPosition ?? 'inside'
+
+  const placeOutsideRight = (() => {
+    if (labelPosMode === 'right') return true
+    if (labelPosMode === 'auto' && typeof barWidthPx === 'number') {
+      const nameWidth = moguchart.estimateTaskLabelWidth(task.name || '', scale)
+      const lockWidth = isLocked ? Math.ceil(16 * scale) : 0
+      const thumbReserve = hasImages ? Math.ceil(barHeightPx + 4) : 0
+      return barWidthPx < nameWidth + lockWidth + thumbReserve
+    }
+    return false
+  })()
+
+  // タスク名ラベル等をバーの右外側に配置する場合（'right' または 'auto' でバー幅が狭い場合）
+  if (placeOutsideRight) {
+    const isDark = resolveIsDarkTheme(options?.isDark)
+    const textColor = isDark ? '#f8fafc' : '#0f172a'
+    const textShadow = isDark
+      ? '0 1px 2px rgba(0,0,0,0.9), 0 0 4px rgba(0,0,0,0.75)'
+      : '0 1px 2px rgba(255,255,255,0.95), 0 0 4px rgba(255,255,255,0.85)'
+
+    const root = document.createElement('div')
+    root.style.cssText =
+      'position: relative; width: 100%; height: 100%; box-sizing: border-box; pointer-events: none; user-select: none;'
+
+    const canFitThumbInside = hasImages && (barWidthPx === undefined || barWidthPx >= Math.ceil(barHeightPx * 0.85))
+
+    if (hasImages && canFitThumbInside) {
+      const thumbWrapper = document.createElement('span')
+      thumbWrapper.style.cssText =
+        'position: absolute; right: 4px; top: 0; height: 100%; box-sizing: border-box; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: 3px; overflow: hidden; background-color: rgba(255, 255, 255, 0.2); pointer-events: auto; cursor: zoom-in; border: 1px solid rgba(255, 255, 255, 0.3);'
+      const thumbImg = document.createElement('img')
+      setImageSrc(thumbImg, imageUrls![0]!)
+      thumbImg.style.cssText = 'width: 100%; height: 100%; object-fit: cover; display: block;'
+      thumbImg.draggable = false
+      thumbWrapper.appendChild(thumbImg)
+
+      if (imageUrls!.length > 1) {
+        const countBadge = document.createElement('span')
+        countBadge.style.cssText =
+          'position: absolute; bottom: -1px; right: -1px; background: rgba(0,0,0,0.7); color: white; font-size: 8px; font-weight: bold; padding: 0 3px; border-radius: 3px 0 3px 0; line-height: 14px;'
+        countBadge.textContent = `${imageUrls!.length}`
+        thumbWrapper.appendChild(countBadge)
+      }
+
+      bindImageThumbnailInteractions(thumbWrapper, imageUrls!, {
+        popupAttr: 'data-moguchart-image-popup',
+        anchorAttr: 'data-task-thumb',
+        anchorId: String(task.id),
+        onBeforeSchedule: () => {
+          hideGanttChartTooltips()
+          thumbWrapper.dispatchEvent(new CustomEvent('bar-mouseleave', { bubbles: true, composed: true }))
+        },
+        onCleanup: () => {
+          restoreGanttChartTooltips()
+        },
+      })
+      root.appendChild(thumbWrapper)
+    }
+
+    const outsideRow = document.createElement('div')
+    outsideRow.style.cssText =
+      'position: absolute; left: calc(100% + 8px); top: 50%; transform: translateY(-50%); display: flex; align-items: center; gap: 6px; white-space: nowrap; pointer-events: none; z-index: 4;'
+
+    if (isLocked) {
+      const lockIcon = document.createElement('span')
+      lockIcon.style.fontSize = 'calc(11px * var(--moguchart-font-scale, 1))'
+      lockIcon.style.flexShrink = '0'
+      lockIcon.style.opacity = '0.85'
+      lockIcon.textContent = '🔒'
+      outsideRow.appendChild(lockIcon)
+    }
+
+    const nameSpan = document.createElement('span')
+    // バー外側ではタスクのカラーパレット文字色(task.labelStyle の color 等)を使わず、テーマに応じた高コントラスト文字色を優先適用する
+    nameSpan.style.cssText = `${task.labelStyle || ''}; font-weight: bold; font-size: calc(12px * var(--moguchart-font-scale, 1)); color: ${textColor} !important; text-shadow: ${textShadow} !important; white-space: nowrap;`
+    const searchKeywords = (task as any)._searchKeywords as string[] | undefined
+    if (searchKeywords && searchKeywords.length > 0) {
+      highlightText(task.name || '', searchKeywords, nameSpan)
+    } else {
+      nameSpan.textContent = task.name || ''
+    }
+    outsideRow.appendChild(nameSpan)
+
+    if (labels && labels.length > 0) {
+      const labelsContainer = document.createElement('div')
+      labelsContainer.style.display = 'flex'
+      labelsContainer.style.gap = '4px'
+      labelsContainer.style.flexShrink = '0'
+
+      labels.forEach((l) => {
+        const labelSpan = document.createElement('span')
+        labelSpan.style.backgroundColor = l.color
+        labelSpan.style.color = getContrastColor(l.color)
+        labelSpan.style.padding = '0px 6px'
+        labelSpan.style.borderRadius = '3px'
+        labelSpan.style.fontSize = 'calc(10px * var(--moguchart-font-scale, 1))'
+        labelSpan.style.fontWeight = 'bold'
+        labelSpan.textContent = l.name
+        labelsContainer.appendChild(labelSpan)
+      })
+      outsideRow.appendChild(labelsContainer)
+    }
+
+    if (commentCount && commentCount > 0) {
+      const taskId = Number(task.id)
+      const badge = document.createElement('span')
+      badge.style.display = 'inline-flex'
+      badge.style.alignItems = 'center'
+      badge.style.gap = '2px'
+      badge.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.16)' : 'rgba(15, 23, 42, 0.1)'
+      badge.style.color = textColor
+      badge.style.padding = '0px 5px'
+      badge.style.borderRadius = '8px'
+      badge.style.fontSize = 'calc(10px * var(--moguchart-font-scale, 1))'
+      badge.style.fontWeight = 'bold'
+      badge.style.flexShrink = '0'
+      badge.style.pointerEvents = 'auto'
+      badge.style.cursor = 'default'
+      badge.textContent = `💬 ${commentCount}`
+
+      bindCommentBadgeInteractions(badge, commentsCache, taskId, commentCount, () => selectComments({ taskId }))
+      outsideRow.appendChild(badge)
+    }
+
+    if (hasImages && !canFitThumbInside) {
+      const thumbWrapper = document.createElement('span')
+      thumbWrapper.style.cssText =
+        'position: relative; width: 20px; height: 20px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 3px; overflow: hidden; background-color: rgba(128,128,128,0.2); pointer-events: auto; cursor: zoom-in; border: 1px solid rgba(128,128,128,0.35);'
+      const thumbImg = document.createElement('img')
+      setImageSrc(thumbImg, imageUrls![0]!)
+      thumbImg.style.cssText = 'width: 100%; height: 100%; object-fit: cover; display: block;'
+      thumbImg.draggable = false
+      thumbWrapper.appendChild(thumbImg)
+
+      if (imageUrls!.length > 1) {
+        const countBadge = document.createElement('span')
+        countBadge.style.cssText =
+          'position: absolute; bottom: -1px; right: -1px; background: rgba(0,0,0,0.7); color: white; font-size: 8px; font-weight: bold; padding: 0 3px; border-radius: 3px 0 3px 0; line-height: 14px;'
+        countBadge.textContent = `${imageUrls!.length}`
+        thumbWrapper.appendChild(countBadge)
+      }
+
+      bindImageThumbnailInteractions(thumbWrapper, imageUrls!, {
+        popupAttr: 'data-moguchart-image-popup',
+        anchorAttr: 'data-task-thumb',
+        anchorId: String(task.id),
+        onBeforeSchedule: () => {
+          hideGanttChartTooltips()
+          thumbWrapper.dispatchEvent(new CustomEvent('bar-mouseleave', { bubbles: true, composed: true }))
+        },
+        onCleanup: () => {
+          restoreGanttChartTooltips()
+        },
+      })
+      outsideRow.appendChild(thumbWrapper)
+    }
+
+    root.appendChild(outsideRow)
+    return root
   }
 
   const container = document.createElement('div')
@@ -902,7 +1086,6 @@ export const barContent = (task: moguchart.GanttTask) => {
   }
 
   // 画像サムネイル
-  const imageUrls = (taskWithAttr.attribute?.imageUrls as string[] | undefined)?.filter(Boolean)
   if (imageUrls && imageUrls.length > 0) {
     const thumbWrapper = document.createElement('span')
     thumbWrapper.style.position = 'absolute'

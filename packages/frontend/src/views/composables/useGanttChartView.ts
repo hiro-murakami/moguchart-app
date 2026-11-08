@@ -58,6 +58,7 @@ import {
 import { useProjectStore } from '@/stores/useProjectStore'
 import { useUserStore } from '@/stores/useUserStore'
 import type {
+  BarLabelPosition,
   ColorPalette,
   CustomNonWorkingDate,
   GanttRow,
@@ -359,7 +360,9 @@ export const useGanttChartView = () => {
   const labelWidth = ref(150)
   const showHiddenRows = ref(false)
   const showCurrentTimeLine = ref(true)
+  const showQuarters = ref(false)
   const barShadowLevel = ref<'none' | 'small' | 'medium' | 'large'>('medium')
+  const barLabelPosition = ref<BarLabelPosition>('inside')
   const readonlyMode = ref(false)
   const showCriticalPath = ref(false)
   const showSummaryTasks = ref(true)
@@ -565,7 +568,9 @@ export const useGanttChartView = () => {
       selectedLabels?: string[]
       showHiddenRows?: boolean
       showCurrentTimeLine?: boolean
+      showQuarters?: boolean
       barShadowLevel?: 'none' | 'small' | 'medium' | 'large'
+      barLabelPosition?: BarLabelPosition
       rowHeaderWidth?: number
       baseRowHeaderWidth?: number
       gridRowHeaderWidth?: number
@@ -740,6 +745,16 @@ export const useGanttChartView = () => {
     saveProjectSettings({ barShadowLevel: newValue })
   })
 
+  // 四半期表示設定変更時に保存
+  watch(showQuarters, (newValue) => {
+    saveProjectSettings({ showQuarters: newValue })
+  })
+
+  // タスク名の表示位置設定変更時に保存
+  watch(barLabelPosition, (newValue) => {
+    saveProjectSettings({ barLabelPosition: newValue })
+  })
+
   // 読み取り専用モード変更時に保存
   watch(readonlyMode, (newValue) => {
     saveProjectSettings({ readonlyMode: newValue })
@@ -879,6 +894,13 @@ export const useGanttChartView = () => {
           showCurrentTimeLine.value = true
         }
 
+        // showQuartersの復元
+        if (settings?.showQuarters !== undefined) {
+          showQuarters.value = settings.showQuarters
+        } else {
+          showQuarters.value = false
+        }
+
         // barShadowLevelの復元
         if (settings?.barShadowLevel !== undefined) {
           barShadowLevel.value = settings.barShadowLevel
@@ -887,6 +909,17 @@ export const useGanttChartView = () => {
           barShadowLevel.value = settings.showBarShadow ? 'medium' : 'none'
         } else {
           barShadowLevel.value = 'medium'
+        }
+
+        // barLabelPositionの復元
+        if (
+          settings?.barLabelPosition === 'inside' ||
+          settings?.barLabelPosition === 'auto' ||
+          settings?.barLabelPosition === 'right'
+        ) {
+          barLabelPosition.value = settings.barLabelPosition
+        } else {
+          barLabelPosition.value = 'inside'
         }
 
         // readonlyModeの復元
@@ -1404,6 +1437,7 @@ export const useGanttChartView = () => {
         height: baseBarHeight.value,
         margin: barMargin.value,
         cornerRadius: barCornerRadius.value,
+        labelPosition: barLabelPosition.value,
       },
       label: {
         width: labelWidth.value,
@@ -1412,6 +1446,16 @@ export const useGanttChartView = () => {
         start: toLocalDate(chartStartStr.value),
         end: toLocalDate(chartEndStr.value),
         pxPerDay: isHourly ? pxPerDayFromHour : basePxPerDay.value,
+        showQuarters: !isHourly && showQuarters.value,
+        quarterStartMonth: (currentProject.value?.attribute?.quarterStartMonth ?? 1) as moguchart.GanttChartOptionCalendar['quarterStartMonth'],
+        autoExtend:
+          !isReadOnly.value && !isSnapshotMode.value && !!currentProject.value?.attribute?.autoExtendCalendar
+            ? {
+                enabled: true,
+                extendDays: isHourly ? 1 : 7,
+                extendMonths: 1,
+              }
+            : false,
         ...(isMonthly
           ? {
               // 月単位表示: basePxPerMonth を直接使用
@@ -1604,7 +1648,43 @@ export const useGanttChartView = () => {
           }
         : {}),
       customRendering: {
-        barContent,
+        barContent: (task: moguchart.GanttTask) => {
+          let barWidthPx: number | undefined
+          if (task.start && task.end) {
+            const startMs = new Date(task.start).getTime()
+            const endMs = new Date(task.end).getTime()
+            if (endMs > startMs) {
+              if (isMonthly) {
+                const monthsDiff = dayjs(task.end).diff(dayjs(task.start), 'month', true)
+                barWidthPx = Math.max(1, monthsDiff * pxPerMonth.value)
+              } else if (isHourly) {
+                const daysDiff = (endMs - startMs) / 86400000
+                barWidthPx = Math.max(1, daysDiff * pxPerHour.value * 24)
+              } else {
+                const daysDiff = (endMs - startMs) / 86400000
+                barWidthPx = Math.max(1, daysDiff * pxPerDay.value)
+              }
+            }
+          }
+          const rawTheme = isPublicViewMode.value
+            ? ((publicThemeOverride.value || 'system') as 'light' | 'dark' | 'system')
+            : userStore.currentTheme
+          const isDark =
+            rawTheme === 'dark'
+              ? true
+              : rawTheme === 'light'
+                ? false
+                : typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+                  ? window.matchMedia('(prefers-color-scheme: dark)').matches
+                  : false
+          return barContent(task, {
+            labelPosition: barLabelPosition.value,
+            barWidthPx,
+            fontScale: fontScale.value,
+            barHeightPx: barHeight.value,
+            isDark,
+          })
+        },
         tooltip: (task: moguchart.GanttTask) => {
           const latestTask =
             displayRows.value.flatMap((r) => r.tasks).find((t) => String(t.id) === String(task.id)) ??
@@ -1743,6 +1823,91 @@ export const useGanttChartView = () => {
     if (typeof detail?.collapsed === 'boolean') {
       minimapCollapsed.value = detail.collapsed
     }
+  }
+
+  const persistAutoExtendedRange = debounce(async (newStartStr: string, newEndStr: string) => {
+    if (!currentProject.value || isReadOnly.value || isSnapshotMode.value) return
+    try {
+      await maybeAutoSnapshot()
+      const updatedProject: Project = {
+        ...currentProject.value,
+        start: newStartStr,
+        end: newEndStr,
+      }
+      await projectStore.updateProject(updatedProject)
+      publishEditEvent('full_reload')
+      snackbar({
+        message: `プロジェクト期間を自動拡張しました（${newStartStr} 〜 ${newEndStr}）`,
+        color: 'info',
+      })
+    } catch (err) {
+      console.error('Failed to auto-extend project calendar range:', err)
+    }
+  }, 600)
+
+  /**
+   * calendar-range-change イベントハンドラ
+   * タスク移動や日付編集によってカレンダー表示期間が自動拡張された際にプロジェクト期間を更新・永続化する
+   */
+  const handleCalendarRangeChange = (e: any) => {
+    if (!currentProject.value || isReadOnly.value || isSnapshotMode.value) return
+    if (!currentProject.value.attribute?.autoExtendCalendar) return
+    const detail = getDetail(e) as moguchart.CalendarRangeChangeEventDetail | undefined
+    if (!detail?.start || !detail?.end) return
+
+    const granularity = currentProject.value.attribute?.granularity || 'daily'
+    const isHourly = granularity === 'hourly'
+    const isMonthly = granularity === 'monthly'
+
+    let nextStart = dayjs(detail.start)
+    let nextEnd = dayjs(detail.end)
+    if (isMonthly) {
+      nextStart = nextStart.startOf('month')
+      nextEnd = nextEnd.endOf('month')
+    }
+
+    // プロジェクト粒度ごとの最大期間制限を超えないようクランプ
+    if (isHourly) {
+      const maxEnd = nextStart.add(10, 'day')
+      if (nextEnd.isAfter(maxEnd)) {
+        if (detail.direction === 'start') {
+          nextStart = nextEnd.subtract(10, 'day')
+        } else {
+          nextEnd = maxEnd
+        }
+      }
+    } else if (isMonthly) {
+      const maxEnd = nextStart.add(100, 'year')
+      if (nextEnd.isAfter(maxEnd)) {
+        if (detail.direction === 'start') {
+          nextStart = nextEnd.subtract(100, 'year').startOf('month')
+        } else {
+          nextEnd = maxEnd.endOf('month')
+        }
+      }
+    } else {
+      const maxEnd = nextStart.add(24, 'month')
+      if (nextEnd.isAfter(maxEnd)) {
+        if (detail.direction === 'start') {
+          nextStart = nextEnd.subtract(24, 'month')
+        } else {
+          nextEnd = maxEnd
+        }
+      }
+    }
+
+    const fmt = isHourly ? 'YYYY-MM-DD HH:mm:ss' : 'YYYY-MM-DD'
+    const newStartStr = nextStart.format(fmt)
+    const newEndStr = nextEnd.format(fmt)
+
+    if (newStartStr === chartStartStr.value && newEndStr === chartEndStr.value) return
+
+    chartStartStr.value = newStartStr
+    chartEndStr.value = newEndStr
+    currentProject.value.start = newStartStr
+    currentProject.value.end = newEndStr
+
+    persistAutoExtendedRange(newStartStr, newEndStr)
   }
 
   const alert = useAlert()
@@ -6535,6 +6700,7 @@ export const useGanttChartView = () => {
     currentProject,
     showHiddenRows,
     showCurrentTimeLine,
+    showQuarters,
     showCriticalPath,
     showSummaryTasks,
     showMinimap,
@@ -6542,6 +6708,7 @@ export const useGanttChartView = () => {
     minimapOpacity,
     minimapCollapsed,
     barShadowLevel,
+    barLabelPosition,
     readonlyMode,
     pxPerDay,
     basePxPerDay,
@@ -6702,6 +6869,7 @@ export const useGanttChartView = () => {
     handleZoomChange,
     handleMinimapResize,
     handleMinimapCollapse,
+    handleCalendarRangeChange,
     isImageDialogVisible,
     imageDialogTaskId,
     imageDialogImageUrls,

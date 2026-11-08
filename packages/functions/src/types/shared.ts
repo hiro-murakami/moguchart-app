@@ -178,11 +178,21 @@ export type ProjectSettings = {
   gridRowHeaderWidth?: number
   /** マルチカラムグリッド有効時の基準行ヘッダー全体幅 (px)（倍率100%基準） */
   baseGridRowHeaderWidth?: number
+  /** カレンダーヘッダーに四半期（Q1〜Q4）を表示するかどうか */
+  showQuarters?: boolean
+  /** タスクバー上のタスク名ラベル表示位置 ('inside' | 'auto' | 'right') */
+  barLabelPosition?: BarLabelPosition
   /** スター付きフラグ */
   starred?: boolean
   /** @deprecated barShadowLevel に移行済み。後方互換のため残存 */
   showBarShadow?: boolean
 }
+
+/** タスクバーのタスク名ラベル表示位置 */
+export type BarLabelPosition = 'inside' | 'auto' | 'right'
+
+/** 会計年度の開始月 (1〜12) */
+export type QuarterStartMonth = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12
 
 /** チュートリアルのキー一覧 */
 export type TutorialKey = 'duplicateBtn' | 'userSetting' | 'displaySetting'
@@ -351,6 +361,14 @@ export type ProjectAttribute = {
    * タスクのドラッグ移動時に稼働日数を維持するかどうか（trueの場合、休日を跨いでも稼働日数が変わらないよう終了日を自動調整）
    */
   preserveWorkingDaysOnDrag?: boolean
+  /**
+   * 四半期（Q1〜Q4）表示時の会計年度の開始月（1=1月始まり/暦年, 4=4月始まり/日本年度 等、未指定時は 1）
+   */
+  quarterStartMonth?: QuarterStartMonth
+  /**
+   * タスクをカレンダー左右端へ移動・編集した際にプロジェクト期間（開始日・終了日）を自動拡張するかどうか
+   */
+  autoExtendCalendar?: boolean
 }
 
 /** マーカーの種類 */

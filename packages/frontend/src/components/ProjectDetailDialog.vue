@@ -50,6 +50,8 @@ const {
   localNonWorkingDays,
   localNonWorkingDates,
   localPreserveWorkingDaysOnDrag,
+  localQuarterStartMonth,
+  localAutoExtendCalendar,
   localSummaryTaskColor,
   authorityHistoryUsers,
   projectUsers,
@@ -104,6 +106,21 @@ const historyRetentionOptions = [
   { title: '30日', value: 30 },
   { title: '60日', value: 60 },
   { title: '90日', value: 90 },
+]
+
+const quarterStartMonthOptions = [
+  { title: '1月（暦年：1〜3月がQ1）', value: 1 },
+  { title: '2月', value: 2 },
+  { title: '3月', value: 3 },
+  { title: '4月（日本会計年度：4〜6月がQ1）', value: 4 },
+  { title: '5月', value: 5 },
+  { title: '6月', value: 6 },
+  { title: '7月', value: 7 },
+  { title: '8月', value: 8 },
+  { title: '9月', value: 9 },
+  { title: '10月（米国会計年度：10〜12月がQ1）', value: 10 },
+  { title: '11月', value: 11 },
+  { title: '12月', value: 12 },
 ]
 
 const tab = ref<'general' | 'permissions' | 'editOptions' | 'scheduling' | 'colorPalettes' | 'labels' | 'milestones'>('general')
@@ -338,6 +355,24 @@ watch(
                     <v-col v-if="localGranularity === 'hourly' || localGranularity === 'daily'" cols="12" class="mb-2">
                       <SnapDurationInput v-model="localSnapDurationMinutes" :granularity="localGranularity" />
                     </v-col>
+                    <!-- daily および monthly モード時の会計年度開始月設定（四半期ヘッダー用） -->
+                    <v-col v-if="localGranularity !== 'hourly'" cols="6" class="mb-2">
+                      <v-select
+                        v-model="localQuarterStartMonth"
+                        :items="quarterStartMonthOptions"
+                        label="会計年度の開始月（四半期表示用）"
+                        density="compact"
+                        variant="outlined"
+                        hide-details="auto"
+                        class="mb-2 mr-3"
+                      >
+                        <template v-slot:append>
+                          <HelpText
+                            text="表示設定で「四半期（Q1〜Q4）を表示」をONにした際、どの月から第1四半期（Q1）を開始するかを設定します"
+                          />
+                        </template>
+                      </v-select>
+                    </v-col>
                     <v-col cols="12" class="mb-4">
                       <v-checkbox v-model="localPublic" density="compact" hide-details>
                         <template v-slot:label>
@@ -418,6 +453,16 @@ watch(
                         <template v-slot:label>
                           <span class="mr-2">タスクの移動を横方向に限定する</span>
                           <HelpText text="ONにするとタスクを別の行へドラッグ移動できなくなります" />
+                        </template>
+                      </v-checkbox>
+                    </v-col>
+                    <v-col cols="12" class="mb-2">
+                      <v-checkbox v-model="localAutoExtendCalendar" density="compact" hide-details>
+                        <template v-slot:label>
+                          <span class="mr-2">カレンダー端へのタスク移動時にプロジェクト期間を自動拡張する</span>
+                          <HelpText
+                            text="ONにすると、タスクをカレンダーの左右端へドラッグ移動・リサイズまたは日付編集した際に、プロジェクトの開始日・終了日を自動的に拡張します"
+                          />
                         </template>
                       </v-checkbox>
                     </v-col>

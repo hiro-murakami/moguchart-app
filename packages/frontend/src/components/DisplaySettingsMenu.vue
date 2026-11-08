@@ -2,7 +2,7 @@
 import { computed, inject, ref, type Ref } from 'vue'
 import { useUserStore } from '@/stores/useUserStore'
 import { CALENDAR_WIDTH_PRESETS, ZOOM_PERCENT, DEFAULT_BAR_HEIGHT } from '@/modules/constants'
-import type { User } from '@functions/types/shared'
+import type { BarLabelPosition, User } from '@functions/types/shared'
 import themeDarkImg from '@/assets/theme-dark.png'
 import themeLightImg from '@/assets/theme-light.png'
 import themeSystemImg from '@/assets/theme-system.png'
@@ -10,11 +10,13 @@ import themeSystemImg from '@/assets/theme-system.png'
 const props = defineProps<{
   showHiddenRows: boolean
   showCurrentTimeLine: boolean
+  showQuarters?: boolean
   showCriticalPath: boolean
   showSummaryTasks: boolean
   showMinimap: boolean
   minimapOpacity?: number
   barShadowLevel: 'none' | 'small' | 'medium' | 'large'
+  barLabelPosition?: BarLabelPosition
   readonlyMode?: boolean
   canEdit?: boolean
   zoomPercent?: number
@@ -38,11 +40,13 @@ const props = defineProps<{
 const emit = defineEmits<{
   'update:showHiddenRows': [value: boolean]
   'update:showCurrentTimeLine': [value: boolean]
+  'update:showQuarters': [value: boolean]
   'update:showCriticalPath': [value: boolean]
   'update:showSummaryTasks': [value: boolean]
   'update:showMinimap': [value: boolean]
   'update:minimapOpacity': [value: number]
   'update:barShadowLevel': [value: 'none' | 'small' | 'medium' | 'large']
+  'update:barLabelPosition': [value: BarLabelPosition]
   'update:readonlyMode': [value: boolean]
   'update:zoomPercent': [value: number]
   'update:pxPerDay': [value: number]
@@ -226,6 +230,24 @@ const selectedBarShadow = computed<'none' | 'small' | 'medium' | 'large'>({
   },
 })
 
+// --- タスク名の表示位置 ---
+const BAR_LABEL_POSITION_PRESETS = [
+  { label: 'バー内', value: 'inside' as const },
+  { label: '自動', value: 'auto' as const },
+  { label: '右外側', value: 'right' as const },
+]
+
+const selectedBarLabelPosition = computed<BarLabelPosition>({
+  get: () => {
+    const current = props.barLabelPosition ?? 'inside'
+    const found = BAR_LABEL_POSITION_PRESETS.find((p) => p.value === current)
+    return found ? current : 'inside'
+  },
+  set: (val: BarLabelPosition | null) => {
+    if (val != null) emit('update:barLabelPosition', val)
+  },
+})
+
 const userStore = useUserStore()
 const user = computed(() => userStore.user)
 const isPublicViewMode = inject<Ref<boolean>>('isPublicViewMode', ref(false))
@@ -320,6 +342,22 @@ const currentTheme = computed({
             density="compact"
             class="setting-switch"
             @update:model-value="emit('update:showCurrentTimeLine', $event as boolean)"
+          />
+        </div>
+
+        <!-- 四半期（Q1〜Q4）を表示（日・月単位モード時のみ） -->
+        <div v-if="currentGranularity !== 'hourly'" class="setting-row">
+          <div class="setting-label-group">
+            <v-icon size="20" color="medium-emphasis" class="setting-icon">mdi-calendar-range</v-icon>
+            <span class="setting-title">四半期（Q1〜Q4）を表示</span>
+          </div>
+          <v-switch
+            :model-value="showQuarters ?? false"
+            color="primary"
+            hide-details
+            density="compact"
+            class="setting-switch"
+            @update:model-value="emit('update:showQuarters', $event as boolean)"
           />
         </div>
 
@@ -602,6 +640,31 @@ const currentTheme = computed({
           >
             <v-btn
               v-for="preset in BAR_SHADOW_PRESETS"
+              :key="preset.value"
+              :value="preset.value"
+              class="toggle-btn"
+            >
+              {{ preset.label }}
+            </v-btn>
+          </v-btn-toggle>
+        </div>
+
+        <!-- タスク名の表示位置 -->
+        <div class="setting-row">
+          <div class="setting-label-group">
+            <v-icon size="20" color="medium-emphasis" class="setting-icon">mdi-format-text-wrapping-overflow</v-icon>
+            <span class="setting-title">タスク名の位置</span>
+          </div>
+          <v-btn-toggle
+            v-model="selectedBarLabelPosition"
+            mandatory
+            density="compact"
+            color="primary"
+            variant="outlined"
+            class="setting-toggle"
+          >
+            <v-btn
+              v-for="preset in BAR_LABEL_POSITION_PRESETS"
               :key="preset.value"
               :value="preset.value"
               class="toggle-btn"

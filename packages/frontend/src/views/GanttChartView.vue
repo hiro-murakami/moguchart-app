@@ -33,11 +33,13 @@ const {
   currentProject,
   showHiddenRows,
   showCurrentTimeLine,
+  showQuarters,
   showCriticalPath,
   showSummaryTasks,
   showMinimap,
   minimapOpacity,
   barShadowLevel,
+  barLabelPosition,
   isExporting,
   readonlyMode,
   gridEnabled,
@@ -195,6 +197,7 @@ const {
   handleZoomChange,
   handleMinimapResize,
   handleMinimapCollapse,
+  handleCalendarRangeChange,
   isImageDialogVisible,
   imageDialogTaskId,
   imageDialogImageUrls,
@@ -552,11 +555,13 @@ const handleOpenSlideSchedule = async () => {
               button-class="header-icon-btn flex-shrink-0"
               v-model:show-hidden-rows="showHiddenRows"
               v-model:show-current-time-line="showCurrentTimeLine"
+              v-model:show-quarters="showQuarters"
               v-model:show-critical-path="showCriticalPath"
               v-model:show-summary-tasks="showSummaryTasks"
               v-model:show-minimap="showMinimap"
               v-model:minimap-opacity="minimapOpacity"
               v-model:bar-shadow-level="barShadowLevel"
+              v-model:bar-label-position="barLabelPosition"
               v-model:zoom-percent="zoomPercent"
               v-model:base-px-per-day="basePxPerDay"
               v-model:base-px-per-month="basePxPerMonth"
@@ -634,6 +639,7 @@ const handleOpenSlideSchedule = async () => {
             @zoom-change="handleZoomChange"
             @minimap-resize="handleMinimapResize"
             @minimap-collapse="handleMinimapCollapse"
+            @calendar-range-change="handleCalendarRangeChange"
             @marker-dblclick="handleMarkerDblClick"
             @marker-contextmenu="handleMarkerContextMenu"
             @row-toggle-collapse="handleRowToggleCollapse"
