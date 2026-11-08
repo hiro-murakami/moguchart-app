@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import { ref, watch, computed, nextTick } from 'vue'
-import type { Project, ColorPalette, CustomNonWorkingDate, Label, Milestone, ProjectGranularity } from '@functions/types/shared'
+import type {
+  Project,
+  ColorPalette,
+  CustomNonWorkingDate,
+  Label,
+  Milestone,
+  ProjectGranularity,
+} from '@functions/types/shared'
 import inputRules from '@/modules/inputRules'
 import { granularityToInputType } from '@/modules/utils'
 import { useProjectDetailDialog } from './composables/useProjectDetailDialog'
@@ -123,7 +130,9 @@ const quarterStartMonthOptions = [
   { title: '12月', value: 12 },
 ]
 
-const tab = ref<'general' | 'permissions' | 'editOptions' | 'scheduling' | 'colorPalettes' | 'labels' | 'milestones'>('general')
+const tab = ref<'general' | 'permissions' | 'editOptions' | 'scheduling' | 'colorPalettes' | 'labels' | 'milestones'>(
+  'general',
+)
 const expandedPaletteIndex = ref<number | null>(null)
 const expandedLabelIndex = ref<number | null>(null)
 const expandedMilestoneIndex = ref<number | null>(null)
@@ -352,7 +361,7 @@ watch(
                       </v-btn>
                     </v-col>
                     <!-- hourly および daily モード時のスナップ単位設定 -->
-                    <v-col v-if="localGranularity === 'hourly' || localGranularity === 'daily'" cols="12" class="mb-2">
+                    <v-col v-if="localGranularity === 'hourly' || localGranularity === 'daily'" cols="12" class="mb-5">
                       <SnapDurationInput v-model="localSnapDurationMinutes" :granularity="localGranularity" />
                     </v-col>
                     <!-- daily および monthly モード時の会計年度開始月設定（四半期ヘッダー用） -->
