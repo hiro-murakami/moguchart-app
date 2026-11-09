@@ -154,6 +154,8 @@ export type ProjectSettings = {
   showCriticalPath?: boolean
   /** サマリータスク（自動集計バー）を表示するかどうか */
   showSummaryTasks?: boolean
+  /** デッドライン（期限マーカー）を表示するかどうか */
+  showDeadlines?: boolean
   /** ミニマップ（全体鳥瞰）を表示するかどうか */
   showMinimap?: boolean
   /** ミニマップの幅 (px) */
@@ -420,6 +422,13 @@ export type RowAttribute = {
   summaryColor?: string
 }
 
+/**
+ * タスクのスケジュール制約タイプ
+ * - 'SNET': Start No Earlier Than（指定日以降に開始）
+ * - 'FNLT': Finish No Later Than（指定日までに終了）
+ */
+export type TaskConstraintType = 'SNET' | 'FNLT'
+
 /** タスクの追加属性 */
 export type TaskAttribute = {
   /** タスク種別（'task': 通常タスク, 'milestone': マイルストーン。未指定時は 'task'） */
@@ -440,6 +449,12 @@ export type TaskAttribute = {
   dependencies?: TaskDependency[]
   /** タスクバーに表示する画像のURL配列 */
   imageUrls?: string[]
+  /** タスクの期限（デッドライン）日時 */
+  deadline?: string
+  /** スケジュール制約タイプ ('SNET' | 'FNLT') */
+  constraintType?: TaskConstraintType
+  /** スケジュール制約の基準日時 */
+  constraintDate?: string
 }
 
 /** フロントエンドの編集用：行データ */
@@ -475,6 +490,12 @@ export interface EditingTaskData {
   dependencies?: TaskDependency[]
   /** タスクバーに表示する画像のURL配列 */
   imageUrls?: string[]
+  /** タスクの期限（デッドライン）日時 */
+  deadline?: string
+  /** スケジュール制約タイプ ('SNET' | 'FNLT') */
+  constraintType?: TaskConstraintType
+  /** スケジュール制約の基準日時 */
+  constraintDate?: string
 }
 
 /** 簡易的な行情報（ドロップダウン選択用など） */

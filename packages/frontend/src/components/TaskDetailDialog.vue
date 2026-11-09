@@ -7,6 +7,7 @@ import type {
   Label,
   ProjectGranularity,
   SimpleRowData,
+  TaskConstraintType,
   User,
 } from '@functions/types/shared'
 import dayjs from 'dayjs'
@@ -93,12 +94,25 @@ const dialogTitle = computed(() => {
 const taskType = computed<'task' | 'milestone'>({
   get: () => (localTask.value.type === 'milestone' ? 'milestone' : 'task'),
   set: (val: 'task' | 'milestone') => {
+    const prevType = localTask.value.type === 'milestone' ? 'milestone' : 'task'
     localTask.value.type = val
     if (val === 'milestone') {
       localTask.value.end = localTask.value.start
       localTask.value.progress = undefined
       if (!localTask.value.id && localTask.value.name === '新規タスク') {
         localTask.value.name = '新規マイルストーン'
+      }
+      if (prevType !== 'milestone' && !isHourly.value) {
+        if (localTask.value.deadline) {
+          localTask.value.deadline = isMonthly.value
+            ? dayjs(localTask.value.deadline).subtract(1, 'day').startOf('month').format('YYYY-MM-DD')
+            : dayjs(localTask.value.deadline).subtract(1, 'day').startOf('day').format('YYYY-MM-DDTHH:mm:ss')
+        }
+        if (localTask.value.constraintType === 'FNLT' && localTask.value.constraintDate) {
+          localTask.value.constraintDate = isMonthly.value
+            ? dayjs(localTask.value.constraintDate).subtract(1, 'day').startOf('month').format('YYYY-MM-DD')
+            : dayjs(localTask.value.constraintDate).subtract(1, 'day').startOf('day').format('YYYY-MM-DDTHH:mm:ss')
+        }
       }
     } else {
       if (!localTask.value.id && localTask.value.name === '新規マイルストーン') {
@@ -115,6 +129,18 @@ const taskType = computed<'task' | 'milestone'>({
           } else {
             localTask.value.end = s.add(1, 'day').startOf('day').format('YYYY-MM-DDTHH:mm:ss')
           }
+        }
+      }
+      if (prevType === 'milestone' && !isHourly.value) {
+        if (localTask.value.deadline) {
+          localTask.value.deadline = isMonthly.value
+            ? dayjs(localTask.value.deadline).add(1, 'month').startOf('month').format('YYYY-MM-DD')
+            : dayjs(localTask.value.deadline).add(1, 'day').startOf('day').format('YYYY-MM-DDTHH:mm:ss')
+        }
+        if (localTask.value.constraintType === 'FNLT' && localTask.value.constraintDate) {
+          localTask.value.constraintDate = isMonthly.value
+            ? dayjs(localTask.value.constraintDate).add(1, 'month').startOf('month').format('YYYY-MM-DD')
+            : dayjs(localTask.value.constraintDate).add(1, 'day').startOf('day').format('YYYY-MM-DDTHH:mm:ss')
         }
       }
     }
@@ -164,6 +190,110 @@ const displayEnd = computed({
       localTask.value.end = dayjs(val).add(1, 'day').startOf('day').format('YYYY-MM-DDTHH:mm:ss')
     } else {
       localTask.value.end = val
+    }
+  },
+})
+
+const displayDeadline = computed({
+  get: () => {
+    if (!localTask.value.deadline) return ''
+    if (isMilestone.value) {
+      return localTask.value.deadline
+    }
+    if (isMonthly.value) {
+      return dayjs(localTask.value.deadline).subtract(1, 'day').startOf('month').format('YYYY-MM-DD')
+    }
+    if (!isHourly.value) {
+      const deadlineDate = dayjs(localTask.value.deadline)
+      if (deadlineDate.isValid() && deadlineDate.hour() === 0 && deadlineDate.minute() === 0) {
+        return deadlineDate.subtract(1, 'day').format('YYYY-MM-DD')
+      }
+      return deadlineDate.format('YYYY-MM-DD')
+    }
+    return localTask.value.deadline
+  },
+  set: (val: string) => {
+    if (!val) {
+      localTask.value.deadline = undefined
+      return
+    }
+    if (isMilestone.value) {
+      localTask.value.deadline = val
+    } else if (isMonthly.value) {
+      localTask.value.deadline = dayjs(val).add(1, 'month').startOf('month').format('YYYY-MM-DD')
+    } else if (!isHourly.value) {
+      localTask.value.deadline = dayjs(val).add(1, 'day').startOf('day').format('YYYY-MM-DDTHH:mm:ss')
+    } else {
+      localTask.value.deadline = val
+    }
+  },
+})
+
+const constraintTypeOptions = [
+  { title: 'なし', value: '' },
+  { title: '指定日以降に開始 (SNET)', value: 'SNET' },
+  { title: '指定日までに終了 (FNLT)', value: 'FNLT' },
+]
+
+const constraintTypeModel = computed<'' | TaskConstraintType>({
+  get: () => localTask.value.constraintType || '',
+  set: (val: '' | TaskConstraintType) => {
+    if (!val) {
+      localTask.value.constraintType = undefined
+      localTask.value.constraintDate = undefined
+      return
+    }
+    const prevType = localTask.value.constraintType
+    localTask.value.constraintType = val
+    if (!localTask.value.constraintDate) {
+      localTask.value.constraintDate =
+        val === 'FNLT' ? localTask.value.end || localTask.value.start : localTask.value.start
+    } else if (prevType && prevType !== val && !isMilestone.value && !isHourly.value) {
+      if (val === 'FNLT') {
+        localTask.value.constraintDate = isMonthly.value
+          ? dayjs(localTask.value.constraintDate).add(1, 'month').startOf('month').format('YYYY-MM-DD')
+          : dayjs(localTask.value.constraintDate).add(1, 'day').startOf('day').format('YYYY-MM-DDTHH:mm:ss')
+      } else {
+        localTask.value.constraintDate = isMonthly.value
+          ? dayjs(localTask.value.constraintDate).subtract(1, 'day').startOf('month').format('YYYY-MM-DD')
+          : dayjs(localTask.value.constraintDate).subtract(1, 'day').startOf('day').format('YYYY-MM-DDTHH:mm:ss')
+      }
+    }
+  },
+})
+
+const displayConstraintDate = computed({
+  get: () => {
+    if (!localTask.value.constraintDate) return ''
+    if (localTask.value.constraintType === 'FNLT' && !isMilestone.value) {
+      if (isMonthly.value) {
+        return dayjs(localTask.value.constraintDate).subtract(1, 'day').startOf('month').format('YYYY-MM-DD')
+      }
+      if (!isHourly.value) {
+        const d = dayjs(localTask.value.constraintDate)
+        if (d.isValid() && d.hour() === 0 && d.minute() === 0) {
+          return d.subtract(1, 'day').format('YYYY-MM-DD')
+        }
+        return d.format('YYYY-MM-DD')
+      }
+    }
+    return localTask.value.constraintDate
+  },
+  set: (val: string) => {
+    if (!val) {
+      localTask.value.constraintDate = undefined
+      return
+    }
+    if (localTask.value.constraintType === 'FNLT' && !isMilestone.value) {
+      if (isMonthly.value) {
+        localTask.value.constraintDate = dayjs(val).add(1, 'month').startOf('month').format('YYYY-MM-DD')
+      } else if (!isHourly.value) {
+        localTask.value.constraintDate = dayjs(val).add(1, 'day').startOf('day').format('YYYY-MM-DDTHH:mm:ss')
+      } else {
+        localTask.value.constraintDate = val
+      }
+    } else {
+      localTask.value.constraintDate = val
     }
   },
 })
@@ -261,6 +391,43 @@ const inputType = computed(() => granularityToInputType(props.granularity))
           class="mb-3"
           clearable
           autocomplete="off"
+        />
+      </v-col>
+      <v-col cols="12" sm="4">
+        <DateInput
+          v-model="displayDeadline"
+          :type="inputType"
+          label-daily="期限（デッドライン）"
+          label-monthly="期限月（デッドライン）"
+          label-datetime="期限日時（デッドライン）"
+          :required="false"
+          clearable
+          hide-details="auto"
+          class="mb-3"
+        />
+      </v-col>
+      <v-col cols="12" :sm="localTask.constraintType ? 4 : 8">
+        <v-select
+          v-model="constraintTypeModel"
+          :items="constraintTypeOptions"
+          item-title="title"
+          item-value="value"
+          label="スケジュール制約"
+          density="compact"
+          variant="outlined"
+          hide-details
+          class="mb-3"
+        />
+      </v-col>
+      <v-col v-if="localTask.constraintType" cols="12" sm="4">
+        <DateInput
+          v-model="displayConstraintDate"
+          :type="inputType"
+          label-daily="制約日"
+          label-monthly="制約月"
+          label-datetime="制約日時"
+          hide-details="auto"
+          class="mb-3"
         />
       </v-col>
       <v-col cols="12">

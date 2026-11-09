@@ -311,6 +311,7 @@ export const useGanttChartView = () => {
     'assignees',
     'startDate',
     'endDate',
+    'deadline',
     'duration',
     'workingDays',
     'progress',
@@ -367,6 +368,7 @@ export const useGanttChartView = () => {
   const readonlyMode = ref(false)
   const showCriticalPath = ref(false)
   const showSummaryTasks = ref(true)
+  const showDeadlines = ref(true)
   const showMinimap = ref(true)
   const minimapWidth = ref(200)
   const minimapOpacity = ref(1)
@@ -583,6 +585,7 @@ export const useGanttChartView = () => {
       readonlyMode?: boolean
       showCriticalPath?: boolean
       showSummaryTasks?: boolean
+      showDeadlines?: boolean
       showMinimap?: boolean
       minimapWidth?: number
       minimapOpacity?: number
@@ -773,6 +776,11 @@ export const useGanttChartView = () => {
     saveProjectSettings({ showSummaryTasks: newValue })
   })
 
+  // デッドライン表示設定変更時に保存
+  watch(showDeadlines, (newValue) => {
+    saveProjectSettings({ showDeadlines: newValue })
+  })
+
   // ミニマップ表示設定変更時に保存
   watch(showMinimap, (newValue) => {
     saveProjectSettings({ showMinimap: newValue })
@@ -954,6 +962,13 @@ export const useGanttChartView = () => {
           showSummaryTasks.value = settings.showSummaryTasks
         } else {
           showSummaryTasks.value = true
+        }
+
+        // showDeadlinesの復元
+        if (settings?.showDeadlines !== undefined) {
+          showDeadlines.value = settings.showDeadlines
+        } else {
+          showDeadlines.value = true
         }
 
         // showMinimapの復元
@@ -1814,6 +1829,13 @@ export const useGanttChartView = () => {
         showTooltip: true,
         autoSummary: true,
       },
+      deadline: {
+        enabled: showDeadlines.value,
+        highlightOverdue: true,
+        showConnector: true,
+        showOverdueBadge: true,
+        showTooltip: true,
+      },
     }
   })
 
@@ -2327,13 +2349,18 @@ export const useGanttChartView = () => {
       const aAssignees = Array.isArray(aAssigneesRaw) ? aAssigneesRaw.filter(Boolean) : []
       const assigneesChanged = !isEqual(bAssignees, aAssignees)
 
+      const bDeadline = bTask.deadline ? toDateTimeString(bTask.deadline) : undefined
+      const aDeadline = aTask.deadline ? toDateTimeString(aTask.deadline) : undefined
+      const deadlineChanged = bDeadline !== aDeadline
+
       const hasChange =
         bRowId !== aRowId ||
         bStart !== aStart ||
         bEnd !== aEnd ||
         bProgress !== aProgress ||
         depsChanged ||
-        assigneesChanged
+        assigneesChanged ||
+        deadlineChanged
 
       if (hasChange) {
         affectedRowIdSet.add(bRowId)
@@ -2350,6 +2377,7 @@ export const useGanttChartView = () => {
           ...(bTask.progress !== undefined && !bIsMilestone ? { progress: bTask.progress } : {}),
           assignees: bAssignees.length > 0 ? bAssignees : undefined,
           dependencies: bDeps.length > 0 ? bDeps : undefined,
+          deadline: bDeadline,
         }
         const aAttr: TaskAttribute = {
           ...aRawAttr,
@@ -2357,6 +2385,7 @@ export const useGanttChartView = () => {
           ...(aTask.progress !== undefined && !aIsMilestone ? { progress: aTask.progress } : {}),
           assignees: aAssignees.length > 0 ? aAssignees : undefined,
           dependencies: aDeps.length > 0 ? aDeps : undefined,
+          deadline: aDeadline,
         }
 
         beforeTasks.push({
@@ -2587,6 +2616,9 @@ export const useGanttChartView = () => {
       progress: isMilestone ? undefined : attribute?.progress,
       progressResizable: canEditProgress,
       dependencies: attribute?.dependencies,
+      deadline: attribute?.deadline ? toLocalDate(attribute.deadline) : undefined,
+      constraintType: attribute?.constraintType,
+      constraintDate: attribute?.constraintDate ? toLocalDate(attribute.constraintDate) : undefined,
       html:
         attribute?.labels && attribute.labels.length > 0
           ? `<div style="display: flex; gap: 4px; padding: 2px 4px; overflow: hidden;">${attribute?.labels
@@ -3721,6 +3753,9 @@ export const useGanttChartView = () => {
         assignees: attr?.assignees ? [...attr.assignees] : undefined,
         dependencies: attr?.dependencies ? [...attr.dependencies] : undefined,
         imageUrls: attr?.imageUrls ? [...attr.imageUrls] : undefined,
+        deadline: attr?.deadline,
+        constraintType: attr?.constraintType,
+        constraintDate: attr?.constraintDate,
       }
       isDialogVisible.value = true
       // 他ユーザーにこのタスクを編集中であることを通知
@@ -3888,6 +3923,10 @@ export const useGanttChartView = () => {
         assignees: taskData.assignees && taskData.assignees.length > 0 ? taskData.assignees : undefined,
         dependencies: taskData.dependencies && taskData.dependencies.length > 0 ? taskData.dependencies : undefined,
         imageUrls: taskData.imageUrls && taskData.imageUrls.length > 0 ? taskData.imageUrls : undefined,
+        deadline: taskData.deadline || undefined,
+        constraintType: taskData.constraintType || undefined,
+        constraintDate:
+          taskData.constraintType && taskData.constraintDate ? taskData.constraintDate : undefined,
       },
     }
 
@@ -3980,6 +4019,9 @@ export const useGanttChartView = () => {
             assignees: beforeAttr?.assignees ? [...beforeAttr.assignees] : undefined,
             dependencies: beforeAttr?.dependencies ? [...beforeAttr.dependencies] : undefined,
             imageUrls: beforeAttr?.imageUrls ? [...beforeAttr.imageUrls] : undefined,
+            deadline: beforeAttr?.deadline,
+            constraintType: beforeAttr?.constraintType,
+            constraintDate: beforeAttr?.constraintDate,
           },
         })
       }
@@ -4010,6 +4052,8 @@ export const useGanttChartView = () => {
           for (const aTask of cascadedAfter) {
             if (String(aTask.id) !== taskIdStr) {
               afterTasksToSave.push(aTask)
+            } else {
+              afterTasksToSave[0] = aTask
             }
           }
         }
@@ -6756,6 +6800,12 @@ export const useGanttChartView = () => {
           if (options.clearProgress) {
             attr.progress = undefined
           }
+          if (attr.deadline) {
+            attr.deadline = toDateTimeString(dayjs(attr.deadline).add(diffMs, 'millisecond').toDate())
+          }
+          if (attr.constraintDate) {
+            attr.constraintDate = toDateTimeString(dayjs(attr.constraintDate).add(diffMs, 'millisecond').toDate())
+          }
 
           allTasks.push({
             id: Number(task.id),
@@ -6908,6 +6958,7 @@ export const useGanttChartView = () => {
     showQuarters,
     showCriticalPath,
     showSummaryTasks,
+    showDeadlines,
     showMinimap,
     minimapWidth,
     minimapOpacity,

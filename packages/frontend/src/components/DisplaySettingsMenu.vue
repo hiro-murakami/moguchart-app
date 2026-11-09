@@ -13,6 +13,7 @@ const props = defineProps<{
   showQuarters?: boolean
   showCriticalPath: boolean
   showSummaryTasks: boolean
+  showDeadlines?: boolean
   showMinimap: boolean
   minimapOpacity?: number
   barShadowLevel: 'none' | 'small' | 'medium' | 'large'
@@ -44,6 +45,7 @@ const emit = defineEmits<{
   'update:showQuarters': [value: boolean]
   'update:showCriticalPath': [value: boolean]
   'update:showSummaryTasks': [value: boolean]
+  'update:showDeadlines': [value: boolean]
   'update:showMinimap': [value: boolean]
   'update:minimapOpacity': [value: number]
   'update:barShadowLevel': [value: 'none' | 'small' | 'medium' | 'large']
@@ -75,6 +77,7 @@ const selectableGridColumns = computed(() => {
     { id: 'assignees', label: '担当者' },
     { id: 'startDate', label: startLabel },
     { id: 'endDate', label: endLabel },
+    { id: 'deadline', label: '期限' },
     { id: 'duration', label: '期間' },
   ]
   if (props.enableWorkingDays) {
@@ -376,6 +379,22 @@ const currentTheme = computed({
             density="compact"
             class="setting-switch"
             @update:model-value="emit('update:showSummaryTasks', $event as boolean)"
+          />
+        </div>
+
+        <!-- デッドライン（期限）を表示 -->
+        <div class="setting-row">
+          <div class="setting-label-group">
+            <v-icon size="20" color="medium-emphasis" class="setting-icon">mdi-flag-checkered</v-icon>
+            <span class="setting-title">デッドライン（期限）を表示</span>
+          </div>
+          <v-switch
+            :model-value="showDeadlines ?? true"
+            color="primary"
+            hide-details
+            density="compact"
+            class="setting-switch"
+            @update:model-value="emit('update:showDeadlines', $event as boolean)"
           />
         </div>
 

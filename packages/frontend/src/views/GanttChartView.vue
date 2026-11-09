@@ -36,6 +36,7 @@ const {
   showQuarters,
   showCriticalPath,
   showSummaryTasks,
+  showDeadlines,
   showMinimap,
   minimapOpacity,
   barShadowLevel,
@@ -576,6 +577,7 @@ const handleOpenSlideSchedule = async () => {
               v-model:show-quarters="showQuarters"
               v-model:show-critical-path="showCriticalPath"
               v-model:show-summary-tasks="showSummaryTasks"
+              v-model:show-deadlines="showDeadlines"
               v-model:show-minimap="showMinimap"
               v-model:minimap-opacity="minimapOpacity"
               v-model:bar-shadow-level="barShadowLevel"

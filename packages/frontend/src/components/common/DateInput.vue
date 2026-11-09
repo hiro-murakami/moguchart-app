@@ -6,16 +6,22 @@ defineOptions({
   inheritAttrs: false,
 })
 
-const props = defineProps<{
-  modelValue: string
-  type?: 'month' | 'date' | 'datetime-local'
-  labelDaily?: string
-  labelMonthly?: string
-  labelDatetime?: string
-  compareTarget?: string
-  compareRule?: 'before' | 'after'
-  customRules?: any[]
-}>()
+const props = withDefaults(
+  defineProps<{
+    modelValue: string
+    type?: 'month' | 'date' | 'datetime-local'
+    labelDaily?: string
+    labelMonthly?: string
+    labelDatetime?: string
+    compareTarget?: string
+    compareRule?: 'before' | 'after'
+    customRules?: any[]
+    required?: boolean
+  }>(),
+  {
+    required: true,
+  },
+)
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: string): void
@@ -35,15 +41,15 @@ const displayValue = computed(() => {
   return props.modelValue.slice(0, 10)
 })
 
-const onUpdateModelValue = (val: string) => {
-  let newValue = val
-  if (val) {
-    if (inputType.value === 'month' && val.length === 7) {
-      newValue = `${val}-01`
+const onUpdateModelValue = (val: string | null) => {
+  let newValue = val || ''
+  if (newValue) {
+    if (inputType.value === 'month' && newValue.length === 7) {
+      newValue = `${newValue}-01`
     } else if (inputType.value === 'datetime-local') {
       // TZオフセットを付けずウォールクロック時刻として保持する
       // dayjs(val).format() は "+09:00" 付きになりバックエンドでUTC変換されて9時間ずれるため使用しない
-      newValue = val.length === 16 ? `${val}:00` : val // "YYYY-MM-DDTHH:mm" → "YYYY-MM-DDTHH:mm:ss"
+      newValue = newValue.length === 16 ? `${newValue}:00` : newValue // "YYYY-MM-DDTHH:mm" → "YYYY-MM-DDTHH:mm:ss"
     }
   }
   emit('update:modelValue', newValue)
@@ -56,7 +62,7 @@ const label = computed(() => {
 })
 
 const rules = computed(() => {
-  const baseRules: any[] = [inputRules.required]
+  const baseRules: any[] = props.required ? [inputRules.required] : []
   if (props.compareTarget) {
     let target = props.compareTarget
     if (inputType.value === 'month') {

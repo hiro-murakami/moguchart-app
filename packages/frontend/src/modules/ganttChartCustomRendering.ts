@@ -1280,6 +1280,72 @@ export const tooltip = (task: moguchart.GanttTask, isHourly?: boolean, options?:
     container.appendChild(baselineDiv)
   }
 
+  // デッドライン（期限）情報
+  if (task.deadline) {
+    const dDate = dayjs(task.deadline)
+    let displayDeadline = dDate
+    if (!isMilestone && !isHourly && dDate.hour() === 0 && dDate.minute() === 0) {
+      displayDeadline = dDate.subtract(1, 'day')
+    }
+    const deadlineText = isHourly ? displayDeadline.format('YYYY/MM/DD HH:mm') : displayDeadline.format('YYYY/MM/DD')
+    const { isOverdue, overdueDays, remainingDays } = moguchart.calculateTaskDeadline(task)
+
+    const deadlineDiv = document.createElement('div')
+    deadlineDiv.style.fontSize = '11px'
+    deadlineDiv.style.marginTop = '2px'
+    deadlineDiv.style.marginBottom = '2px'
+    deadlineDiv.style.padding = '3px 6px'
+    deadlineDiv.style.borderRadius = '4px'
+    deadlineDiv.style.backgroundColor = isOverdue ? 'rgba(239, 68, 68, 0.15)' : 'rgba(128, 128, 128, 0.15)'
+    deadlineDiv.style.display = 'flex'
+    deadlineDiv.style.alignItems = 'center'
+    deadlineDiv.style.justifyContent = 'space-between'
+    deadlineDiv.style.gap = '6px'
+
+    const statusText = isOverdue
+      ? `+${overdueDays}日超過`
+      : remainingDays > 0
+        ? `残り${remainingDays}日`
+        : '期限内'
+    const statusColor = isOverdue ? '#ef4444' : '#10b981'
+
+    deadlineDiv.innerHTML = `
+      <span style="opacity: 0.85;">期限: ${deadlineText}</span>
+      <span style="color: ${statusColor}; font-weight: bold; white-space: nowrap;">${statusText}</span>
+    `
+    container.appendChild(deadlineDiv)
+  }
+
+  // スケジュール制約情報
+  const constraintType = task.constraintType || taskWithAttr.attribute?.constraintType
+  const constraintDateRaw = task.constraintDate || taskWithAttr.attribute?.constraintDate
+  if (constraintType && constraintDateRaw) {
+    const cDate = dayjs(constraintDateRaw)
+    let displayConstraint = cDate
+    if (constraintType === 'FNLT' && !isMilestone && !isHourly && cDate.hour() === 0 && cDate.minute() === 0) {
+      displayConstraint = cDate.subtract(1, 'day')
+    }
+    const cDateText = isHourly ? displayConstraint.format('YYYY/MM/DD HH:mm') : displayConstraint.format('YYYY/MM/DD')
+    const cLabel = constraintType === 'SNET' ? '指定日以降に開始 (SNET)' : '指定日までに終了 (FNLT)'
+
+    const constraintDiv = document.createElement('div')
+    constraintDiv.style.fontSize = '11px'
+    constraintDiv.style.marginTop = '1px'
+    constraintDiv.style.marginBottom = '2px'
+    constraintDiv.style.padding = '2px 6px'
+    constraintDiv.style.borderRadius = '4px'
+    constraintDiv.style.backgroundColor = 'rgba(59, 130, 246, 0.15)'
+    constraintDiv.style.display = 'flex'
+    constraintDiv.style.alignItems = 'center'
+    constraintDiv.style.justifyContent = 'space-between'
+    constraintDiv.style.gap = '6px'
+    constraintDiv.innerHTML = `
+      <span style="opacity: 0.85;">制約: ${cLabel}</span>
+      <span style="color: #60a5fa; font-weight: bold; white-space: nowrap;">${cDateText}</span>
+    `
+    container.appendChild(constraintDiv)
+  }
+
   // タスク名
   const nameSpan = document.createElement('div')
   nameSpan.style.fontWeight = 'bold'
