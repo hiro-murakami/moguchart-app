@@ -1280,8 +1280,8 @@ export const tooltip = (task: moguchart.GanttTask, isHourly?: boolean, options?:
     container.appendChild(baselineDiv)
   }
 
-  // デッドライン（期限）情報
-  if (task.deadline) {
+  // デッドライン（期限）情報（サマリータスクは対象外）
+  if (task.deadline && !isSummary) {
     const dDate = dayjs(task.deadline)
     let displayDeadline = dDate
     if (!isMilestone && !isHourly && dDate.hour() === 0 && dDate.minute() === 0) {
@@ -1316,10 +1316,10 @@ export const tooltip = (task: moguchart.GanttTask, isHourly?: boolean, options?:
     container.appendChild(deadlineDiv)
   }
 
-  // スケジュール制約情報
+  // スケジュール制約情報（サマリータスクは対象外）
   const constraintType = task.constraintType || taskWithAttr.attribute?.constraintType
   const constraintDateRaw = task.constraintDate || taskWithAttr.attribute?.constraintDate
-  if (constraintType && constraintDateRaw) {
+  if (!isSummary && constraintType && constraintDateRaw) {
     const cDate = dayjs(constraintDateRaw)
     let displayConstraint = cDate
     if (constraintType === 'FNLT' && !isMilestone && !isHourly && cDate.hour() === 0 && cDate.minute() === 0) {
