@@ -2480,6 +2480,7 @@ export const useGanttChartView = () => {
       'task-move',
       'task-resize',
       'task-progress',
+      'task-deadline',
       'dependency-create',
       'dependency-delete',
     ]
@@ -2531,6 +2532,8 @@ export const useGanttChartView = () => {
       description = 'タスクリサイズ'
     } else if (cmd.type === 'task-progress') {
       description = 'タスク進捗率の変更'
+    } else if (cmd.type === 'task-deadline') {
+      description = 'タスク期限の変更'
     } else if (cmd.type === 'dependency-create') {
       description = 'タスクの依存関係を追加'
     } else if (cmd.type === 'dependency-delete') {
