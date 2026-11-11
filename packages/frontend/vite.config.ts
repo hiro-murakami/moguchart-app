@@ -42,6 +42,7 @@ export default defineConfig({
           {
             name: 'Roboto',
             styles: '100;300;400;500;700;900',
+            defer: false,
           },
         ],
       },
