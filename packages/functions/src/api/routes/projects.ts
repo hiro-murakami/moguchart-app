@@ -1,5 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express'
 import { requireWriteScope } from '../middleware/apiKeyAuth.js'
+import { checkProjectPermission } from '../../scripts/common/commonFunctions.js'
 import selectProjects from '../../scripts/selectProjects.js'
 import selectProject from '../../scripts/selectProject.js'
 import selectGanttChart from '../../scripts/selectGanttChart.js'
@@ -149,8 +150,12 @@ router.get('/:id/zip', async (req: Request, res: Response, next: NextFunction) =
 router.post('/:id/restore', requireWriteScope, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const id = req.params.id as string
+    await checkProjectPermission(id, req.apiKeyUser, 'owner')
     const body = req.body || {}
-    if (body.project && !body.project.id) {
+    if (body.project) {
+      if (body.project.id && body.project.id !== id) {
+        throw new Error('Invalid parameters: project ID mismatch')
+      }
       body.project.id = id
     }
     const projectId = await restoreProject(body, req.apiKeyUser)

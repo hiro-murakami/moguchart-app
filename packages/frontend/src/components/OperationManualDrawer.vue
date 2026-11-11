@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { marked, Renderer } from 'marked'
+import DOMPurify from 'dompurify'
 import OPERATION_MANUAL from '../../../../docs/operation-manual.md?raw'
 
 defineProps<{
@@ -33,7 +34,8 @@ renderer.heading = ({ text, depth }: { text: string; depth: number }) => {
 }
 
 const renderedHtml = computed(() => {
-  return marked.parse(OPERATION_MANUAL, { renderer }) as string
+  const rawHtml = marked.parse(OPERATION_MANUAL, { renderer }) as string
+  return DOMPurify.sanitize(rawHtml)
 })
 
 // 目次のアンカーリンククリックをインターセプトしてドロワー内スクロール

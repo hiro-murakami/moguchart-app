@@ -143,11 +143,27 @@ export const useExportData = () => {
   }
 
   /**
-   * CSVフィールドの値をエスケープする (RFC 4180 準拠)
+   * Excel / Google Sheets 等での数式インジェクション（CSV Injection）を防ぐため、
+   * 先頭が `=`, `+`, `-`, `@`, `\t`, `\r` で始まる文字列（純粋な符号付き数値を除く）に `'` を付与する
+   */
+  const sanitizeCsvFormula = (str: string): string => {
+    if (!str) return str
+    const trimmed = str.trim()
+    if (/^[+-]?\d+(?:\.\d+)?$/.test(trimmed)) {
+      return str
+    }
+    if (/^[\s\u3000]*(?:[=@\t\r]|[+-](?=\S))/.test(str)) {
+      return `'${str}`
+    }
+    return str
+  }
+
+  /**
+   * CSVフィールドの値をエスケープする (RFC 4180 準拠 + 数式インジェクション対策)
    */
   const escapeCsvField = (field: string | number | null | undefined): string => {
     if (field === null || field === undefined) return ''
-    const str = String(field)
+    const str = typeof field === 'number' ? String(field) : sanitizeCsvFormula(String(field))
     if (/[",\r\n]/.test(str)) {
       return `"${str.replace(/"/g, '""')}"`
     }
@@ -182,7 +198,9 @@ export const useExportData = () => {
       // BOM付きUTF-8でCSVを出力（Excelでの文字化け防止）
       const bom = '\ufeff'
       const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' })
-      const filename = `${projectName}_${dayjs().format('YYYYMMDD_HHmmss')}.csv`
+      const safeProjectName =
+        (projectName || 'gantt').replace(/[\\/:*?"<>|\u0000-\u001f]/g, '_').trim() || 'gantt'
+      const filename = `${safeProjectName}_${dayjs().format('YYYYMMDD_HHmmss')}.csv`
       downloadBlob(blob, filename)
 
       snackbar({ message: 'CSVファイルをエクスポートしました。', color: 'success' })

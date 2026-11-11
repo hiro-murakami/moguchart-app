@@ -102,7 +102,12 @@ export const useProjectListDialog = (
   }
 
   const escapeHtml = (str: string): string => {
-    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;')
   }
 
   const fetchProjects = async (isFirst: boolean = false) => {
@@ -324,7 +329,7 @@ export const useProjectListDialog = (
     if (
       !(await confirm({
         title: '⚠️ プロジェクトの削除',
-        message: `プロジェクト "<strong>${project.name}</strong>" を削除してもよろしいですか？<br><span class="text-error font-weight-bold">※この操作は取り消すことができません。</span>`,
+        message: `プロジェクト "<strong>${escapeHtml(project.name)}</strong>" を削除してもよろしいですか？<br><span class="text-error font-weight-bold">※この操作は取り消すことができません。</span>`,
         confirmText: '削除',
         confirmColor: 'error',
       }))

@@ -8,15 +8,26 @@ async function main() {
   const displayName = 'Upsert Test User'
   const updatedDisplayName = 'Updated Test User'
 
-  console.log(`Testing upsertUser (creation): ${email} (id: ${id})`)
-  await upsertUser({
-    id,
+  const authContext = {
+    uid: id,
     email,
-    displayName,
-    attribute: {},
-  })
+    emailVerified: true,
+    isAnonymous: false,
+  }
 
-  let user = await selectUser(id)
+  console.log(`Testing upsertUser (creation): ${email} (id: ${id})`)
+  await upsertUser(
+    {
+      id,
+      email,
+      displayName,
+      attribute: {},
+    },
+    email,
+    authContext,
+  )
+
+  let user = await selectUser(id, email, authContext)
   if (!user || user.displayName !== displayName) {
     console.error('Test failed: Creation failed or displayName mismatch')
     process.exit(1)
@@ -24,14 +35,18 @@ async function main() {
   console.log('Creation successful')
 
   console.log(`Testing upsertUser (update): ${email}`)
-  await upsertUser({
-    id,
+  await upsertUser(
+    {
+      id,
+      email,
+      displayName: updatedDisplayName,
+      attribute: { theme: 'dark' },
+    },
     email,
-    displayName: updatedDisplayName,
-    attribute: { theme: 'dark' },
-  })
+    authContext,
+  )
 
-  user = await selectUser(id)
+  user = await selectUser(id, email, authContext)
   if (!user || user.displayName !== updatedDisplayName) {
     console.error('Test failed: Update failed or displayName mismatch')
     process.exit(1)

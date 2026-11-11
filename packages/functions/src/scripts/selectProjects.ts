@@ -1,5 +1,5 @@
 import type { SelectProjects, Authority } from '../types/shared'
-import { prisma } from './common/commonFunctions'
+import { ensureProjectsAclSynced, prisma } from './common/commonFunctions'
 import { toProject } from './common/converters'
 
 const selectProjects: SelectProjects = async (_, userIdentifier) => {
@@ -105,6 +105,8 @@ const selectProjects: SelectProjects = async (_, userIdentifier) => {
     const viewers = authority.viewers ?? []
     return matchesIdentifier(owners) || matchesIdentifier(editors) || matchesIdentifier(viewers)
   })
+
+  await ensureProjectsAclSynced(filtered)
 
   return filtered.map(toProject(userIdentifier || '', userEmail))
 }

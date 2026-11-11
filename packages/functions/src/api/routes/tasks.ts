@@ -8,6 +8,14 @@ import deleteTaskComment from '../../scripts/deleteTaskComment.js'
 
 const router = Router()
 
+const parsePositiveIntParam = (value: string | string[] | undefined, label: string): number => {
+  const num = Number(value)
+  if (!Number.isInteger(num) || num <= 0) {
+    throw new Error(`Invalid ${label}`)
+  }
+  return num
+}
+
 // POST /tasks — タスクの作成/更新
 // body: { tasks: GanttTask[] }
 router.post('/', requireWriteScope, async (req: Request, res: Response, next: NextFunction) => {
@@ -35,7 +43,7 @@ router.put('/', requireWriteScope, async (req: Request, res: Response, next: Nex
 // PUT /tasks/:id — タスクの単体更新
 router.put('/:id', requireWriteScope, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const id = Number(req.params.id)
+    const id = parsePositiveIntParam(req.params.id, 'task ID')
     const task = { ...req.body, id }
     const data = await upsertGanttTasks([task], req.apiKeyUser)
     res.json({ status: 'succeeded', data })
@@ -59,7 +67,7 @@ router.delete('/', requireWriteScope, async (req: Request, res: Response, next: 
 // DELETE /tasks/:id — タスクの単体削除
 router.delete('/:id', requireWriteScope, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const id = Number(req.params.id)
+    const id = parsePositiveIntParam(req.params.id, 'task ID')
     await deleteGanttTask([id], req.apiKeyUser)
     res.json({ status: 'succeeded' })
   } catch (e) {
@@ -70,7 +78,7 @@ router.delete('/:id', requireWriteScope, async (req: Request, res: Response, nex
 // GET /tasks/:id/comments — タスクコメント一覧取得
 router.get('/:id/comments', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const taskId = Number(req.params.id)
+    const taskId = parsePositiveIntParam(req.params.id, 'task ID')
     const data = await selectTaskComments(taskId, req.apiKeyUser)
     res.json({ status: 'succeeded', data })
   } catch (e) {
@@ -81,7 +89,7 @@ router.get('/:id/comments', async (req: Request, res: Response, next: NextFuncti
 // POST /tasks/:id/comments — タスクコメント作成/更新
 router.post('/:id/comments', requireWriteScope, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const taskId = Number(req.params.id)
+    const taskId = parsePositiveIntParam(req.params.id, 'task ID')
     const comment = { ...req.body, taskId }
     const commentId = await upsertTaskComment(comment, req.apiKeyUser)
     res.status(201).json({ status: 'succeeded', data: commentId })
@@ -93,7 +101,8 @@ router.post('/:id/comments', requireWriteScope, async (req: Request, res: Respon
 // DELETE /tasks/:id/comments/:commentId — タスクコメント削除
 router.delete('/:id/comments/:commentId', requireWriteScope, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const commentId = Number(req.params.commentId)
+    parsePositiveIntParam(req.params.id, 'task ID')
+    const commentId = parsePositiveIntParam(req.params.commentId, 'comment ID')
     await deleteTaskComment(commentId, req.apiKeyUser)
     res.json({ status: 'succeeded' })
   } catch (e) {

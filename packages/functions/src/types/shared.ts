@@ -57,6 +57,7 @@ export type FunctionName =
   | 'getSnapshotDownloadUrl'
   | 'deleteSnapshot'
   | 'updateSnapshot'
+  | 'deleteProjectImages'
 
 /** ユーザーの権限ロール */
 export type Role = 'owner' | 'editor' | 'viewer'
@@ -636,7 +637,11 @@ export type DuplicateProject = (
 ) => Promise<string>
 
 /** ユーザー情報を取得する関数の型（IDまたはemailで検索） */
-export type SelectUser = (identifier: string) => Promise<User | null>
+export type SelectUser = (
+  identifier: string,
+  authUid?: string,
+  authContext?: AuthContext,
+) => Promise<User | null>
 
 /** プロジェクトに関係するユーザー一覧（権限者およびタスク担当者）を取得する関数の型 */
 export type SelectProjectUsers = (projectId: string, email?: string) => Promise<User[]>
@@ -644,8 +649,20 @@ export type SelectProjectUsers = (projectId: string, email?: string) => Promise<
 /** ユーザーが過去に関わったコラボレーター（プロジェクトメンバー・担当者）一覧を取得する関数の型 */
 export type SelectCollaborators = (param?: any, userIdentifier?: string) => Promise<User[]>
 
+/** 認証コンテキスト（サーバー側で検証済みのトークン情報） */
+export interface AuthContext {
+  /** Firebase Auth UID */
+  uid: string
+  /** 検証済みメールアドレス（未検証または匿名の場合は undefined） */
+  email?: string
+  /** メールアドレス検証済みフラグ */
+  emailVerified?: boolean
+  /** 匿名認証ユーザーかどうか */
+  isAnonymous?: boolean
+}
+
 /** ユーザー情報を作成または更新する関数の型 */
-export type UpsertUser = (user: User, authUid?: string) => Promise<void>
+export type UpsertUser = (user: User, authUid?: string, authContext?: AuthContext) => Promise<void>
 
 /** JSONとして出力・入力するガントチャートデータの型 */
 export interface GanttDataJson {
@@ -720,6 +737,9 @@ export interface UpdateSnapshotParams {
 
 /** スナップショット情報を更新する関数の型 */
 export type UpdateSnapshot = (params: UpdateSnapshotParams, email?: string) => Promise<SnapshotInfo>
+
+/** プロジェクト配下のStorage画像URL一覧を削除する関数の型 */
+export type DeleteProjectImages = (urls: string[], email?: string) => Promise<void>
 
 /** コメント（タスク・行・プロジェクト共通） */
 export interface Comment {

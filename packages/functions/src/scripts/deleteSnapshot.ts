@@ -1,5 +1,5 @@
 import type { DeleteSnapshot } from '../types/shared.js'
-import { checkProjectPermission, getStorageBucket } from './common/commonFunctions.js'
+import { assertSafeSnapshotName, checkProjectPermission, getStorageBucket } from './common/commonFunctions.js'
 
 const deleteSnapshot: DeleteSnapshot = async (params, email) => {
   const { projectId, snapshotName } = params
@@ -10,6 +10,7 @@ const deleteSnapshot: DeleteSnapshot = async (params, email) => {
   if (!snapshotName) {
     throw new Error('Snapshot name is required')
   }
+  assertSafeSnapshotName(snapshotName)
 
   await checkProjectPermission(projectId, email, 'owner')
 

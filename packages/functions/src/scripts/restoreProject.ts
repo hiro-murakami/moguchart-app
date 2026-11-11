@@ -1,7 +1,50 @@
 import type { RestoreProject } from '../types/shared'
-import { getCreateCommonColumns, getUpdateCommonColumns, getStorageBucket, prisma } from './common/commonFunctions'
-import AdmZip from 'adm-zip'
+import {
+  checkProjectPermission,
+  getCreateCommonColumns,
+  getUpdateCommonColumns,
+  getStorageBucket,
+  prisma,
+  syncProjectAclToFirestore,
+} from './common/commonFunctions'
+import { MAX_ZIP_COMPRESSED_BYTES, openValidatedZip } from './common/zipHelpers'
+import { sanitizeAuthority, syncProjectMembers } from './upsertProject'
+import AdmZip, { type IZipEntry } from 'adm-zip'
 import crypto from 'node:crypto'
+
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024
+
+const ALLOWED_IMAGE_MIME_TYPES: Record<string, string> = {
+  'image/png': 'png',
+  'image/jpeg': 'jpg',
+  'image/gif': 'gif',
+  'image/webp': 'webp',
+}
+
+const EXT_TO_IMAGE_MIME: Record<string, string> = {
+  png: 'image/png',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  gif: 'image/gif',
+  webp: 'image/webp',
+}
+
+const isSafeStorageFileName = (name: string): boolean => {
+  if (!name || name.length > 255) return false
+  if (name.includes('/') || name.includes('\\') || name.includes('..') || name.includes('\0')) {
+    return false
+  }
+  return name !== '.' && name !== '..'
+}
+
+const resolveSafeImageContentType = (declaredType: string | undefined, fileName: string): string | null => {
+  const normalizedDeclared = declaredType?.trim().toLowerCase()
+  if (normalizedDeclared && ALLOWED_IMAGE_MIME_TYPES[normalizedDeclared]) {
+    return normalizedDeclared
+  }
+  const ext = fileName.split('.').pop()?.toLowerCase() || ''
+  return EXT_TO_IMAGE_MIME[ext] ?? null
+}
 
 // 依存関係のIDを書き換えるためのヘルパー
 // dependenciesはstringまたはTaskDependencyLinkオブジェクトの配列として保存されるため両方に対応する
@@ -34,7 +77,11 @@ const updateDependencies = (attribute: any, taskIdMap: Map<string, string>): any
 }
 
 // スナップショットをCloud Storageに復元するヘルパー
-const restoreSnapshots = async (zip: AdmZip, projectId: string) => {
+const restoreSnapshots = async (
+  zip: AdmZip,
+  projectId: string,
+  readEntryBuffer: (entry: IZipEntry, maxEntryBytes?: number) => Buffer,
+) => {
   const snapshotEntries = zip.getEntries().filter(
     (e) => e.entryName.startsWith('snapshots/') && e.entryName.endsWith('.json.zip')
   )
@@ -52,7 +99,7 @@ const restoreSnapshots = async (zip: AdmZip, projectId: string) => {
   }> = []
   if (metadataEntry) {
     try {
-      metadataList = JSON.parse(metadataEntry.getData().toString('utf8'))
+      metadataList = JSON.parse(readEntryBuffer(metadataEntry, 2 * 1024 * 1024).toString('utf8'))
     } catch {
       // メタデータのパースに失敗した場合は空のまま
     }
@@ -62,6 +109,7 @@ const restoreSnapshots = async (zip: AdmZip, projectId: string) => {
 
   for (const entry of snapshotEntries) {
     const snapshotFileName = entry.entryName.replace('snapshots/', '')
+    if (!isSafeStorageFileName(snapshotFileName)) continue
     const storagePath = `snapshots/${projectId}/${snapshotFileName}`
     const file = bucket.file(storagePath)
 
@@ -75,7 +123,7 @@ const restoreSnapshots = async (zip: AdmZip, projectId: string) => {
       customMetadata.displayName = metadata.displayName
     }
 
-    const fileBuffer = entry.getData()
+    const fileBuffer = readEntryBuffer(entry)
     await file.save(fileBuffer, {
       metadata: {
         contentType: 'application/zip',
@@ -96,7 +144,11 @@ const buildDownloadUrl = (bucketName: string, storagePath: string, token: string
 }
 
 // 画像をCloud Storageに復元し、ファイル名 → 新ダウンロードURL のマッピングを返すヘルパー
-const restoreImages = async (zip: AdmZip, projectId: string): Promise<Map<string, string>> => {
+const restoreImages = async (
+  zip: AdmZip,
+  projectId: string,
+  readEntryBuffer: (entry: IZipEntry, maxEntryBytes?: number) => Buffer,
+): Promise<Map<string, string>> => {
   const urlMap = new Map<string, string>()
   const imageEntries = zip.getEntries().filter(
     (e) => e.entryName.startsWith('images/') && !e.isDirectory && e.entryName !== 'images/metadata.json'
@@ -113,7 +165,7 @@ const restoreImages = async (zip: AdmZip, projectId: string): Promise<Map<string
   }> = []
   if (metadataEntry) {
     try {
-      metadataList = JSON.parse(metadataEntry.getData().toString('utf8'))
+      metadataList = JSON.parse(readEntryBuffer(metadataEntry, 2 * 1024 * 1024).toString('utf8'))
     } catch {
       // メタデータのパースに失敗した場合は空のまま
     }
@@ -124,18 +176,28 @@ const restoreImages = async (zip: AdmZip, projectId: string): Promise<Map<string
 
   for (const entry of imageEntries) {
     const imageFileName = entry.entryName.replace('images/', '')
-    if (!imageFileName) continue
+    if (!isSafeStorageFileName(imageFileName)) continue
+
+    const meta = metadataList.find((m) => m.fileName === imageFileName)
+    const safeContentType = resolveSafeImageContentType(meta?.contentType, imageFileName)
+    if (!safeContentType) continue
+
+    let fileBuffer: Buffer
+    try {
+      fileBuffer = readEntryBuffer(entry, MAX_IMAGE_BYTES)
+    } catch {
+      continue
+    }
+    if (fileBuffer.byteLength === 0 || fileBuffer.byteLength > MAX_IMAGE_BYTES) continue
 
     const storagePath = `images/${projectId}/${imageFileName}`
     const file = bucket.file(storagePath)
 
     const downloadToken = crypto.randomUUID()
-    const meta = metadataList.find((m) => m.fileName === imageFileName)
 
-    const fileBuffer = entry.getData()
     await file.save(fileBuffer, {
       metadata: {
-        contentType: meta?.contentType || 'image/png',
+        contentType: safeContentType,
         metadata: {
           firebaseStorageDownloadTokens: downloadToken,
         },
@@ -182,15 +244,12 @@ const restoreDataUrlImages = async (
     if (!base64Data) continue
 
     const match = metaPart.match(/^data:([^;,]+)/)
-    const contentType = match?.[1] || 'image/png'
+    const rawContentType = match?.[1]?.trim().toLowerCase() || 'image/png'
+    const ext = ALLOWED_IMAGE_MIME_TYPES[rawContentType]
+    if (!ext) continue
 
     const buffer = Buffer.from(base64Data, 'base64')
-
-    // 拡張子の判定（image/png -> png, image/jpeg -> jpg, etc.）
-    let ext = contentType.split('/')[1]?.toLowerCase() || 'png'
-    if (ext === 'jpeg') ext = 'jpg'
-    if (ext.includes('+')) ext = ext.split('+')[0]
-    if (!/^[a-z0-9]+$/.test(ext)) ext = 'png'
+    if (buffer.byteLength === 0 || buffer.byteLength > MAX_IMAGE_BYTES) continue
 
     const fileName = `${crypto.randomUUID()}.${ext}`
     const storagePath = `images/${projectId}/${fileName}`
@@ -199,7 +258,7 @@ const restoreDataUrlImages = async (
     const downloadToken = crypto.randomUUID()
     await file.save(buffer, {
       metadata: {
-        contentType,
+        contentType: rawContentType,
         metadata: {
           firebaseStorageDownloadTokens: downloadToken,
         },
@@ -219,15 +278,24 @@ const isUUID = (value: string): boolean => {
 }
 
 const restoreProject: RestoreProject = async (data, email) => {
+  if (!email) {
+    throw new Error('Permission denied')
+  }
+
   let projectData: any
   let zipInstance: AdmZip | undefined
+  let readZipEntryBuffer: ((entry: IZipEntry, maxEntryBytes?: number) => Buffer) | undefined
 
   if ('zipBase64' in data && data.zipBase64) {
-    // zipBase64が含まれている場合はzip展開してJSONを取り出す
+    if (typeof data.zipBase64 !== 'string' || data.zipBase64.length > Math.ceil(MAX_ZIP_COMPRESSED_BYTES * 1.4)) {
+      throw new Error('Zip archive exceeds maximum allowed size')
+    }
+    // zipBase64が含まれている場合は安全検証のうえでzip展開してJSONを取り出す
     const zipBuffer = Buffer.from(data.zipBase64, 'base64')
-    const zip = new AdmZip(zipBuffer)
-    zipInstance = zip
-    const entries = zip.getEntries()
+    const validated = openValidatedZip(zipBuffer)
+    zipInstance = validated.zip
+    readZipEntryBuffer = validated.readEntryBuffer
+    const entries = zipInstance.getEntries()
     const jsonEntry = entries.find(
       (e) =>
         e.entryName.endsWith('.json') &&
@@ -239,7 +307,7 @@ const restoreProject: RestoreProject = async (data, email) => {
     if (!jsonEntry) {
       throw new Error('zipファイル内にJSONファイルが見つかりませんでした')
     }
-    const jsonString = jsonEntry.getData().toString('utf8')
+    const jsonString = readZipEntryBuffer(jsonEntry).toString('utf8')
     projectData = JSON.parse(jsonString)
   } else {
     projectData = data
@@ -252,7 +320,7 @@ const restoreProject: RestoreProject = async (data, email) => {
   const { project, rows, force, newId } = { ...projectData, force: data.force, newId: (data as any).newId }
 
   const { id: oldProjectId, ...projectDataBody } = project
-  const isValidUUID = isUUID(oldProjectId)
+  const isValidUUID = typeof oldProjectId === 'string' && isUUID(oldProjectId)
 
   // 既存プロジェクトのチェック（UUID形式の場合のみ）
   const existingProject = isValidUUID
@@ -261,14 +329,37 @@ const restoreProject: RestoreProject = async (data, email) => {
       })
     : null
 
-  if (existingProject && !force && !newId) {
-    throw new Error('PROJECT_EXISTS')
+  let isOwnerOfExisting = false
+  if (existingProject) {
+    try {
+      await checkProjectPermission(oldProjectId, email, 'owner')
+      isOwnerOfExisting = true
+    } catch {
+      isOwnerOfExisting = false
+    }
   }
 
-  // 復元先のプロジェクトIDを確定
+  // Storageへの書き込みやDBトランザクションに入る前に認可判定・復元先ID確定を行う
+  let shouldOverwrite = false
+  let shouldAppendCopySuffix = false
   let targetProjectId: string
+
   if (existingProject) {
-    targetProjectId = newId ? crypto.randomUUID() : oldProjectId
+    if (force) {
+      if (!isOwnerOfExisting) {
+        throw new Error('Permission denied')
+      }
+      shouldOverwrite = true
+      targetProjectId = oldProjectId
+    } else if (newId) {
+      targetProjectId = crypto.randomUUID()
+      shouldAppendCopySuffix = isOwnerOfExisting
+    } else if (isOwnerOfExisting) {
+      throw new Error('PROJECT_EXISTS')
+    } else {
+      // 他者のプロジェクトIDと衝突した場合は存在確認オラクルを防ぎつつ新規UUIDを採番
+      targetProjectId = crypto.randomUUID()
+    }
   } else {
     targetProjectId = isValidUUID ? oldProjectId : crypto.randomUUID()
   }
@@ -326,81 +417,67 @@ const restoreProject: RestoreProject = async (data, email) => {
       // メタデータの更新
       const commonColumns = getCreateCommonColumns(email)
 
-      // 権限設定: 実行ユーザーをオーナーにする
+      // 権限設定: 新規作成時は実行ユーザーをオーナーにする
       const newAuthority = {
-        owners: [email!],
+        owners: [email],
         editors: [],
         viewers: [],
       }
 
       let newProjectId: string
 
-      if (existingProject) {
-        if (newId) {
-          // 別のIDで新規作成（IDを指定）
-          const newProject = await tx.project.create({
-            data: {
-              id: targetProjectId,
-              name: `${projectDataBody.name}のコピー`,
-              start: new Date(projectDataBody.start),
-              end: new Date(projectDataBody.end),
-              attribute: projectDataBody.attribute ?? {},
-              public: false,
-              authority: newAuthority,
-              ...commonColumns,
-            },
-          })
-          newProjectId = newProject.id
-        } else if (force) {
-          // 既存プロジェクトを上書き
-          await tx.project.update({
-            where: { id: oldProjectId },
-            data: {
-              name: projectDataBody.name,
-              start: new Date(projectDataBody.start),
-              end: new Date(projectDataBody.end),
-              attribute: projectDataBody.attribute ?? {},
-              public: false,
-              authority: newAuthority,
-              ...getUpdateCommonColumns(email),
-            },
-          })
-          newProjectId = oldProjectId
+      if (shouldOverwrite && existingProject) {
+        const preservedAuthority = sanitizeAuthority(existingProject.authority, email)
+        // 既存プロジェクトを上書き（オーナー検証済み・既存メンバー構成と公開設定を保持）
+        await tx.project.update({
+          where: { id: oldProjectId },
+          data: {
+            name: projectDataBody.name,
+            start: new Date(projectDataBody.start),
+            end: new Date(projectDataBody.end),
+            attribute: projectDataBody.attribute ?? {},
+            public: existingProject.public,
+            authority: preservedAuthority,
+            ...getUpdateCommonColumns(email),
+          },
+        })
+        newProjectId = oldProjectId
+        await syncProjectMembers(tx, newProjectId, preservedAuthority)
 
-          // 既存データを依存関係の順序で削除
-          // 1. プロジェクトコメントを削除
-          await tx.comment.deleteMany({
-            where: { projectId: newProjectId },
-          })
-          // 2. タスクに紐づくコメントを削除
-          await tx.comment.deleteMany({
-            where: {
-              task: { row: { projectId: newProjectId } },
-            },
-          })
-          // 3. 行に紐づくコメントを削除
-          await tx.comment.deleteMany({
-            where: {
-              row: { projectId: newProjectId },
-            },
-          })
-          // 4. タスクを削除
-          await tx.ganttTask.deleteMany({
-            where: { row: { projectId: newProjectId } },
-          })
-          // 5. 行を削除
-          await tx.ganttRow.deleteMany({
-            where: { projectId: newProjectId },
-          })
-        } else {
-          throw new Error('PROJECT_EXISTS')
-        }
+        // 既存データを依存関係の順序で削除
+        // 1. プロジェクトコメントを削除
+        await tx.comment.deleteMany({
+          where: { projectId: newProjectId },
+        })
+        // 2. タスクに紐づくコメントを削除
+        await tx.comment.deleteMany({
+          where: {
+            task: { row: { projectId: newProjectId } },
+          },
+        })
+        // 3. 行に紐づくコメントを削除
+        await tx.comment.deleteMany({
+          where: {
+            row: { projectId: newProjectId },
+          },
+        })
+        // 4. タスクを削除
+        await tx.ganttTask.deleteMany({
+          where: { row: { projectId: newProjectId } },
+        })
+        // 5. 行を削除
+        await tx.ganttRow.deleteMany({
+          where: { projectId: newProjectId },
+        })
       } else {
-        // 新規作成
+        // 新規作成（別IDでの復元を含む）
+        const projectName = shouldAppendCopySuffix
+          ? `${projectDataBody.name}のコピー`
+          : projectDataBody.name
         const newProject = await tx.project.create({
           data: {
             id: targetProjectId,
-            name: projectDataBody.name,
+            name: projectName,
             start: new Date(projectDataBody.start),
             end: new Date(projectDataBody.end),
             attribute: projectDataBody.attribute ?? {},
@@ -410,6 +487,7 @@ const restoreProject: RestoreProject = async (data, email) => {
           },
         })
         newProjectId = newProject.id
+        await syncProjectMembers(tx, newProjectId, newAuthority)
       }
 
 
@@ -519,13 +597,13 @@ const restoreProject: RestoreProject = async (data, email) => {
   }, { timeout: 60000 }) // 大量データの復元に対応するためタイムアウトを60秒に設定
 
   // トランザクション完了後にスナップショットを復元
-  if (zipInstance) {
+  if (zipInstance && readZipEntryBuffer) {
     const hasSnapshots = zipInstance.getEntries().some(
       (e) => e.entryName.startsWith('snapshots/') && e.entryName.endsWith('.json.zip')
     )
     if (hasSnapshots) {
       try {
-        await restoreSnapshots(zipInstance, newProjectId)
+        await restoreSnapshots(zipInstance, newProjectId, readZipEntryBuffer)
       } catch (e) {
         console.warn('Failed to restore snapshots:', e)
       }
@@ -536,7 +614,7 @@ const restoreProject: RestoreProject = async (data, email) => {
     )
     if (hasImages) {
       try {
-        const urlMap = await restoreImages(zipInstance, newProjectId)
+        const urlMap = await restoreImages(zipInstance, newProjectId, readZipEntryBuffer)
         if (urlMap.size > 0) {
           // 行の画像URLを更新
           const rows = await prisma.ganttRow.findMany({
@@ -587,6 +665,8 @@ const restoreProject: RestoreProject = async (data, email) => {
       }
     }
   }
+
+  await syncProjectAclToFirestore(newProjectId)
 
   return newProjectId
 }

@@ -15,8 +15,15 @@ async function main() {
     },
   })
 
+  const authContext = {
+    uid: id,
+    email,
+    emailVerified: true,
+    isAnonymous: false,
+  }
+
   console.log('Testing selectUser by id...')
-  const userById = await selectUser(id)
+  const userById = await selectUser(id, email, authContext)
 
   if (!userById) {
     console.error('Test failed: User not found by id')
@@ -24,7 +31,7 @@ async function main() {
   }
 
   console.log('Testing selectUser by email...')
-  const user = await selectUser(email)
+  const user = await selectUser(email, email, authContext)
 
   if (!user) {
     console.error('Test failed: User not found')

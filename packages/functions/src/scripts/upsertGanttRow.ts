@@ -3,51 +3,95 @@ import type { UpsertGanttRow, GanttRow } from '../types/shared'
 import { checkProjectPermission, getCreateCommonColumns, getUpdateCommonColumns, prisma } from './common/commonFunctions'
 import { fromGanttRow } from './common/converters'
 
-const executeUpsert = async (tx: Prisma.TransactionClient, row: GanttRow, email?: string) => {
+const executeUpsert = async (
+  tx: Prisma.TransactionClient,
+  row: GanttRow,
+  targetProjectId: string,
+  email?: string,
+) => {
   const data = fromGanttRow(row)
-  // id はDB側で自動採番されるので入力データからは除外する
-  const { id, ...rawData } = data
-  const createOrUpdateData = {
-    ...rawData,
-    attribute: rawData.attribute as Prisma.InputJsonValue,
+  const { id, projectId: _ignoredProjectId, ...rawData } = data
+  const attribute = rawData.attribute as Prisma.InputJsonValue
+
+  if (id === 0) {
+    const orderForCreate = await tx.ganttRow.count({ where: { projectId: targetProjectId } })
+    const created = await tx.ganttRow.create({
+      data: {
+        ...rawData,
+        projectId: targetProjectId,
+        order: orderForCreate,
+        attribute,
+        ...getCreateCommonColumns(email),
+      },
+    })
+    return created.id
   }
 
-  const orderForCreate =
-    id === 0
-      ? await tx.ganttRow.count({ where: { projectId: createOrUpdateData.projectId } })
-      : rawData.order
-
-  const result = await tx.ganttRow.upsert({
+  const updated = await tx.ganttRow.update({
     where: { id },
-    update: { ...createOrUpdateData, ...getUpdateCommonColumns(email) },
-    create: {
-      ...createOrUpdateData,
-      ...(id !== 0 ? { id } : {}),
-      order: orderForCreate,
-      ...getCreateCommonColumns(email),
+    data: {
+      name: rawData.name,
+      order: rawData.order,
+      visible: rawData.visible,
+      attribute,
+      ...getUpdateCommonColumns(email),
     },
   })
-  return result.id
+  return updated.id
 }
 
 const upsertGanttRow: UpsertGanttRow = async (row, email?: string) => {
-  if (Array.isArray(row)) {
-    // 一括更新: 最初の行のprojectIdでチェック
-    if (row.length > 0) {
-      await checkProjectPermission(row[0]!.projectId, email, 'editor')
-    }
-    return await prisma.$transaction(async (tx) => {
-      const results = []
-      for (const r of row) {
-        results.push(await executeUpsert(tx, r, email))
-      }
-      return results
-    })
+  const isBatch = Array.isArray(row)
+  const rowsInput = isBatch ? row : [row]
+
+  if (rowsInput.length === 0) {
+    return []
   }
 
-  // 単一更新
-  await checkProjectPermission(row.projectId, email, 'editor')
-  return await executeUpsert(prisma as unknown as Prisma.TransactionClient, row, email)
+  for (const r of rowsInput) {
+    if (!r || typeof r.projectId !== 'string' || !r.projectId.trim()) {
+      throw new Error('Project ID is required')
+    }
+    const numericId = Number(r.id ?? 0)
+    if (!Number.isInteger(numericId) || numericId < 0) {
+      throw new Error('Invalid row ID')
+    }
+  }
+
+  const projectIds = new Set(rowsInput.map((r) => r.projectId))
+  if (projectIds.size !== 1) {
+    throw new Error('All rows must belong to the same project')
+  }
+  const targetProjectId = rowsInput[0]!.projectId
+
+  await checkProjectPermission(targetProjectId, email, 'editor')
+
+  const existingIds = Array.from(
+    new Set(rowsInput.map((r) => Number(r.id ?? 0)).filter((id) => id > 0)),
+  )
+
+  const results = await prisma.$transaction(async (tx) => {
+    if (existingIds.length > 0) {
+      const existingRows = await tx.ganttRow.findMany({
+        where: { id: { in: existingIds } },
+        select: { id: true, projectId: true },
+      })
+      if (
+        existingRows.length !== existingIds.length ||
+        existingRows.some((er) => er.projectId !== targetProjectId)
+      ) {
+        throw new Error('Permission denied')
+      }
+    }
+
+    const ids: number[] = []
+    for (const r of rowsInput) {
+      ids.push(await executeUpsert(tx, r, targetProjectId, email))
+    }
+    return ids
+  })
+
+  return isBatch ? results : results[0]!
 }
 
 export default upsertGanttRow

@@ -1,12 +1,13 @@
-import AdmZip from 'adm-zip'
 import type { LoadSnapshot } from '../types/shared.js'
-import { checkProjectPermission, getStorageBucket } from './common/commonFunctions.js'
+import { assertSafeSnapshotName, checkProjectPermission, getStorageBucket } from './common/commonFunctions.js'
+import { openValidatedZip } from './common/zipHelpers.js'
 
 const loadSnapshot: LoadSnapshot = async (params, email) => {
   const { projectId, snapshotName } = params
   if (!projectId || !snapshotName) {
     throw new Error('Project ID and Snapshot Name are required')
   }
+  assertSafeSnapshotName(snapshotName)
 
   await checkProjectPermission(projectId, email, 'viewer')
 
@@ -24,13 +25,18 @@ const loadSnapshot: LoadSnapshot = async (params, email) => {
     }
     throw err
   }
-  const zip = new AdmZip(fileBuffer)
+
+  const { zip, readEntryBuffer } = openValidatedZip(fileBuffer, {
+    maxEntries: 10,
+    maxSingleEntryBytes: 50 * 1024 * 1024,
+    maxTotalUncompressedBytes: 50 * 1024 * 1024,
+  })
   const zipEntries = zip.getEntries()
 
   let jsonStr = ''
   for (const entry of zipEntries) {
-    if (entry.entryName.endsWith('.json')) {
-      jsonStr = entry.getData().toString('utf8')
+    if (!entry.isDirectory && entry.entryName.endsWith('.json')) {
+      jsonStr = readEntryBuffer(entry).toString('utf8')
       break
     }
   }

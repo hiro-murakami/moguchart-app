@@ -1,8 +1,14 @@
 import type { SelectProjectUsers, User, UserAttribute, Authority, TaskAttribute } from '../types/shared.js'
-import { checkProjectPermission, prisma } from './common/commonFunctions.js'
+import { checkProjectPermission, isExplicitProjectMember, prisma } from './common/commonFunctions.js'
+
+const toPublicUserAttribute = (raw: UserAttribute | undefined): UserAttribute => {
+  if (!raw?.photoURL) return {}
+  return { photoURL: raw.photoURL }
+}
 
 const selectProjectUsers: SelectProjectUsers = async (projectId: string, userIdentifier?: string) => {
   await checkProjectPermission(projectId, userIdentifier, 'viewer')
+  const explicitMember = await isExplicitProjectMember(projectId, userIdentifier)
 
   const identifierSet = new Set<string>()
 
@@ -107,9 +113,9 @@ const selectProjectUsers: SelectProjectUsers = async (projectId: string, userIde
 
   return dbUsers.map((u): User => ({
     id: u.id,
-    email: u.email || undefined,
+    email: explicitMember ? u.email || undefined : undefined,
     displayName: u.displayName || undefined,
-    attribute: (u.attribute as UserAttribute) || {},
+    attribute: toPublicUserAttribute((u.attribute as UserAttribute) || undefined),
   }))
 }
 

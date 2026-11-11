@@ -1,5 +1,10 @@
 import type { DeleteProject } from '../types/shared'
-import { checkProjectPermission, getStorageBucket, prisma } from './common/commonFunctions'
+import {
+  checkProjectPermission,
+  deleteProjectAclFromFirestore,
+  getStorageBucket,
+  prisma,
+} from './common/commonFunctions'
 
 const deleteProject: DeleteProject = async (id, email) => {
   await checkProjectPermission(id, email, 'owner')
@@ -22,6 +27,8 @@ const deleteProject: DeleteProject = async (id, email) => {
   await prisma.project.delete({
     where: { id },
   })
+
+  await deleteProjectAclFromFirestore(id)
 }
 
 export default deleteProject

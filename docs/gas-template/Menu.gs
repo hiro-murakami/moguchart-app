@@ -13,8 +13,16 @@ function onOpen() {
     .addSeparator()
     .addItem('🔄 全データを更新', 'menuRefreshAll')
     .addSeparator()
+    .addItem('🔑 APIキーを設定', 'menuSetApiKey')
     .addItem('⚙️ 初期設定', 'menuSetup')
     .addToUi();
+}
+
+/**
+ * メニュー: APIキーを安全に設定
+ */
+function menuSetApiKey() {
+  setApiKeyPrompt_();
 }
 
 /**
@@ -98,21 +106,31 @@ function writeTasksForProject_(projectId) {
   var rows = [];
   chartData.forEach(function (row) {
     if (!row.tasks || row.tasks.length === 0) {
-      rows.push([row.id, row.name, '', '（タスクなし）', '', '', '', '', '', '', '', '', '']);
+      rows.push([
+        row.id,
+        sanitizeSheetText_(row.name),
+        '',
+        '（タスクなし）',
+        '', '', '', '', '', '', '', '', '',
+      ]);
       return;
     }
     row.tasks.forEach(function (task) {
       var attr = task.attribute || {};
       rows.push([
-        row.id, row.name, task.id, task.name,
-        formatDate_(task.start), formatDate_(task.end),
+        row.id,
+        sanitizeSheetText_(row.name),
+        task.id,
+        sanitizeSheetText_(task.name),
+        formatDate_(task.start),
+        formatDate_(task.end),
         calcDays_(task.start, task.end),
         attr.progress != null ? attr.progress : '',
-        (attr.labels || []).map(function (l) { return l.name; }).join(', '),
-        attr.colorPalette ? attr.colorPalette.backgroundColor : '',
+        sanitizeSheetText_((attr.labels || []).map(function (l) { return l.name; }).join(', ')),
+        sanitizeSheetText_(attr.colorPalette ? attr.colorPalette.backgroundColor : ''),
         attr.lock ? '🔒' : '',
-        (attr.dependencies || []).join(', '),
-        attr.description || '',
+        sanitizeSheetText_((attr.dependencies || []).join(', ')),
+        sanitizeSheetText_(attr.description || ''),
       ]);
     });
   });
@@ -137,8 +155,8 @@ function menuSetup() {
     '⚙️ 初期設定',
     '「設定」シートが開きました。\n\n' +
     '1. moguchart でAPIキーを発行してください\n' +
-    '2. B2セルにAPIキーを貼り付けてください\n' +
-    '3. メニュー「moguchart > プロジェクト一覧を取得」で動作確認してください',
+    '2. メニュー「🐹 moguchart > 🔑 APIキーを設定」からAPIキーを登録してください\n' +
+    '3. メニュー「🐹 moguchart > 📋 プロジェクト一覧を取得」で動作確認してください',
     SpreadsheetApp.getUi().ButtonSet.OK
   );
 }

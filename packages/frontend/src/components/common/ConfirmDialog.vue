@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
+import DOMPurify from 'dompurify'
 
 export interface ConfirmButton {
   text: string
@@ -83,6 +84,14 @@ const selectButton = (value: string) => {
   resolvePromise?.(value)
 }
 
+const sanitizedMessage = computed(() => {
+  if (!state.value.message) return ''
+  return DOMPurify.sanitize(state.value.message, {
+    ALLOWED_TAGS: ['b', 'strong', 'br', 'span'],
+    ALLOWED_ATTR: ['class'],
+  })
+})
+
 defineExpose({ open })
 </script>
 
@@ -91,7 +100,7 @@ defineExpose({ open })
     <v-card v-draggable-dialog>
       <v-card-title class="pt-6">{{ state.title }}</v-card-title>
       <v-card-text>
-        <span v-if="state.message" v-html="state.message"></span>
+        <span v-if="sanitizedMessage" v-html="sanitizedMessage"></span>
         <slot></slot>
       </v-card-text>
       <v-card-actions class="pb-6">

@@ -32,8 +32,8 @@ router.get('/projects/:id', async (req, res, next) => {
       return
     }
 
-    // 公開プロジェクトのレスポンスを構築（viewer ロール固定）
-    const authority = (project.authority ?? {}) as Authority
+    // 公開プロジェクトのレスポンスを構築（viewer ロール固定・メンバー権威リストは非公開）
+    const authority: Authority = { owners: [], editors: [], viewers: [] }
     const result: Project = {
       ...omit(project, ['createdBy', 'createdAt', 'updatedBy', 'updatedAt']),
       start: toDateTimeString(project.start),

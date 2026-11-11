@@ -1,0 +1,10 @@
+# リモートステート管理（GCS バックエンド）の設定テンプレート
+# 本番運用時は `backend.tf` にコピーし、暗号化・バージョニング有効化済みの GCS バケット名を指定してください。
+# （ローカルの terraform.tfstate に機密属性が残存するリスクを防止します）
+
+terraform {
+  backend "gcs" {
+    bucket = "REPLACE_WITH_TFSTATE_BUCKET_NAME"
+    prefix = "moguchart/terraform/state"
+  }
+}

@@ -1,15 +1,25 @@
 import { Router, Request, Response, NextFunction } from 'express'
-import { requireWriteScope } from '../middleware/apiKeyAuth.js'
+import {
+  formatStoredApiKey,
+  requireFirebaseAuth,
+  requireWriteScope,
+} from '../middleware/apiKeyAuth.js'
 import { prisma } from '../../scripts/common/commonFunctions.js'
 import crypto from 'crypto'
 
 const router = Router()
 
+/** 1ユーザーあたりの有効なAPIキー最大発行数 */
+export const MAX_ACTIVE_API_KEYS_PER_USER = 10
+
+// APIキー管理エンドポイントはすべて Firebase IDトークン（Web UI）必須
+router.use(requireFirebaseAuth)
+
 /**
  * mk_ プレフィックス付きのAPIキーを生成する
  */
 const generateKey = (): string => {
-  const randomPart = crypto.randomBytes(24).toString('base64url') // 32文字程度
+  const randomPart = crypto.randomBytes(24).toString('base64url') // 32文字
   return `mk_${randomPart}`
 }
 
@@ -25,7 +35,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
         active: true,
         lastUsedAt: true,
         createdAt: true,
-        // key は先頭のみ表示（セキュリティのため）
+        // key カラムには先頭8文字プレフィックス + SHA-256ダイジェストが格納される
         key: true,
       },
       orderBy: { createdAt: 'desc' },
@@ -45,30 +55,51 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 // body: { name: string, scope?: 'read' | 'read-write' }
 router.post('/', requireWriteScope, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { name, scope } = req.body
-    if (!name) {
-      res.status(400).json({ status: 'failed', message: 'name is required' })
+    const rawName = req.body?.name
+    const scope = req.body?.scope
+    const trimmedName = typeof rawName === 'string' ? rawName.trim() : ''
+    if (!trimmedName || trimmedName.length > 100) {
+      res.status(400).json({
+        status: 'failed',
+        message: 'name is required and must be 100 characters or fewer',
+      })
       return
     }
+
+    const activeCount = await prisma.apiKey.count({
+      where: {
+        email: req.apiKeyUser!,
+        active: true,
+      },
+    })
+    if (activeCount >= MAX_ACTIVE_API_KEYS_PER_USER) {
+      res.status(400).json({
+        status: 'failed',
+        message: `Maximum number of active API keys (${MAX_ACTIVE_API_KEYS_PER_USER}) reached.`,
+      })
+      return
+    }
+
     const validScopes = ['read', 'read-write']
     const keyScope = validScopes.includes(scope) ? scope : 'read-write'
 
-    const key = generateKey()
+    const rawKey = generateKey()
+    const storedKey = formatStoredApiKey(rawKey)
     const apiKey = await prisma.apiKey.create({
       data: {
-        key,
-        name,
+        key: storedKey,
+        name: trimmedName,
         email: req.apiKeyUser!,
         scope: keyScope,
       },
     })
 
-    // 作成直後のみ、フルキーを返す
+    // 作成直後のみ、平文のフルキーを返す（DBにはハッシュのみ保存）
     res.status(201).json({
       status: 'succeeded',
       data: {
         id: apiKey.id,
-        key: apiKey.key, // フルキー（この1回のみ表示）
+        key: rawKey, // フルキー（この1回のみ表示）
         name: apiKey.name,
         scope: apiKey.scope,
         createdAt: apiKey.createdAt,

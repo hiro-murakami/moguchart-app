@@ -58,15 +58,15 @@ function writeProjectsToSheet() {
   var rows = projects.map(function (p) {
     var attr = p.attribute || {};
     return [
-      p.id,
-      p.name,
+      sanitizeSheetText_(p.id),
+      sanitizeSheetText_(p.name),
       formatDate_(p.start),
       formatDate_(p.end),
       p.public ? '○' : '',
-      p.role || '',
-      attr.granularity || 'daily',
+      sanitizeSheetText_(p.role || ''),
+      sanitizeSheetText_(attr.granularity || 'daily'),
       p.commentCount || 0,
-      attr.description || '',
+      sanitizeSheetText_(attr.description || ''),
     ];
   });
 
@@ -139,7 +139,7 @@ function writeTasksToSheet() {
       // タスクのない行も表示
       rows.push([
         row.id,
-        row.name,
+        sanitizeSheetText_(row.name),
         '',
         '（タスクなし）',
         '', '', '', '', '', '', '', '', '',
@@ -156,18 +156,18 @@ function writeTasksToSheet() {
 
       rows.push([
         row.id,
-        row.name,
+        sanitizeSheetText_(row.name),
         task.id,
-        task.name,
+        sanitizeSheetText_(task.name),
         formatDate_(task.start),
         formatDate_(task.end),
         days,
         attr.progress != null ? attr.progress : '',
-        labels,
-        color,
+        sanitizeSheetText_(labels),
+        sanitizeSheetText_(color),
         attr.lock ? '🔒' : '',
-        deps,
-        attr.description || '',
+        sanitizeSheetText_(deps),
+        sanitizeSheetText_(attr.description || ''),
       ]);
     });
   });
@@ -253,6 +253,26 @@ function getSelectedProjectId_() {
   }
 
   return id;
+}
+
+/**
+ * スプレッドシートの数式インジェクション対策
+ * 先頭が `=`, `+`, `-`, `@` 等で始まる文字列（純粋な符号付き数値を除く）に `'` を付与する
+ * @param {*} value
+ * @returns {string}
+ */
+function sanitizeSheetText_(value) {
+  if (value === null || value === undefined) return '';
+  var str = String(value);
+  if (!str) return '';
+  var trimmed = str.trim();
+  if (/^[+-]?\d+(?:\.\d+)?$/.test(trimmed)) {
+    return str;
+  }
+  if (/^[\s\u3000]*(?:[=@\t\r]|[+-](?=\S))/.test(str)) {
+    return "'" + str;
+  }
+  return str;
 }
 
 /**

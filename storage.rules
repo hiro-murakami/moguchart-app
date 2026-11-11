@@ -1,19 +1,23 @@
 rules_version = '2';
 
-// Craft rules based on data in your Firestore database
-// allow write: if firestore.get(
-//    /databases/(default)/documents/users/$(request.auth.uid)).data.isAdmin;
 service firebase.storage {
   match /b/{bucket}/o {
     match /snapshots/{allPaths=**} {
-      allow read: if true; // スナップショットは推測不可能なファイル名（ハッシュ/日時等）のため読み取り操作を許可
+      // スナップショット操作はすべて Cloud Functions (Admin SDK) 経由で行うためクライアント直接アクセスを拒否
+      allow read, write: if false;
     }
     match /images/{projectId}/{imageId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null
-                   && request.resource.size < 5 * 1024 * 1024
-                   && request.resource.contentType.matches('image/.*');
-      allow delete: if request.auth != null;
+      // 一覧列挙 (list) を禁止し、個別メタデータ取得 (get) のみ認証済みユーザーに許可
+      allow get: if request.auth != null;
+      allow list: if false;
+      // 新規作成 (create) のみ許可し、既存ファイルの上書き (update) や直接削除 (delete) を禁止
+      // ラスタ画像形式のみ許可（SVGによるStored XSSを防止）
+      allow create: if request.auth != null
+                    && request.resource.size < 5 * 1024 * 1024
+                    && request.resource.contentType.matches('image/(png|jpeg|gif|webp)')
+                    && projectId.matches('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')
+                    && imageId.matches('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\\.(png|jpg|jpeg|gif|webp)$');
+      allow update, delete: if false;
     }
     match /{allPaths=**} {
       allow read, write: if false; // デフォルトは拒否

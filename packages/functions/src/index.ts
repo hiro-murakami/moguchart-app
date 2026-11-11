@@ -30,6 +30,7 @@ import listSnapshots from './scripts/listSnapshots.js'
 import getSnapshotDownloadUrl from './scripts/getSnapshotDownloadUrl.js'
 import deleteSnapshot from './scripts/deleteSnapshot.js'
 import updateSnapshot from './scripts/updateSnapshot.js'
+import deleteProjectImages from './scripts/deleteProjectImages.js'
 import { cleanupEditEvents } from './scripts/cleanupEditEvents.js'
 import { cleanupAnonymousData } from './scripts/cleanupAnonymousData.js'
 import { cleanupPresence } from './scripts/cleanupPresence.js'
@@ -71,6 +72,7 @@ const functions: FirebaseFunction = {
   getSnapshotDownloadUrl,
   deleteSnapshot,
   updateSnapshot,
+  deleteProjectImages,
 }
 
 export const gantt = {

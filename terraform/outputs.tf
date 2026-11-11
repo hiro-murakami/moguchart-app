@@ -17,3 +17,8 @@ output "storage_bucket_name" {
   description = "Firebase Storage バケット名"
   value       = google_firebase_storage_bucket.default.bucket_id
 }
+
+output "functions_service_account_email" {
+  description = "Cloud Functions 実行用の最小権限サービスアカウント メールアドレス"
+  value       = google_service_account.functions_runtime.email
+}

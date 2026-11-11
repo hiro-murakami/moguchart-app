@@ -82,9 +82,20 @@ async function main() {
   }
 
   const chromePath = getChromeExecutablePath();
+  const extraArgs = process.argv.slice(2);
+  const hasUserDataDir = extraArgs.some((arg) => arg.startsWith('--user-data-dir'));
+  const defaultProfileDir = path.join(os.tmpdir(), 'moguchart-chrome-debug-profile');
+  if (!hasUserDataDir) {
+    fs.mkdirSync(defaultProfileDir, { recursive: true, mode: 0o700 });
+  }
+
   const chromeArgs = [
     `--remote-debugging-port=${PORT}`,
-    ...process.argv.slice(2)
+    '--remote-debugging-address=127.0.0.1',
+    '--no-first-run',
+    '--no-default-browser-check',
+    ...(hasUserDataDir ? [] : [`--user-data-dir=${defaultProfileDir}`]),
+    ...extraArgs,
   ];
 
   console.log(`[Chrome Debug] Launching Chrome on port ${PORT}...`);

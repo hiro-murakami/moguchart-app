@@ -3,27 +3,79 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    function callerEmail() {
+      return (request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.firebase.sign_in_provider != 'anonymous'
+        && request.auth.token.email != null)
+        ? request.auth.token.email
+        : '';
+    }
+
+    function isSelfIdentifier(identifier) {
+      return request.auth != null
+        && identifier is string
+        && (identifier == request.auth.uid || (callerEmail() != '' && identifier == callerEmail()));
+    }
+
+    function isProjectMember(projectId) {
+      let projectDoc = get(/databases/$(database)/documents/projects/$(projectId));
+      return request.auth != null
+        && projectDoc != null
+        && 'acl' in projectDoc.data
+        && projectDoc.data.acl is map
+        && 'memberIds' in projectDoc.data.acl
+        && projectDoc.data.acl.memberIds is list
+        && (
+          request.auth.uid in projectDoc.data.acl.memberIds
+          || (callerEmail() != '' && callerEmail() in projectDoc.data.acl.memberIds)
+        );
+    }
+
+    function isValidEditEventType(eventType) {
+      return eventType in [
+        'task_upsert',
+        'task_delete',
+        'row_upsert',
+        'row_delete',
+        'row_reorder',
+        'comment_update',
+        'full_reload'
+      ];
+    }
+
     // レートリミットデータ（サーバーサイドのみアクセス可）
     match /rateLimits/{document=**} {
       allow read, write: if false;
     }
 
-    // プロジェクト配下のプレゼンス情報
-    match /projects/{projectId}/presence/{userId} {
-      allow read: if request.auth != null;
-      // emailが存在する場合はemail一致、匿名ユーザーの場合はuid一致で書き込み許可
-      allow write: if request.auth != null
-        && (request.auth.token.email == userId || request.auth.uid == userId);
-    }
+    // プロジェクトドキュメント（acl はサーバー Admin SDK のみ更新可、クライアントはメンバーのみ autoSnapshotLastAt を読み書き可）
+    match /projects/{projectId} {
+      allow get: if isProjectMember(projectId);
+      allow list: if false;
+      allow create, delete: if false;
+      allow update: if isProjectMember(projectId)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['autoSnapshotLastAt'])
+        && request.resource.data.autoSnapshotLastAt is string;
 
-    // プロジェクト配下の編集イベント
-    match /projects/{projectId}/editEvents/{eventId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null;
-      allow delete: if request.auth != null;
-      // 編集イベントは更新不可（作成のみ）
-      allow update: if false;
+      // プロジェクト配下のプレゼンス情報（プロジェクトメンバーのみ閲覧可・自分自身の識別子のみ書き込み可）
+      match /presence/{userId} {
+        allow read: if isProjectMember(projectId);
+        allow write: if isProjectMember(projectId) && isSelfIdentifier(userId);
+      }
+
+      // プロジェクト配下の編集イベント（プロジェクトメンバーのみ閲覧・作成・古いイベント削除可、送信者詐称・更新は不可）
+      match /editEvents/{eventId} {
+        allow read: if isProjectMember(projectId);
+        allow create: if isProjectMember(projectId)
+          && request.resource.data.keys().hasOnly(['type', 'userEmail', 'timestamp', 'payload'])
+          && request.resource.data.keys().hasAll(['type', 'userEmail', 'timestamp'])
+          && isValidEditEventType(request.resource.data.type)
+          && isSelfIdentifier(request.resource.data.userEmail)
+          && request.resource.data.timestamp is string;
+        allow delete: if isProjectMember(projectId);
+        allow update: if false;
+      }
     }
   }
 }
-

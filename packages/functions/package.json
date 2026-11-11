@@ -27,7 +27,7 @@
   "dependencies": {
     "@prisma/adapter-mariadb": "^7.4.2",
     "@prisma/client": "^7.4.2",
-    "adm-zip": "^0.5.16",
+    "adm-zip": "^0.6.1",
     "dayjs": "^1.11.19",
     "express": "^5.2.1",
     "firebase-admin": "^13.0.2",

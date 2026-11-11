@@ -1273,10 +1273,16 @@ export const tooltip = (task: moguchart.GanttTask, isHourly?: boolean, options?:
         ? `${bStart.format('MM/DD HH:mm')} - ${bEnd.format('MM/DD HH:mm')}`
         : `${bStart.format('YYYY/MM/DD')} - ${bDisplayEnd.format('YYYY/MM/DD')} (${bDaysText})`
 
-    baselineDiv.innerHTML = `
-      <span style="opacity: 0.85;">計画: ${bDateText}</span>
-      <span style="color: ${statusColor}; font-weight: bold; white-space: nowrap;">${statusText}</span>
-    `
+    const planSpan = document.createElement('span')
+    planSpan.style.opacity = '0.85'
+    planSpan.textContent = `計画: ${bDateText}`
+    const baselineStatusSpan = document.createElement('span')
+    baselineStatusSpan.style.color = statusColor
+    baselineStatusSpan.style.fontWeight = 'bold'
+    baselineStatusSpan.style.whiteSpace = 'nowrap'
+    baselineStatusSpan.textContent = statusText
+    baselineDiv.appendChild(planSpan)
+    baselineDiv.appendChild(baselineStatusSpan)
     container.appendChild(baselineDiv)
   }
 
@@ -1309,10 +1315,16 @@ export const tooltip = (task: moguchart.GanttTask, isHourly?: boolean, options?:
         : '期限内'
     const statusColor = isOverdue ? '#ef4444' : '#10b981'
 
-    deadlineDiv.innerHTML = `
-      <span style="opacity: 0.85;">期限: ${deadlineText}</span>
-      <span style="color: ${statusColor}; font-weight: bold; white-space: nowrap;">${statusText}</span>
-    `
+    const deadlineLabelSpan = document.createElement('span')
+    deadlineLabelSpan.style.opacity = '0.85'
+    deadlineLabelSpan.textContent = `期限: ${deadlineText}`
+    const deadlineStatusSpan = document.createElement('span')
+    deadlineStatusSpan.style.color = statusColor
+    deadlineStatusSpan.style.fontWeight = 'bold'
+    deadlineStatusSpan.style.whiteSpace = 'nowrap'
+    deadlineStatusSpan.textContent = statusText
+    deadlineDiv.appendChild(deadlineLabelSpan)
+    deadlineDiv.appendChild(deadlineStatusSpan)
     container.appendChild(deadlineDiv)
   }
 
@@ -1339,10 +1351,16 @@ export const tooltip = (task: moguchart.GanttTask, isHourly?: boolean, options?:
     constraintDiv.style.alignItems = 'center'
     constraintDiv.style.justifyContent = 'space-between'
     constraintDiv.style.gap = '6px'
-    constraintDiv.innerHTML = `
-      <span style="opacity: 0.85;">制約: ${cLabel}</span>
-      <span style="color: #60a5fa; font-weight: bold; white-space: nowrap;">${cDateText}</span>
-    `
+    const cLabelSpan = document.createElement('span')
+    cLabelSpan.style.opacity = '0.85'
+    cLabelSpan.textContent = `制約: ${cLabel}`
+    const cDateSpan = document.createElement('span')
+    cDateSpan.style.color = '#60a5fa'
+    cDateSpan.style.fontWeight = 'bold'
+    cDateSpan.style.whiteSpace = 'nowrap'
+    cDateSpan.textContent = cDateText
+    constraintDiv.appendChild(cLabelSpan)
+    constraintDiv.appendChild(cDateSpan)
     container.appendChild(constraintDiv)
   }
 
@@ -1352,9 +1370,30 @@ export const tooltip = (task: moguchart.GanttTask, isHourly?: boolean, options?:
   nameSpan.style.fontSize = '14px'
   nameSpan.style.marginBottom = '4px'
   if (isSummary) {
-    nameSpan.innerHTML = `<span style="opacity: 0.85; font-size: 11px; display: flex; align-items: center; gap: 4px; margin-bottom: 2px;">📁 <span>サマリータスク（配下集計）</span></span>${task.name || ''}`
+    const badgeSpan = document.createElement('span')
+    badgeSpan.style.cssText =
+      'opacity: 0.85; font-size: 11px; display: flex; align-items: center; gap: 4px; margin-bottom: 2px;'
+    badgeSpan.appendChild(document.createTextNode('📁 '))
+    const badgeLabel = document.createElement('span')
+    badgeLabel.textContent = 'サマリータスク（配下集計）'
+    badgeSpan.appendChild(badgeLabel)
+    nameSpan.appendChild(badgeSpan)
+    const titleText = document.createElement('span')
+    titleText.textContent = task.name || ''
+    nameSpan.appendChild(titleText)
   } else if (isMilestone) {
-    nameSpan.innerHTML = `<span style="opacity: 0.85; font-size: 11px; display: flex; align-items: center; gap: 4px; margin-bottom: 2px;"><span style="color: #a78bfa;">◆</span> <span>マイルストーン</span></span>`
+    const badgeSpan = document.createElement('span')
+    badgeSpan.style.cssText =
+      'opacity: 0.85; font-size: 11px; display: flex; align-items: center; gap: 4px; margin-bottom: 2px;'
+    const iconSpan = document.createElement('span')
+    iconSpan.style.color = '#a78bfa'
+    iconSpan.textContent = '◆'
+    const badgeLabel = document.createElement('span')
+    badgeLabel.textContent = 'マイルストーン'
+    badgeSpan.appendChild(iconSpan)
+    badgeSpan.appendChild(document.createTextNode(' '))
+    badgeSpan.appendChild(badgeLabel)
+    nameSpan.appendChild(badgeSpan)
     const titleText = document.createElement('span')
     titleText.textContent = task.name || ''
     nameSpan.appendChild(titleText)
@@ -1449,7 +1488,11 @@ export const tooltip = (task: moguchart.GanttTask, isHourly?: boolean, options?:
     const progressValue = document.createElement('span')
     progressValue.style.fontWeight = 'bold'
     if (task.baseline && typeof task.baseline.progress === 'number') {
-      progressValue.innerHTML = `${clampedProgress}% <span style="font-size: 11px; font-weight: normal; opacity: 0.75;">(計画: ${task.baseline.progress}%)</span>`
+      progressValue.textContent = `${clampedProgress}% `
+      const baselineProgressSpan = document.createElement('span')
+      baselineProgressSpan.style.cssText = 'font-size: 11px; font-weight: normal; opacity: 0.75;'
+      baselineProgressSpan.textContent = `(計画: ${task.baseline.progress}%)`
+      progressValue.appendChild(baselineProgressSpan)
     } else {
       progressValue.textContent = `${clampedProgress}%`
     }

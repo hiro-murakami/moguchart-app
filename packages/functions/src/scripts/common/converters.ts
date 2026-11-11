@@ -82,6 +82,7 @@ export const toProject =
     },
   ): Project => {
     let role: Role = 'viewer'
+    let isExplicitMember = false
 
     if (project.members && project.members.length > 0) {
       // 1. members から判定
@@ -91,6 +92,7 @@ export const toProject =
           (!!fallbackEmail && (m.email === fallbackEmail || m.userId === fallbackEmail)),
       )
       if (myMember) {
+        isExplicitMember = true
         if (myMember.role === 'owner') role = 'owner'
         else if (myMember.role === 'editor') role = 'editor'
         else role = 'viewer'
@@ -103,18 +105,26 @@ export const toProject =
         return list.includes(userIdentifier) || (!!fallbackEmail && list.includes(fallbackEmail))
       }
       if (matches(authority.owners)) {
+        isExplicitMember = true
         role = 'owner'
       } else if (matches(authority.editors)) {
+        isExplicitMember = true
         role = 'editor'
+      } else if (matches(authority.viewers)) {
+        isExplicitMember = true
+        role = 'viewer'
       } else {
         role = 'viewer'
       }
     }
 
-    // members がある場合は ProjectMember テーブルを正（Source of Truth）として authority を再構築
-    // （旧 authority JSON と安易にマージすると、UID とメールアドレスが両方入って二重表示になるのを防止）
+    // 非メンバーが公開プロジェクトを参照している場合はメンバー一覧（メールアドレス等）をマスクする
     let authority: Authority
-    if (project.members && project.members.length > 0) {
+    if (!isExplicitMember) {
+      authority = { owners: [], editors: [], viewers: [] }
+    } else if (project.members && project.members.length > 0) {
+      // members がある場合は ProjectMember テーブルを正（Source of Truth）として authority を再構築
+      // （旧 authority JSON と安易にマージすると、UID とメールアドレスが両方入って二重表示になるのを防止）
       const owners: string[] = []
       const editors: string[] = []
       const viewers: string[] = []

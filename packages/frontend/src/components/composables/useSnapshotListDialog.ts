@@ -6,6 +6,7 @@ import { useAlert } from '@/composables/useAlert'
 import { useConfirm } from '@/composables/useConfirm'
 import { useSnackbar } from '@/composables/useSnackbar'
 import { usePrompt } from '@/composables/usePrompt'
+import { escapeHtml } from '@/modules/utils'
 import dayjs from 'dayjs'
 
 export const useSnapshotListDialog = (
@@ -143,7 +144,7 @@ export const useSnapshotListDialog = (
 
     const confirmed = await confirm({
       title: 'スナップショットの削除',
-      message: `「${item.displayName}」を削除しますか？この操作は取り消せません。`,
+      message: `「${escapeHtml(item.displayName)}」を削除しますか？この操作は取り消せません。`,
     })
     if (!confirmed) return
 
@@ -210,7 +211,7 @@ export const useSnapshotListDialog = (
 
     const confirmed = await confirm({
       title: 'スナップショットからの復元',
-      message: `「${item.displayName}」の内容で現在のプロジェクトを上書き復元しますか？<br><span class="text-error font-weight-bold">※現在のプロジェクトデータは上書きされます。</span>`,
+      message: `「${escapeHtml(item.displayName)}」の内容で現在のプロジェクトを上書き復元しますか？<br><span class="text-error font-weight-bold">※現在のプロジェクトデータは上書きされます。</span>`,
       confirmText: '復元',
       confirmColor: 'warning',
     })

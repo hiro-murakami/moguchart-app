@@ -1,5 +1,10 @@
 import { VERSION, type GetGanttDataJson } from '../types/shared'
-import { checkProjectPermission, prisma, toDateTimeString } from './common/commonFunctions'
+import {
+  checkProjectPermission,
+  isExplicitProjectMember,
+  prisma,
+  toDateTimeString,
+} from './common/commonFunctions'
 
 const convertDatesToIsoString = (obj: any): any => {
   if (obj === null || obj === undefined) {
@@ -38,6 +43,7 @@ const getGanttDataJson: GetGanttDataJson = async (projectId, email) => {
 
   // 権限チェック（viewerロール以上）
   await checkProjectPermission(projectId, email, 'viewer')
+  const explicitMember = await isExplicitProjectMember(projectId, email)
 
   // プロジェクト情報の取得（プロジェクトコメントも含む）
   const project = await prisma.project.findUnique({
@@ -94,11 +100,20 @@ const getGanttDataJson: GetGanttDataJson = async (projectId, email) => {
     : []
   const userMap = new Map(users.map((u) => [u.email, u]))
 
+  const sanitizeActor = (actor: string | null | undefined, mappedUserId?: string) => {
+    if (explicitMember) return actor
+    if (!actor) return actor
+    if (actor.includes('@')) return mappedUserId ?? ''
+    return actor
+  }
+
   // コメントにdisplayName/photoURLを付与するヘルパー
   const enrichComment = (c: any) => {
     const user = c.createdBy ? userMap.get(c.createdBy) : undefined
     return {
       ...c,
+      createdBy: sanitizeActor(c.createdBy, user?.id),
+      updatedBy: sanitizeActor(c.updatedBy),
       createdByDisplayName: user?.displayName ?? undefined,
       createdByPhotoURL: (() => {
         try {
@@ -111,17 +126,24 @@ const getGanttDataJson: GetGanttDataJson = async (projectId, email) => {
     }
   }
 
-  // コメントを拡張したデータを生成
+  // コメントを拡張したデータを生成（非メンバーによる公開プロジェクト閲覧時は権威リスト・作成者メールをマスク）
   const enrichedProject = {
     ...project,
+    authority: explicitMember ? project.authority : { owners: [], editors: [], viewers: [] },
+    createdBy: sanitizeActor(project.createdBy),
+    updatedBy: sanitizeActor(project.updatedBy),
     comments: project.comments?.map(enrichComment) ?? [],
   }
 
   const enrichedRows = rows.map((row) => ({
     ...row,
+    createdBy: sanitizeActor(row.createdBy),
+    updatedBy: sanitizeActor(row.updatedBy),
     comments: row.comments?.map(enrichComment) ?? [],
     tasks: row.tasks.map((task) => ({
       ...task,
+      createdBy: sanitizeActor(task.createdBy),
+      updatedBy: sanitizeActor(task.updatedBy),
       comments: task.comments?.map(enrichComment) ?? [],
     })),
   }))

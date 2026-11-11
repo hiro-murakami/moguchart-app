@@ -8,7 +8,7 @@ const router = Router()
 // GET /user — 自分のユーザー情報取得
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const data = await selectUser(req.apiKeyUser!)
+    const data = await selectUser(req.apiKeyUser!, req.apiKeyUser, req.authContext)
     res.json({ status: 'succeeded', data })
   } catch (e) {
     next(e)
@@ -18,7 +18,10 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 // PUT /user — ユーザー情報更新
 router.put('/', requireWriteScope, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    await upsertUser(req.body, req.apiKeyUser)
+    if (!req.apiKeyUser && !req.authContext) {
+      throw new Error('Permission denied: authentication required')
+    }
+    await upsertUser(req.body, req.apiKeyUser, req.authContext)
     res.json({ status: 'succeeded' })
   } catch (e) {
     next(e)

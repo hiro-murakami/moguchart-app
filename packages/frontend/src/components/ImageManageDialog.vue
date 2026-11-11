@@ -128,16 +128,26 @@ const compressImage = (file: File): Promise<Blob> => {
   })
 }
 
+const ALLOWED_IMAGE_MIME_TYPES: Record<string, string> = {
+  'image/png': '.png',
+  'image/jpeg': '.jpg',
+  'image/gif': '.gif',
+  'image/webp': '.webp',
+}
+
 /**
- * ファイルサイズが大きい場合は圧縮し、そうでなければそのまま返す。
- * 戻り値は [アップロード用データ, 拡張子, 圧縮したかどうか]
+ * ファイル形式を検証し、サイズが大きい場合は圧縮して返す。
+ * 戻り値は [アップロード用データ, 正規化済み拡張子, 圧縮したかどうか]
  */
 const prepareFile = async (file: File): Promise<[Blob | File, string, boolean]> => {
+  const normalizedMime = file.type.toLowerCase()
+  const allowedExt = ALLOWED_IMAGE_MIME_TYPES[normalizedMime]
+  if (!allowedExt) {
+    throw new Error('PNG / JPEG / GIF / WebP 形式の画像のみアップロードできます')
+  }
+
   if (file.size <= MAX_FILE_SIZE) {
-    const name = file.name
-    const idx = name.lastIndexOf('.')
-    const ext = idx >= 0 ? name.substring(idx) : '.png'
-    return [file, ext, false]
+    return [file, allowedExt, false]
   }
 
   // サイズオーバー → 圧縮
@@ -208,9 +218,12 @@ const uploadFiles = async (files: File[]) => {
     if (compressedCount > 0) {
       infoMessage.value = `${compressedCount}件の画像を自動圧縮してアップロードしました`
     }
-  } catch (err) {
+  } catch (err: any) {
     console.error('画像アップロードエラー:', err)
-    errorMessage.value = '画像のアップロードに失敗しました'
+    errorMessage.value =
+      typeof err?.message === 'string' && err.message.includes('形式の画像のみ')
+        ? err.message
+        : '画像のアップロードに失敗しました'
   } finally {
     uploading.value = false
     compressing.value = false
@@ -332,7 +345,7 @@ const handleCancel = async () => {
           v-model="selectedFiles"
           density="compact"
           multiple
-          filter-by-type="image/*"
+          filter-by-type="image/png,image/jpeg,image/gif,image/webp"
           title="ここにドラッグ＆ドロップ"
           browse-text="ファイルを選択"
           divider-text="または"

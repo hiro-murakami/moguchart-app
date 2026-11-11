@@ -48,6 +48,16 @@ export const toDisplayIdentifier = (value: string): string => {
   return isAnonymousIdentifier(value) ? '匿名ユーザー' : value
 }
 
+/** HTML特殊文字をエスケープする（v-html等でのXSS防止用） */
+export const escapeHtml = (str: string): string => {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 /** ラグ入力用の時間単位 */
 export type LagUnit = 'days' | 'hours' | 'minutes'
 

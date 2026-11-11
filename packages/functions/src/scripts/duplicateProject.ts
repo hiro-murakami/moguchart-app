@@ -1,5 +1,5 @@
 import type { DuplicateProject, Milestone } from '../types/shared'
-import { checkProjectPermission, prisma } from './common/commonFunctions'
+import { checkProjectPermission, prisma, syncProjectAclToFirestore } from './common/commonFunctions'
 import { _upsertProject } from './upsertProject'
 
 /**
@@ -49,6 +49,13 @@ const duplicateProject: DuplicateProject = async (
   { originalProjectId, newProjectData, newStartDate, clearProgress },
   email?,
 ) => {
+  if (!email) {
+    throw new Error('Permission denied')
+  }
+  if (!originalProjectId || !newProjectData) {
+    throw new Error('Invalid parameters: originalProjectId and newProjectData are required')
+  }
+
   // 権限チェック（元プロジェクトの閲覧権限が必要）
   await checkProjectPermission(originalProjectId, email, 'viewer')
 
@@ -77,24 +84,42 @@ const duplicateProject: DuplicateProject = async (
   // 開始日スライドの差分ミリ秒を計算
   const msDiff = newStartDate ? diffMs(project.start, newStartDate) : 0
 
+  // 複製先データは id や authority を引き継がず、新規プロジェクト用のフィールドのみ抽出
+  let sanitizedAttribute =
+    newProjectData.attribute && typeof newProjectData.attribute === 'object' && !Array.isArray(newProjectData.attribute)
+      ? { ...newProjectData.attribute }
+      : {}
+
   // マイルストーンの日付をスライド（JSON内の文字列なので addMsStrKeepFormat を使用）
-  if (msDiff !== 0 && newProjectData.attribute?.milestones) {
-    newProjectData = {
-      ...newProjectData,
-      attribute: {
-        ...newProjectData.attribute,
-        milestones: newProjectData.attribute.milestones.map((m: Milestone) => ({
-          ...m,
-          datetime: m.datetime ? addMsStrKeepFormat(m.datetime, msDiff) : m.datetime,
-        })),
-      },
+  if (msDiff !== 0 && Array.isArray(sanitizedAttribute.milestones)) {
+    sanitizedAttribute = {
+      ...sanitizedAttribute,
+      milestones: sanitizedAttribute.milestones.map((m: Milestone) => ({
+        ...m,
+        datetime: m.datetime ? addMsStrKeepFormat(m.datetime, msDiff) : m.datetime,
+      })),
     }
   }
 
-  return prisma.$transaction(
+  const createPayload = {
+    id: '',
+    name: newProjectData.name,
+    start: newProjectData.start,
+    end: newProjectData.end,
+    public: false,
+    attribute: sanitizedAttribute,
+    authority: {
+      owners: [email],
+      editors: [],
+      viewers: [],
+    },
+    role: 'owner' as const,
+  }
+
+  const duplicatedProjectId = await prisma.$transaction(
     async (tx) => {
-      // 新しいプロジェクトを作成
-      const newProject = await _upsertProject(tx, newProjectData, email)
+      // 常に新しいIDでプロジェクトを新規作成（既存プロジェクトの上書きを防止）
+      const newProject = await _upsertProject(tx, createPayload, email, { forceCreate: true })
 
       // 旧タスクID → 新タスクIDのマッピング（依存関係の更新に使用）
       // dependenciesはstring[]として保存されているため、キーも文字列で扱う
@@ -237,6 +262,9 @@ const duplicateProject: DuplicateProject = async (
       timeout: 30000,
     },
   )
+
+  await syncProjectAclToFirestore(duplicatedProjectId)
+  return duplicatedProjectId
 }
 
 export default duplicateProject

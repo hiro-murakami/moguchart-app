@@ -21,6 +21,7 @@
     "@mogura/moguchart-plugin-export": "link:../../../moguchart-core/packages/plugin-export",
     "@mogura/moguchart-vue": "link:../../../moguchart-core/packages/vue",
     "dayjs": "^1.11.19",
+    "dompurify": "^3.4.17",
     "firebase": "^12.8.0",
     "lodash": "^4.17.23",
     "marked": "^17.0.4",

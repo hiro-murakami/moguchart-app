@@ -174,11 +174,12 @@ const selectCollaborators: SelectCollaborators = async (_, userIdentifier?: stri
   const resultUserMap = new Map<string, User>()
 
   for (const u of dbUsers) {
+    const rawAttr = (u.attribute as UserAttribute) || {}
     const userObj: User = {
       id: u.id,
       email: u.email || undefined,
       displayName: u.displayName || undefined,
-      attribute: (u.attribute as UserAttribute) || {},
+      attribute: rawAttr.photoURL ? { photoURL: rawAttr.photoURL } : {},
     }
     if (userObj.id) resultUserMap.set(userObj.id, userObj)
     if (userObj.email) resultUserMap.set(userObj.email, userObj)

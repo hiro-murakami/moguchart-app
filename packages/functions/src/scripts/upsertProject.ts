@@ -1,26 +1,57 @@
+import crypto from 'node:crypto'
 import { PrismaClient } from '../generated/prisma/client'
-import type { UpsertProject } from '../types/shared'
-import { checkProjectPermission, getCreateCommonColumns, getUpdateCommonColumns, prisma } from './common/commonFunctions'
+import type { Authority, UpsertProject } from '../types/shared'
+import {
+  checkProjectPermission,
+  getCreateCommonColumns,
+  getUpdateCommonColumns,
+  prisma,
+  syncProjectAclToFirestore,
+} from './common/commonFunctions'
 
 type PrismaTransactionClient = Omit<PrismaClient, '$connect' | '$disconnect' | '$on' | '$transaction' | '$extends'>
+
+const sanitizeStringList = (list: unknown): string[] => {
+  if (!Array.isArray(list)) return []
+  return Array.from(
+    new Set(
+      list
+        .filter((item): item is string => typeof item === 'string')
+        .map((item) => item.trim())
+        .filter(Boolean),
+    ),
+  )
+}
+
+export const sanitizeAuthority = (
+  rawAuthority: unknown,
+  fallbackOwner: string,
+): Required<Authority> => {
+  const obj = (rawAuthority && typeof rawAuthority === 'object' ? rawAuthority : {}) as Authority
+  const owners = sanitizeStringList(obj.owners)
+  const editors = sanitizeStringList(obj.editors)
+  const viewers = sanitizeStringList(obj.viewers)
+  return {
+    owners: owners.length > 0 ? owners : [fallbackOwner],
+    editors,
+    viewers,
+  }
+}
 
 export const _upsertProject = async (
   prismaClient: PrismaTransactionClient,
   project: Parameters<UpsertProject>[0],
   email?: string,
+  options?: { forceCreate?: boolean },
 ) => {
-  // Prisma の update に渡せないフィールドを除外
-  // _count: Prisma の集計フィールド、commentCount: フロントエンド用の仮想フィールド
-  const { id, role, _count, commentCount, ...data } = project as any
-  const isNew = !id
-
-  if (isNew) {
-    data.authority = {
-      owners: [email!],
-      editors: [],
-      viewers: [],
-    }
+  if (!email) {
+    throw new Error('Permission denied')
   }
+  if (!project || typeof project.name !== 'string' || !project.name.trim()) {
+    throw new Error('Project name is required')
+  }
+
+  const isNew = Boolean(options?.forceCreate || !project.id)
 
   /**
    * TZなし文字列（"YYYY-MM-DDTHH:mm:ss"）をUTCのDateとして解釈する。
@@ -36,35 +67,56 @@ export const _upsertProject = async (
     return new Date(`${dateStr}Z`)
   }
 
-  const dataForDb = {
-    ...data,
-    start: toUtcDate(data.start),
-    end: toUtcDate(data.end),
-    attribute: data.attribute,
-    authority: data.authority,
+  const startDate = toUtcDate(project.start)
+  const endDate = toUtcDate(project.end)
+  if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+    throw new Error('Invalid project start or end date')
   }
 
+  const safeAttribute =
+    project.attribute && typeof project.attribute === 'object' && !Array.isArray(project.attribute)
+      ? project.attribute
+      : {}
 
   if (isNew) {
-    // 新規作成
+    const newAuthority: Required<Authority> = {
+      owners: [email],
+      editors: [],
+      viewers: [],
+    }
+    // 新規作成: サーバー側で常に新しいUUIDを採番し、許可されたフィールドのみ保存（Mass Assignment防止）
     const result = await prismaClient.project.create({
       data: {
-        ...dataForDb,
+        id: crypto.randomUUID(),
+        name: project.name,
+        start: startDate,
+        end: endDate,
+        public: Boolean(project.public),
+        attribute: safeAttribute as any,
+        authority: newAuthority,
         ...getCreateCommonColumns(email),
       },
     })
-    if (data.authority) {
-      await syncProjectMembers(prismaClient, result.id, data.authority as any)
-    }
+    await syncProjectMembers(prismaClient, result.id, newAuthority)
     return result
   } else {
-    // 更新
+    const updatedAuthority =
+      project.authority !== undefined ? sanitizeAuthority(project.authority, email) : undefined
+    // 更新: 許可されたフィールドのみ明示的に指定
     const result = await prismaClient.project.update({
-      where: { id },
-      data: { ...dataForDb, ...getUpdateCommonColumns(email) },
+      where: { id: project.id },
+      data: {
+        name: project.name,
+        start: startDate,
+        end: endDate,
+        public: Boolean(project.public),
+        attribute: safeAttribute as any,
+        ...(updatedAuthority ? { authority: updatedAuthority } : {}),
+        ...getUpdateCommonColumns(email),
+      },
     })
-    if (data.authority) {
-      await syncProjectMembers(prismaClient, id, data.authority as any)
+    if (updatedAuthority) {
+      await syncProjectMembers(prismaClient, project.id, updatedAuthority)
     }
     return result
   }
@@ -140,12 +192,17 @@ export const syncProjectMembers = async (
 }
 
 const upsertProject: UpsertProject = async (project, email) => {
+  if (!email) {
+    throw new Error('Permission denied')
+  }
+
   // 更新時はownerのみ許可
   if (project.id) {
     await checkProjectPermission(project.id, email, 'owner')
   }
 
-  const result = await _upsertProject(prisma, project, email)
+  const result = await prisma.$transaction((tx) => _upsertProject(tx, project, email))
+  await syncProjectAclToFirestore(result.id)
   return result.id
 }
 

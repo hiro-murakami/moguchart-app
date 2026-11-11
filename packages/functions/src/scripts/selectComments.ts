@@ -2,35 +2,67 @@ import type { SelectComments } from '../types/shared'
 import { checkProjectPermission, prisma } from './common/commonFunctions'
 
 const selectComments: SelectComments = async (params, email) => {
-  // リソースからプロジェクトIDを特定して権限チェック
-  let projectId: string | undefined
+  if (!params || typeof params !== 'object') {
+    throw new Error('Invalid parameters: projectId, rowId, or taskId is required')
+  }
 
-  if (params.projectId != null) {
-    projectId = params.projectId
-  } else if (params.rowId != null) {
+  const hasProjectId = params.projectId !== undefined && params.projectId !== null
+  const hasRowId = params.rowId !== undefined && params.rowId !== null
+  const hasTaskId = params.taskId !== undefined && params.taskId !== null
+
+  // 全パラメータ省略による全件取得を拒否
+  if (!hasProjectId && !hasRowId && !hasTaskId) {
+    throw new Error('Invalid parameters: projectId, rowId, or taskId is required')
+  }
+
+  // 指定されたすべてのリソースからプロジェクトIDを解決し、単一プロジェクトに一致することを検証
+  const resolvedProjectIds = new Set<string>()
+  const where: { taskId?: number; rowId?: number; projectId?: string } = {}
+
+  if (hasProjectId) {
+    if (typeof params.projectId !== 'string' || !params.projectId.trim()) {
+      throw new Error('Invalid projectId')
+    }
+    const trimmedProjectId = params.projectId.trim()
+    resolvedProjectIds.add(trimmedProjectId)
+    where.projectId = trimmedProjectId
+  }
+
+  if (hasRowId) {
+    if (typeof params.rowId !== 'number' || !Number.isInteger(params.rowId) || params.rowId <= 0) {
+      throw new Error('Invalid rowId')
+    }
     const row = await prisma.ganttRow.findUnique({
       where: { id: params.rowId },
       select: { projectId: true },
     })
     if (!row) throw new Error('Row not found')
-    projectId = row.projectId
-  } else if (params.taskId != null) {
+    resolvedProjectIds.add(row.projectId)
+    where.rowId = params.rowId
+  }
+
+  if (hasTaskId) {
+    if (typeof params.taskId !== 'number' || !Number.isInteger(params.taskId) || params.taskId <= 0) {
+      throw new Error('Invalid taskId')
+    }
     const task = await prisma.ganttTask.findUnique({
       where: { id: params.taskId },
-      select: { row: { select: { projectId: true } } },
+      select: { rowId: true, row: { select: { projectId: true } } },
     })
     if (!task) throw new Error('Task not found')
-    projectId = task.row.projectId
+    if (hasRowId && task.rowId !== params.rowId) {
+      throw new Error('Invalid parameters: taskId does not belong to rowId')
+    }
+    resolvedProjectIds.add(task.row.projectId)
+    where.taskId = params.taskId
   }
 
-  if (projectId) {
-    await checkProjectPermission(projectId, email, 'viewer')
+  if (resolvedProjectIds.size !== 1) {
+    throw new Error('Invalid parameters: resource project mismatch')
   }
 
-  const where: { taskId?: number; rowId?: number; projectId?: string } = {}
-  if (params.taskId != null) where.taskId = params.taskId
-  if (params.rowId != null) where.rowId = params.rowId
-  if (params.projectId != null) where.projectId = params.projectId
+  const [projectId] = Array.from(resolvedProjectIds)
+  await checkProjectPermission(projectId!, email, 'viewer')
 
   const data = await prisma.comment.findMany({
     where,

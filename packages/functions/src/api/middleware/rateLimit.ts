@@ -10,13 +10,17 @@ if (getApps().length === 0) {
 }
 
 /** レートリミットの設定オプション */
-interface RateLimitOptions {
+export interface RateLimitOptions {
   /** ウィンドウ内の最大リクエスト数（デフォルト: 60） */
   maxRequests?: number
   /** ウィンドウの長さ（ミリ秒）（デフォルト: 60_000 = 1分） */
   windowMs?: number
   /** Firestore コレクション名（デフォルト: 'rateLimits'） */
   collectionName?: string
+  /** 識別モード ('authenticated': 認証確定後のプリンシパル基準 / 'ip': クライアントIP基準) */
+  mode?: 'authenticated' | 'ip'
+  /** バケット衝突を防ぐプレフィックス */
+  keyPrefix?: string
 }
 
 /** Firestore に保存するレートリミットドキュメントの型 */
@@ -66,24 +70,41 @@ function getWindowStart(now: number, windowMs: number): number {
  * app.use('/api/v1/heavy', createRateLimiter({ maxRequests: 10, windowMs: 60_000 }))
  * ```
  */
+function resolveClientIp(req: Request): string {
+  if (req.ip) return req.ip
+  const xff = req.headers['x-forwarded-for']
+  if (typeof xff === 'string' && xff.trim()) {
+    return xff.split(',')[0].trim()
+  }
+  if (Array.isArray(xff) && xff[0]) {
+    return xff[0].split(',')[0].trim()
+  }
+  return req.socket?.remoteAddress || 'unknown'
+}
+
 export function createRateLimiter(options?: RateLimitOptions) {
   const maxRequests = options?.maxRequests ?? 60
   const windowMs = options?.windowMs ?? 60_000
   const collectionName = options?.collectionName ?? 'rateLimits'
+  const mode = options?.mode ?? 'authenticated'
+  const keyPrefix = options?.keyPrefix ?? mode
 
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    // 認証ミドルウェアで設定された識別子を取得
-    const apiKey = req.headers['x-api-key'] as string | undefined
-    const userEmail = req.apiKeyUser
+    let rawSubject: string | undefined
+    if (mode === 'ip') {
+      rawSubject = resolveClientIp(req)
+    } else {
+      // 必ず検証済み認証結果 (req.authRateLimitKey / req.apiKeyUser) のみを使用し、
+      // 未検証の X-API-Key ヘッダーによるバケット偽装・レート制限バイパスを防止する
+      rawSubject = req.authRateLimitKey ?? req.apiKeyUser
+    }
 
-    // 識別子がない場合（認証前のリクエスト）はスキップ
-    if (!apiKey && !userEmail) {
+    if (!rawSubject) {
       next()
       return
     }
 
-    // APIキーが優先、なければメールアドレスをハッシュ化
-    const identifier = hashIdentifier(apiKey ?? userEmail!)
+    const identifier = hashIdentifier(`${keyPrefix}:${rawSubject}`)
 
     try {
       const db = getFirestore()

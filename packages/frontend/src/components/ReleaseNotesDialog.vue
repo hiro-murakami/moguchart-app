@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { marked } from 'marked'
+import DOMPurify from 'dompurify'
 import RELEASE_NOTES from '../../../../docs/release-notes.md?raw'
 
 defineProps<{
@@ -12,7 +13,8 @@ const emit = defineEmits<{
 }>()
 
 const renderedHtml = computed(() => {
-  return marked.parse(RELEASE_NOTES) as string
+  const rawHtml = marked.parse(RELEASE_NOTES) as string
+  return DOMPurify.sanitize(rawHtml)
 })
 </script>
 

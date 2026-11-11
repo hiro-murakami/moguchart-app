@@ -39,7 +39,7 @@ import { usePrompt } from '@/composables/usePrompt'
 import { useLoading } from '@/composables/useLoading'
 import { useSnackbar } from '@/composables/useSnackbar'
 import { useExportData } from '@/composables/useExportData'
-import { toDateString, toDateTimeString, toLocalDate, getContrastColor } from '@/modules/utils'
+import { escapeHtml, toDateString, toDateTimeString, toLocalDate, getContrastColor } from '@/modules/utils'
 import {
   barContent,
   tooltip,
@@ -3372,7 +3372,7 @@ export const useGanttChartView = () => {
 
     const result = await confirm({
       title: '接続線削除の確認',
-      message: `「<b>${sourceName}</b>」から「<b>${targetName}</b>」への接続線を削除してもよろしいですか？`,
+      message: `「<b>${escapeHtml(sourceName)}</b>」から「<b>${escapeHtml(targetName)}</b>」への接続線を削除してもよろしいですか？`,
       confirmText: '削除',
       confirmColor: 'error',
     })
@@ -5309,7 +5309,7 @@ export const useGanttChartView = () => {
 
       const result = await confirm({
         title: 'タスク削除の確認',
-        message: `「<b>${taskName}</b>」を削除してもよろしいですか？`,
+        message: `「<b>${escapeHtml(taskName)}</b>」を削除してもよろしいですか？`,
         confirmText: '削除',
         confirmColor: 'error',
       })
@@ -6149,7 +6149,7 @@ export const useGanttChartView = () => {
 
       const result = await confirm({
         title: '行削除の確認',
-        message: `「<b>${rowName}</b>」を削除してもよろしいですか？<br>含まれるタスクもすべて削除されます。`,
+        message: `「<b>${escapeHtml(rowName)}</b>」を削除してもよろしいですか？<br>含まれるタスクもすべて削除されます。`,
         confirmText: '削除',
         confirmColor: 'error',
       })

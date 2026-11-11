@@ -3,33 +3,52 @@ import { FirebaseFunction } from '../../types'
 import { PrismaClient } from '../../generated/prisma/client'
 import { PrismaMariaDb } from '@prisma/adapter-mariadb'
 import { getApps, initializeApp } from 'firebase-admin/app'
+import { getFirestore } from 'firebase-admin/firestore'
 import { getStorage } from 'firebase-admin/storage'
-import { FunctionParam, FunctionResult, VERSION, type Role } from '../../types/shared'
+import { type AuthContext, FunctionParam, FunctionResult, VERSION, type Role } from '../../types/shared'
 import dayjs from 'dayjs'
 
 dayjs.extend(require('dayjs/plugin/utc'))
 dayjs.extend(require('dayjs/plugin/timezone'))
 
+const isProductionRuntime =
+  Boolean(process.env.K_SERVICE) && process.env.FUNCTIONS_EMULATOR !== 'true'
+
+const dbHost = process.env.DATABASE_HOST?.trim()
+const useDbSocket = Boolean(process.env.DATABASE_SOCKET_PATH)
+const isLocalDbHost = !dbHost || ['localhost', '127.0.0.1', '::1'].includes(dbHost)
+
 const adapter = new PrismaMariaDb({
   socketPath: process.env.DATABASE_SOCKET_PATH,
-  host: process.env.DATABASE_HOST,
+  host: dbHost,
   user: process.env.DATABASE_USER,
   password: process.env.DATABASE_PASSWORD,
   database: process.env.DATABASE_NAME,
   connectionLimit: 5,
-  allowPublicKeyRetrieval: true,
+  allowPublicKeyRetrieval: !useDbSocket && isLocalDbHost && !isProductionRuntime,
+  ...(!useDbSocket && !isLocalDbHost && process.env.DATABASE_SSL !== 'false'
+    ? {
+        ssl: {
+          rejectUnauthorized: process.env.DATABASE_SSL_REJECT_UNAUTHORIZED !== 'false',
+        },
+      }
+    : {}),
 })
 export const prisma = new PrismaClient({ adapter })
 
 /**
- * Firebase Storage のバケットを取得する（バケット名が未設定の場合でも適切に解決）
+ * Firebase Storage のバケットを取得する（バケット名が未設定の場合はエラーを送出）
  */
 export const getStorageBucket = () => {
   if (getApps().length === 0) {
     initializeApp()
   }
 
-  let bucketName = process.env.STORAGE_BUCKET || process.env.FIREBASE_STORAGE_BUCKET || process.env.GCP_PROJECT_ID
+  let bucketName =
+    process.env.STORAGE_BUCKET ||
+    process.env.FIREBASE_STORAGE_BUCKET ||
+    process.env.GCP_PROJECT_ID ||
+    process.env.GCLOUD_PROJECT
   if (!bucketName && process.env.FIREBASE_CONFIG) {
     try {
       const config = JSON.parse(process.env.FIREBASE_CONFIG)
@@ -38,16 +57,37 @@ export const getStorageBucket = () => {
       // ignore
     }
   }
-  if (!bucketName) {
-    bucketName = 'firestore-sample-c7300.appspot.com'
+  if (!bucketName && process.env.FUNCTIONS_EMULATOR === 'true') {
+    bucketName = 'demo-moguchart.appspot.com'
   }
-  if (bucketName && !bucketName.includes('.')) {
+  if (!bucketName) {
+    throw new Error('Storage bucket is not configured (STORAGE_BUCKET or GCP_PROJECT_ID is required)')
+  }
+  if (!bucketName.includes('.')) {
     bucketName = `${bucketName}.appspot.com`
   }
 
   return getStorage().bucket(bucketName)
 }
 
+const buildAllowedCallableOrigins = (): string[] => {
+  const projectId = process.env.GCP_PROJECT_ID || process.env.GCLOUD_PROJECT
+  const origins = [
+    ...(projectId
+      ? [`https://${projectId}.web.app`, `https://${projectId}.firebaseapp.com`]
+      : []),
+    'https://moguchart.jp',
+  ]
+  if (!isProductionRuntime) {
+    origins.push(
+      'http://localhost:5173',
+      'http://localhost:4173',
+      'http://localhost:5174',
+      'http://localhost:4174',
+    )
+  }
+  return origins
+}
 
 /**
  * Firebase公開用の関数を返す
@@ -59,19 +99,10 @@ export const setupFirebaseFunction = (targetFunctions: FirebaseFunction): Functi
   return functions.https.onCall(
     {
       region: 'asia-northeast1',
-      cors: [
-        `https://${process.env.GCP_PROJECT_ID}.web.app`,
-        `https://${process.env.GCP_PROJECT_ID}.firebaseapp.com`,
-        'https://moguchart.jp',
-        // 開発環境用
-        'http://localhost:5173',
-        'http://localhost:4173',
-        'http://localhost:5174',
-        'http://localhost:4174',
-      ],
+      cors: buildAllowedCallableOrigins(),
     },
     async (data) => {
-      functions.logger.log('request: ' + JSON.stringify(data.data))
+      const startedAt = Date.now()
 
       // 認証チェック
       // Authorizationヘッダがない、または不正な値が設定されていた場合はエラーとする
@@ -86,20 +117,58 @@ export const setupFirebaseFunction = (targetFunctions: FirebaseFunction): Functi
       }
 
       const requestData = data.data as FunctionParam
+      const functionName = typeof requestData?.name === 'string' ? requestData.name : 'unknown'
 
-      // ユーザー識別子: メールアドレスが存在する場合はメールアドレス、匿名ユーザー等はuidを使用
-      const userIdentifier = data.auth.token.email || data.auth.uid
+      const signInProvider = data.auth.token.firebase?.sign_in_provider
+      const isAnonymous = signInProvider === 'anonymous'
+      const emailVerified = data.auth.token.email_verified === true
+      const verifiedEmail =
+        !isAnonymous && emailVerified && data.auth.token.email ? data.auth.token.email : undefined
 
-      await targetFunctions[requestData.name](requestData.param, userIdentifier)
+      // ユーザー識別子: 検証済みメールアドレスが存在する場合はメールアドレス、匿名ユーザー等はuidを使用
+      const userIdentifier = verifiedEmail || data.auth.uid
+      const authContext: AuthContext = {
+        uid: data.auth.uid,
+        email: verifiedEmail,
+        emailVerified,
+        isAnonymous,
+      }
+
+      const targetFn = requestData?.name ? targetFunctions[requestData.name] : undefined
+      if (typeof targetFn !== 'function') {
+        result.status = 'failed'
+        result.message = 'Invalid function name'
+        functions.logger.warn('[Callable] Invalid function name', {
+          functionName,
+          uid: data.auth.uid,
+          durationMs: Date.now() - startedAt,
+        })
+        return result
+      }
+
+      await targetFn(requestData.param, userIdentifier, authContext)
         .then((resultData: any) => {
           result.data = resultData
         })
         .catch((e: Error) => {
           result.status = 'failed'
           result.message = e.message
+          functions.logger.warn('[Callable] Function execution failed', {
+            functionName,
+            uid: data.auth?.uid,
+            error: e.message,
+            durationMs: Date.now() - startedAt,
+          })
         })
 
-      functions.logger.log('response: ' + JSON.stringify(result))
+      if (result.status === 'succeeded') {
+        functions.logger.info('[Callable] Function executed', {
+          functionName,
+          uid: data.auth.uid,
+          status: result.status,
+          durationMs: Date.now() - startedAt,
+        })
+      }
       return result
     })
 }
@@ -238,20 +307,82 @@ export const checkProjectPermission = async (
 }
 
 /**
- * 行IDの配列からプロジェクトIDを取得する。
- * すべての行が同一プロジェクトに属していることを検証する。
+ * 指定ユーザーが対象プロジェクトの明示的なメンバー（owner / editor / viewer）かどうかを判定する。
+ * 公開プロジェクトを非メンバーが閲覧しているケースとメンバー閲覧を区別するために使用する。
  */
-export const getProjectIdFromRowIds = async (rowIds: number[]): Promise<string> => {
-  if (rowIds.length === 0) {
-    throw new Error('Row IDs are required')
+export const isExplicitProjectMember = async (
+  projectId: string,
+  userIdentifier: string | undefined,
+): Promise<boolean> => {
+  if (!userIdentifier) return false
+
+  let authUid: string | undefined
+  let authEmail: string | undefined
+  if (userIdentifier.includes('@')) {
+    authEmail = userIdentifier
+    const user = await prisma.user.findFirst({
+      where: { email: userIdentifier },
+      select: { id: true },
+    })
+    authUid = user?.id
+  } else {
+    authUid = userIdentifier
+    const user = await prisma.user.findUnique({
+      where: { id: userIdentifier },
+      select: { email: true },
+    })
+    authEmail = user?.email || undefined
   }
 
+  const member = await prisma.projectMember.findFirst({
+    where: {
+      projectId,
+      OR: [
+        ...(authUid ? [{ userId: authUid }] : []),
+        ...(authEmail ? [{ email: authEmail }] : []),
+        { userId: userIdentifier },
+        { email: userIdentifier },
+      ],
+    },
+    select: { id: true },
+  })
+  if (member) return true
+
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    select: { authority: true },
+  })
+  if (!project) return false
+
+  const authority = (project.authority as any) || {}
+  const allAuthIds = [
+    ...(Array.isArray(authority.owners) ? authority.owners : []),
+    ...(Array.isArray(authority.editors) ? authority.editors : []),
+    ...(Array.isArray(authority.viewers) ? authority.viewers : []),
+  ]
+  const identifiers = [userIdentifier, authUid, authEmail].filter(Boolean) as string[]
+  return identifiers.some((id) => allAuthIds.includes(id))
+}
+
+/**
+ * 行IDの配列からプロジェクトIDを取得する。
+ * すべての行が存在し、かつ同一プロジェクトに属していることを検証する。
+ */
+export const getProjectIdFromRowIds = async (rowIds: number[]): Promise<string> => {
+  if (!Array.isArray(rowIds) || rowIds.length === 0) {
+    throw new Error('Row IDs are required')
+  }
+  if (!rowIds.every((id) => Number.isInteger(id) && id > 0)) {
+    throw new Error('Invalid row ID')
+  }
+
+  const uniqueRowIds = Array.from(new Set(rowIds))
   const rows = await prisma.ganttRow.findMany({
-    where: { id: { in: rowIds } },
-    select: { projectId: true },
+    where: { id: { in: uniqueRowIds } },
+    select: { id: true, projectId: true },
   })
 
-  if (rows.length === 0) {
+  if (rows.length === 0 || rows.length !== uniqueRowIds.length) {
     throw new Error('Rows not found')
   }
 
@@ -265,19 +396,23 @@ export const getProjectIdFromRowIds = async (rowIds: number[]): Promise<string> 
 
 /**
  * タスクIDの配列からプロジェクトIDを取得する。
- * すべてのタスクが同一プロジェクトに属していることを検証する。
+ * すべてのタスクが存在し、かつ同一プロジェクトに属していることを検証する。
  */
 export const getProjectIdFromTaskIds = async (taskIds: number[]): Promise<string> => {
-  if (taskIds.length === 0) {
+  if (!Array.isArray(taskIds) || taskIds.length === 0) {
     throw new Error('Task IDs are required')
   }
+  if (!taskIds.every((id) => Number.isInteger(id) && id > 0)) {
+    throw new Error('Invalid task ID')
+  }
 
+  const uniqueTaskIds = Array.from(new Set(taskIds))
   const tasks = await prisma.ganttTask.findMany({
-    where: { id: { in: taskIds } },
-    select: { row: { select: { projectId: true } } },
+    where: { id: { in: uniqueTaskIds } },
+    select: { id: true, row: { select: { projectId: true } } },
   })
 
-  if (tasks.length === 0) {
+  if (tasks.length === 0 || tasks.length !== uniqueTaskIds.length) {
     throw new Error('Tasks not found')
   }
 
@@ -287,6 +422,182 @@ export const getProjectIdFromTaskIds = async (taskIds: number[]): Promise<string
   }
 
   return tasks[0]!.row.projectId
+}
+
+/**
+ * スナップショット名のパストラバーサル等を防ぐバリデーション
+ */
+export function assertSafeSnapshotName(snapshotName: unknown): asserts snapshotName is string {
+  if (typeof snapshotName !== 'string' || !snapshotName.trim() || snapshotName.length > 128) {
+    throw new Error('Invalid snapshot name')
+  }
+  if (
+    snapshotName.includes('/') ||
+    snapshotName.includes('\\') ||
+    snapshotName.includes('..') ||
+    snapshotName.includes('\0') ||
+    snapshotName === '.'
+  ) {
+    throw new Error('Invalid snapshot name')
+  }
+}
+
+export interface ProjectAclSource {
+  id: string
+  public: boolean
+  authority: unknown
+  members?: Array<{ role: string; userId: string | null; email: string | null }>
+}
+
+export const buildFirestoreProjectAcl = (project: ProjectAclSource) => {
+  const memberSet = new Set<string>()
+  const writerSet = new Set<string>()
+
+  const addIdentifier = (set: Set<string>, id: unknown) => {
+    if (typeof id === 'string' && id.trim()) {
+      set.add(id.trim())
+    }
+  }
+
+  if (Array.isArray(project.members)) {
+    for (const m of project.members) {
+      addIdentifier(memberSet, m.userId)
+      addIdentifier(memberSet, m.email)
+      if (m.role === 'owner' || m.role === 'editor') {
+        addIdentifier(writerSet, m.userId)
+        addIdentifier(writerSet, m.email)
+      }
+    }
+  }
+
+  const auth = (project.authority && typeof project.authority === 'object' ? project.authority : {}) as {
+    owners?: unknown[]
+    editors?: unknown[]
+    viewers?: unknown[]
+  }
+  for (const id of Array.isArray(auth.owners) ? auth.owners : []) {
+    addIdentifier(memberSet, id)
+    addIdentifier(writerSet, id)
+  }
+  for (const id of Array.isArray(auth.editors) ? auth.editors : []) {
+    addIdentifier(memberSet, id)
+    addIdentifier(writerSet, id)
+  }
+  for (const id of Array.isArray(auth.viewers) ? auth.viewers : []) {
+    addIdentifier(memberSet, id)
+  }
+
+  return {
+    public: Boolean(project.public),
+    memberIds: Array.from(memberSet),
+    writerIds: Array.from(writerSet),
+  }
+}
+
+const withFirestoreTimeout = async <T>(promise: Promise<T>, timeoutMs = 2000): Promise<T> => {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new Error('Firestore operation timed out')), timeoutMs)
+      }),
+    ])
+  } finally {
+    if (timer) clearTimeout(timer)
+  }
+}
+
+/**
+ * Cloud SQL の Project / ProjectMember 権限情報を Firestore `projects/{projectId}` の `acl` に同期する。
+ * Firestore ルールによるプレゼンス・編集イベント認可に使用する。
+ */
+export const syncProjectAclToFirestore = async (projectId: string): Promise<void> => {
+  try {
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
+      select: {
+        id: true,
+        public: true,
+        authority: true,
+        members: {
+          select: { role: true, userId: true, email: true },
+        },
+      },
+    })
+    if (!project) return
+
+    if (getApps().length === 0) {
+      initializeApp()
+    }
+    const db = getFirestore()
+    const acl = buildFirestoreProjectAcl(project)
+    await withFirestoreTimeout(
+      db.collection('projects').doc(projectId).set({ acl }, { merge: true }),
+    )
+  } catch (err) {
+    functions.logger.warn(`[FirestoreACL] Failed to sync ACL for project ${projectId}:`, err)
+  }
+}
+
+/**
+ * 既存プロジェクト一覧のうち、Firestore 上にまだ `acl` が未設定のものがあれば補完同期する。
+ */
+export const ensureProjectsAclSynced = async (projects: ProjectAclSource[]): Promise<void> => {
+  if (projects.length === 0) return
+  try {
+    if (getApps().length === 0) {
+      initializeApp()
+    }
+    const db = getFirestore()
+    const docRefs = projects.map((p) => db.collection('projects').doc(p.id))
+    const snapshots = await withFirestoreTimeout(db.getAll(...docRefs))
+
+    const batch = db.batch()
+    let needsCommit = false
+    snapshots.forEach((snap, idx) => {
+      const data = snap.data()
+      if (!data || !data.acl || !Array.isArray(data.acl.memberIds)) {
+        const project = projects[idx]!
+        batch.set(snap.ref, { acl: buildFirestoreProjectAcl(project) }, { merge: true })
+        needsCommit = true
+      }
+    })
+
+    if (needsCommit) {
+      await withFirestoreTimeout(batch.commit())
+    }
+  } catch (err) {
+    functions.logger.warn('[FirestoreACL] Failed to ensure projects ACL synced:', err)
+  }
+}
+
+/**
+ * プロジェクト削除時に Firestore 上の `projects/{projectId}` ドキュメントと配下のコラボ情報を削除する。
+ */
+export const deleteProjectAclFromFirestore = async (projectId: string): Promise<void> => {
+  try {
+    if (getApps().length === 0) {
+      initializeApp()
+    }
+    const db = getFirestore()
+    const projectRef = db.collection('projects').doc(projectId)
+    await withFirestoreTimeout(
+      (async () => {
+        for (const subName of ['presence', 'editEvents']) {
+          const subSnap = await projectRef.collection(subName).limit(500).get()
+          if (!subSnap.empty) {
+            const batch = db.batch()
+            subSnap.docs.forEach((d) => batch.delete(d.ref))
+            await batch.commit()
+          }
+        }
+        await projectRef.delete()
+      })(),
+    )
+  } catch (err) {
+    functions.logger.warn(`[FirestoreACL] Failed to delete Firestore project doc ${projectId}:`, err)
+  }
 }
 
 /**

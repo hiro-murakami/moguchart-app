@@ -14,6 +14,7 @@ import apiKeysRouter from './routes/apiKeys.js'
 import publicRouter from './routes/public.js'
 
 const app = express()
+app.set('trust proxy', 1)
 
 // JSON body parser
 app.use(express.json({ limit: '10mb' }))
@@ -23,14 +24,17 @@ app.get('/api/v1/health', (_req, res) => {
   res.json({ status: 'ok', version: VERSION })
 })
 
+// IPベースの全体レートリミット（公開エンドポイント・未認証総当たり試行への保護: 120 req/min）
+app.use('/api/v1', createRateLimiter({ mode: 'ip', keyPrefix: 'ip', maxRequests: 120, windowMs: 60_000 }))
+
 // 公開プロジェクト用エンドポイント（認証不要）
 app.use('/api/v1/public', publicRouter)
 
 // APIキー認証（以降のすべてのルートに適用）
 app.use('/api/v1', apiKeyAuth)
 
-// レートリミット（認証済みリクエストに適用: 60 req/min）
-app.use('/api/v1', createRateLimiter())
+// 認証プリンシパル単位のレートリミット（60 req/min）
+app.use('/api/v1', createRateLimiter({ mode: 'authenticated', keyPrefix: 'auth', maxRequests: 60, windowMs: 60_000 }))
 
 // ルートの登録
 app.use('/api/v1/projects', projectsRouter)

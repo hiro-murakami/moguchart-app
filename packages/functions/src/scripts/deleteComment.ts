@@ -2,18 +2,22 @@ import type { DeleteComment } from '../types/shared'
 import { checkProjectPermission, getProjectIdFromCommentId, prisma } from './common/commonFunctions'
 
 const deleteComment: DeleteComment = async (id, email) => {
-  // コメントの所有者チェック: 自分のコメントか、プロジェクトのeditor以上であれば削除可能
+  if (!email) {
+    throw new Error('Permission denied')
+  }
+  if (typeof id !== 'number' || !Number.isInteger(id) || id <= 0) {
+    throw new Error('Invalid comment id')
+  }
+
+  // コメントの存在確認および所属プロジェクトの editor 以上権限を検証
   const comment = await prisma.comment.findUnique({
     where: { id },
     select: { createdBy: true },
   })
   if (!comment) throw new Error('Comment not found')
 
-  if (comment.createdBy !== email) {
-    // 自分のコメントでない場合、プロジェクトのeditor権限が必要
-    const projectId = await getProjectIdFromCommentId(id)
-    await checkProjectPermission(projectId, email, 'editor')
-  }
+  const projectId = await getProjectIdFromCommentId(id)
+  await checkProjectPermission(projectId, email, 'editor')
 
   await prisma.comment.delete({
     where: { id },

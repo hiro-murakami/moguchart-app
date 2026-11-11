@@ -34,8 +34,9 @@ Apps Script エディタで以下の4ファイルを作成し、それぞれの�
 
 1. スプレッドシートに戻り、ページをリロード
 2. メニューバーに「🐹 moguchart」が表示されます
-3. 「🐹 moguchart」>「⚙️ 初期設定」をクリック
-4. 「設定」シートが作成されるので、B2セルに **APIキー** を入力
+3. 「🐹 moguchart」>「⚙️ 初期設定」をクリック（設定シートが作成されます）
+4. 「🐹 moguchart」>「🔑 APIキーを設定」をクリックし、ダイアログに **APIキー**（`mk_...`）を入力
+   - APIキーはシート上のセルではなく Google Apps Script の `PropertiesService`（`UserProperties`）に保存されるため、スプレッドシートを共有・コピー配布しても第三者へ漏洩しません。
 
 ### 4. データ取得
 
@@ -48,7 +49,7 @@ Apps Script エディタで以下の4ファイルを作成し、それぞれの�
 ### 設定シート
 | 項目 | 値 |
 |------|---|
-| APIキー | `mk_xxxxxxxx...` |
+| APIキー | `（UserPropertiesに保存済み）` |
 | ベースURL | `https://moguchart.jp/api/v1` |
 
 ### プロジェクト一覧シート
@@ -64,11 +65,11 @@ Apps Script エディタで以下の4ファイルを作成し、それぞれの�
 
 ## 🔑 APIキーの発行
 
-moguchart の Web UI（設定画面）または REST API から発行できます。
+moguchart の Web UI（設定画面）または Firebase ID トークンを用いた REST API から発行できます（セキュリティ保護のため、既存の API キーから新しい API キーを自己増殖発行することはできません）。
 
 ```
 POST /api/v1/api-keys
-X-API-Key: mk_既存のキー
+Authorization: Bearer <Firebase_ID_Token>
 Content-Type: application/json
 
 { "name": "Spreadsheet連携用", "scope": "read" }
