@@ -47,6 +47,18 @@ const handleBeforeClose = (value: boolean) => {
 const formRef = ref<VForm | null>(null)
 const formValid = ref(false)
 
+const onSave = async () => {
+  if (formRef.value) {
+    const { valid } = await formRef.value.validate()
+    if (!valid) return
+  }
+  emit('save')
+}
+
+defineExpose({
+  validate: () => formRef.value?.validate(),
+})
+
 watch(
   () => props.modelValue,
   async (isVisible) => {
@@ -123,7 +135,7 @@ watch(
       <v-card-actions class="pa-8 pt-0">
         <v-spacer></v-spacer>
         <v-btn color="grey-darken-1" variant="text" @click="emit('close')"> キャンセル </v-btn>
-        <v-btn color="primary" variant="flat" @click="emit('save')" :disabled="saveDisabled || !formValid" class="ml-2">
+        <v-btn color="primary" variant="flat" @click="onSave" :disabled="saveDisabled || !formValid" class="ml-2">
           保存
         </v-btn>
       </v-card-actions>

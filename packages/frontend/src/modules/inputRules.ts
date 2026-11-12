@@ -63,6 +63,18 @@ const inputRules = {
     if (!value || !target) return true
     return value >= target || message.ERROR_DATE_AFTER
   },
+  dateOnOrAfter:
+    (target: string, targetLabel: string, unitLabel: string = '日付') =>
+    (value: string) => {
+      if (!value || !target) return true
+      return value >= target || message.ERROR_DATE_ON_OR_AFTER(targetLabel, unitLabel)
+    },
+  dateOnOrBefore:
+    (target: string, targetLabel: string, unitLabel: string = '日付') =>
+    (value: string) => {
+      if (!value || !target) return true
+      return value <= target || message.ERROR_DATE_ON_OR_BEFORE(targetLabel, unitLabel)
+    },
 }
 
 export default inputRules

@@ -30,6 +30,20 @@ export const granularityToInputType = (granularity?: string): 'month' | 'datetim
   return granularity === 'monthly' ? 'month' : granularity === 'hourly' ? 'datetime-local' : 'date'
 }
 
+/**
+ * 日付・日時文字列を HTML input (month / date / datetime-local) 用の値に整形する。
+ * TZ変換の介入を避けるため文字列スライスで正規化する。
+ */
+export const formatValueForDateInput = (
+  value: string | undefined | null,
+  inputType: 'month' | 'date' | 'datetime-local' = 'date',
+): string => {
+  if (!value) return ''
+  if (inputType === 'month') return value.slice(0, 7)
+  if (inputType === 'datetime-local') return value.replace(' ', 'T').slice(0, 16)
+  return value.slice(0, 10)
+}
+
 /** メールアドレス形式かどうかを判定する */
 export const isEmailFormat = (value: string): boolean => {
   return /^[\w\-._]+@[\w\-._]+\.[A-Za-z]+$/.test(value)

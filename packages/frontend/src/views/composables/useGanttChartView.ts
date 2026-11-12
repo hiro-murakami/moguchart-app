@@ -55,6 +55,7 @@ import {
   createAssigneesCellEditor,
   createNameCellEditor,
 } from '@/modules/ganttChartCustomRendering'
+import { createScheduleConstraintDragGuide } from '@/modules/scheduleConstraintDragGuide'
 import { useProjectStore } from '@/stores/useProjectStore'
 import { useUserStore } from '@/stores/useUserStore'
 import type {
@@ -83,7 +84,7 @@ import type { GanttChartInstance } from '@mogura/moguchart-vue'
 import type { ExcelExportColumn } from '@mogura/moguchart-plugin-excel'
 import { debounce, isEqual } from 'lodash'
 import { storeToRefs } from 'pinia'
-import { computed, inject, nextTick, ref, watch, watchEffect, type Ref } from 'vue'
+import { computed, inject, nextTick, onBeforeUnmount, ref, watch, watchEffect, type Ref } from 'vue'
 
 /**
  * 日本の祝日判定および祝日名を含むメタ情報を返す GanttHolidayChecker
@@ -642,16 +643,54 @@ export const useGanttChartView = () => {
     })
   })
 
-  // チャートインスタンスの再マウント時に現在の zoomPercent と initialZoomPercent を同期
-  watch(ganttChartRef, (chart) => {
-    if (!chart) {
-      initialZoomPercent.value = zoomPercent.value
-      return
-    }
-    if (typeof chart.getZoomPercent === 'function' && chart.getZoomPercent() !== zoomPercent.value) {
-      chart.zoomToPercent(zoomPercent.value)
-    }
+  const scheduleConstraintDragGuide = createScheduleConstraintDragGuide({
+    getChartElement: () => ganttChartRef.value?.element,
+    getGranularity: () => currentProject.value?.attribute?.granularity,
+    getAutoScheduleOptions: () => getAutoScheduleOptions(),
+    getPreserveWorkingDaysOnDrag: () => {
+      const granularity = currentProject.value?.attribute?.granularity
+      const calendarMode = currentProject.value?.attribute?.autoScheduleCalendarMode || 'calendar'
+      return (
+        granularity !== 'monthly' &&
+        granularity !== 'hourly' &&
+        calendarMode !== 'calendar' &&
+        !!currentProject.value?.attribute?.preserveWorkingDaysOnDrag
+      )
+    },
   })
+
+  const ensureScheduleConstraintDragGuidePlugin = (chart: GanttChartInstance | null | undefined) => {
+    if (!chart?.element) return
+    const isAlreadyInstalled =
+      chart.element.pluginManager?.hasPlugin('schedule-constraint-drag-guide') ?? false
+    if (!isAlreadyInstalled) {
+      chart.use(scheduleConstraintDragGuide.plugin)
+    }
+  }
+
+  onBeforeUnmount(() => {
+    scheduleConstraintDragGuide.clearGuide()
+  })
+
+  // チャートインスタンスの再マウント時に現在の zoomPercent と initialZoomPercent を同期し、制約ガイドプラグインを登録
+  watch(
+    ganttChartRef,
+    (chart) => {
+      if (!chart) {
+        scheduleConstraintDragGuide.clearGuide()
+        initialZoomPercent.value = zoomPercent.value
+        return
+      }
+      ensureScheduleConstraintDragGuidePlugin(chart)
+      nextTick(() => {
+        ensureScheduleConstraintDragGuidePlugin(ganttChartRef.value)
+      })
+      if (typeof chart.getZoomPercent === 'function' && chart.getZoomPercent() !== zoomPercent.value) {
+        chart.zoomToPercent(zoomPercent.value)
+      }
+    },
+    { immediate: true },
+  )
 
   // カレンダー基準幅変更時に保存
   watch(basePxPerDay, (newValue) => {
@@ -3102,7 +3141,9 @@ export const useGanttChartView = () => {
   }
 
   const handleTaskUpdate = async (e: any) => {
+    ensureScheduleConstraintDragGuidePlugin(ganttChartRef.value)
     const detail = getDetail<moguchart.TaskUpdateEventDetail>(e)
+    scheduleConstraintDragGuide.handleTaskUpdateEvent(detail)
     if (detail.isDragging || detail.isCancel || detail.isOutside) {
       return
     }

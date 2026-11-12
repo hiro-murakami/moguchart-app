@@ -6,6 +6,10 @@ const message = {
   ERROR_INVALID_MAIL_ADDRESS: 'メールアドレス形式で入力してください',
   ERROR_DATE_BEFORE: '終了日より前の日付にしてください',
   ERROR_DATE_AFTER: '開始日より後の日付にしてください',
+  ERROR_DATE_ON_OR_AFTER: (targetLabel: string, unitLabel: string = '日付') =>
+    `${targetLabel}以降の${unitLabel}にしてください`,
+  ERROR_DATE_ON_OR_BEFORE: (targetLabel: string, unitLabel: string = '日付') =>
+    `${targetLabel}以前の${unitLabel}にしてください`,
 }
 
 export default message

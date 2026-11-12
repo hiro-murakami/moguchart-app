@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import inputRules from '@/modules/inputRules'
+import { formatValueForDateInput } from '@/modules/utils'
 
 defineOptions({
   inheritAttrs: false,
@@ -13,6 +14,8 @@ const props = withDefaults(
     labelDaily?: string
     labelMonthly?: string
     labelDatetime?: string
+    min?: string
+    max?: string
     compareTarget?: string
     compareRule?: 'before' | 'after'
     customRules?: any[]
@@ -32,13 +35,15 @@ const inputType = computed(() => {
 })
 
 const displayValue = computed(() => {
-  if (!props.modelValue) return ''
-  if (inputType.value === 'month') return props.modelValue.slice(0, 7)
-  // datetime-local: TZなしの文字列（例: "2025-05-03T03:00:00"）をそのままスライスして表示
-  // dayjs() でパースするとブラウザのローカルTZが介入してズレが生じるため使用しない
-  if (inputType.value === 'datetime-local') return props.modelValue.slice(0, 16)
-  // date
-  return props.modelValue.slice(0, 10)
+  return formatValueForDateInput(props.modelValue, inputType.value)
+})
+
+const formattedMin = computed(() => {
+  return props.min ? formatValueForDateInput(props.min, inputType.value) : undefined
+})
+
+const formattedMax = computed(() => {
+  return props.max ? formatValueForDateInput(props.max, inputType.value) : undefined
 })
 
 const onUpdateModelValue = (val: string | null) => {
@@ -64,15 +69,7 @@ const label = computed(() => {
 const rules = computed(() => {
   const baseRules: any[] = props.required ? [inputRules.required] : []
   if (props.compareTarget) {
-    let target = props.compareTarget
-    if (inputType.value === 'month') {
-      target = target.slice(0, 7)
-    } else if (inputType.value === 'datetime-local') {
-      // TZなしのウォールクロック文字列として比較する（dayjs はTZ変換が入るため使わない）
-      target = target.slice(0, 16)
-    } else {
-      target = target.slice(0, 10)
-    }
+    const target = formatValueForDateInput(props.compareTarget, inputType.value)
 
     if (props.compareRule === 'before') {
       baseRules.push(inputRules.dateBefore(target))
@@ -94,6 +91,8 @@ const rules = computed(() => {
     @update:model-value="onUpdateModelValue"
     :label="label"
     :type="inputType"
+    :min="formattedMin"
+    :max="formattedMax"
     density="compact"
     variant="outlined"
     :rules="rules"

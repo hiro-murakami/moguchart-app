@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useDiscardConfirm } from '@/composables/useConfirm'
-import { granularityToInputType } from '@/modules/utils'
+import inputRules from '@/modules/inputRules'
+import { formatValueForDateInput, granularityToInputType } from '@/modules/utils'
 import type {
   ColorPalette,
   EditingTaskData,
@@ -12,7 +13,8 @@ import type {
 } from '@functions/types/shared'
 import dayjs from 'dayjs'
 import { cloneDeep, isEqual } from 'lodash'
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
+import type TaskFormDialog from './TaskFormDialog.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -125,7 +127,7 @@ const taskType = computed<'task' | 'milestone'>({
           if (isMonthly.value) {
             localTask.value.end = s.startOf('month').add(1, 'month').format('YYYY-MM-DD')
           } else if (isHourly.value) {
-            localTask.value.end = s.add(2, 'hour').format('YYYY-MM-DD HH:mm:ss')
+            localTask.value.end = s.add(2, 'hour').format('YYYY-MM-DDTHH:mm:ss')
           } else {
             localTask.value.end = s.add(1, 'day').startOf('day').format('YYYY-MM-DDTHH:mm:ss')
           }
@@ -299,10 +301,82 @@ const displayConstraintDate = computed({
 })
 
 const inputType = computed(() => granularityToInputType(props.granularity))
+
+const taskFormDialogRef = ref<InstanceType<typeof TaskFormDialog> | null>(null)
+
+const activeConstraintDate = computed(() => {
+  if (!localTask.value.constraintType || !displayConstraintDate.value) return undefined
+  return displayConstraintDate.value
+})
+
+const startConstraintMin = computed(() => {
+  return localTask.value.constraintType === 'SNET' ? activeConstraintDate.value : undefined
+})
+
+const startConstraintMax = computed(() => {
+  return localTask.value.constraintType === 'FNLT' ? activeConstraintDate.value : undefined
+})
+
+const endConstraintMin = computed(() => {
+  return localTask.value.constraintType === 'SNET' ? activeConstraintDate.value : undefined
+})
+
+const endConstraintMax = computed(() => {
+  return localTask.value.constraintType === 'FNLT' ? activeConstraintDate.value : undefined
+})
+
+const constraintTargetLabel = computed(() => {
+  if (isMonthly.value) return '制約月'
+  if (isHourly.value) return '制約日時'
+  return '制約日'
+})
+
+const constraintUnitLabel = computed(() => {
+  if (isMonthly.value) return '月'
+  if (isHourly.value) return '日時'
+  return '日付'
+})
+
+const startConstraintRules = computed(() => {
+  if (!activeConstraintDate.value) return []
+  const target = formatValueForDateInput(activeConstraintDate.value, inputType.value)
+  if (localTask.value.constraintType === 'SNET') {
+    return [inputRules.dateOnOrAfter(target, constraintTargetLabel.value, constraintUnitLabel.value)]
+  }
+  if (isMilestone.value && localTask.value.constraintType === 'FNLT') {
+    return [inputRules.dateOnOrBefore(target, constraintTargetLabel.value, constraintUnitLabel.value)]
+  }
+  return []
+})
+
+const endConstraintRules = computed(() => {
+  if (isMilestone.value || !activeConstraintDate.value) return []
+  const target = formatValueForDateInput(activeConstraintDate.value, inputType.value)
+  if (localTask.value.constraintType === 'FNLT') {
+    return [inputRules.dateOnOrBefore(target, constraintTargetLabel.value, constraintUnitLabel.value)]
+  }
+  return []
+})
+
+watch(
+  () => [
+    localTask.value.start,
+    localTask.value.end,
+    localTask.value.type,
+    localTask.value.constraintType,
+    localTask.value.constraintDate,
+  ],
+  async () => {
+    if (!props.modelValue) return
+    await nextTick()
+    taskFormDialogRef.value?.validate()
+  },
+)
 </script>
 
 <template>
   <TaskFormDialog
+    ref="taskFormDialogRef"
     :model-value="modelValue"
     @update:model-value="emit('update:modelValue', $event)"
     :title="dialogTitle"
@@ -357,8 +431,11 @@ const inputType = computed(() => granularityToInputType(props.granularity))
           :label-daily="isMilestone ? '日付' : '開始日'"
           :label-monthly="isMilestone ? '月' : '開始月'"
           :label-datetime="isMilestone ? '日時' : '開始日時'"
+          :min="startConstraintMin"
+          :max="startConstraintMax"
           :compare-target="isMilestone ? undefined : displayEnd"
           :compare-rule="isMilestone ? undefined : 'before'"
+          :custom-rules="startConstraintRules"
           hide-details="auto"
           class="mb-3"
         />
@@ -370,8 +447,11 @@ const inputType = computed(() => granularityToInputType(props.granularity))
           label-daily="終了日"
           label-monthly="終了月"
           label-datetime="終了日時"
+          :min="endConstraintMin"
+          :max="endConstraintMax"
           :compare-target="localTask.start"
           compare-rule="after"
+          :custom-rules="endConstraintRules"
           hide-details="auto"
           class="mb-3"
         />
