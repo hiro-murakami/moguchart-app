@@ -383,20 +383,19 @@ export const createScheduleConstraintDragGuide = (deps: ScheduleConstraintDragGu
 
     const granularity = deps.getGranularity()
     const isMoveOperation = detail.dx !== undefined
-    const checker = isMoveOperation ? getNonWorkingDayChecker() : undefined
     const selectedIds = detail.selectedTaskIds
 
-    // 複数タスク一括移動時
+    // 複数タスク一括移動時（シェード境界・警告判定ともに営業日考慮なしでカレンダー位置基準で判定）
     if (isMoveOperation && selectedIds && selectedIds.length >= 2) {
       const selectedSet = new Set(selectedIds.map(String))
       let strictestSnet: {
         constraint: TaskConstraintInfo
-        effectiveDate: Date
+        boundaryDate: Date
         minAllowedDx: number
       } | null = null
       let strictestFnlt: {
         constraint: TaskConstraintInfo
-        effectiveDate: Date
+        boundaryDate: Date
         maxAllowedDx: number
       } | null = null
 
@@ -408,19 +407,18 @@ export const createScheduleConstraintDragGuide = (deps: ScheduleConstraintDragGu
 
           const origStart = new Date(task.start)
           const origEnd = new Date(task.end)
+          const boundaryDate = constraint.date
 
           if (constraint.type === 'SNET') {
-            const effectiveDate = resolveEffectiveSnetDate(constraint, true, checker)
-            const minAllowedDx = chartEl.getDateX(effectiveDate) - chartEl.getDateX(origStart)
+            const minAllowedDx = chartEl.getDateX(boundaryDate) - chartEl.getDateX(origStart)
             if (!strictestSnet || minAllowedDx > strictestSnet.minAllowedDx) {
-              strictestSnet = { constraint, effectiveDate, minAllowedDx }
+              strictestSnet = { constraint, boundaryDate, minAllowedDx }
             }
           } else if (constraint.type === 'FNLT') {
-            const effectiveDate = constraint.date
             const refEdge = constraint.isMilestone ? origStart : origEnd
-            const maxAllowedDx = chartEl.getDateX(effectiveDate) - chartEl.getDateX(refEdge)
+            const maxAllowedDx = chartEl.getDateX(boundaryDate) - chartEl.getDateX(refEdge)
             if (!strictestFnlt || maxAllowedDx < strictestFnlt.maxAllowedDx) {
-              strictestFnlt = { constraint, effectiveDate, maxAllowedDx }
+              strictestFnlt = { constraint, boundaryDate, maxAllowedDx }
             }
           }
         }
@@ -438,10 +436,10 @@ export const createScheduleConstraintDragGuide = (deps: ScheduleConstraintDragGu
         const isViolating = dx < strictestSnet.minAllowedDx - 0.5
         nextState.snet = {
           type: 'SNET',
-          boundaryDate: strictestSnet.effectiveDate,
+          boundaryDate: strictestSnet.boundaryDate,
           labelText: buildBadgeText(
             strictestSnet.constraint,
-            strictestSnet.effectiveDate,
+            strictestSnet.boundaryDate,
             granularity,
             true,
             isViolating,
@@ -454,10 +452,10 @@ export const createScheduleConstraintDragGuide = (deps: ScheduleConstraintDragGu
         const isViolating = dx > strictestFnlt.maxAllowedDx + 0.5
         nextState.fnlt = {
           type: 'FNLT',
-          boundaryDate: strictestFnlt.effectiveDate,
+          boundaryDate: strictestFnlt.boundaryDate,
           labelText: buildBadgeText(
             strictestFnlt.constraint,
-            strictestFnlt.effectiveDate,
+            strictestFnlt.boundaryDate,
             granularity,
             true,
             isViolating,
@@ -472,7 +470,7 @@ export const createScheduleConstraintDragGuide = (deps: ScheduleConstraintDragGu
       return
     }
 
-    // 単一タスクの移動またはリサイズ時
+    // 単一タスクの移動またはリサイズ時（シェード境界・警告判定ともに営業日考慮なしで判定）
     const found = findTaskById(chartEl.rows, detail.id)
     if (!found) {
       clearGuide()
@@ -485,29 +483,35 @@ export const createScheduleConstraintDragGuide = (deps: ScheduleConstraintDragGu
       return
     }
 
-    const currentStartMs = new Date(detail.start).getTime()
-    const currentEndMs = new Date(detail.end).getTime()
+    const boundaryDate = constraint.date
+    const origStart = new Date(found.task.start)
+    const origEnd = new Date(found.task.end)
 
     if (constraint.type === 'SNET') {
-      const effectiveDate = resolveEffectiveSnetDate(constraint, isMoveOperation, checker)
-      const isViolating = currentStartMs < effectiveDate.getTime()
+      const isViolating = isMoveOperation
+        ? chartEl.getDateX(origStart) + (detail.dx ?? 0) < chartEl.getDateX(boundaryDate) - 0.5
+        : new Date(detail.start).getTime() < boundaryDate.getTime()
       activeState = {
         snet: {
           type: 'SNET',
-          boundaryDate: effectiveDate,
-          labelText: buildBadgeText(constraint, constraint.date, granularity, false, isViolating),
+          boundaryDate,
+          labelText: buildBadgeText(constraint, boundaryDate, granularity, false, isViolating),
           isViolating,
         },
       }
     } else {
-      const effectiveDate = constraint.date
-      const checkEdgeMs = constraint.isMilestone ? currentStartMs : currentEndMs
-      const isViolating = checkEdgeMs > effectiveDate.getTime()
+      const refOrigEdge = constraint.isMilestone ? origStart : origEnd
+      const checkResizeEdgeMs = constraint.isMilestone
+        ? new Date(detail.start).getTime()
+        : new Date(detail.end).getTime()
+      const isViolating = isMoveOperation
+        ? chartEl.getDateX(refOrigEdge) + (detail.dx ?? 0) > chartEl.getDateX(boundaryDate) + 0.5
+        : checkResizeEdgeMs > boundaryDate.getTime()
       activeState = {
         fnlt: {
           type: 'FNLT',
-          boundaryDate: effectiveDate,
-          labelText: buildBadgeText(constraint, effectiveDate, granularity, false, isViolating),
+          boundaryDate,
+          labelText: buildBadgeText(constraint, boundaryDate, granularity, false, isViolating),
           isViolating,
         },
       }
