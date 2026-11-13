@@ -413,6 +413,9 @@ const bindCommentBadgeInteractions = (
     hideTimeout = setTimeout(removeTooltip, 100)
   }
 
+  badge.style.userSelect = 'none'
+  badge.style.setProperty('-webkit-user-select', 'none')
+
   badge.addEventListener('pointerdown', (e) => {
     lastPointerType = e.pointerType || 'mouse'
     e.stopPropagation()
@@ -421,6 +424,10 @@ const bindCommentBadgeInteractions = (
     }
   })
   badge.addEventListener('mousedown', (e) => {
+    e.stopPropagation()
+  })
+  badge.addEventListener('dragstart', (e) => {
+    e.preventDefault()
     e.stopPropagation()
   })
   badge.addEventListener('dblclick', (e) => {
@@ -464,6 +471,8 @@ const bindImageThumbnailInteractions = (
   options: ImageThumbnailInteractionOptions,
 ) => {
   thumbWrapper.style.cursor = 'zoom-in'
+  thumbWrapper.style.userSelect = 'none'
+  thumbWrapper.style.setProperty('-webkit-user-select', 'none')
   thumbWrapper.setAttribute(options.anchorAttr, options.anchorId)
 
   let popupEl: HTMLElement | null = null
@@ -664,6 +673,15 @@ const resolveIsDarkTheme = (explicitIsDark?: boolean): boolean => {
 }
 
 export const barContent = (task: moguchart.GanttTask, options?: BarContentOptions) => {
+  const preventNativeDrag = (el: HTMLElement) => {
+    el.style.userSelect = 'none'
+    el.style.setProperty('-webkit-user-select', 'none')
+    el.addEventListener('dragstart', (e) => {
+      e.preventDefault()
+      e.stopPropagation()
+    })
+  }
+
   // サマリータスクの場合（ブラケット形状に最適化した専用レイアウト）
   if (task.type === 'summary') {
     const summaryContainer = document.createElement('div')
@@ -678,7 +696,7 @@ export const barContent = (task: moguchart.GanttTask, options?: BarContentOption
     summaryContainer.style.whiteSpace = 'nowrap'
     summaryContainer.style.overflow = 'hidden'
     summaryContainer.style.pointerEvents = 'none'
-    summaryContainer.style.userSelect = 'none'
+    preventNativeDrag(summaryContainer)
 
     const iconSpan = document.createElement('span')
     iconSpan.style.fontSize = 'calc(10px * var(--moguchart-font-scale, 1))'
@@ -728,11 +746,12 @@ export const barContent = (task: moguchart.GanttTask, options?: BarContentOption
     const isDark = resolveIsDarkTheme(options?.isDark)
     const anchor = document.createElement('div')
     anchor.style.cssText =
-      'position: absolute; left: 50%; top: 50%; width: 0; height: 0; transform: scale(calc(1 / 0.76)) rotate(-45deg); transform-origin: 0 0; pointer-events: none; user-select: none; z-index: 2;'
+      'position: absolute; left: 50%; top: 50%; width: 0; height: 0; transform: scale(calc(1 / 0.76)) rotate(-45deg); transform-origin: 0 0; pointer-events: none; user-select: none; -webkit-user-select: none; z-index: 2;'
+    preventNativeDrag(anchor)
 
     const milestoneRow = document.createElement('div')
     milestoneRow.style.cssText =
-      'position: absolute; left: 14px; top: 0; transform: translateY(-50%); display: flex; align-items: center; gap: 6px; white-space: nowrap; pointer-events: none;'
+      'position: absolute; left: 14px; top: 0; transform: translateY(-50%); display: flex; align-items: center; gap: 6px; white-space: nowrap; pointer-events: none; user-select: none; -webkit-user-select: none;'
 
     if (isLocked) {
       const lockIcon = document.createElement('span')
@@ -804,7 +823,7 @@ export const barContent = (task: moguchart.GanttTask, options?: BarContentOption
     if (milestoneImageUrls && milestoneImageUrls.length > 0) {
       const thumbWrapper = document.createElement('span')
       thumbWrapper.style.cssText =
-        'position: relative; width: 20px; height: 20px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 3px; overflow: hidden; background-color: rgba(128,128,128,0.2); pointer-events: auto; cursor: zoom-in; border: 1px solid rgba(128,128,128,0.35);'
+        'position: relative; width: 20px; height: 20px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 3px; overflow: hidden; background-color: rgba(128,128,128,0.2); pointer-events: auto; cursor: zoom-in; border: 1px solid rgba(128,128,128,0.35); user-select: none; -webkit-user-select: none;'
       const thumbImg = document.createElement('img')
       setImageSrc(thumbImg, milestoneImageUrls[0]!)
       thumbImg.style.cssText = 'width: 100%; height: 100%; object-fit: cover; display: block;'
@@ -814,6 +833,10 @@ export const barContent = (task: moguchart.GanttTask, options?: BarContentOption
         e.stopPropagation()
       })
       thumbWrapper.addEventListener('mousedown', (e) => {
+        e.stopPropagation()
+      })
+      thumbWrapper.addEventListener('dragstart', (e) => {
+        e.preventDefault()
         e.stopPropagation()
       })
       thumbWrapper.addEventListener('dblclick', (e) => {
@@ -858,7 +881,8 @@ export const barContent = (task: moguchart.GanttTask, options?: BarContentOption
 
     const root = document.createElement('div')
     root.style.cssText =
-      'position: relative; width: 100%; height: 100%; box-sizing: border-box; pointer-events: none; user-select: none;'
+      'position: relative; width: 100%; height: 100%; box-sizing: border-box; pointer-events: none; user-select: none; -webkit-user-select: none;'
+    preventNativeDrag(root)
 
     const canFitThumbInside = hasImages && (barWidthPx === undefined || barWidthPx >= Math.ceil(barHeightPx * 0.85))
 
@@ -891,13 +915,14 @@ export const barContent = (task: moguchart.GanttTask, options?: BarContentOption
         onCleanup: () => {
           restoreGanttChartTooltips()
         },
+        preventNativeDrag: true,
       })
       root.appendChild(thumbWrapper)
     }
 
     const outsideRow = document.createElement('div')
     outsideRow.style.cssText =
-      'position: absolute; left: calc(100% + 8px); top: 50%; transform: translateY(-50%); display: flex; align-items: center; gap: 6px; white-space: nowrap; pointer-events: none; z-index: 4;'
+      'position: absolute; left: calc(100% + 8px); top: 50%; transform: translateY(-50%); display: flex; align-items: center; gap: 6px; white-space: nowrap; pointer-events: none; user-select: none; -webkit-user-select: none; z-index: 4;'
 
     if (isLocked) {
       const lockIcon = document.createElement('span')
@@ -989,6 +1014,7 @@ export const barContent = (task: moguchart.GanttTask, options?: BarContentOption
         onCleanup: () => {
           restoreGanttChartTooltips()
         },
+        preventNativeDrag: true,
       })
       outsideRow.appendChild(thumbWrapper)
     }
@@ -1010,7 +1036,7 @@ export const barContent = (task: moguchart.GanttTask, options?: BarContentOption
   container.style.gap = '1px'
   container.style.pointerEvents = 'none'
   container.style.position = 'relative'
-  container.style.userSelect = 'none'
+  preventNativeDrag(container)
 
   const headerContainer = document.createElement('div')
   headerContainer.style.display = 'flex'
@@ -1133,6 +1159,7 @@ export const barContent = (task: moguchart.GanttTask, options?: BarContentOption
       onCleanup: () => {
         restoreGanttChartTooltips()
       },
+      preventNativeDrag: true,
     })
 
     container.appendChild(thumbWrapper)
