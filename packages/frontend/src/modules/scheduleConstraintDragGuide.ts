@@ -203,7 +203,8 @@ export const createScheduleConstraintDragGuide = (deps: ScheduleConstraintDragGu
     ctx: NonNullable<typeof lastOverlayCtx>,
     badgeVerticalOffsetPx: number,
   ) => {
-    if (!boundary) {
+    const overlayHeight = Math.max(0, ctx.totalHeight)
+    if (!boundary || overlayHeight <= 0) {
       shadeEl.style.display = 'none'
       lineEl.style.display = 'none'
       badgeEl.style.display = 'none'
@@ -217,12 +218,6 @@ export const createScheduleConstraintDragGuide = (deps: ScheduleConstraintDragGu
     const viewRight = ctx.scrollLeft + timelineViewportWidth
     const renderClipMinX = Math.max(0, viewLeft - 400)
     const renderClipMaxX = Math.min(ctx.contentWidth, viewRight + 400)
-
-    const timelineAvailableHeight = Math.max(0, ctx.viewportHeight - ctx.calendarHeight - 18)
-    const overlayHeight =
-      ctx.totalHeight >= timelineAvailableHeight
-        ? ctx.totalHeight
-        : Math.max(ctx.totalHeight, timelineAvailableHeight)
 
     const rawBoundaryX = ctx.getDateX(boundary.boundaryDate)
     const clampedLineX = Math.max(0, Math.min(ctx.contentWidth, rawBoundaryX))
@@ -290,7 +285,8 @@ export const createScheduleConstraintDragGuide = (deps: ScheduleConstraintDragGu
         badgeEl.style.border = '1px solid rgba(147, 197, 253, 0.45)'
       }
 
-      badgeEl.style.top = `${Math.max(4, ctx.scrollTop + badgeVerticalOffsetPx)}px`
+      const maxBadgeTop = Math.max(4, overlayHeight - 26)
+      badgeEl.style.top = `${Math.max(4, Math.min(maxBadgeTop, ctx.scrollTop + badgeVerticalOffsetPx))}px`
 
       // 境界位置に寄せて配置し、タイムライン可視領域の左右端でクランプ
       const estimatedWidth = Math.max(160, boundary.labelText.length * 9 + 20)
