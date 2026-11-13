@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Moguchart REST API
-  version: 1.9.0
+  version: 1.10.0
   description: |
     Moguchartの外部アプリ向けREST API。
     ガントチャートプロジェクトの管理（プロジェクト・行・タスク・コメント・スナップショット）を提供します。
@@ -1222,8 +1222,10 @@ paths:
     get:
       operationId: listApiKeys
       summary: APIキー一覧取得
-      description: 認証ユーザーのAPIキー一覧を取得します。キーはマスク表示（先頭8文字のみ）されます。
+      description: 認証ユーザーのAPIキー一覧を取得します（検証済み Firebase IDトークン認証が必要）。キーはマスク表示（先頭8文字のみ）されます。
       tags: [API Keys]
+      security:
+        - BearerAuth: []
       responses:
         '200':
           description: APIキー一覧
@@ -1241,14 +1243,18 @@ paths:
                       $ref: '#/components/schemas/ApiKeyMasked'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
 
     post:
       operationId: createApiKey
       summary: 新しいAPIキー生成
       description: |
-        新しいAPIキーを生成します。`read-write` スコープが必要です。
+        新しいAPIキーを生成します（検証済み Firebase IDトークン認証が必要、有効なキーは1ユーザーあたり最大10件まで）。
         **注意**: フルキーは作成直後のレスポンスでのみ表示されます。以降はマスクされて表示されるため、必ず保存してください。
       tags: [API Keys]
+      security:
+        - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -1259,7 +1265,9 @@ paths:
               properties:
                 name:
                   type: string
-                  description: キーの名前（識別用）
+                  minLength: 1
+                  maxLength: 100
+                  description: キーの名前（識別用、1〜100文字）
                   example: 'CI/CDパイプライン用'
                 scope:
                   type: string
@@ -1302,8 +1310,10 @@ paths:
     delete:
       operationId: deleteApiKey
       summary: APIキー無効化
-      description: 指定したAPIキーを論理削除（無効化）します。自分のキーのみ操作可能です。`read-write` スコープが必要です。
+      description: 指定したAPIキーを論理削除（無効化）します（検証済み Firebase IDトークン認証が必要）。自分のキーのみ操作可能です。
       tags: [API Keys]
+      security:
+        - BearerAuth: []
       responses:
         '200':
           description: 無効化成功
@@ -1731,6 +1741,14 @@ components:
         preserveWorkingDaysOnDrag:
           type: boolean
           description: タスクのドラッグ移動時に稼働日数を維持するかどうか（trueの場合、非営業日を跨いでも稼働日数が変わらないよう終了日を自動調整）
+        quarterStartMonth:
+          type: integer
+          minimum: 1
+          maximum: 12
+          description: 四半期（Q1〜Q4）表示時の会計年度の開始月（1=1月始まり/暦年, 4=4月始まり/日本年度 等、未指定時は 1）
+        autoExtendCalendar:
+          type: boolean
+          description: タスクをカレンダー左右端へ移動・編集した際にプロジェクト期間（開始日・終了日）を自動拡張するかどうか
 
     CustomNonWorkingDate:
       type: object
@@ -1810,6 +1828,16 @@ components:
           items:
             type: string
           description: タスクバーに表示する画像のURL配列
+        deadline:
+          type: string
+          description: タスクの期限（デッドライン）日時
+        constraintType:
+          type: string
+          enum: [SNET, FNLT]
+          description: スケジュール制約タイプ（'SNET'：指定日以降に開始、'FNLT'：指定日までに終了）
+        constraintDate:
+          type: string
+          description: スケジュール制約の基準日時
 
     RowAttribute:
       type: object
@@ -2240,6 +2268,12 @@ components:
         showCriticalPath:
           type: boolean
           description: クリティカルパスを表示するかどうか
+        showSummaryTasks:
+          type: boolean
+          description: サマリータスク（自動集計バー）を表示するかどうか
+        showDeadlines:
+          type: boolean
+          description: デッドライン（期限マーカー）を表示するかどうか
         showMinimap:
           type: boolean
           description: ミニマップ（全体鳥瞰）を表示するかどうか
@@ -2273,6 +2307,16 @@ components:
           additionalProperties:
             type: number
           description: マルチカラムグリッドの各カラム幅 (columnId -> px)
+        gridShowFooter:
+          type: boolean
+          description: マルチカラムグリッドの集計フッター行を表示するかどうか
+        showQuarters:
+          type: boolean
+          description: カレンダーヘッダーに四半期（Q1〜Q4）を表示するかどうか
+        barLabelPosition:
+          type: string
+          enum: [inside, auto, right]
+          description: タスクバー上のタスク名ラベル表示位置
         starred:
           type: boolean
           description: スター付きフラグ
