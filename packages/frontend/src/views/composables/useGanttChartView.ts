@@ -1800,6 +1800,8 @@ export const useGanttChartView = () => {
         autoSchedule: !!currentProject.value?.attribute?.autoSchedule,
         scheduleMode: currentProject.value?.attribute?.autoScheduleMode || 'push-only',
         respectMovable: true,
+        enableEditPopover: false,
+        showEditButton: true,
       },
       minimap: {
         enabled: isMinimapReady.value && showMinimap.value,
@@ -3201,6 +3203,12 @@ export const useGanttChartView = () => {
     lag: number
   } | null>(null)
 
+  watch(isDependencyEditDialogVisible, (visible) => {
+    if (!visible) {
+      ganttChartRef.value?.clearDependencySelection?.()
+    }
+  })
+
   const openDependencyEditDialog = (sourceTaskId: string, targetTaskId: string) => {
     if (!sourceTaskId || !targetTaskId || isReadOnly.value) return
 
@@ -3230,6 +3238,14 @@ export const useGanttChartView = () => {
       lag: normalized.lag,
     }
     isDependencyEditDialogVisible.value = true
+  }
+
+  const handleDependencyEdit = (e: any) => {
+    if (isReadOnly.value) return
+    const detail = getDetail<moguchart.DependencyEditEventDetail>(e)
+    if (!detail?.sourceTaskId || !detail?.targetTaskId) return
+    dependencyContextMenu.value.visible = false
+    openDependencyEditDialog(detail.sourceTaskId, detail.targetTaskId)
   }
 
   const handleDependencyClick = (e: any) => {
@@ -7016,6 +7032,7 @@ export const useGanttChartView = () => {
     dependencyContextMenu,
     isDependencyEditDialogVisible,
     editingDependency,
+    handleDependencyEdit,
     handleDependencyClick,
     handleEditDependencyFromContextMenu,
     saveDependencyEdit,

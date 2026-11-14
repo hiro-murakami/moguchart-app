@@ -191,6 +191,7 @@ const {
   dependencyContextMenu,
   isDependencyEditDialogVisible,
   editingDependency,
+  handleDependencyEdit,
   handleDependencyClick,
   handleEditDependencyFromContextMenu,
   saveDependencyEdit,
@@ -656,6 +657,7 @@ const handleOpenSlideSchedule = async () => {
             @task-delete="handleTaskDelete"
             @dependency-create="handleDependencyCreate"
             @dependency-click="handleDependencyClick"
+            @dependency-edit="handleDependencyEdit"
             @dependency-delete="handleDependencyDelete"
             @task-progress-change="handleTaskProgressChange"
             @zoom-change="handleZoomChange"
