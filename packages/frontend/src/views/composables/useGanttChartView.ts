@@ -4638,13 +4638,33 @@ export const useGanttChartView = () => {
   }
 
   // --- 行追加関連 ---
-  const handleAddRow = async (index?: number, count: number = 1) => {
+  /** 行から親行ID（数値またはnull）を取得する */
+  const getRowParentId = (row: moguchart.GanttRow | undefined): number | null => {
+    if (!row) return null
+    const attrParentId = ((row as any).attribute as RowAttribute | undefined)?.parentId
+    if (attrParentId != null) {
+      return Number(attrParentId)
+    }
+    if (row.parentId != null && row.parentId !== '') {
+      return Number(row.parentId)
+    }
+    return null
+  }
+
+  /** 親行IDが現在の行リスト内に実在する場合のみ有効な親行IDとして返す */
+  const resolveValidParentId = (parentId: number | null): number | null => {
+    if (parentId == null || Number.isNaN(parentId)) return null
+    return rows.value.some((r) => Number(r.id) === parentId) ? parentId : null
+  }
+
+  const handleAddRow = async (index?: number, count: number = 1, parentId: number | null = null) => {
     await maybeAutoSnapshot()
 
     setIsLoading(true)
     try {
       const targetIndex = index ?? rows.value.length
       const newName = '新規行'
+      const newAttribute: RowAttribute = parentId != null ? { parentId } : {}
       const newRowIds: number[] = []
 
       // 指定された数だけ新規行を追加
@@ -4655,7 +4675,7 @@ export const useGanttChartView = () => {
           order: targetIndex + 1 + i,
           projectId: projectId.value,
           visible: true,
-          attribute: {},
+          attribute: { ...newAttribute },
           tasks: [],
         })) as number
         newRowIds.push(newRowId)
@@ -4675,10 +4695,11 @@ export const useGanttChartView = () => {
       await updateGanttRowOrder(orderedRows)
 
       // Undo/Redo記録
+      let createdRowIds = [...newRowIds]
       pushAction({
         description: `行追加 (${count}件)`,
         undo: async () => {
-          await deleteGanttRow(newRowIds)
+          await deleteGanttRow(createdRowIds)
           await loadData(projectId.value, { silent: true })
         },
         redo: async () => {
@@ -4691,11 +4712,20 @@ export const useGanttChartView = () => {
               order: targetIndex + 1 + i,
               projectId: projectId.value,
               visible: true,
-              attribute: {},
+              attribute: { ...newAttribute },
               tasks: [],
             })) as number
             reNewRowIds.push(id)
           }
+          const rowsBeforeInsert = [...rows.value]
+          const reNewRowStubs = reNewRowIds.map((id) => ({ id: String(id) }) as any)
+          rowsBeforeInsert.splice(targetIndex, 0, ...reNewRowStubs)
+          const reOrderedRows = rowsBeforeInsert.map((row, idx) => ({
+            id: Number(row.id),
+            order: idx + 1,
+          }))
+          await updateGanttRowOrder(reOrderedRows)
+          createdRowIds = reNewRowIds
           await loadData(projectId.value, { silent: true })
         },
       })
@@ -5578,37 +5608,72 @@ export const useGanttChartView = () => {
     if (contextMenu.value.rowId === null) return
     const count = getSelectedRowCount()
 
+    let refIndex = -1
     if (count > 1) {
       // 複数選択時は選択行ブロックの最上部に挿入
       const selectedIndices = selectedRowIds.value
         .map((id) => rows.value.findIndex((r) => r.id === id))
         .filter((i) => i !== -1)
-      const minIndex = Math.min(...selectedIndices)
-      await handleAddRow(minIndex, count)
-    } else {
-      const index = rows.value.findIndex((r) => Number(r.id) === contextMenu.value.rowId)
-      if (index !== -1) {
-        await handleAddRow(index, 1)
+      if (selectedIndices.length > 0) {
+        refIndex = Math.min(...selectedIndices)
       }
+    } else {
+      refIndex = rows.value.findIndex((r) => Number(r.id) === contextMenu.value.rowId)
     }
+
+    if (refIndex === -1) return
+    const refRow = rows.value[refIndex]
+    // 基準行（先頭行）と同じ親（同じインデント階層）を設定する
+    const parentId = resolveValidParentId(getRowParentId(refRow))
+    await handleAddRow(refIndex, count, parentId)
   }
 
   const handleAddRowBelow = async () => {
     if (contextMenu.value.rowId === null) return
     const count = getSelectedRowCount()
 
+    let refIndex = -1
     if (count > 1) {
       // 複数選択時は選択行ブロックの最下部の下に挿入
       const selectedIndices = selectedRowIds.value
         .map((id) => rows.value.findIndex((r) => r.id === id))
         .filter((i) => i !== -1)
-      const maxIndex = Math.max(...selectedIndices)
-      await handleAddRow(maxIndex + 1, count)
-    } else {
-      const index = rows.value.findIndex((r) => Number(r.id) === contextMenu.value.rowId)
-      if (index !== -1) {
-        await handleAddRow(index + 1, 1)
+      if (selectedIndices.length > 0) {
+        refIndex = Math.max(...selectedIndices)
       }
+    } else {
+      refIndex = rows.value.findIndex((r) => Number(r.id) === contextMenu.value.rowId)
+    }
+
+    if (refIndex === -1) return
+    const refRow = rows.value[refIndex]
+    if (!refRow) return
+
+    const hasChildren = isParentRow(refRow.id)
+    const isCollapsed = Boolean(
+      refRow.collapsed ?? ((refRow as any).attribute as RowAttribute | undefined)?.collapsed,
+    )
+
+    if (hasChildren && !isCollapsed) {
+      // 展開中の親行の下に追加する場合：親行の直下（先頭の子行の上）に、その親行の子行（1段深いインデント）として追加
+      await handleAddRow(refIndex + 1, count, Number(refRow.id))
+    } else if (hasChildren && isCollapsed) {
+      // 折りたたみ中の親行の下に追加する場合：非表示の子孫行ブロックの末尾の後ろに、親行と同じインデントで追加
+      const descendantIds = new Set(moguchart.computeChildRowIds(rows.value as any, String(refRow.id), true))
+      let lastBlockIndex = refIndex
+      if (descendantIds.size > 0) {
+        for (let i = refIndex + 1; i < rows.value.length; i++) {
+          if (descendantIds.has(String(rows.value[i]!.id))) {
+            lastBlockIndex = i
+          }
+        }
+      }
+      const parentId = resolveValidParentId(getRowParentId(refRow))
+      await handleAddRow(lastBlockIndex + 1, count, parentId)
+    } else {
+      // 子を持たない行の下に追加する場合：直下に同じインデントで追加
+      const parentId = resolveValidParentId(getRowParentId(refRow))
+      await handleAddRow(refIndex + 1, count, parentId)
     }
   }
 
